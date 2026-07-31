@@ -1,8 +1,8 @@
 /**
  * Decorative per-HTTP-method presentation shared across the API docs: the
  * brand color palette (MethodBadge, MethodIconBadge) and the icon glyph
- * (MethodIconBadge, EndpointDetail). All three views are decorative — the
- * method reaches assistive tech through a neighboring <h3> or sr-only path —
+ * (MethodIconBadge, EndpointDetail). All three views are decorative - the
+ * method reaches assistive tech through a neighboring <h3> or sr-only path -
  * so color and glyph carry no meaning and need not survive CVD.
  *
  * The brand palette is logged-out only; the themed (logged-in) paint uses
@@ -18,7 +18,7 @@ export interface MethodPalette {
   border: string;
 }
 
-/** Fallback palette for an unrecognized method – neutral brand grey. */
+/** Fallback palette for an unrecognized method - neutral brand grey. */
 export const DEFAULT_PALETTE: MethodPalette = {
   text: '#eeeede',
   border: '#7d6ec0',

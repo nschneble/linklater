@@ -108,8 +108,7 @@ describe('VerifyLoginPage verifying state', () => {
     const status = screen.getByRole('status');
     expect(status).toBeInTheDocument();
     expect(status).toHaveTextContent(/verifying your login link/i);
-    // The status node carries `sr-only` – verifying state is visually a bare
-    // spinner. No card heading is rendered (errors redirect to /login).
+    // sr-only status only; failures redirect to /login, no error card
     expect(status).toHaveClass('sr-only');
   });
 

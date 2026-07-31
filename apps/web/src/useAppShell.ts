@@ -49,18 +49,9 @@ export function useAppShell() {
   const mainReference = useRef<HTMLElement>(null);
   const isFirstRender = useRef(true);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  // Tracks whether LinksView's inline save-link dialog (an `aria-modal`
-  // `role="dialog"`) is open. LinksView reports its open state up via
-  // `handleLinkFormOpenChange`; AppShell uses this to `inert` its own chrome
-  // (skip link, verification banner, Header) that lives OUTSIDE the dialog's
-  // subtree, so the dialog's modality holds against click-through and
-  // SR-browse-mode reach (WCAG 2.4.3 / 4.1.2).
+  // inert chrome outside the dialog so it stays modal (WCAG 2.4.3/4.1.2)
   const [isSaveLinkDialogOpen, setIsSaveLinkDialogOpen] = useState(false);
-  // The WelcomeModal pitches the bookmarklet, which can't be dragged to a
-  // bookmarks bar on touch devices. Gate it to >=md viewports so mobile
-  // users aren't shown irrelevant onboarding. A user who first lands on
-  // mobile will see it the next time they visit on desktop, since
-  // `markWelcomed` only fires when the modal is dismissed.
+  // welcome modal pitches the bookmarklet; gate to desktop (no drag on touch)
   const [isDesktop, setIsDesktop] = useState(() =>
     typeof window !== 'undefined' && typeof window.matchMedia === 'function'
       ? window.matchMedia('(min-width: 768px)').matches
@@ -91,8 +82,7 @@ export function useAppShell() {
     [],
   );
 
-  // Optimistic update: the theme switches immediately without waiting for
-  // the server response.
+  // optimistic: switch theme now, save to the server after
   const handleThemeSelect = (theme: BaseTheme) => {
     setBaseTheme(theme);
     updateMe({ theme }).catch((error) =>
@@ -100,8 +90,7 @@ export function useAppShell() {
     );
   };
 
-  // The next mode is derived from user.mode (auth state) rather than from
-  // ThemeContext so the persisted value stays in sync with auth state.
+  // derive next mode from user.mode not ThemeContext to stay auth-synced
   const handleModeToggle = () => {
     const nextMode = user?.mode === 'light' ? 'dark' : 'light';
     toggleMode();
@@ -116,16 +105,8 @@ export function useAppShell() {
     document.title = `Linklater – ${VIEW_LABELS[view]}`;
   }, [view]);
 
-  // Move focus to the main landmark whenever the user navigates between
-  // views. The isFirstRender guard prevents stealing focus on the
-  // initial page load – on mount the browser has not set focus anywhere
-  // meaningful yet, so moving it to <main> would skip the skip link and
-  // surprise keyboard users who land tabbed into the page header. Skip
-  // the focus shift when a navigation into Settings carries a `scrollTo`
-  // intent (e.g. the welcome modal jumping to the bookmarks section),
-  // because `SettingsView` is about to move focus to that section and we'd
-  // otherwise steal it right back to <main>. Plain `/settings` still
-  // focuses <main>.
+  // focus <main> on route change, not first load (would skip the skip link)
+  // and not on a Settings scrollTo intent (SettingsView focuses the section)
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
@@ -139,10 +120,7 @@ export function useAppShell() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view]);
 
-  // Global 'x' shortcut to open/close the user menu from anywhere. Respects
-  // the same keyboard-shortcuts preference as the links-view handlers, so
-  // disabling shortcuts in Settings turns this off too (WCAG 2.1.4); without
-  // it, 'x' would stay live while the rest were off.
+  // global 'x' toggles the user menu; gated by shortcuts pref (WCAG 2.1.4)
   useEffect(() => {
     if (!shortcutsEnabled) return;
 

@@ -23,8 +23,7 @@ describe('validateRequiredEnvVars', () => {
       originalEnv[name] = process.env[name];
     }
 
-    // A fully-valid baseline environment; individual tests knock out one
-    // variable to exercise a single failure branch in isolation.
+    // valid baseline; each test drops a variable to hit a failure branch
     process.env.DATABASE_URL = 'postgres://localhost/linklater';
     process.env.JWT_SECRET = 'super-secret';
     process.env.TOTP_ENCRYPTION_KEY = VALID_TOTP_KEY;

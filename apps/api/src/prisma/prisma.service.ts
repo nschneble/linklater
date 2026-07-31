@@ -16,7 +16,7 @@ dotenv.config();
  * their own connections.
  *
  * The pool is capped at 10 connections. With the adapter, the pool size is a
- * `pg.Pool` option — the `connection_limit` query param that Prisma's native
+ * `pg.Pool` option; the `connection_limit` query param that Prisma's native
  * engine reads is meaningless to node-postgres, so it must be set here in code.
  * Paired with pg-boss's own pool (`max: 5` in `QueueService`), that is 15
  * backends, comfortably under the production `max_connections = 50`.

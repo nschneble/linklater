@@ -139,9 +139,8 @@ export async function loadCatalogs() {
   return { solid, brands };
 }
 
-// Strip `//`-line and `/* ... */`-block comments before scanning, so narrative
-// references like `fa-triangle-excl` (column-aligned doc comment) don't
-// pollute the consumer set.
+// strip comments before scanning so doc-comment references like
+// `fa-triangle-excl` don't pollute the consumer set
 function stripComments(source) {
   return source
     .replace(/\/\*[\s\S]*?\*\//g, '')

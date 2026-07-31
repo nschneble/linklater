@@ -48,11 +48,7 @@ export class RefreshTokenService {
   async refresh(rawRefreshToken: string) {
     const tokenHash = sha256Hex(rawRefreshToken);
 
-    // Lookup + delete + re-issue in a single transaction so a crash mid-rotation
-    // cannot leave the user without a refresh token, and concurrent refresh
-    // requests for the same raw token cannot race: the loser's deleteMany
-    // returns count === 0 and we map that to a clean 401 rather than letting
-    // a Prisma P2025 leak out as a 500.
+    // single transaction: crash-safe rotation; race loser 401s not P2025 500
     return this.prisma.$transaction(async (transaction) => {
       const stored = await transaction.refreshToken.findUnique({
         where: { tokenHash },

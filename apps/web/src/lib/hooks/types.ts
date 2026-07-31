@@ -6,7 +6,7 @@ export type LinksFilter = 'unread' | 'read';
 /**
  * The full public interface returned by `useLinks`. Extracted from the facade
  * (`useLinks.ts`) so the sub-hooks (`useLinksActions`, `useLinksData`,
- * `useLinksView`) can import the type without depending on the facade –
+ * `useLinksView`) can import the type without depending on the facade;
  * breaks an otherwise circular import.
  */
 export interface UseLinksResult {

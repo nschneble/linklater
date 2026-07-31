@@ -52,22 +52,14 @@ const rule = {
   create(context) {
     const sourceCode = context.sourceCode;
 
-    // True when the comment is the first non-whitespace token on its own line
-    // (so it is a leading comment rather than a trailing comment on the
-    // previous import's line).
+    // true when the comment starts its own line (leading, not a trailing comment)
     const startsOwnLine = (comment) => {
       const lineStart =
         sourceCode.text.lastIndexOf('\n', comment.range[0] - 1) + 1;
       return sourceCode.text.slice(lineStart, comment.range[0]).trim() === '';
     };
 
-    // The text span that should move with an import: the declaration plus any
-    // leading own-line comments directly above it (no blank line between) and
-    // any trailing comment on the same line as the declaration's end. Trailing
-    // same-line comments and leading own-line comments are mutually exclusive
-    // (a comment either shares the preceding import's line or starts its own),
-    // so a comment is captured by exactly one block and travels with the import
-    // it annotates through the reorder rather than being stranded or deleted.
+    // each comment is captured once: leading own-line or trailing same-line, never both
     const getBlock = (node) => {
       const before = sourceCode.getCommentsBefore(node);
       let start = node.range[0];
@@ -91,9 +83,7 @@ const rule = {
       for (const comment of after) {
         const between = sourceCode.text.slice(end, comment.range[0]);
 
-        // The first newline marks the end of the declaration's own line: any
-        // comment beyond it begins its own line and belongs to the next block
-        // as a leading comment, not to this one as a trailing comment.
+        // a newline ends the decl's line; a comment past it leads the next block
         if (between.includes('\n')) {
           break;
         }
@@ -119,7 +109,7 @@ const rule = {
         }
       }
 
-      // Every type import positioned before the final value import is misplaced.
+      // a type import before the last value import is misplaced
       const misplaced = [];
       for (let index = 0; index < lastValueIndex; index++) {
         if (group[index].importKind === 'type') {
@@ -144,9 +134,7 @@ const rule = {
       const groupStart = blocks[0].start;
       const groupEnd = blocks[blocks.length - 1].end;
 
-      // Report every misplaced type import for visibility, but attach the
-      // single group-rewriting fix to the first report only so the autofix
-      // applies once (no overlapping fixes, no extra passes).
+      // report each misplaced import; attach the single rewrite fix to the first only
       misplaced.forEach((node, reportIndex) => {
         context.report({
           node,

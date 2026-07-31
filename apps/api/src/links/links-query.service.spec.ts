@@ -135,10 +135,7 @@ describe('LinksQueryService', () => {
 
       await service.findAll(USER_ID, { search: 'montréal' });
 
-      // $queryRaw is invoked as a tagged template – the first argument is the
-      // TemplateStringsArray containing the raw SQL fragments around the
-      // interpolated values. We assert that those fragments include the
-      // unaccent() wrapper around plainto_tsquery's input (Postel's Law).
+      // the raw SQL must wrap plainto_tsquery in unaccent() (Postel's Law)
       const callArguments = (prismaMock.$queryRaw as jest.Mock).mock
         .calls[0] as [readonly string[], ...unknown[]];
       const sql = callArguments[0].join(' ');
@@ -235,7 +232,7 @@ describe('LinksQueryService', () => {
     it('re-sorts search results to match the raw rank order', async () => {
       const LINK_ID_A = 'link-a';
       const LINK_ID_B = 'link-b';
-      // Raw query returns B then A (by rank)
+      // raw query returns B then A (by rank)
       (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([
         { id: LINK_ID_B, total: BigInt(2) },
         { id: LINK_ID_A, total: BigInt(2) },
@@ -377,7 +374,6 @@ describe('LinksQueryService', () => {
     });
   });
 
-  // Verify that Prisma is not used for the mocked Prisma module
   it('Prisma import is reachable (mock sanity)', () => {
     expect(Prisma).toBeDefined();
   });

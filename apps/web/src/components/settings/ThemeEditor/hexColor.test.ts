@@ -46,7 +46,7 @@ describe('normalizeToSixDigitHex – # prefix is optional (Postel’s Law)', () 
   });
 
   it('does not rescue an 8-digit alpha hex body that lacks a #', () => {
-    // Out of scope: only bare 3/6-digit bodies get a `#`.
+    // out of scope: only bare 3/6-digit bodies get a `#`
     expect(normalizeToSixDigitHex('aabbccdd')).toBe('aabbccdd');
   });
 

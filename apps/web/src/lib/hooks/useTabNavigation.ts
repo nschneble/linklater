@@ -5,8 +5,8 @@ import { useEffect, type RefObject } from 'react';
  * within the container and moves focus to another `[role="tab"]` element,
  * activating it via a synthetic click so selection follows focus:
  *
- *   - `ArrowLeft` / `ArrowRight` — previous / next tab, wrapping around.
- *   - `Home` / `End` — first / last tab.
+ *   - `ArrowLeft` / `ArrowRight`: previous / next tab, wrapping around.
+ *   - `Home` / `End`: first / last tab.
  *
  * This is required by WCAG 2.1 Success Criterion 4.1.2 for tab patterns.
  * The keys must move focus within the tab list rather than using Tab, which

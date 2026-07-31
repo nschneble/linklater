@@ -1,5 +1,5 @@
 /*
- * Tests for ModeToggle – the editor's Light/Dark palette selector. It IS the
+ * Tests for ModeToggle, the editor's Light/Dark palette selector. It IS the
  * shared SlidingTabBar (same component as the Unread/Read switcher), so it is a
  * role="tablist" of aria-selected tabs with roving tabindex and arrow-key
  * navigation via useTabNavigation. We assert the tablist semantics, the panel
@@ -83,7 +83,7 @@ describe('ModeToggle', () => {
     const onModeChange = vi.fn();
     renderToggle({ mode: 'dark', onModeChange });
     const [lightTab, darkTab] = screen.getAllByRole('tab');
-    // Focus the active tab the way Tab-in does, then drive with the keyboard.
+    // focus the active tab like Tab-in does, then drive with the keyboard
     darkTab.focus();
     fireEvent.keyDown(darkTab, { key: 'ArrowRight' });
     expect(document.activeElement).toBe(lightTab);

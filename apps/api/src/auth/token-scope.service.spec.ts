@@ -84,15 +84,12 @@ describe('TokenScopeService', () => {
         }),
       ).rejects.toThrow(ForbiddenException);
 
-      // Out-of-scope requests never reach the rate limiter.
+      // out-of-scope requests never reach the rate limiter
       expect(storage.increment).not.toHaveBeenCalled();
     });
   });
 
-  // The API_DOCS token authorizes no route (see the class docstring) – it
-  // used to be gated by an Origin header equality check, which any
-  // non-browser client can spoof (CWE-346); rejecting unconditionally closes
-  // that regardless of what the caller claims as its Origin.
+  // API_DOCS authorizes no route; Origin spoofs (CWE-346), so reject all
   describe('API_DOCS tokens', () => {
     it('rejects every request with ForbiddenException, regardless of Origin', async () => {
       await expect(

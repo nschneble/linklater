@@ -85,8 +85,7 @@ export default function ResetPasswordPage() {
         setLoading(false);
         return;
       }
-      // Server already issued a session and the api wrapper stored the
-      // tokens. Hydrate the auth context and route to the signed-in surface.
+      // server issued the session; hydrate auth and route to the app
       await refreshUser();
       setPendingNotice('password-reset-success');
       navigate('/unread', { replace: true });
@@ -115,14 +114,7 @@ export default function ResetPasswordPage() {
     }
   };
 
-  // `data-theme="branding"` pins the reset-password surface to the branding
-  // chrome, matching login/signup. The route is always accessible without auth,
-  // but the paint must never inherit a stale film/custom palette from a
-  // lingering session. Branding defines --page-gradient-from/to and --base-bg
-  // in-block, so the form gradient, the loading spinner, and this MFA branch all
-  // composite brand navy. MfaView paints only a translucent centered card, so
-  // this branch carries its own full-viewport navy gradient (the form branch's
-  // wrapper) rather than relying on the document background behind the card.
+  // "branding" pins the surface so no stale film/custom palette leaks in
   if (isInMfa) {
     return (
       <div

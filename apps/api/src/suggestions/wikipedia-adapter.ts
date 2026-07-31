@@ -47,8 +47,7 @@ export class WikipediaAdapter implements SourceAdapter {
       (suggestion): suggestion is Suggestion => suggestion !== null,
     );
 
-    // Dedupe by URL – the random endpoint occasionally returns the same
-    // article twice when called in quick succession.
+    // dedupe by URL; the random endpoint occasionally returns the same article
     const seen = new Set<string>();
     return successful.filter((suggestion) => {
       if (seen.has(suggestion.url)) return false;

@@ -100,7 +100,7 @@ describe('AnyAuthGuard', () => {
       );
       expect(result).toBe(true);
       expect(request.user).toEqual({ userId: USER_ID, email: USER_EMAIL });
-      // The kind/tokenHash must NOT leak onto request.user.
+      // kind/tokenHash must NOT leak onto request.user
       expect(request.user).not.toHaveProperty('tokenHash');
     });
 

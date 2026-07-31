@@ -60,11 +60,7 @@ export default function LinkForm({ onCreated }: LinkFormProps) {
             value={url}
             onChange={(event) => setUrl(event.target.value)}
             required
-            // aria-describedby and the Alert below are gated on the SAME error
-            // boolean in one render pass, so they mount together and the
-            // reference is never dangling. Keep them co-conditional — a static
-            // aria-describedby would point at an absent id when error is null,
-            // which some screen readers announce as "undefined".
+            // conditional so a dangling id never reads as "undefined"
             aria-describedby={error ? 'link-form-error' : undefined}
           />
           <p className="hidden sm:inline-flex mt-1.5 text-[var(--base-subtle-text)] text-xs">

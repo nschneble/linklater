@@ -112,17 +112,15 @@ describe('initial state – stored token present', () => {
         expect(result.current.loading).toBe(false);
       });
 
-      // A transient fault on the very first getMe must not drop the session:
-      // core clears the token only on a server-confirmed auth rejection, so
-      // the token survives here for the next reload to retry.
+      // transient first getMe fault keeps the session; token clears only on a
+      // confirmed auth rejection
       expect(apiModule.clearStoredToken).not.toHaveBeenCalled();
       expect(result.current.user).toBeNull();
     },
   );
 
   it('lands logged out when the session is genuinely dead', async () => {
-    // Core clears the token during the failed getMe (a rejected refresh), so
-    // by the catch the token is gone. The visitor is logged out as before.
+    // core clears the token on the failed getMe, so the visitor lands logged out
     vi.mocked(apiModule.getStoredToken)
       .mockReturnValueOnce('expired-jwt')
       .mockReturnValue(null);
@@ -156,7 +154,7 @@ describe('initial state – stored token present', () => {
     expect(result.current.user).toBeNull();
     expect(apiModule.clearStoredToken).not.toHaveBeenCalled();
 
-    // The surviving token lets the next hydration succeed.
+    // the surviving token lets the next hydration succeed
     await act(async () => {
       await result.current.refreshUser();
     });
@@ -470,7 +468,7 @@ describe('mapMeToUser customTheme normalization', () => {
       expect(result.current.user?.email).toBe('user@example.com'),
     );
 
-    // Known keys survive; unknown keys are stripped by the trust boundary.
+    // known keys survive; unknown keys are stripped by the trust boundary
     expect(result.current.user?.customTheme).toEqual({
       dark: { '--mount-border': '#abcdef' },
       light: {},
@@ -502,8 +500,7 @@ describe('mapMeToUser customTheme normalization', () => {
       expect(result.current.user?.email).toBe('user@example.com'),
     );
 
-    // An array is an object, so normalize returns empty mode maps – never the
-    // raw array.
+    // an array is an object, so normalize returns empty mode maps, not the raw array
     expect(result.current.user?.customTheme).toEqual({ dark: {}, light: {} });
   });
 });

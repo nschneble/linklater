@@ -98,18 +98,15 @@ describe('SettingSwitch forced-colors redundancy', () => {
     const css = await compileClasses(classes);
     const flattened = css.replace(/\s+/g, ' ');
 
-    // Both overrides live inside the forced-colors media query.
+    // both overrides live inside the forced-colors media query
     expect(flattened).toContain('@media (forced-colors: active)');
 
-    // Off/base border keys off the class alone: no aria-checked qualifier, so
-    // the selector is a single class (lowest specificity of the pair).
+    // off/base border keys off the class alone: lowest specificity
     expect(flattened).toContain(
       '.forced-colors\\:border-\\[ButtonText\\] { border-color: ButtonText; }',
     );
 
-    // Checked border keys off the aria-checked DOM attribute, adding an
-    // attribute selector on top of the two classes. That strictly higher
-    // specificity is what lets Highlight win over ButtonText when checked.
+    // checked border adds aria-checked selector; higher specificity wins
     expect(flattened).toContain(
       '.forced-colors\\:aria-checked\\:border-\\[Highlight\\][aria-checked="true"] { border-color: Highlight; }',
     );

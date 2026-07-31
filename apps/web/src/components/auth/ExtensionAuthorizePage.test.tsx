@@ -1,12 +1,9 @@
 /*
- * Tests for ExtensionAuthorizePage – extension OAuth confirmation page.
+ * Tests for ExtensionAuthorizePage, the extension OAuth confirmation page.
  *
- * Host-bundle contract – the Authorize PrimaryButton paints with
- * `surface="mount"` (the default) via the data-surface attribute. The card
- * itself is `--mount-bg`, so the default surface IS the correct tier here;
- * this test pins the default in place so a future refactor cannot silently
- * override it to the wrong surface. Locked in to match the
- * LinksControls / LinksMobileControls pattern.
+ * Host-bundle contract: the Authorize PrimaryButton keeps surface="mount"
+ * (the default) so it tiers against the --mount-bg card; this pins the
+ * default so a refactor can't silently override it to the wrong surface.
  */
 
 import ExtensionAuthorizePage from './ExtensionAuthorizePage';

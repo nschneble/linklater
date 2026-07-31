@@ -1,5 +1,5 @@
 /*
- * Tests for Modal – shared dialog primitive used by WelcomeModal and
+ * Tests for Modal, the shared dialog primitive used by WelcomeModal and
  * KeyboardShortcutsModal.
  *
  * Covers the ARIA + focus + scroll-lock contracts the primitive owns.

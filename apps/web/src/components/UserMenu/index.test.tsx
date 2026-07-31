@@ -63,9 +63,7 @@ function renderMenu() {
   );
 }
 
-// The Theme row trigger is the only `role="menuitem"` inside the menu that
-// opens a nested `menu` (the avatar button shares `aria-haspopup="menu"` but
-// carries no `role` and lives outside the menu container).
+// the only menuitem that opens a nested menu (the avatar shares aria-haspopup but has no role)
 function getThemeTrigger(): HTMLElement {
   const trigger = document.querySelector<HTMLElement>(
     '[role="menuitem"][aria-haspopup="menu"]',
@@ -76,9 +74,7 @@ function getThemeTrigger(): HTMLElement {
   return trigger;
 }
 
-// Opens the flyout via keyboard (ArrowRight on the trigger), which sets the
-// keyboard-open flag so the submenu auto-focuses its first option. Returns that
-// now-focused first flyout item.
+// ArrowRight sets the keyboard-open flag so the submenu auto-focuses its first option
 function openFlyoutAndGetFirstItem(): HTMLElement {
   const trigger = getThemeTrigger();
   trigger.focus();
@@ -104,9 +100,7 @@ describe('UserMenu theme flyout focus management', () => {
 
     fireEvent.keyDown(firstItem, { key: 'Tab' });
 
-    // Tab routes through `closeFlyoutOnTab`, which does state cleanup only and
-    // never calls `.focus()`. Focus is left where it was for the browser's
-    // native Tab advance, not snapped back to the trigger.
+    // Tab routes through closeFlyoutOnTab (cleanup only, no .focus()), so native Tab advance wins
     expect(document.activeElement).not.toBe(getThemeTrigger());
   });
 
@@ -116,7 +110,7 @@ describe('UserMenu theme flyout focus management', () => {
 
     fireEvent.keyDown(firstItem, { key: 'Escape' });
 
-    // Escape routes through `closeFlyout`, which returns focus to the trigger.
+    // Escape routes through closeFlyout, which refocuses the trigger
     expect(document.activeElement).toBe(getThemeTrigger());
   });
 
@@ -126,8 +120,7 @@ describe('UserMenu theme flyout focus management', () => {
 
     fireEvent.keyDown(firstItem, { key: 'ArrowLeft' });
 
-    // Arrow-left routes through `closeFlyout` (via `onArrowLeft`), which returns
-    // focus to the trigger.
+    // Arrow-left routes through closeFlyout (via onArrowLeft) and refocuses the trigger
     expect(document.activeElement).toBe(getThemeTrigger());
   });
 });

@@ -39,8 +39,7 @@ function ApiDocsRoute() {
   );
 }
 
-// CalOPPA requires allowing users to access the privacy policy without
-// needing to create an account.
+// CalOPPA requires privacy-policy access without an account
 function PrivacyPolicyRoute() {
   return (
     <Suspense

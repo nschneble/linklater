@@ -33,8 +33,7 @@ beforeEach(() => {
   scrollIntoViewMock = vi.fn();
   scrollToMock = vi.fn();
   Element.prototype.scrollIntoView = scrollIntoViewMock;
-  // jsdom defines `focus` on `HTMLElement.prototype`; stub it so the
-  // helper's focus call is a no-op in tests.
+  // jsdom defines focus on HTMLElement.prototype; stub it to a no-op
   HTMLElement.prototype.focus = vi.fn();
   window.scrollTo = scrollToMock as unknown as typeof window.scrollTo;
   Object.defineProperty(window, 'scrollY', {
@@ -67,10 +66,7 @@ describe('scrollToSettingsSection', () => {
   });
 
   it('snaps to the top of the page when the resulting scrollY would be smaller than the scroll-margin', () => {
-    // Mirrors the production first-section case: Account naturally sits
-    // ~111px down with scroll-mt-24 (96px). scrollIntoView would scroll
-    // the page 15px to anchor it at viewport y=96, drifting from the
-    // fresh-load position. The helper must snap to 0 instead.
+    // Account sits ~111px down (scroll-mt 96px); anchoring drifts, so snap to 0
     createSection('account', { top: 111, scrollMarginTop: 96 });
 
     expect(scrollToSettingsSection('account')).toBe(true);
@@ -93,8 +89,7 @@ describe('scrollToSettingsSection', () => {
   });
 
   it('snaps to the top at the boundary where the resulting scrollY equals the scroll-margin minus one', () => {
-    // naturalTop = 2 * scrollMt - 1 -> targetScrollY = scrollMt - 1,
-    // which is strictly less than scrollMt and must take the snap path.
+    // naturalTop=2*scrollMt-1 -> targetScrollY=scrollMt-1 (< scrollMt, snaps)
     createSection('account', { top: 191, scrollMarginTop: 96 });
 
     scrollToSettingsSection('account');
@@ -106,8 +101,7 @@ describe('scrollToSettingsSection', () => {
   });
 
   it('uses scrollIntoView at the boundary where the resulting scrollY equals the scroll-margin', () => {
-    // naturalTop = 2 * scrollMt -> targetScrollY = scrollMt; the snap
-    // condition is strict (`<`), so this case must take the anchored path.
+    // naturalTop=2*scrollMt -> targetScrollY=scrollMt; strict < means anchor
     createSection('section', { top: 192, scrollMarginTop: 96 });
 
     scrollToSettingsSection('section');

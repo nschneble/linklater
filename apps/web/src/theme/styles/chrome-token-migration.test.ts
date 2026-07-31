@@ -1,21 +1,10 @@
 /*
- * Anti-regression tripwire for the chrome bundle migration.
+ * Anti-regression tripwire for the chrome bundle migration: asserts
+ * migrated files reference no legacy pre-bundle CSS custom properties.
  *
- * Asserts that migrated files contain no references to the legacy
- * pre-bundle CSS custom properties. Started with page-chrome +
- * settings, then extended (common components, UserMenu,
- * auth pages, feature views) as files were migrated.
- *
- * Nine of the legacy tokens (`--bg`, `--bg-surface`,
- * `--text`, `--text-muted`, `--text-subtle`, `--border`, `--accent-fg`,
- * `--accent-hover`, `--accent`) are fully retired from the codebase –
- * not declared anywhere. The tripwire still lists them to prevent
- * re-introduction (sister to the `--bg-input` and `--bg-elevated`
- * retirements).
- *
- * Fires before the WCAG contrast suite runs, so a regression here is
- * caught as a flat string mismatch rather than a downstream contract
- * failure.
+ * Some listed tokens are already fully retired; they stay listed to block
+ * re-introduction. Fires before the WCAG contrast suite so a regression
+ * shows as a flat string mismatch, not a downstream contract failure.
  */
 
 import { readFileSync } from 'node:fs';
@@ -131,11 +120,8 @@ const MIGRATED_FILES = [
 ] as const;
 
 /*
- * Legacy tokens that should NOT appear in any migrated chrome file.
- *
- * Not included:
- *   --focus-ring      – universal slot. Migrated chrome files
- *                       use it; not a legacy alias.
+ * Legacy tokens that must NOT appear in any migrated chrome file.
+ * --focus-ring is excluded: it's a universal slot, not a legacy alias.
  */
 const LEGACY_TOKENS = [
   'var(--text)',

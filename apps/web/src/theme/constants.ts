@@ -5,7 +5,7 @@
  * matching CSS variable file in `apps/web/src/theme/styles/`.
  *
  * The off-book `branding` theme (branding.css) is deliberately absent here
- * by design — registering it would make it user-selectable and break its
+ * by design - registering it would make it user-selectable and break its
  * invisibility contract. See THEMES.md Section 7.
  */
 export type BaseTheme =
@@ -102,16 +102,9 @@ export const THEMES: Array<{
     swatchIcon: 'fa-guitar',
   },
   {
-    // The user-editable custom theme. Its palette lives in the per-user
-    // `customTheme` column, not a film-specific CSS file, so the accent is a
-    // statically chosen neutral gray (NOT derived from the user's tokens,
-    // which may be empty). #808080 clears 3:1 against the menu background in
-    // both light and dark mode. `swatchIcon` is special-cased to the generic
-    // paintbrush — every other theme uses a film-specific icon. `isAccessible`
-    // is intentionally omitted: a user-authored palette can't be assumed
-    // CVD-safe. The label is "Your Theme" (the viewer's own); each
-    // picker still appends an sr-only "custom theme" qualifier via
-    // `customThemeSrSuffix` so it reads unambiguously out of context.
+    // static neutral gray accent (user tokens may be empty); #808080 clears
+    // 3:1 on the menu bg in both modes. isAccessible omitted: user palettes
+    // aren't guaranteed CVD-safe
     id: 'custom',
     label: 'Your Theme',
     accent: '#808080',
@@ -125,7 +118,7 @@ export const VALID_BASE_THEME_IDS = new Set<string>(
 
 /**
  * The themes the picker menus list. The Custom theme is hidden until the user
- * opts in via the Theme Editor — except when it is the active theme, so the
+ * opts in via the Theme Editor - except when it is the active theme, so the
  * picker always lists the current selection. That exception keeps the radio
  * group's exactly-one-checked invariant intact (a filtered-out active theme
  * would leave the group with zero checked items) and lets a user who is on the

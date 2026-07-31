@@ -1,5 +1,5 @@
 /*
- * Tests for TabButton – a single tab inside a `role="tablist"`.
+ * Tests for TabButton, a single tab inside a `role="tablist"`.
  *
  * Surface paint is driven structurally: TabButton reads its host bundle
  * from an ancestor's `data-surface` attribute via Tailwind
@@ -12,7 +12,7 @@
  * - Under `data-surface=mount`, the variant overrides take effect:
  *   `--orbit-alt-text` idle and `--orbit-bg` active.
  * - `aria-selected` mirrors `isActive`. Roving `tabIndex` (0 when active,
- *   -1 when inactive) is preserved – `useTabNavigation` in the parent
+ *   -1 when inactive) is preserved; `useTabNavigation` in the parent
  *   relies on it for arrow-key navigation.
  * - The CVD active-indicator `fa-circle-dot` renders only when active.
  * - The off-screen extrabold sizing twin always renders so the label does
@@ -94,8 +94,7 @@ describe('TabButton', () => {
         Label
       </TabButton>,
     );
-    // Visible label spans never include the dot when inactive (the
-    // off-screen sizing twin always carries the dot – see the next test).
+    // visible span omits the dot when inactive; the sizing twin carries it
     const visibleSpan = container.querySelector(
       'span.col-start-1.row-start-1:not(.invisible)',
     );
@@ -121,8 +120,7 @@ describe('TabButton', () => {
     );
     let twin = container.querySelector('span.invisible.font-extrabold');
     expect(twin).toBeTruthy();
-    // Twin carries the dot icon AND the label text so it reserves the
-    // maximum width regardless of the live state.
+    // twin carries the dot AND label so it reserves max width in any state
     expect(twin!.querySelector('i.fa-circle-dot')).toBeTruthy();
     expect(twin!.textContent).toContain('Label');
 

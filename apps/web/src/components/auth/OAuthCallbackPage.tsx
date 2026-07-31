@@ -38,11 +38,7 @@ export default function OAuthCallbackPage() {
     const accessToken = parameters.get('token');
     const refreshToken = parameters.get('refresh') ?? undefined;
 
-    // Strip the credentials out of the URL bar before doing anything else.
-    // The fragment never reaches the server, but it persists in the
-    // browser's address bar and history until the user navigates away –
-    // shoulder-surfing a stale tab would expose a usable JWT. replaceState
-    // keeps the entry in history (so Back still works) without the secret.
+    // strip the JWT from the URL bar so a stale tab can't leak it
     if (typeof window !== 'undefined' && window.location.hash) {
       try {
         window.history.replaceState(
@@ -51,8 +47,7 @@ export default function OAuthCallbackPage() {
           window.location.pathname + window.location.search,
         );
       } catch {
-        // history.replaceState is unavailable in sandboxed contexts –
-        // silently fall through to the auth flow.
+        // history.replaceState throws in sandboxed contexts; fall through to auth
       }
     }
 
@@ -71,12 +66,7 @@ export default function OAuthCallbackPage() {
       });
   }, [loginWithToken, navigate]);
 
-  // The page is purely transient: spinner while loginWithToken is in flight,
-  // then an unconditional redirect (success → /unread, failure → /login).
-  // The verifying state mirrors VerifyLoginPage / ConfirmAccountDeletionPage –
-  // a single centered spinning icon with an sr-only polite status, no card
-  // chrome. Card chrome would flash visibly for sub-second windows before the
-  // redirect fires, which reads as "page loaded and immediately bounced."
+  // no card chrome: it would flash for the sub-second window before redirect
   return (
     <main className="flex items-center justify-center min-h-screen bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none">
       <p role="status" aria-live="polite" className="sr-only">

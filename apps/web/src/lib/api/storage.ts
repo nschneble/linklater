@@ -28,8 +28,7 @@ function safeWrite(key: string, value: string): void {
   try {
     window.localStorage.setItem(key, value);
   } catch {
-    // Storage quota exceeded or blocked – keep the in-memory copy so the
-    // current session keeps working, but skip persistence.
+    // storage quota exceeded or blocked; keep the in-memory copy
   }
 }
 
@@ -39,7 +38,7 @@ function safeRemove(key: string): void {
   try {
     window.localStorage.removeItem(key);
   } catch {
-    // Nothing to do – keep the in-memory copy in sync via the caller.
+    // nothing to do; caller keeps the in-memory copy in sync
   }
 }
 

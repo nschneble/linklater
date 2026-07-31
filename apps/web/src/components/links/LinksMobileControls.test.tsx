@@ -1,5 +1,5 @@
 /*
- * Tests for LinksMobileControls – mobile icon-only action buttons inside
+ * Tests for LinksMobileControls: mobile icon-only action buttons inside
  * LinksToolbar.
  *
  * Same `surface="base"` host-bundle contract as LinksControls (page-level

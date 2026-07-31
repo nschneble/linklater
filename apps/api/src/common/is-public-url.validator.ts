@@ -26,8 +26,7 @@ import type { HostResolver } from './safe-fetch.js';
  */
 @ValidatorConstraint({ name: 'isPublicUrl', async: true })
 export class IsPublicUrlConstraint implements ValidatorConstraintInterface {
-  // Injectable so tests can supply a deterministic resolver; production uses
-  // the default `node:dns/promises`-backed resolver inside `assertPublicHost`.
+  // optional resolver lets tests inject a deterministic DNS stub
   constructor(private readonly resolver?: HostResolver) {}
 
   async validate(value: unknown): Promise<boolean> {
@@ -40,11 +39,7 @@ export class IsPublicUrlConstraint implements ValidatorConstraintInterface {
       return false;
     }
 
-    // Defence-in-depth: reject non-http(s) schemes inside the validator
-    // itself. Otherwise `new URL('javascript:alert(1)').hostname` is the
-    // empty string, the host check passes, and the validator green-lights the
-    // payload, a footgun if @IsPublicUrl is ever used without a co-located
-    // @IsUrl({ protocols: ['http', 'https'] }).
+    // non-http(s) schemes yield an empty hostname that slips host check
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
       return false;
     }
@@ -53,8 +48,7 @@ export class IsPublicUrlConstraint implements ValidatorConstraintInterface {
       await assertPublicHost(parsed.hostname, this.resolver);
       return true;
     } catch (error) {
-      // A confirmed private host (literal or resolved) is rejected; any other
-      // failure (unresolvable host) is allowed. The fetch-time guard covers it.
+      // reject only confirmed-private hosts; fetch-time guard covers the rest
       return !(error instanceof PrivateHostError);
     }
   }

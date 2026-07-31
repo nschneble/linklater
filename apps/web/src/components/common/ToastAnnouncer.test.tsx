@@ -28,14 +28,13 @@ describe('ToastAnnouncer', () => {
       />,
     );
 
-    // Locate the visual card via its dismiss button: the always-mounted mirror
-    // is itself role="status", so queryByRole('status') can't isolate the card.
+    // mirror is also role="status", so find the card via its dismiss button
     const dismiss = screen.getByRole('button', { name: 'Dismiss' });
     const card = dismiss.closest('div');
     expect(card).toHaveTextContent('Link saved!');
     expect(card).not.toHaveAttribute('role');
     expect(card).not.toHaveAttribute('aria-live');
-    // The card owns no assertive live-region semantics either.
+    // the card owns no assertive live-region semantics either
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
@@ -53,9 +52,7 @@ describe('ToastAnnouncer', () => {
     expect(region).toHaveAttribute('aria-live', 'polite');
     expect(region).toHaveAttribute('aria-atomic', 'true');
 
-    // The mirror clears-then-sets, deferring even the first announcement one
-    // tick, so the empty → populated transition SRs need is observable after a
-    // flush rather than on first paint.
+    // mirror clears-then-sets, deferring the first announcement one tick
     await waitFor(() => expect(region).toHaveTextContent('Link saved!'));
   });
 
@@ -68,10 +65,9 @@ describe('ToastAnnouncer', () => {
       />,
     );
 
-    // No visual card (its dismiss button is the tell) …
+    // no visual card (its dismiss button is the tell) …
     expect(screen.queryByRole('button', { name: 'Dismiss' })).toBeNull();
-    // … but the live region stays mounted and empty so a later message still
-    // produces an empty → populated transition.
+    // … but the region stays mounted + empty so a later message transitions
     const region = screen.getByTestId('toast-announcement');
     expect(region).toHaveAttribute('role', 'status');
     expect(region).toBeEmptyDOMElement();
@@ -103,7 +99,7 @@ describe('ToastAnnouncer', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
 
-    // Toast runs a 150ms exit animation before invoking onDismiss.
+    // Toast runs a 150ms exit animation before invoking onDismiss
     await waitFor(() => expect(handleDismiss).toHaveBeenCalledTimes(1));
   });
 });

@@ -58,7 +58,7 @@ export function resolveSchema(
     const name = schemaNameFromReference(schema.$ref);
     if (name === undefined) return undefined;
     if (visited.has(name)) {
-      // Cycle: hand back the raw target without recursing into it again.
+      // cycle: hand back the raw target without recursing into it again
       return schemas[name];
     }
     const target = schemas[name];

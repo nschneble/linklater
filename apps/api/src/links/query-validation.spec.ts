@@ -70,9 +70,7 @@ describe('Query validation wiring', () => {
         },
       ],
     })
-      // Guards run before pipes: attach a user so the valid-query control
-      // handlers can read `request.user.userId`. Malformed queries fail
-      // validation before the handler runs regardless.
+      // guards run before pipes: attach a user for valid-query handlers
       .overrideGuard(AnyAuthGuard)
       .useValue({
         canActivate: (context: ExecutionContext) => {
@@ -83,15 +81,14 @@ describe('Query validation wiring', () => {
           return true;
         },
       })
-      // The route-level throttler on `POST /links` needs the whole
-      // ThrottlerModule graph; override it so this test does not boot it.
+      // override the POST /links throttler; avoids booting ThrottlerModule
       .overrideGuard(CustomThrottlerGuard)
       .useValue({ canActivate: () => true })
       .compile();
 
     app = moduleReference.createNestApplication();
 
-    // Byte-identical to `apps/api/src/main.ts`'s global pipe.
+    // byte-identical to `apps/api/src/main.ts`'s global pipe
     app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,
@@ -126,9 +123,7 @@ describe('Query validation wiring', () => {
     expect(response.status).toBe(400);
   });
 
-  // Positive controls: a well-formed query on each endpoint must NOT 400, so
-  // the assertions above prove validation is firing rather than a blanket
-  // failure of the boot.
+  // positive controls: a valid query must NOT 400, proving validation fires
   it('accepts a valid page on GET /links', async () => {
     const response = await request(app.getHttpServer()).get('/links?page=2');
     expect(response.status).toBe(200);

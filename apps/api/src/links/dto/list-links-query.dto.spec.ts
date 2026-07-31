@@ -8,8 +8,7 @@ const META: ArgumentMetadata = {
   data: '',
 };
 
-// Mirrors the global pipe configured in main.ts so these tests exercise the
-// exact transform + validation behavior that runs against every request.
+// mirror the global pipe from main.ts so tests match production behavior
 const pipe = new ValidationPipe({
   whitelist: true,
   forbidNonWhitelisted: true,

@@ -18,7 +18,7 @@ function makeStorageStub(overrides: Partial<Storage> = {}): Storage {
 
 /**
  * Verifies that `core.ts` survives module load when `localStorage` throws on
- * read – Safari private browsing and storage-blocked sites throw a
+ * read; Safari private browsing and storage-blocked sites throw a
  * `SecurityError` on every access. A naked `localStorage.getItem` call at
  * module top-level would have broken the entire app under those conditions.
  *
@@ -69,7 +69,7 @@ describe('core.ts storage safety', () => {
     expect(() =>
       module_.setStoredToken('access-token', 'refresh-token'),
     ).not.toThrow();
-    // In-memory copy is still updated so the current session keeps working.
+    // in-memory copy is still updated so the session keeps working
     expect(module_.getStoredToken()).toBe('access-token');
     expect(module_.getStoredRefreshToken()).toBe('refresh-token');
   });

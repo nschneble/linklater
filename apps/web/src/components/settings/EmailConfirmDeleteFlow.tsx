@@ -34,11 +34,7 @@ export default function EmailConfirmDeleteFlow({
   refreshUser,
 }: EmailConfirmDeleteFlowProps) {
   const triggerReference = useRef<HTMLButtonElement>(null);
-  // Set by handleNeverMind before the async refreshUser flips
-  // accountDeletionPending → false. The effect below catches the next render
-  // that lands on the idle trigger and returns focus there. Without this,
-  // the CheckYourEmailPanel unmounts and focus falls to <body>, dropping
-  // keyboard + screen-reader users out of context.
+  // arm focus-return so the trigger regains focus, not <body>, on unmount
   const shouldFocusTriggerOnIdle = useRef(false);
 
   const accountDeletionPending = !!user.accountDeletionPending;
@@ -53,13 +49,10 @@ export default function EmailConfirmDeleteFlow({
   const handleEmailConfirmConfirm = useCallback(async () => {
     const response = await deleteMe();
     if ('requiresEmailConfirmation' in response) {
-      // The server now holds an unexpired deletion token, so refreshUser
-      // flips accountDeletionPending to true and the CheckYourEmailPanel
-      // renders. Its own mount effect handles focus.
+      // refreshUser flips the pending flag; CheckYourEmailPanel takes over
       await refreshUser();
     } else {
-      // Defensive fallback: if the API ever deletes on the email path,
-      // finish cleanly rather than leave the user in a stale UI.
+      // defensive: if the API ever deletes directly, finish cleanly
       setPendingNotice('account-deleted');
       logout();
     }
@@ -70,19 +63,14 @@ export default function EmailConfirmDeleteFlow({
       try {
         await cancelPendingAccountDeletion();
       } catch {
-        // Fire-and-forget: a failed cancel leaves the server-side token
-        // pending, but the user clicked Never mind. We revert the UI
-        // either way; the worst case is the email link still works.
+        // fire-and-forget: revert the UI even if cancel fails
       }
-      // Arm the focus-return effect before refreshUser commits the idle
-      // branch – raf-after-await races React commit; the effect locks
-      // focus to the actual mount of the trigger button.
+      // arm before refreshUser; a raf-after-await would race React's commit
       shouldFocusTriggerOnIdle.current = true;
       try {
         await refreshUser();
       } catch {
-        // stale user state resolves on next navigation; intent ref clears
-        // on the next idle render either way
+        // stale state resolves on next navigation; intent ref self-clears
       }
     })();
   }, [refreshUser]);
@@ -110,18 +98,7 @@ export default function EmailConfirmDeleteFlow({
         runConfirm,
       }) =>
         !confirming ? (
-          // Two independent focus-return paths converge on this element, so
-          // it needs BOTH wirings:
-          //   - id={triggerId}: ActionGuard's own effect refocuses via
-          //     getElementById(triggerId) when the confirm row closes
-          //     (cancel / Escape / no-error success) while ActionGuard is
-          //     mounted.
-          //   - ref={triggerReference}: the never-mind path fires from
-          //     CheckYourEmailPanel, when ActionGuard is NOT mounted, so this
-          //     component's shouldFocusTriggerOnIdle effect refocuses via the
-          //     ref instead.
-          // Removing either drops a distinct keyboard/screen-reader
-          // focus-return.
+          // needs BOTH id (ActionGuard) and ref (never-mind) focus-return
           <IconButton
             id={triggerId}
             ref={triggerReference}
@@ -150,15 +127,10 @@ export default function EmailConfirmDeleteFlow({
               >
                 {pending ? 'Deleting…' : 'Yes, delete'}
               </IconButton>
-              {/* Ghost on alert-bg host (SettingsGroup variant="danger"
-                  paints --alert-bg). IconButton default surface="mount"
-                  paints --mount-border / --mount-alt-text against --alert-bg.
-                  Intentional – adding 'alert' to IconButton's surface union
-                  would require a new bundle slot per
-                  [[feedback-bundle-slot-add-reverify]] and is deferred to
-                  a future wave. Pre-existing in legacy code (was
-                  --text-muted, similar effect). Do not "fix" by adding an
-                  explicit surface override here. */}
+              {/* Ghost IconButton (surface="mount") paints mount tokens on
+                  the danger card's --alert-bg. Intentional: a clean fix needs
+                  a new 'alert' bundle slot, so don't add a surface override
+                  here. */}
               <IconButton
                 {...actionGuardInitialFocusProps}
                 variant="ghost"

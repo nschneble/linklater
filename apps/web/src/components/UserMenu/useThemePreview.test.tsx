@@ -24,7 +24,7 @@ afterEach(() => {
 
 describe('useThemePreview Custom-token sync', () => {
   it('clears the inline Custom tokens when previewing another theme', () => {
-    // Simulate the active Custom theme having injected its inline tokens.
+    // simulate the active Custom theme having injected its inline tokens
     applyCustomThemeTokens(document.documentElement, CUSTOM, 'dark');
     expect(document.documentElement.style.getPropertyValue('--base-bg')).toBe(
       '#abcabc',
@@ -34,7 +34,7 @@ describe('useThemePreview Custom-token sync', () => {
     act(() => result.current.applyPreview('scanner-darkly'));
 
     expect(document.documentElement.dataset.theme).toBe('scanner-darkly');
-    // The Custom inline token is gone, so the previewed theme's stylesheet wins.
+    // the Custom inline token is gone, so the preview stylesheet wins
     expect(document.documentElement.style.getPropertyValue('--base-bg')).toBe(
       '',
     );
@@ -53,10 +53,7 @@ describe('useThemePreview Custom-token sync', () => {
 
 describe('useThemePreview reset does not stomp an authoritative repaint', () => {
   it('no-ops the deferred restore when logout repainted branding first', () => {
-    // Control the reset rAF so the test can interleave a branding repaint
-    // between scheduling and firing — the exact ordering the logout race hits
-    // in a real browser (rAF fires after the unauthenticated branding gate
-    // paints, but the paint effect never re-runs to correct a stomp).
+    // mock reset rAF to interleave a branding repaint (the logout race order)
     let scheduled: FrameRequestCallback | null = null;
     const rafSpy = vi
       .spyOn(window, 'requestAnimationFrame')
@@ -67,18 +64,17 @@ describe('useThemePreview reset does not stomp an authoritative repaint', () => 
 
     const { result } = renderHook(() => useThemePreview(null, 'dark'));
 
-    // Hover a theme → preview paints imperatively.
+    // hover a theme → preview paints imperatively
     act(() => result.current.applyPreview('boyhood'));
     expect(document.documentElement.dataset.theme).toBe('boyhood');
 
-    // Mouse away → schedules the deferred restore back to the committed theme.
+    // mouse away → schedules the deferred restore to the committed theme
     act(() => result.current.resetPreview('school-of-rock'));
 
-    // Logout: useThemeState's unauthenticated gate repaints the off-book
-    // branding chrome before the rAF fires.
+    // logout: the unauthenticated gate repaints branding before the rAF fires
     document.documentElement.dataset.theme = 'branding';
 
-    // The deferred restore now fires. It must NOT clobber branding.
+    // the deferred restore now fires; it must NOT clobber branding
     act(() => {
       scheduled?.(0);
     });
@@ -102,7 +98,7 @@ describe('useThemePreview reset does not stomp an authoritative repaint', () => 
     act(() => result.current.applyPreview('boyhood'));
     act(() => result.current.resetPreview('school-of-rock'));
 
-    // No competing repaint: the preview is still on screen when the rAF fires.
+    // no competing repaint: the preview is still on screen when the rAF fires
     act(() => {
       scheduled?.(0);
     });

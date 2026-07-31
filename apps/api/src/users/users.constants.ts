@@ -6,7 +6,7 @@
  * definitions in `apps/web/src/theme/styles/`.
  *
  * The off-book `branding` theme (branding.css) is deliberately absent here by
- * design — accepting it would let a client persist a user-invisible theme and
+ * design - accepting it would let a client persist a user-invisible theme and
  * break its invisibility contract. See THEMES.md Section 7.
  *
  * Unlike `branding`, the `custom` theme IS user-selectable: it is the

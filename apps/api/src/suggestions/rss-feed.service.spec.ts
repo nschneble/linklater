@@ -91,8 +91,7 @@ describe('RssFeedService', () => {
   describe('refreshOne', () => {
     it('inserts all-new items via a single createMany and skips updateMany', async () => {
       fetchMock.mockResolvedValueOnce(textResponse(RSS_XML));
-      // No existing rows → every feed item is freshly created. updateMany
-      // must NOT fire for these – that would be a redundant write.
+      // no existing rows: all created fresh; updateMany must not fire
       (prismaMock.rssEntry.findMany as jest.Mock).mockResolvedValueOnce([]);
       (prismaMock.rssEntry.createMany as jest.Mock).mockResolvedValue({
         count: 2,
@@ -155,10 +154,7 @@ describe('RssFeedService', () => {
 
     it('passes skipDuplicates so a racing duplicate insert does not throw the whole batch', async () => {
       fetchMock.mockResolvedValueOnce(textResponse(RSS_XML));
-      // Simulate a race: the read-then-partition saw no existing rows, but a
-      // concurrent refresh inserted one of them before this createMany ran.
-      // skipDuplicates lets Postgres skip the colliding row instead of
-      // rejecting the entire insert (P2002) and failing the whole refresh.
+      // concurrent insert collides; skipDuplicates skips it, no P2002 batch fail
       (prismaMock.rssEntry.findMany as jest.Mock).mockResolvedValueOnce([]);
       (prismaMock.rssEntry.createMany as jest.Mock).mockResolvedValue({
         count: 1,
@@ -179,8 +175,7 @@ describe('RssFeedService', () => {
 
     it('issues one updateMany per pre-existing item and skips createMany for them', async () => {
       fetchMock.mockResolvedValueOnce(textResponse(RSS_XML));
-      // Both feed URLs already exist → updateMany fires per row, createMany
-      // is skipped entirely (no fresh rows to insert).
+      // both URLs already exist: updateMany per row, createMany skipped
       (prismaMock.rssEntry.findMany as jest.Mock).mockResolvedValueOnce([
         { url: 'https://example.com/first' },
         { url: 'https://example.com/second' },
@@ -333,8 +328,7 @@ describe('RssFeedService', () => {
       });
 
       const updateManyMock = prismaMock.rssEntry.updateMany as jest.Mock;
-      // Same URL twice in the batch → dedup to one update; the later item
-      // wins (matches the old sequential per-item upsert semantics).
+      // same URL twice: dedup to one update; later item wins
       expect(updateManyMock).toHaveBeenCalledTimes(1);
       const call = updateManyMock.mock.calls[0][0] as {
         data: { title: string };

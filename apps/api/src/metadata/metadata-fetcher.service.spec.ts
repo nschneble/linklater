@@ -3,12 +3,7 @@ import { jest } from '@jest/globals';
 import { Test, TestingModule } from '@nestjs/testing';
 import type { MetadataFetcherService } from './metadata-fetcher.service';
 
-// safeFetch dispatches through `undici`'s own `fetch` so its dispatcher (an
-// `undici` Agent) and the fetch come from one `undici` instance (see
-// safe-fetch.ts). Mock that module – in ESM that means `unstable_mockModule`
-// plus a dynamic import of the module under test – and forward its `fetch` to
-// `global.fetch`, which these tests already drive, so every existing
-// `global.fetch` expectation stays intact.
+// mock undici (safeFetch's fetch source) via unstable_mockModule + dynamic import, forwarding to global.fetch
 const undiciFetchMock = jest.fn();
 jest.unstable_mockModule('undici', () => ({
   Agent: class {},
@@ -48,9 +43,7 @@ const mockFetchSuccess = () => {
 };
 
 const mockFetchReject = () => {
-  // Never resolves – the SSRF guard should prevent fetch from being called
-  // at all. Using a never-settling mock avoids unhandled-rejection noise
-  // while still allowing the test to assert fetch was not invoked.
+  // never-settling mock: SSRF guard blocks fetch, and this avoids unhandled-rejection noise
   global.fetch = jest
     .fn()
     .mockReturnValue(new Promise(() => {})) as unknown as typeof fetch;
@@ -109,7 +102,7 @@ describe('MetadataFetcherService', () => {
     it.each(blockedUrls)('blocks %s', async (_label: string, url: string) => {
       mockFetchReject();
       const result = await service.fetchMetadata(url);
-      // Should return empty metadata without ever calling fetch
+      // empty metadata returned, fetch never called
       expect(global.fetch).not.toHaveBeenCalled();
       expect(result).toEqual({
         description: null,
@@ -129,10 +122,7 @@ describe('MetadataFetcherService', () => {
     });
   });
 
-  // These use public IP LITERALS so the SSRF guard never touches DNS – keeping
-  // the fetcher's streaming/parse behaviour deterministic and offline. The
-  // DNS-name resolve-and-validate path (public name -> private IP) is covered
-  // in safe-fetch.spec.ts, where the resolver is injectable.
+  // public IP literals so the SSRF guard never touches DNS; the DNS resolve path is covered in safe-fetch.spec.ts
   describe('SSRF protection – allowed hosts', () => {
     const allowedUrls = [
       ['public IPv4', 'https://93.184.216.34/'],
@@ -153,8 +143,7 @@ describe('MetadataFetcherService', () => {
 
   describe('SSRF protection – redirect bypass', () => {
     it('does not follow a redirect to a private host', async () => {
-      // First (and only) hop: a public host that 302s to an internal address.
-      // safeFetch must re-validate the redirect target and refuse to connect.
+      // public host 302s to an internal address; safeFetch must re-validate the redirect and refuse
       global.fetch = jest.fn().mockResolvedValue({
         status: 302,
         ok: false,
@@ -167,7 +156,7 @@ describe('MetadataFetcherService', () => {
 
       const result = await service.fetchMetadata('https://93.184.216.34/redir');
 
-      // Only the first hop was fetched; the private redirect target was blocked.
+      // only the first hop was fetched; the private redirect was blocked
       expect(global.fetch).toHaveBeenCalledTimes(1);
       expect(result.title).toBeNull();
       expect(result.description).toBeNull();

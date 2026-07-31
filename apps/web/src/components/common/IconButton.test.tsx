@@ -134,10 +134,7 @@ describe('IconButton', () => {
   });
 
   it('elevated variant carries the universal --focus-ring alongside its border-shadow', () => {
-    // elevated keeps its card-shadow edge AND the FOCUS_RING utility: without
-    // the ring, keyboard focus on the logged-out OAuth buttons ("Continue with
-    // Google/Apple") had no theme-aware indicator outside CVD mode (the
-    // universal 3px outline in index.css is scoped to [data-cvd='on']).
+    // elevated needs the ring: OAuth buttons had no focus indicator outside CVD mode (universal outline is [data-cvd='on'] only)
     render(<IconButton variant="elevated">go</IconButton>);
     const button = screen.getByRole('button', { name: 'go' });
     expect(button.className).toContain('border-shadow');
@@ -158,10 +155,7 @@ describe('IconButton', () => {
   });
 
   it('danger-filled variant carries the alert-highlight-fg focus-ring (Recovery A)', () => {
-    // The danger-filled fill IS --alert-highlight; a same-color ring
-    // would paint 1:1 invisible against the variant's own background.
-    // Recovery A switches the ring to --alert-highlight-fg, which
-    // inherits 4.5:1 vs --alert-highlight from the bundle contract.
+    // danger-filled fill IS --alert-highlight, so Recovery A rings with --alert-highlight-fg (4.5:1) not an invisible same-color ring
     render(<IconButton variant="danger-filled">confirm</IconButton>);
     const button = screen.getByRole('button', { name: 'confirm' });
     expect(button.className).toContain(

@@ -1,8 +1,7 @@
 import { toOptionalBoolean, toOptionalInteger } from './query-transforms.js';
 import type { TransformFnParams } from 'class-transformer';
 
-// The transforms only read `value`, so a minimal parameters object is enough
-// to exercise every branch of the coercion.
+// the transforms only read `value`, so a minimal object is enough
 function makeParameters(value: unknown): TransformFnParams {
   return { value } as unknown as TransformFnParams;
 }

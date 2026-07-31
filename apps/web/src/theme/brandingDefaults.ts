@@ -2,11 +2,11 @@
  * The Custom theme's DARK starting palette: a snapshot of the off-book
  * `branding` theme's tokens (branding.css `[data-theme='branding']`). A freshly
  * enabled Custom theme has no saved tokens, so its dark mode falls back to
- * these instead of the synthetic `:root` defaults — the Custom theme "defaults
+ * these instead of the synthetic `:root` defaults - the Custom theme "defaults
  * to branding". The light counterpart is `BRANDING_DEFAULTS_LIGHT` below.
  *
  * Keyed by the same CSS variable names as `CUSTOM_TOKEN_KEYS`, so these values
- * flow through the exact same allowlisted injection path as user-saved tokens —
+ * flow through the exact same allowlisted injection path as user-saved tokens -
  * they never become a trusted bypass. This map is the canonical RUNTIME source;
  * `brandingDefaults.drift.test.ts` asserts it stays byte-for-byte in sync with
  * branding.css so the two can never silently diverge.
@@ -79,7 +79,7 @@ export const BRANDING_DEFAULTS: Readonly<Record<string, string>> = {
  * `BRANDING_DEFAULTS`, in the same warm coral/peach + navy-violet identity but
  * inverted for a light surface (light backgrounds, dark text). The off-book
  * `branding` theme is dark-locked and is NEVER rendered in light mode in the
- * app — this palette exists ONLY so a fresh Custom theme's light mode "defaults
+ * app - this palette exists ONLY so a fresh Custom theme's light mode "defaults
  * to branding" too, rather than falling through to the synthetic bundle
  * defaults.
  *

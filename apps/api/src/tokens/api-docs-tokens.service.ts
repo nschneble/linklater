@@ -10,13 +10,9 @@ const API_DOCS_TOKEN_NAME = 'API Docs';
  * Manages the single, hidden API-docs token per user.
  *
  * Mirrors `BookmarkletTokensService.getOrCreate`: the raw value is stored in
- * `secretValue`. The token is still auto-provisioned server-side on first
- * request, never expires, and is never shown in the user's token list
- * (`TokensService.findAll` filters to `kind = USER`). The former in-page "try
- * it out" explorer that consumed it has been removed – the API docs are now
- * read-only reference (a cURL example the user copies and runs) – but the
- * server-side provisioning is retained deliberately; its teardown is a
- * separate, deferred decision.
+ * `secretValue`. The token is auto-provisioned server-side on first request,
+ * never expires, and is never shown in the user's token list
+ * (`TokensService.findAll` filters to `kind = USER`).
  *
  * Unlike the bookmarklet token there is intentionally NO regenerate path: the
  * user decided this token is invisible plumbing, so it is only ever minted
@@ -45,9 +41,7 @@ export class ApiDocsTokensService {
       return this.toSummary(existing);
     }
 
-    // Row exists but secretValue is missing (data-integrity glitch, manual
-    // patch, partial restore). Self-heal by re-minting instead of 500ing
-    // every docs-page load.
+    // secretValue missing (glitch/restore): self-heal by re-minting, don't 500
     if (existing) {
       return this.reMint(userId);
     }
@@ -60,10 +54,7 @@ export class ApiDocsTokensService {
       });
       return this.toSummary(stored);
     } catch (error) {
-      // Two tabs opened simultaneously can both hit the create branch; the
-      // partial unique index on (userId) WHERE kind = 'API_DOCS' wins one
-      // and rejects the other with P2002. Re-fetch the row the winning tab
-      // inserted and return its raw value.
+      // two tabs race create; the partial unique index rejects one with P2002
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
@@ -130,9 +121,7 @@ export class ApiDocsTokensService {
     secretValue: string | null;
   }) {
     if (!stored.secretValue) {
-      // Every API_DOCS row must have a secretValue populated at creation. A
-      // null here means a data-integrity violation – throw so it produces a
-      // visible 500 rather than silently returning an empty token record.
+      // null secretValue = data-integrity violation; throw for a visible 500
       throw new Error(
         `API docs token ${stored.id} is missing secretValue – data integrity violation`,
       );

@@ -4,7 +4,7 @@
  * can compose it into a sentence ("Created a few hours ago", "was last used
  * a minute ago").
  *
- * Future dates are clamped to "a few seconds ago" rather than throwing – a
+ * Future dates are clamped to "a few seconds ago" rather than throwing; a
  * tiny clock skew between client and server should never crash the UI.
  */
 export function formatRelativeTimeFuzzy(date: Date | string): string {

@@ -30,7 +30,7 @@ import { SuggestionsService } from './suggestions.service.js';
  * source per call so the same user gets variety across visits.
  *
  * Auth: `AnyAuthGuard` so browser-extension PATs work alongside the web
- * session – when an extension surfaces suggestions inline this endpoint
+ * session; when an extension surfaces suggestions inline this endpoint
  * is already reachable.
  */
 @ApiTags('suggestions')

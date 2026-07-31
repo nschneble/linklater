@@ -7,7 +7,7 @@ import type { SourceAdapter, Suggestion } from './suggestions.types.js';
  * `SuggestionsService` so a single `RssFeedService` powers all five RSS
  * sources without further branching.
  *
- * `fetch(count)` is read-only – refreshes happen on the scheduled job, not
+ * `fetch(count)` is read-only; refreshes happen on the scheduled job, not
  * inline. If the cache is empty (fresh deploy before bootstrap refresh)
  * this returns `[]` and `SuggestionsService` falls through to another
  * source.

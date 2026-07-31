@@ -35,9 +35,7 @@ function makeOptions(overrides: object = {}) {
 
 describe('useCreateLink', () => {
   it('keeps handleCreated and handleDirectSave stable when only onSaved changes', () => {
-    // The paste listener relies on handleDirectSave's identity staying stable.
-    // onSaved is a fresh closure each render, so it must not be a dependency.
-    // Hold every real dependency fixed and vary only onSaved to isolate it.
+    // onSaved can't be a dep or handleDirectSave's identity would churn
     const stable = makeOptions();
     const { result, rerender } = renderHook(
       (onSaved: () => void) => useCreateLink({ ...stable, onSaved }),

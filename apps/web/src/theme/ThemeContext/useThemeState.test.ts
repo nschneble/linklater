@@ -475,7 +475,7 @@ describe('custom theme runtime injection', () => {
   it('injects tokens onto documentElement only when baseTheme is custom', () => {
     seedStoredCustomTheme({ dark: { '--mount-border': '#abcabc' } });
 
-    // Not custom yet (defaults to scanner-darkly): nothing injected.
+    // not custom yet (defaults to scanner-darkly): nothing injected
     const { result } = renderHook(() => useThemeState());
     expect(root().style.getPropertyValue('--mount-border')).toBe('');
 
@@ -507,7 +507,7 @@ describe('custom theme runtime injection', () => {
     });
 
     const { result } = renderHook(() => useThemeState());
-    // Saved dark token wins; an unsaved dark token falls back to branding.
+    // saved dark token wins; an unsaved dark token falls back to branding
     expect(root().style.getPropertyValue('--mount-border')).toBe('#dark11');
     expect(root().style.getPropertyValue('--base-bg')).toBe(
       BRANDING_DEFAULTS['--base-bg'],
@@ -516,8 +516,7 @@ describe('custom theme runtime injection', () => {
     act(() => {
       result.current.setMode('light');
     });
-    // Light defaults to branding-light: saved light token wins, an unsaved one
-    // falls back to the light palette.
+    // light defaults to branding-light: saved token wins, unsaved falls back
     expect(root().style.getPropertyValue('--base-bg')).toBe('#light22');
     expect(root().style.getPropertyValue('--mount-border')).toBe(
       BRANDING_DEFAULTS_LIGHT['--mount-border'],
@@ -560,15 +559,13 @@ describe('unauthenticated branding gate', () => {
 
     const { result } = renderHook(() => useThemeState(false));
 
-    // The document paints the off-book branding chrome, never the stored
-    // theme, so the auth screens ignore a stale localStorage selection.
+    // auth screens paint off-book branding, ignoring the stored theme
     expect(root().dataset.theme).toBe('branding');
-    // Branding wins BEFORE the `=== 'custom'` token-injection gate, so no
-    // per-user custom palette is ever injected onto the login controls.
+    // branding wins BEFORE the `=== 'custom'` gate, so no palette is injected
     for (const variable of CUSTOM_TOKEN_KEYS) {
       expect(root().style.getPropertyValue(variable)).toBe('');
     }
-    // The stored selection itself is left untouched so it restores after login.
+    // the stored selection is left untouched so it restores after login
     expect(result.current.baseTheme).toBe('custom');
   });
 
@@ -732,7 +729,7 @@ describe('setPreviewTheme', () => {
     });
 
     expect(root().dataset.theme).toBe('boyhood');
-    // The committed selection and storage are untouched — preview never persists.
+    // committed selection and storage untouched; preview never persists
     expect(result.current.baseTheme).toBe('scanner-darkly');
     expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBeNull();
   });
@@ -763,8 +760,7 @@ describe('setPreviewTheme', () => {
   it('does not let a preview of custom bypass the unauthenticated gate', () => {
     window.localStorage.setItem(THEME_STORAGE_KEY, 'custom');
     seedStoredCustomTheme({ dark: { '--mount-border': '#abcabc' } });
-    // Unauthenticated: branding short-circuits every paint; a preview of custom
-    // must not re-open the custom-token injection door.
+    // unauthenticated: branding short-circuits paint, blocking custom inject
     const { result } = renderHook(() => useThemeState(false));
 
     act(() => result.current.setPreviewTheme('custom'));

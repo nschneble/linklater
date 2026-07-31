@@ -1,13 +1,8 @@
 /*
- * Tests for WelcomeModal – first-session onboarding modal.
+ * Tests for WelcomeModal, the first-session onboarding modal.
  *
- * Host-bundle contract – both PrimaryButton instances (bookmarklet + Stumble)
- * paint with `surface="orbit"` via the data-surface attribute. The modal
- * panel itself is `--orbit-bg`, so a silent revert to the PrimaryButton
- * default (`mount`) would mis-tier the highlight fill against the orbit
- * surface. This shape is caught for IconButton and extended to
- * PrimaryButton (LinksControls / LinksMobileControls), and pinned for
- * WelcomeModal + ExtensionAuthorizePage.
+ * Host-bundle contract: both PrimaryButton instances paint surface="orbit"
+ * so the highlight fill tiers against the orbit panel, not the mount default.
  */
 
 import WelcomeModal from './WelcomeModal';

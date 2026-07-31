@@ -68,9 +68,7 @@ export class SuggestionsService implements OnModuleInit {
   }
 
   async onModuleInit(): Promise<void> {
-    // In testing-ui mode we never want network calls to flaky external
-    // sources or the recurring refresh job competing for the test database
-    // – both would inject non-determinism into visual baselines.
+    // testing-ui skips network + refresh job so visual baselines stay deterministic
     if (isTestingUi()) {
       this.logger.log(
         'TESTING_UI=1: skipping RSS scheduling and bootstrap refresh.',
@@ -87,9 +85,7 @@ export class SuggestionsService implements OnModuleInit {
       await this.rssFeedService.refreshAll();
     });
 
-    // Bootstrap: refresh feeds immediately so the cache is populated on a
-    // fresh deploy. Awaited inside an IIFE that swallows errors so a flaky
-    // network at boot does not block app startup.
+    // refresh feeds now for a fresh deploy; IIFE swallows errors so boot never blocks
     void (async () => {
       try {
         await this.rssFeedService.refreshAll();

@@ -78,8 +78,7 @@ describe('throttler runtime composition', () => {
   const originalTestingUi = process.env.TESTING_UI;
 
   beforeEach(() => {
-    // The guard skips all throttling under TESTING_UI, which would let every
-    // request through and hide the limits under test.
+    // guard skips throttling under TESTING_UI, which would hide the limits
     delete process.env.TESTING_UI;
     jest.useFakeTimers();
   });
@@ -107,8 +106,7 @@ describe('throttler runtime composition', () => {
 
     const allowed = await countAllowedBeforeBlock(guard, context);
 
-    // The core regression: this route must allow far more than the 3 / minute
-    // that the union of buckets used to impose.
+    // core regression: must allow far more than the old 3 / minute union cap
     expect(allowed).toBeGreaterThan(3);
     expect(allowed).toBe(60);
   });
@@ -148,11 +146,10 @@ describe('throttler runtime composition', () => {
       AuthController.prototype.login,
     );
 
-    // Exhaust forgot-password (3 / minute).
+    // exhaust forgot-password (3 / minute)
     await countAllowedBeforeBlock(guard, forgotPasswordContext);
 
-    // login must still enforce its own full 10 / minute, untouched by the
-    // forgot-password traffic above.
+    // login still enforces its own 10 / minute, untouched by forgot-password
     const loginAllowed = await countAllowedBeforeBlock(guard, loginContext);
     expect(loginAllowed).toBe(10);
   });

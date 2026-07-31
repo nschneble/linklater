@@ -2,11 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { render } from '@testing-library/react';
 import Alert from './Alert';
 
-// These tests pin the resolved class strings for each variant so the
-// bundle-token migration is caught the next time anyone touches the variant
-// map. The actual color resolution happens at CSS time against
-// `bundles.css`; this file only verifies the class strings the component
-// emits.
+// pins each variant's resolved class strings to catch bundle-token drift
 
 describe('Alert', () => {
   it('uses the alert bundle tokens for the error variant', () => {

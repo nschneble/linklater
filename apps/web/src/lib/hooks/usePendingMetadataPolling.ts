@@ -111,25 +111,17 @@ export function usePendingMetadataPolling(
   const onSettledReference = useRef(onSettled);
   onSettledReference.current = onSettled;
 
-  // The live pending set, refreshed every render. The polling loop reads this
-  // ref so it always targets the current links, and the timer never restarts
-  // just because an unrelated list update re-rendered the hook. No dedup here:
-  // upstream list state keeps ids unique (a create's prependLink drops any
-  // prior copy, and a later page appends only ids not already loaded), so a
-  // link can appear in the rendered list at most once.
+  // ref-read so an unrelated list re-render never restarts the timer
   const pendingIds = links.filter(isMetadataPending).map((link) => link.id);
   const pendingIdsReference = useRef(pendingIds);
   pendingIdsReference.current = pendingIds;
 
-  // The back-off interval, round-robin cursor, and previous membership persist
-  // across renders and effect re-runs so a membership change never silently
-  // rewinds the back-off or the rotation.
+  // persist across renders so membership never rewinds the back-off
   const intervalReference = useRef(INITIAL_INTERVAL_MS);
   const cursorReference = useRef(0);
   const previousPendingReference = useRef<Set<string>>(new Set());
 
-  // An order-independent key over the pending set. The effect below re-runs
-  // only when membership actually changes, not on every list re-render.
+  // order-independent key so the effect re-runs only on membership change
   const pendingKey = [...pendingIds].sort().join('\n');
 
   useEffect(() => {
@@ -139,41 +131,25 @@ export function usePendingMetadataPolling(
     previousPendingReference.current = new Set(currentIds);
 
     if (currentIds.length === 0) {
-      // Nothing pending: no timer runs, and the back-off rests at its initial
-      // value so the next link to arrive settles quickly.
+      // nothing pending: rest back-off so the next link settles fast
       intervalReference.current = INITIAL_INTERVAL_MS;
       return;
     }
 
-    // A freshly joined id (a save, a mid-job reload) restarts the back-off so
-    // it settles within the initial interval instead of inheriting a mature
-    // one. The cursor rewinds to the head too: a just-saved link is prepended
-    // at index 0, so this puts it in the very next batch even when more than
-    // MAX_POLLS_PER_TICK links are already pending.
+    // a freshly joined id resets back-off + cursor so it lands next batch
     if (hasNewId) {
       intervalReference.current = INITIAL_INTERVAL_MS;
       cursorReference.current = 0;
     }
 
-    // Per-run flag so a poll resolving after this effect was torn down (a
-    // membership change or unmount) can never schedule a stale timer.
+    // per-run flag so a post-teardown poll can't schedule a stale timer
     let cancelled = false;
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
-    // Whether a poll batch's requests are still in flight. A batch runs up to
-    // the per-request deadline, so a firing timer or a visibility resume can
-    // land while its requests are still pending. This gate holds concurrency to
-    // one batch: neither path starts a second while one is in flight, and the
-    // settling batch's own re-arm carries the rotation forward, so the gate
-    // bounds overlap without stalling. It is a per-run flag, not a ref: a fresh
-    // effect run (a membership change) gets its own `false` and polls the new
-    // set at once rather than waiting out a now-irrelevant prior batch, whose
-    // late result the `cancelled` guard already drops.
+    // gate holding poll concurrency to one batch at a time
     let batchInFlight = false;
 
-    // Arm the single shared timer, always clearing any prior handle first. That
-    // clear is what makes a resume and an in-flight poll's reschedule converge
-    // on one timer instead of leaving two live during a hidden/visible flap.
+    // clear the prior handle first so a flap can't leave two live timers
     function arm(delayMs: number) {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(poll, delayMs);
@@ -190,13 +166,7 @@ export function usePendingMetadataPolling(
     function poll() {
       const ids = pendingIdsReference.current;
       if (ids.length === 0) return;
-      // A batch is already in flight: a firing timer or a resume must not stack
-      // a second on top of it. The in-flight batch's own re-arm resumes the
-      // rotation when it settles, so skipping here loses no rotation. No current
-      // path reaches this with a batch in flight (every arm site fires while the
-      // flag is false and clears the prior timer, so the resume path carries the
-      // flap behavior); it is kept as defense in depth so a future arm site
-      // cannot silently stack a second batch.
+      // skip if a batch is already in flight so we never stack a second
       if (batchInFlight) return;
 
       const { batch, nextCursor } = selectPollBatch(
@@ -209,10 +179,7 @@ export function usePendingMetadataPolling(
       batchInFlight = true;
       Promise.all(
         batch.map((id) => {
-          // Bound each poll with a client-side deadline so one hung request
-          // cannot wedge the whole batch (see REQUEST_DEADLINE_MS). The timer
-          // is cleared the moment the request settles so a healthy poll never
-          // fires a pointless abort.
+          // deadline each poll so one hung request can't wedge the batch
           const deadlineController = new AbortController();
           const deadlineTimeoutId = setTimeout(
             () => deadlineController.abort(),
@@ -221,28 +188,21 @@ export function usePendingMetadataPolling(
           return (
             getLink(id, deadlineController.signal)
               .then((link) => {
-                // Only a settled poll writes state. Dropping a still-pending copy
-                // avoids a pointless re-render and keeps a card the client
-                // already settled from reverting to its skeleton.
+                // only a settled poll writes state, so no card reverts
                 if (isMetadataSettled(link)) {
                   onSettledReference.current(link);
                 }
               })
-              // A failed or timed-out request is not terminal: swallow it and let
-              // the next tick retry, so a rendered pending card is never
-              // abandoned.
+              // swallow failures; the next tick retries, no card abandoned
               .catch(() => {})
               .finally(() => clearTimeout(deadlineTimeoutId))
           );
         }),
       ).then(() => {
-        // Release the in-flight gate first, before any early return, so a batch
-        // that settles parked (torn down, or landed while hidden) still frees
-        // the next batch to run once the loop re-arms.
+        // release the gate before any early return, even a parked batch
         batchInFlight = false;
         if (cancelled) return;
-        // A tab hidden mid-request must not resume polling when the request
-        // lands: leave the timer parked until a visibilitychange re-arms it.
+        // tab hidden mid-request: leave the timer parked till re-arm
         if (document.visibilityState === 'hidden') return;
         if (pendingIdsReference.current.length > 0) {
           scheduleNext();
@@ -252,18 +212,11 @@ export function usePendingMetadataPolling(
 
     function handleVisibilityChange() {
       if (document.visibilityState === 'hidden') {
-        // Pause: park the timer. No state write, so a rendered card keeps its
-        // pending skeleton while the tab is backgrounded.
+        // pause: park the timer; no state write so the skeleton stays
         clearTimeout(timeoutId);
         timeoutId = undefined;
       } else {
-        // Resume: reset the back-off so a long-hidden tab does not wait out a
-        // matured interval after refocus. Reset regardless of whether a batch
-        // is in flight: if one is, the arm below is skipped, but the settling
-        // batch's re-arm must still start from the initial interval rather than
-        // inheriting the matured one. Only arm when nothing is in flight; an
-        // in-flight batch re-arms itself on settle, so arming here would just
-        // stack a second batch on top of it.
+        // resume: reset back-off so a refocus skips a matured interval
         intervalReference.current = INITIAL_INTERVAL_MS;
         if (!batchInFlight) {
           arm(INITIAL_INTERVAL_MS);
@@ -273,8 +226,7 @@ export function usePendingMetadataPolling(
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // Defer the first poll while mounted hidden; the listener above resumes it
-    // once the tab becomes visible.
+    // defer the first poll while mounted hidden; the listener resumes it
     if (document.visibilityState !== 'hidden') {
       arm(intervalReference.current);
     }

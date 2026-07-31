@@ -35,9 +35,7 @@ export function useReannounce(
       delayMs,
     );
     return () => clearTimeout(timer);
-    // `message` and `delayMs` are intentionally read at fire time, not deps:
-    // the re-announce is keyed on `trigger` alone so an identical consecutive
-    // message still fires, and a message that changes after scheduling wins.
+    // trigger-keyed, message read at fire time: repeats fire, latest wins
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trigger]);
 

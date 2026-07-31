@@ -28,8 +28,7 @@ describe('useAnnouncer', () => {
 
     rerender({ count: 1, message: 'Your theme saved.' });
 
-    // Cleared immediately on the count bump; the message only lands once the
-    // wrapper's 50ms delay elapses.
+    // cleared on the count bump; message lands only after the 50ms delay
     expect(result.current).toBe('');
     act(() => {
       vi.advanceTimersByTime(50);

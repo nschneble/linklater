@@ -120,10 +120,7 @@ export class LinksQueryService {
 
     const offset = (page - 1) * limit;
 
-    // Postel's Law: unaccent() is applied to both the stored searchVector
-    // (see the unaccent_search migration and MetadataService) and to the
-    // incoming term here, so a query for "montréal" matches a link titled
-    // "Montreal" and vice versa.
+    // Postel's Law: unaccent() the stored vector and the query term so "montréal" matches "Montreal"
     const rows = await this.prisma.$queryRaw<{ id: string; total: bigint }[]>`
       SELECT l.id, COUNT(*) OVER() AS total
       FROM "Link" l
@@ -136,8 +133,7 @@ export class LinksQueryService {
     `;
 
     if (rows.length === 0) {
-      // Page past the last result: COUNT(*) OVER() is unavailable, so issue
-      // a dedicated count to recover the real total.
+      // past the last page: COUNT(*) OVER() is gone, so run a dedicated count
       if (page > 1) {
         const countRows = await this.prisma.$queryRaw<{ total: bigint }[]>`
           SELECT COUNT(*) AS total
@@ -155,8 +151,7 @@ export class LinksQueryService {
     const ids = rows.map((row) => row.id);
     const total = Number(rows[0].total);
 
-    // Prisma does not guarantee result order when using `id: { in: ids }`, so
-    // we re-sort by the rank order captured in the raw query above.
+    // Prisma doesn't guarantee order for `id: { in: ids }`, so re-sort by rank
     const links = await this.prisma.link.findMany({
       where: { id: { in: ids } },
       omit: { userId: true },

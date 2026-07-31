@@ -9,10 +9,7 @@ function UnreadRedirect() {
 
 export function userRoutes() {
   return [
-    // The marketing landing page is logged-out-only; an authenticated visitor
-    // hitting `/` is sent to their home feed. Element selection (not a
-    // useEffect inside LandingPage) means LandingPage never mounts, so the
-    // "Get started" / "Log in" CTAs never flash.
+    // element redirect (not useEffect) so LandingPage never mounts/flashes
     <Route key="root-redirect" path="/" element={<UnreadRedirect />} />,
 
     ...['forgot-password', 'login', 'signup'].map((key) => (
@@ -23,15 +20,12 @@ export function userRoutes() {
       />
     )),
 
-    // `/settings` is a single route; sections are reached by scrolling or
-    // clicking the in-page sidebar nav, not by URL.
+    // /settings is one route; sections via scroll/sidebar nav, not URL
     ...['editor', 'read', 'settings', 'unread'].map((key) => (
       <Route key={key} path={`/${key}`} element={<AppShell />} />
     )),
 
-    // The API docs live at the PUBLIC `/docs` route (see `Common.tsx`), so a
-    // logged-out visitor reaches the same page; nothing API-docs-specific lives
-    // in the logged-in route table.
+    // API docs are public at /docs (see Common.tsx); nothing lives here
     <Route key="stumble" path="/stumble" element={<StumblePage />} />,
     <Route key="not-found" path="*" element={<NotFoundView />} />,
   ];

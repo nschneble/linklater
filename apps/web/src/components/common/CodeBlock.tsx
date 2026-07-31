@@ -45,10 +45,7 @@ export default function CodeBlock({ label, code, labelId }: CodeBlockProps) {
       <pre
         role="group"
         aria-labelledby={labelId}
-        // SC 2.1.1: the <pre> is the scroll container for clipped JSON, so a
-        // keyboard user must be able to focus it to scroll. role="group" is a
-        // deliberately non-interactive (non-landmark) nameable role, so the
-        // heuristic can't see this is a legitimately focusable scroll region.
+        // SC 2.1.1: focusable scroll stop; role="group" = non-landmark nameable
         // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
         tabIndex={0}
         className={`overflow-x-auto px-3 py-2.5 bg-[var(--mount-input-bg)] border border-[var(--mount-border)] text-[var(--mount-text)] text-xs leading-relaxed select-text ${FOCUS_RING} rounded-lg`}

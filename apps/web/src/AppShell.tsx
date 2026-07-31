@@ -6,12 +6,10 @@ import SettingsView from './components/settings/SettingsView';
 import { lazy, Suspense } from 'react';
 import { useAppShell } from './useAppShell';
 
-// ThemeEditor is lazy-loaded because it's rarely visited and its
-// color-math utilities add non-trivial weight to the bundle.
+// lazy-loaded: rarely visited, its color-math is heavy in the bundle
 const ThemeEditor = lazy(() => import('./components/settings/ThemeEditor'));
 
-// WelcomeModal is lazy-loaded because it shows once per user and would
-// otherwise be dead weight in the initial bundle for every session.
+// lazy-loaded: shows once per user, dead weight in the initial bundle
 const WelcomeModal = lazy(() => import('./components/welcome/WelcomeModal'));
 
 /**

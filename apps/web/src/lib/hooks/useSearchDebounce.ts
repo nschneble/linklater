@@ -42,8 +42,7 @@ export function useSearchDebounce(
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Resets search whenever the filter changes (e.g. switching between the
-  // unread and read tabs).
+  // reset search when the filter changes (e.g. unread vs read tabs)
   useEffect(() => {
     setSearch('');
     setDebouncedSearch('');

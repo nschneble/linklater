@@ -13,7 +13,7 @@ interface MockNoticeProps {
  * `Alert` banner (bundle bg + border, inline bundle-text icon and copy) stacked
  * above a `Toast` pill (bundle-highlight fill, bundle-highlight-fg icon + copy +
  * a decorative close glyph). Decorative only: no role="alert"/"status", no
- * aria-live — the whole mock re-renders on every color edit, so a live region
+ * aria-live - the whole mock re-renders on every color edit, so a live region
  * would re-announce on every keystroke. Between them the two forms paint the
  * bundle's bg, border, text, highlight, and highlight-fg slots in realistic
  * context so the editor can preview that bundle's contrast.

@@ -33,16 +33,7 @@ export default function ApiDocsView() {
   const isBrand = user === null;
 
   return (
-    // BRAND branch only: pin `bg-hit-man`, force dark `color-scheme`, and
-    // activate the off-book `branding` theme so the token-driven children
-    // paint the marketing palette. The branding cascade (branding.css)
-    // redeclares `--base-bg` AND `--focus-ring` so the global
-    // `[data-cvd='on'] *:focus-visible` halo (index.css) paints brand colors:
-    // some on-book themes set `--focus-ring` to a hue that fails SC 1.4.11 vs
-    // the navy gradient (e.g. before-sunrise dark), so branding pins #eeeede
-    // (~16:1 vs #0a0812). THEMED branch: no `data-theme` override – the
-    // `<html>` cascade supplies every slot, the theme's own `--focus-ring`
-    // wins, and `color-scheme` follows the active mode.
+    // brand branch pins branding so --focus-ring clears SC 1.4.11 on navy
     <div
       className={`min-h-screen ${isBrand ? 'bg-hit-man [color-scheme:dark]' : ''}`}
       data-theme={isBrand ? 'branding' : undefined}

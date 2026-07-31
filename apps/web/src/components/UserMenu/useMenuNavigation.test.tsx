@@ -101,14 +101,12 @@ describe('useMenuNavigation', () => {
     const first = screen.getByRole('menuitem');
     first.focus();
 
-    // Tab routes through onTabClose only – the refocus-the-trigger onClose
-    // must not fire (SC 2.4.3: native Tab target is preserved).
+    // Tab routes through onTabClose only; onClose must not fire (SC 2.4.3)
     fireEvent.keyDown(first, { key: 'Tab' });
     expect(onTabClose).toHaveBeenCalledOnce();
     expect(onClose).not.toHaveBeenCalled();
 
-    // Escape still routes through onClose (which the UserMenu uses to return
-    // focus to the avatar).
+    // Escape still routes through onClose (UserMenu refocuses the avatar)
     fireEvent.keyDown(first, { key: 'Escape' });
     expect(onClose).toHaveBeenCalledOnce();
     expect(onTabClose).toHaveBeenCalledOnce();
@@ -135,7 +133,7 @@ describe('useMenuNavigation', () => {
     const [first, second] = screen.getAllByRole('menuitem');
     first.focus();
     fireEvent.keyDown(first, { key: 'Tab' });
-    // Trap cycles focus and never closes.
+    // trap cycles focus and never closes
     expect(document.activeElement).toBe(second);
     expect(onClose).not.toHaveBeenCalled();
   });

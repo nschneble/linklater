@@ -99,7 +99,7 @@ export async function revokeAllSessions(): Promise<void> {
   try {
     await apiFetch('/auth/sessions', { method: 'DELETE' });
   } catch {
-    // Best-effort – clear local tokens regardless.
+    // best-effort - clear local tokens regardless
   }
 }
 
@@ -254,11 +254,8 @@ export async function requestMagicLink(email: string): Promise<void> {
 export async function verifyMagicLink(
   token: string,
 ): Promise<MagicLinkVerifyResponse> {
-  // Does NOT auto-store the returned token pair. The caller (VerifyLoginPage)
-  // first compares the returned `userId` against the currently signed-in
-  // user, and may keep the existing session (same-account click) or revoke
-  // B's sessions first (cross-account click). The server still consumes the
-  // magic-link token on every call – single-use semantics hold.
+  // no auto-store: caller compares userId, then keeps or swaps the session.
+  // server still consumes the magic-link token on every call (single-use)
   return apiFetchRequired<MagicLinkVerifyResponse>(
     '/auth/verify-magic-link',
     { body: JSON.stringify({ token }), method: 'POST' },

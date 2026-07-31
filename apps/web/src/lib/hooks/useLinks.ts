@@ -32,20 +32,13 @@ export function useLinks(filter: LinksFilter, search: string): UseLinksResult {
     updateLink: data.updateLink,
   });
 
-  // Paste detection is disabled on the read tab because saving a new
-  // link while viewing read links would be confusing; the saved link would
-  // appear on a different tab.
+  // disabled on the read tab: a saved link would appear on a different tab
   const form = useLinksForm({
     enabled: filter !== 'read',
     onDirectSave: actions.handleDirectSave,
   });
 
-  // A successful create is the sole trigger for auto-closing the inline form.
-  // `handleCreated` runs only on success (LinkForm swallows failures locally
-  // and never calls it), so routing `closeForm` through this wrapper keeps the
-  // form open on error (the error Alert survives) and drives the same
-  // `showLinkForm` boolean, letting focus-return and `aria-expanded` settle
-  // themselves on unmount.
+  // closeForm rides success-only handleCreated, so errors keep the form open
   const { handleCreated: handleLinkCreated } = actions;
   const { closeForm } = form;
   const handleCreated = useCallback(

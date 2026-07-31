@@ -103,10 +103,7 @@ describe('IdPsSection error rendering', () => {
       />,
     );
 
-    // No role="alert" (no error) and no role="status" (toast lifted out).
-    // The `[aria-live]` query is belt-and-suspenders: it catches a regression
-    // that reintroduces a bare `<div aria-live="polite">` with no role,
-    // which the role queries above would silently false-pass.
+    // [aria-live] guard catches a roleless aria-live div the role queries false-pass
     expect(screen.queryByRole('alert')).toBeNull();
     expect(screen.queryByRole('status')).toBeNull();
     expect(container.querySelector('[aria-live]')).toBeNull();
@@ -123,7 +120,7 @@ describe('IdPsSection empty state', () => {
 
   it('renders the Google provider row when googleEnabled', () => {
     render(<IdPsSection appleEnabled={false} googleEnabled={true} />);
-    // Heading "Other ways to log in" is the section anchor.
+    // heading "Other ways to log in" is the section anchor
     expect(
       screen.getByRole('heading', { name: /other ways to log in/i }),
     ).toBeTruthy();

@@ -50,8 +50,7 @@ export default function CredentialedDeleteFlow({
     setPhase('reauth');
   }, []);
 
-  // Escape backs out of the credentialed reauth form – matches user
-  // expectation that Escape always cancels, regardless of focus location.
+  // Escape always cancels the reauth form, regardless of focus location
   useEffect(() => {
     if (phase !== 'reauth' && phase !== 'reauth-pending') return;
     const handleKeyDown = (event: KeyboardEvent) => {

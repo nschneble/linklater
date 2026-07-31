@@ -43,7 +43,7 @@ async function parseError(response: Response): Promise<ApiError> {
     const body = JSON.parse(text) as { message?: string };
     if (body.message) message = body.message;
   } catch {
-    // Body is not JSON – use the raw text as the error message.
+    // body is not JSON, use the raw text as the error message
   }
   return new ApiError(message, response.status);
 }
@@ -73,20 +73,12 @@ const REFRESH_DEADLINE_MS = 10_000;
 
 async function performTokenRefresh(): Promise<boolean> {
   if (!getStoredRefreshToken()) {
-    // Only a 401 on an authenticated request reaches this function (see the
-    // refresh condition in apiFetch). With no refresh token there is nothing to
-    // renew with, so the access token the server just rejected is dead for
-    // good: no path exists to revive it. Clear it. Left in place it would
-    // grant nothing yet survive every reload, staying stuck until a fresh
-    // login overwrote it. This is the no-refresh-token twin of the 401/403
-    // clear below, where a present refresh token is the thing proven spent.
+    // no refresh token: the rejected access token is dead for good, so clear it
     clearStoredToken();
     return false;
   }
 
-  // The refresh owns this deadline. It is never wired to a caller's signal: one
-  // caller aborting its own request must not tear down the shared refresh that
-  // every other 401'd caller is awaiting.
+  // not wired to a caller's signal: one abort must not kill the shared refresh
   const deadlineController = new AbortController();
   const deadlineTimeoutId = setTimeout(
     () => deadlineController.abort(),
@@ -102,12 +94,7 @@ async function performTokenRefresh(): Promise<boolean> {
     });
 
     if (!response.ok) {
-      // Only a server-answered auth rejection proves the refresh token is
-      // spent. A 401 or 403 ends the session; every other status (a 5xx
-      // server fault, most often) is transient, so the tokens stay put for a
-      // later request to retry. Keeping them adds no exposure since they were
-      // already stored: only the server's own rejection settles that the
-      // session is dead.
+      // only a 401/403 proves the token spent; other statuses are transient
       if (response.status === 401 || response.status === 403) {
         clearStoredToken();
       }
@@ -121,17 +108,14 @@ async function performTokenRefresh(): Promise<boolean> {
     setStoredToken(data.accessToken, data.refreshToken);
     return true;
   } catch {
-    // A network failure or a deadline abort means the refresh never reached a
-    // verdict, so the session is not proven dead. Leave the stored tokens in
-    // place: the triggering request still fails, but a later one can retry.
-    // Keeping them adds no exposure since they were already stored.
+    // network failure/abort reached no verdict, so keep tokens for retry
     return false;
   } finally {
     clearTimeout(deadlineTimeoutId);
   }
 }
 
-// Dedup concurrent refreshes so N parallel 401s share one /auth/refresh call.
+// dedup concurrent refreshes so N parallel 401s share one refresh call
 async function attemptTokenRefresh(): Promise<boolean> {
   if (inFlightRefresh) return inFlightRefresh;
   inFlightRefresh = performTokenRefresh().finally(() => {
@@ -140,16 +124,7 @@ async function attemptTokenRefresh(): Promise<boolean> {
   return inFlightRefresh;
 }
 
-// Two overloads: callers that do not need a typed response (e.g. POST/DELETE
-// endpoints that only signal success) call without `<T>` and get
-// `Promise<void>`. Callers that read a JSON body pass `<T>` and get
-// `Promise<T>`. Without the void overload, untyped callers silently get
-// `Promise<unknown>` and the JSON body leaks into a typed return position.
-//
-// Note: if the server returns an empty body for a typed endpoint, the resolved
-// value will be `undefined` at runtime even though the type says `T`. Callers
-// that depend on the body being present should guard against undefined (see
-// login(), verifyMagicLink(), verifyOtp() in auth.ts for the pattern).
+// untyped callers get void, typed get T; an empty typed body is `undefined` at runtime
 
 /**
  * Controls the Authorization header on an `apiFetch` call:

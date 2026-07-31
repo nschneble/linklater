@@ -1,5 +1,5 @@
 /*
- * Bundle contrast contract – automated WCAG verification.
+ * Bundle contrast contract - automated WCAG verification.
  *
  * Parses bundles.css and asserts every bundle pair clears the threshold
  * documented in the file's preamble:
@@ -12,19 +12,8 @@
  * Card-style bundles (mount/orbit/alert/warn/info/success) additionally
  * clear 3:1 between their border and the PAGE --base-bg.
  *
- * Why this file exists: waves 1-4 of the bundle migration verified ratios
- * by hand. Future waves cannot scale that. This suite encodes the contract
- * so any regression – a hex tweak that drops below the threshold, a
- * forgotten composite, a typo in an alpha value – surfaces in CI.
- *
- * Apollo migrated to the bundle cascade for a CVD-mandated palette
- * verified per-pair against axis A + axis B distinguishability) and is
- * covered by its own FIXTURES entries below.
- *
- * Nouvelle Vague migrated last. The palette is grayscale
- * by design, so categorical separation between state bundles is carried
- * by axis B (luminance ratio) plus three SHAPE_REDUNDANCY_WAIVERS entries
- * documented in the sister suite – see bundles.distinguishability.test.ts.
+ * Encodes the contract so any regression - a hex tweak below threshold, a
+ * forgotten composite, a typo in an alpha value - surfaces in CI.
  *
  * Soft assertions are used so a single run reports every failing pair,
  * not just the first.
@@ -83,7 +72,7 @@ interface CascadeFixture {
   /*
    * Whether to run the border-vs-page-bg adjacency check. False for the
    * `:root` + `[data-mode='dark']` defensive defaults (no runtime
-   * consumer paints them – all 10 themes have per-theme cascades).
+   * consumer paints them - all 10 themes have per-theme cascades).
    * True for every per-theme fixture, which self-contains a concrete
    * --base-bg.
    */
@@ -95,7 +84,7 @@ interface CascadeFixture {
  * explicit hex in `bundles.css :root` (the legacy
  * `--bg` flat-token alias). The default cascade's state-bundle borders
  * are pure defensive fallback now that all 10 shipped themes carry
- * their own per-theme bundle cascades – `checkAdjacency: false` skips
+ * their own per-theme bundle cascades - `checkAdjacency: false` skips
  * the border adjacency assertions for `:root` + `[data-mode='dark']`
  * since no runtime consumer paints the default cascade's state
  * borders. Per-theme cascades define --base-bg directly as hex; we
@@ -350,13 +339,10 @@ const FIXTURES: readonly CascadeFixture[] = [
     checkAdjacency: true,
   },
   {
-    // OFF-BOOK brand-chrome theme – mode-independent (no [data-mode]). It
+    // off-book brand-chrome theme, mode-independent (no [data-mode]); it
     // self-contains a concrete --base-bg, so the per-theme adjacency checks
-    // apply. It now declares --page-gradient-{from,to} (it backs the logged-out
-    // auth surfaces), so the card-on-gradient lift block explicitly excludes it
-    // by label instead: this monochromatic near-black chrome cannot separate
-    // the card from the gradient by bg-luminance, and its card text/border/
-    // focus-ring contrast is covered by the dedicated branding describes below.
+    // apply. Excluded by label from the card-on-gradient lift block below:
+    // near-black chrome can't separate the card from the gradient by luminance.
     label: 'branding',
     selector: "[data-theme='branding']",
     pageBg: BRANDING_PAGE_BG,
@@ -405,14 +391,11 @@ describe('bundle contrast contract', () => {
    * --focus-ring is a UNIVERSAL chrome token (not a per-bundle slot).
    * SC 1.4.11 requires the focus indicator clear 3:1 against every
    * surface a focused element can sit on: base-bg, mount-bg, orbit-bg,
-   * and each state bundle's composited bg. Mechanizes the
-   * contract that the brief verified by hand.
+   * and each state bundle's composited bg.
    *
-   * Every per-theme cascade ships an explicit `--focus-ring: #...` hex
-   *. The `:root` synthetic fallback in `bundles.css` omits
-   * the slot (retiring `--accent` collapsed the prior
-   * alias chain) – the resolver returns null for that fixture so the
-   * per-theme cascades carry the contract.
+   * Every per-theme cascade ships an explicit `--focus-ring: #...` hex;
+   * the `:root` synthetic fallback omits the slot, so the resolver
+   * returns null for that fixture and the per-theme cascades carry it.
    */
   describe('focus-ring on every surface', () => {
     const SURFACES_TO_CHECK = [
@@ -427,23 +410,13 @@ describe('bundle contrast contract', () => {
 
     /*
      * Resolve `--focus-ring` to a literal hex.
+     *  1. Undefined (slot not declared, e.g. the synthetic :root /
+     *     [data-mode='dark'] cascades) - return null so the caller skips
+     *     the fixture cleanly. Only per-theme blocks declare it.
+     *  2. Literal hex (every per-theme block ships one).
      *
-     * Legitimate shapes today:
-     *  1. Undefined (no `--focus-ring` declared in this fixture's block) –
-     *     return null so the caller can skip the fixture cleanly. The
-     *     synthetic `:root` / `[data-mode='dark']` cascades omit the
-     *     slot (the prior `var(--accent)` alias chain was
-     *     retired). Only per-theme blocks declare it.
-     *  2. Literal hex (every per-theme block ships one). This is the
-     *     only resolved path today.
-     *
-     * The `var(--accent)` alias chase that previously
-     * lived here – the resolver's state space collapsed to undefined →
-     * null and hex → hex. Anything else (an unexpected alias, a
-     * misspelled function) gets returned as `'__UNRESOLVED__'` so the
-     * caller can fail loud rather than silently skip the fixture and
-     * lose coverage. Flagged as an a11y-lead gang finding:
-     * silent-skip on aliases was the bug.
+     * Anything else returns `'__UNRESOLVED__'` so the caller fails loud
+     * rather than silently skip the fixture and lose coverage.
      */
     function resolveFocusRing(
       declarations: Map<string, string>,
@@ -468,8 +441,8 @@ describe('bundle contrast contract', () => {
 
       describe(`${fixture.label}`, () => {
         if (focusRing === '__UNRESOLVED__') {
-          // Fail loud per a11y-lead MINOR – silent skip would mask a
-          // future alias the resolver does not know how to chase.
+          // fail loud: a silent skip would mask a future alias the
+          // resolver does not know how to chase
           const raw = declarations.get('focus-ring') ?? '<undeclared>';
           it(`focus-ring resolves to a hex literal`, () => {
             expect.fail(
@@ -508,7 +481,7 @@ describe('bundle contrast contract', () => {
   /*
    * --base-subtle-text is a BASE-only slot (no equivalent on mount/orbit/
    * state bundles). It expresses the lowest-emphasis text tier used by
-   * page-chrome consumers – kbd legends, helper hints, chevrons, the
+   * page-chrome consumers: kbd legends, helper hints, chevrons, the
    * descriptive line under section nav pills. Contract: clears 4.5:1
    * against --base-bg per SC 1.4.3.
    *
@@ -545,14 +518,12 @@ describe('bundle contrast contract', () => {
 
   /*
    * branding `--base-alt-text` is EndpointNav's resting endpoint label,
-   * painted directly on the `bg-hit-man` radial gradient – NOT a flat
+   * painted directly on the `bg-hit-man` radial gradient, NOT a flat
    * surface. The CONTRACT loop above checks `base-alt-text on base-bg`
    * over a single `fixture.pageBg`, which for branding is the gradient's
    * OUTER stop (#0a0812). The selection list also rides up over the
    * BRIGHTER top stop (#14103a), the harder contrast case, so this block
    * pins the resting label against BOTH gradient stops at SC 1.4.3 (4.5:1).
-   * Wave-3 slot add; mirrors the `state-text on base-bg` mechanization
-   * pattern. See [[feedback-off-book-theme-contrast-harness]].
    */
   describe('branding base-alt-text on both gradient stops', () => {
     const BRANDING_TOP_STOP: Rgb = parseColor('#14103a');
@@ -585,8 +556,8 @@ describe('bundle contrast contract', () => {
    * the `--page-gradient-{from,to}` stops the `Unauthenticated.tsx` AuthCard
    * wrapper paints (`bg-gradient-to-b from-[var(--page-gradient-from)]
    * to-[var(--page-gradient-to)]`). Omitting them leaks to the :root amber/cream
-   * fallback and collapses --mount-text on the card to ~1:1 (accessibility-lead
-   * C1). Presence tripwire — fails loud on absence.
+   * fallback and collapses --mount-text on the card to ~1:1. Presence
+   * tripwire: fails loud on absence.
    */
   describe('branding page-gradient stops are defined', () => {
     const declarations = parseDeclarations(
@@ -610,8 +581,6 @@ describe('bundle contrast contract', () => {
    *     (SC 1.4.11 / 2.4.7)
    *   - in-card alert/success text >= 4.5 over the state-bg composited on the
    *     card; their borders >= 3 over the card AND the page --base-bg.
-   * accessibility-lead C1/M1/M2 gate; mirrors the branding base-alt-text
-   * mechanization. See [[feedback-off-book-theme-contrast-harness]].
    */
   describe('branding auth card over page-gradient', () => {
     const declarations = parseDeclarations(
@@ -697,9 +666,9 @@ describe('bundle contrast contract', () => {
 
   /*
    * `--border-shadow-color` pins the mode-independent card-edge tint on the
-   * branding cascade (accessibility-lead M1). border-shadow.css only sets it
-   * under `[data-mode='dark']`, so without this a logged-out visitor in light
-   * mode gets the #000000 fallback — invisible on the navy card.
+   * branding cascade. border-shadow.css only sets it under `[data-mode='dark']`,
+   * so without this a logged-out visitor in light mode gets the #000000
+   * fallback, invisible on the navy card.
    */
   describe('branding border-shadow-color', () => {
     const declarations = parseDeclarations(
@@ -711,7 +680,7 @@ describe('bundle contrast contract', () => {
   });
 
   /*
-   * Alert/success source-order pin (accessibility-lead MECH). Branding is
+   * Alert/success source-order pin. Branding is
    * mode-independent, but `bundles.css [data-mode='dark']` also declares
    * `--alert-bg`/`--success-bg` at the SAME specificity (single attribute
    * selector). A logged-out visitor can carry data-mode='dark', so which one
@@ -760,13 +729,12 @@ describe('bundle contrast contract', () => {
    * Pattern is monotonically safer than text-on-bundle-bg because state
    * bgs sit at the lightness extreme adjacent to `--base-bg`, but a hex
    * tweak to either token could silently regress without mechanization.
-   * See [[feedback-state-text-on-base-bg-test-pair]].
    *
-   * SECOND consumer (theme editor, Wave 2): the title-row contrast-status
-   * icon paints `--success-text` (clean) / `--warn-text` (failing) directly
+   * SECOND consumer (theme editor): the title-row contrast-status icon
+   * paints `--success-text` (clean) / `--warn-text` (failing) directly
    * on the page `--base-bg`. As a non-text status glyph it needs only SC
    * 1.4.11 (3:1), which the 4.5:1 assertions below already SUBSUME for every
-   * theme — so warn-text never falls back to alert-text. No separate weaker
+   * theme, so warn-text never falls back to alert-text. No separate weaker
    * 3:1 pair is added; this stronger pair IS the icon's contract gate.
    */
   describe('state-text on base-bg', () => {
@@ -809,12 +777,8 @@ describe('bundle contrast contract', () => {
 
   /*
    * --base-input-bg and --mount-input-bg are base/mount-only slots
-   * tuning the form-input fill per host surface. The
-   * slots + mount-input-bg per-theme values (consumed by ColorEditor).
-   * Per-theme --base-input-bg values were added and migrated
-   * FormInput / LinksToolbar / 11 indirect consumers. Then retired
-   * the legacy --bg-input flat token and dropped the default-cascade
-   * aliases from bundles.css :root.
+   * tuning the form-input fill per host surface (consumed by FormInput,
+   * LinksToolbar, and ColorEditor).
    *
    * Contract per slot:
    *   {surface}-text on {surface}-input-bg          >= 4.5:1 (SC 1.4.3)
@@ -824,7 +788,7 @@ describe('bundle contrast contract', () => {
    *     (input boundary visible against its own fill)
    *
    * The default :root / [data-mode='dark'] cascades no longer declare
-   * the input slots – every shipped theme defines them per-theme. Those
+   * the input slots; every shipped theme defines them per-theme. Those
    * fixtures skip the contract via the undefined-slot guard below.
    */
   describe('input bundle contract', () => {
@@ -888,7 +852,7 @@ describe('bundle contrast contract', () => {
    *     a subtle warm-brown sitting inside the base-bg's luminance band
    *     so the border carries the entire SC 1.4.11 load. The visual
    *     distinction reads as "bordered shape on a near-uniform dark
-   *     surface" – focus ring carries the focus affordance.
+   *     surface" - focus ring carries the focus affordance.
    *
    *   - boyhood dark: visible separation. The base-border #87973c is
    *     bright lime-olive (rel lum ~0.276) leaving comfortable headroom
@@ -897,9 +861,9 @@ describe('bundle contrast contract', () => {
    *
    * These two themes are the only ones whose bundles.css comments
    * explicitly call out the intent. Mechanizing only those two keeps the
-   * assertion set tight – every other theme's input-bg/base-bg
+   * assertion set tight; every other theme's input-bg/base-bg
    * relationship is incidental and should not be retro-fitted with a
-   * threshold. Flagged as a chemist nice-to-have in gang findings.
+   * threshold.
    */
   describe('input-bg vs base-bg luminance intent', () => {
     it('school-of-rock dark – base-input-bg matches base-bg luminance band (ratio <= 1.5)', () => {
@@ -982,14 +946,8 @@ describe('bundle contrast contract', () => {
    * on a mount surface paints `--orbit-bg` filled with `--orbit-border`
    * and sits on `--mount-bg`. SC 1.4.11 (3:1) applies on the border, not
    * on the bg-on-bg adjacency (`--orbit-bg` vs `--mount-bg` is
-   * intentionally low across every theme – 1.07-1.46:1 – with the border
-   * carrying the visual lift). This pair is mechanized so any
-   * future palette tweak to either slot is caught.
-   *
-   * Brief originally listed `--orbit-bg` vs `--mount-bg >= 3:1`; that
-   * pair fails every theme/mode by design and is not the WCAG-load-
-   * bearing pair. Replaced with the structural border-on-host check per
-   * [[feedback-verify-upstream-gate-claims]].
+   * intentionally low across every theme, 1.07-1.46:1, with the border
+   * carrying the visual lift).
    */
   describe('orbit-border on mount-bg (elevated lift)', () => {
     for (const fixture of FIXTURES) {
@@ -1058,12 +1016,9 @@ describe('bundle contrast contract', () => {
    * `--orbit-border` over `--orbit-bg` is the structural pair for inner
    * lifted sub-surfaces inside an orbit-tier panel: WelcomeModal feature
    * tiles + KeyboardShortcutsModal kbd legends both sit on the orbit
-   * panel with `border-[var(--orbit-border)]` carrying separation.
-   * This pair surfaced in the diamantaire's gang-pass review:
-   * the previous "orbit-border on mount-bg" pair did not cover the
-   * sub-surface case because the host bg is now orbit, not mount.
-   * This pair is mechanized so future palette tweaks are caught.
-   * Tightest theme: before-sunset dark at ~3.017:1 (+0.017 over floor).
+   * panel with `border-[var(--orbit-border)]` carrying separation. The
+   * host bg is orbit here, not mount, so this is distinct from the
+   * elevated-lift pair above. Tightest theme: before-sunset dark ~3.017:1.
    */
   describe('orbit-border on orbit-bg (sub-surface on orbit panel)', () => {
     for (const fixture of FIXTURES) {
@@ -1094,29 +1049,25 @@ describe('bundle contrast contract', () => {
   });
 
   /*
-   * Card-on-gradient lift – perceptual separation between each page-
+   * Card-on-gradient lift: perceptual separation between each page-
    * gradient stop and the card's --mount-bg surface. Consumers paint
    * `bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-
    * gradient-to)]` behind a centered AuthCard whose edge is conveyed by
    * `border-shadow` (a box-shadow utility), NOT by
    * `border-[var(--mount-border)]`.
    *
-   * NOT a WCAG SC 1.4.11 contract – the card edge does not depend on
+   * NOT a WCAG SC 1.4.11 contract: the card edge does not depend on
    * stop-vs-mount-border separation. This is a design tripwire: if a
    * future theme tweak collapses the gradient-bg-vs-mount-bg luminance
    * gap to imperceptible, the card stops feeling lifted off the page.
    * Threshold 3.0 luminance ratio (perceptual separation, mirrors the
    * axis B pattern in [[feedback-bundle-hue-separation]]).
    *
-   * The --text / --text-muted aliases the stops used to
-   * resolve through; each per-theme cascade now declares its own
-   * --page-gradient-{from,to} hex directly are retired; also retired the
-   * --page-gradient-via mid-stop that was byte-identical to
-   * --page-gradient-from in every theme. Pre-flight cleared
-   * the matrix at 14.603:1 floor (nouvelle-vague light from-stop), so
-   * every theme passes with massive headroom.
+   * Each per-theme cascade declares its own --page-gradient-{from,to}
+   * hex directly. Pre-flight cleared the matrix at a 14.603:1 floor
+   * (nouvelle-vague light from-stop), so every theme passes with headroom.
    *
-   * Skips :root / [data-mode='dark'] fallback cascades – the :root
+   * Skips :root / [data-mode='dark'] fallback cascades - the :root
    * declares default stops but `checkAdjacency: false` already excludes
    * those fixtures. Per-theme cascades cover every runtime-painted
    * combination.
@@ -1128,15 +1079,9 @@ describe('bundle contrast contract', () => {
       if (!fixture.checkAdjacency) {
         continue;
       }
-      /*
-       * branding declares --page-gradient-{from,to} (it backs the logged-out
-       * auth surfaces) but is EXCLUDED from this non-WCAG design tripwire: its
-       * monochromatic near-black navy chrome is separated from the AuthCard by
-       * the white `.border-shadow`, not by bg-luminance, so the 3.0 perceptual-
-       * lift threshold (premised on a mid-tone film-theme gradient) does not
-       * apply. Branding's card text/border/focus-ring contrast is WCAG-verified
-       * in the 'branding auth card over page-gradient' describe below.
-       */
+      // branding excluded: near-black chrome separates the AuthCard via the
+      // white .border-shadow, not bg-luminance, so the 3.0 lift threshold
+      // doesn't apply; its card contrast is WCAG-verified below
       if (fixture.label === 'branding') {
         continue;
       }
@@ -1147,16 +1092,8 @@ describe('bundle contrast contract', () => {
         continue;
       }
 
-      /*
-       * Skip fixtures that declare no concrete gradient stops. branding is
-       * the OFF-BOOK brand-chrome theme: its page bg is the `bg-hit-man`
-       * radial (hardcoded hexes in index.css, NOT --page-gradient-* tokens),
-       * and no branding-consuming view paints a card on a
-       * `from-[var(--page-gradient-from)]` gradient, so it declares neither
-       * stop. Without this guard the per-fixture describe below would
-       * register zero it() calls and vitest fails the empty suite
-       * ([[feedback-vitest-empty-describe]]).
-       */
+      // skip fixtures with no concrete gradient stops: an empty per-fixture
+      // describe registers zero it() calls and vitest fails the empty suite
       const declaresAnyStop = STOPS.some((stop) => {
         const value = declarations.get(stop);
         return value !== undefined && !value.includes('var(');
@@ -1192,24 +1129,20 @@ describe('bundle contrast contract', () => {
   });
 
   /*
-   * Alert idle paint on host surfaces – the IconButton `danger` variant
+   * Alert idle paint on host surfaces - the IconButton `danger` variant
    * paints `--alert-text` + `--alert-border` directly on its host bg (no
    * `--alert-bg` wrapper) at rest. The hover transient does fill
    * `--alert-bg`, but the idle pair is what the consumer reads most of
    * the time.
    *
-   * Scoped to alert only – the `danger` variant is the only intrinsic
+   * Scoped to alert only: the `danger` variant is the only intrinsic
    * state-bundle IconButton variant, and Alert.tsx/StatusBadge.tsx
    * always pair `--{state}-border` with `--{state}-bg` (the in-bundle
    * CONTRACT iteration above covers those). Warn/info/success on host
    * bg are not real consumer pairs today; if a future consumer adds
    * one, expand this block.
    *
-   * Mirrors the `state-text on base-bg` block above
-   * ([[feedback-state-text-on-base-bg-test-pair]]) extended to the
-   * mount and orbit tiers an IconButton can ride. Mechanized here
-   * after a culori pre-flight cleared the matrix worst-case at 3.275:1
-   * (alert-border on orbit-bg, before-midnight dark).
+   * Worst case: alert-border on orbit-bg, before-midnight dark, 3.275:1.
    */
   describe('alert idle paint on host surfaces', () => {
     const HOST_PAIRS = [
@@ -1260,7 +1193,7 @@ describe('bundle contrast contract', () => {
   });
 
   /*
-   * ResponseTabs status-pill contract – the master-detail response widget
+   * ResponseTabs status-pill contract - the master-detail response widget
    * inside EndpointDetail renders a tablist of status-code pills on the
    * `--mount-bg` card surface. The selected pill fills `--orbit-bg` with an
    * `--orbit-border` ring and `--orbit-text` digits; unselected pills paint
@@ -1268,21 +1201,18 @@ describe('bundle contrast contract', () => {
    *
    * Three SC pairs, two of which are NOT otherwise mechanized for THIS
    * geometry:
-   *   1. orbit-border on mount-bg >= 3:1 (SC 1.4.11) – the selected ring
+   *   1. orbit-border on mount-bg >= 3:1 (SC 1.4.11) - the selected ring
    *      against the CARD it sits on, NOT --base-bg. Orbit is tuned against
    *      --base-bg, so accent ≈ card surface in dark themes is the genuine
    *      risk. Already covered by the "orbit-border on mount-bg (elevated
    *      lift)" block above (IconButton shares the geometry); re-asserted
    *      here so the ResponseTabs contract reads as a single unit.
-   *   2. orbit-text on orbit-bg >= 4.5:1 (SC 1.4.3) – selected pill digits on
+   *   2. orbit-text on orbit-bg >= 4.5:1 (SC 1.4.3) - selected pill digits on
    *      the fill. The per-bundle CONTRACT loop's `text on bg` covers orbit,
    *      so this is belt-and-braces for the same slot pair.
-   *   3. base-alt-text on mount-bg >= 4.5:1 (SC 1.4.3) – unselected pill
+   *   3. base-alt-text on mount-bg >= 4.5:1 (SC 1.4.3) - unselected pill
    *      digits on the card. FRESH pair: EndpointNav uses base-alt-text on
    *      --base-bg (the gutter); here the pills render on --mount-bg.
-   *
-   * See [[feedback-state-text-on-base-bg-test-pair]] + the pre-build
-   * accessibility brief for the response-status master-detail widget.
    */
   describe('ResponseTabs status-pill contract', () => {
     for (const fixture of FIXTURES) {
@@ -1350,30 +1280,29 @@ describe('bundle contrast contract', () => {
   });
 
   /*
-   * Cross-bundle highlight adjacencies – `--{tier}-highlight` painted on a
+   * Cross-bundle highlight adjacencies - `--{tier}-highlight` painted on a
    * DIFFERENT tier's bg. Per-bundle CONTRACT above covers highlight on its
    * own bg; these four pairs cover the consumer geometries where a highlight
    * slot lives on a foreign host. SC 1.4.11 (3:1) per pair.
    *
-   *   1. mount-highlight on base-bg – LinkCardLayout's left accent edge. The
+   *   1. mount-highlight on base-bg - LinkCardLayout's left accent edge. The
    *      card's `border-l-4` rests on --mount-highlight when fetched, and the
    *      pending color-pulse peaks on --mount-highlight at 50%. That border's
    *      outer edge sits against the page's base-bg (and the placeholder badge,
    *      shifted `-translate-x-1/2`, straddles half onto that same base-bg),
    *      not the card's mount-bg. LinkCardLayout.tsx.
-   *   2. orbit-highlight on mount-bg – CvdModeToggle aria-checked capsule
+   *   2. orbit-highlight on mount-bg - CvdModeToggle aria-checked capsule
    *      bg painted inside a SettingsGroup mount-host. CvdModeToggle.tsx:78.
-   *   3. base-highlight on mount-bg – SettingsGroup data-active=true border
+   *   3. base-highlight on mount-bg - SettingsGroup data-active=true border
    *      painted on the section's own mount-bg fill (the matching outline
    *      sits on base-bg and is covered by the CONTRACT loop's
    *      `base-highlight on base-bg`). SettingsGroup.tsx:89.
-   *   4. base-highlight on orbit-bg – `[data-cvd='on'] [aria-checked='true']`
+   *   4. base-highlight on orbit-bg - `[data-cvd='on'] [aria-checked='true']`
    *      inset 3px box-shadow bar painted on orbit-host menu items (InlineThemeList
    *      inside MobileBottomSheet). index.css:159-164, InlineThemeList.tsx:28.
    *
    * Pre-flight cleared the matrix worst-case at 3.282:1
-   * (mount-highlight on base-bg, before-midnight light). A diamantaire nit   * flagged pair 1 specifically; it was verified ad-hoc but
-   * left the contract un-mechanized.
+   * (mount-highlight on base-bg, before-midnight light).
    */
   describe('cross-bundle highlight adjacencies', () => {
     const CROSS_PAIRS = [

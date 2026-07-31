@@ -17,8 +17,7 @@ const API_ENV_PATH = join(REPO_ROOT, 'apps', 'api', '.env');
 const PROTECTED_TABLES = new Set(['_prisma_migrations']);
 const AUTH_STATE_DIR = join(TUFFGAL_DIR, '.auth');
 
-// Bcrypt minimum (4 rounds). Test password is a known plaintext seeded
-// once per reset; production-grade work factor would only burn CI time.
+// Bcrypt minimum: known test plaintext, higher rounds only burn CI time
 const BCRYPT_ROUNDS = 4;
 
 export const TEST_USER = {
@@ -184,19 +183,12 @@ async function applyLinks(
   try {
     await client.query('BEGIN');
     try {
-      // Wipe any prior story's links + cascading Meta rows for this user
-      // before reapplying. ON CONFLICT on row id keeps a fixture's own
-      // rows idempotent across reruns but leaves stale rows written by
-      // API-driven stories (save-link, bookmarklet), which then leak
-      // into later stories and drift their screenshots.
+      // DELETE clears stale API-driven rows that ON CONFLICT on id would leak
       await client.query(`DELETE FROM "Link" WHERE "userId" = $1`, [
         TEST_USER.id,
       ]);
       for (const link of links) {
-        // Compute searchVector inline + refresh on conflict so the index
-        // never gets out of sync with url + title when fixture data is
-        // edited between runs (the prior INSERT-then-UPDATE pattern left
-        // a stale row when ON CONFLICT skipped the INSERT).
+        // searchVector computed inline so it tracks url + title on every upsert
         await client.query(
           `
           INSERT INTO "Link"
@@ -283,9 +275,7 @@ async function listDataTables(client: pg.Client): Promise<string[]> {
 
 async function seedDeterministicUser(client: pg.Client): Promise<void> {
   const passwordHash = await bcrypt.hash(TEST_USER.password, BCRYPT_ROUNDS);
-  // Pin every timestamp to FIXED_DATE so any UI that surfaces User.* fields
-  // renders byte-identical across runs; the client-side `frozenTime` only
-  // covers Date.now() in the browser, not server-written timestamps.
+  // pin server timestamps to FIXED_DATE; frozenTime only covers browser time
   await client.query(
     `
     INSERT INTO "User"

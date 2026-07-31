@@ -27,17 +27,16 @@ const ruleTester = new RuleTester({
 
 ruleTester.run('type-imports-after-value', rule, {
   valid: [
-    // Value import already before the type import.
+    // value import already before the type import
     {
       code: [
         "import { value } from 'value';",
         "import type { Kind } from 'kind';",
       ].join('\n'),
     },
-    // Single import: nothing to order.
+    // single import: nothing to order
     { code: "import type { Kind } from 'kind';" },
-    // A blank line is a group boundary: a type import ending the first group is
-    // NOT flagged against a value import that opens the next group.
+    // blank line is a group boundary; not flagged across the boundary
     {
       code: [
         "import { value } from 'value';",
@@ -46,8 +45,7 @@ ruleTester.run('type-imports-after-value', rule, {
         "import { local } from './local';",
       ].join('\n'),
     },
-    // A non-import statement between imports resets the group, so the trailing
-    // value import is not compared against the leading type import.
+    // a non-import statement between imports resets the group
     {
       code: [
         "import type { Kind } from 'kind';",
@@ -57,7 +55,7 @@ ruleTester.run('type-imports-after-value', rule, {
     },
   ],
   invalid: [
-    // A single type import before a value import is reported and fixed.
+    // a single type import before a value import is reported and fixed
     {
       code: [
         "import type { Kind } from 'kind';",
@@ -69,8 +67,7 @@ ruleTester.run('type-imports-after-value', rule, {
       ].join('\n'),
       errors: [{ messageId: 'typeBeforeValue' }],
     },
-    // Multiple type imports before one value import converge in a single fix
-    // pass, and every misplaced type import is reported.
+    // multiple type imports before one value import fix in a single pass
     {
       code: [
         "import type { First } from 'first';",
@@ -87,8 +84,7 @@ ruleTester.run('type-imports-after-value', rule, {
         { messageId: 'typeBeforeValue' },
       ],
     },
-    // A leading own-line comment moves with its type import rather than being
-    // stranded on the value import it is swapped past.
+    // a leading own-line comment moves with its type import, not stranded
     {
       code: [
         '// documents the Kind type',
@@ -102,8 +98,7 @@ ruleTester.run('type-imports-after-value', rule, {
       ].join('\n'),
       errors: [{ messageId: 'typeBeforeValue' }],
     },
-    // Only the offending group is reordered; a separate later group is left
-    // untouched.
+    // only the offending group is reordered; a later group is left untouched
     {
       code: [
         "import type { Kind } from 'kind';",
@@ -119,9 +114,7 @@ ruleTester.run('type-imports-after-value', rule, {
       ].join('\n'),
       errors: [{ messageId: 'typeBeforeValue' }],
     },
-    // A trailing same-line `//` comment on a type import survives the reorder,
-    // travelling with its declaration rather than being silently deleted (the
-    // gap between blocks that the whole-group replace would otherwise drop).
+    // a trailing same-line comment survives the reorder, not silently deleted
     {
       code: [
         "import type { Kind } from 'kind'; // KEEPME trailing",
@@ -133,8 +126,7 @@ ruleTester.run('type-imports-after-value', rule, {
       ].join('\n'),
       errors: [{ messageId: 'typeBeforeValue' }],
     },
-    // The same guarantee holds for a trailing same-line block `/* */` comment,
-    // including a suppression comment whose loss would change lint behaviour.
+    // same holds for a trailing block comment, incl a lint-suppression comment
     {
       code: [
         "import type { Kind } from 'kind'; /* KEEPME trailing */",

@@ -1,8 +1,8 @@
 /*
  * Tests for the editor's `resolveToast` message-key resolver. The toast holds
  * only a string key; this resolver picks the <Toast> variant and visible copy.
- * Only the assertive FAILURE keys route here now — copy/undo success is
- * announced by the editor's polite live region, not a toast.
+ * Only assertive FAILURE keys route here: copy/undo success is announced
+ * by the editor's polite live region, not a toast.
  */
 
 import { describe, expect, it } from 'vitest';

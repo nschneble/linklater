@@ -11,7 +11,7 @@ import { useEffect } from 'react';
  * non-idle transition so rapid sequences don't clobber each other.
  *
  * Default `ms` of 1500 matches the announcement window most polite live
- * regions need on modern screen readers – shortening risks missing the
+ * regions need on modern screen readers; shortening risks missing the
  * announcement.
  *
  * @param value - The current state value to watch.

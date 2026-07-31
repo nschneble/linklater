@@ -92,19 +92,19 @@ afterEach(() => {
 
 describe('logged-out branding paint (full provider stack)', () => {
   it('repro #1: painting flips to branding after logout from a film theme', async () => {
-    // Authenticated on load, stored film theme.
+    // authenticated on load, stored film theme
     window.localStorage.setItem(THEME_STORAGE_KEY, 'school-of-rock');
     vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
     vi.mocked(apiModule.getMe).mockResolvedValue(makeMe());
 
     const { getByTestId } = render(<Stack />);
 
-    // Session hydrates → the user's film theme paints.
+    // session hydrates → the user's film theme paints
     await waitFor(() => {
       expect(paintedTheme()).toBe('school-of-rock');
     });
 
-    // Log out → the auth surfaces must repaint to the off-book branding chrome.
+    // log out → the auth surfaces must repaint to the off-book branding chrome
     await act(async () => {
       getByTestId('logout').click();
     });
@@ -113,14 +113,13 @@ describe('logged-out branding paint (full provider stack)', () => {
   });
 
   it('repro #2: a fresh logged-out load paints branding, never the stored film theme', async () => {
-    // Logged out (no token), but a stale film selection lingers in storage.
+    // logged out (no token), but a stale film selection lingers in storage
     window.localStorage.setItem(THEME_STORAGE_KEY, 'school-of-rock');
     vi.mocked(apiModule.getStoredToken).mockReturnValue(null);
 
     render(<Stack />);
 
-    // The painted theme must be branding from the very first commit and stay
-    // branding once the (no-op) auth check settles — never school-of-rock.
+    // paint branding from first commit, stay branding, never school-of-rock
     await waitFor(() => {
       expect(paintedTheme()).toBe('branding');
     });
@@ -128,9 +127,7 @@ describe('logged-out branding paint (full provider stack)', () => {
   });
 
   it('repro #2b: a stale JWT that still resolves must NOT be treated as logged out', async () => {
-    // A stateless JWT survives a server DB wipe: GET /auth/me still resolves,
-    // so the visitor IS authenticated and their film theme is correct. This
-    // pins the boundary so a branding fix does not over-reach into authed views.
+    // a stateless JWT still resolves post DB-wipe; visitor stays authed
     window.localStorage.setItem(THEME_STORAGE_KEY, 'school-of-rock');
     vi.mocked(apiModule.getStoredToken).mockReturnValue('stale-jwt');
     vi.mocked(apiModule.getMe).mockResolvedValue(makeMe());

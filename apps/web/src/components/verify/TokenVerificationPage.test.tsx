@@ -133,9 +133,7 @@ describe('TokenVerificationPage verifying state', () => {
     const status = screen.getByRole('status');
     expect(status).toBeInTheDocument();
     expect(status).toHaveTextContent(/verifying your email/i);
-    // The verifying state is a bare spinner; the polite-status text lives
-    // in an sr-only live region. No card heading is rendered (errors
-    // redirect to /login).
+    // verifying state is a bare spinner; status text lives sr-only
     expect(status).toHaveClass('sr-only');
   });
 
@@ -193,11 +191,7 @@ describe('TokenVerificationPage success path – signed-in user', () => {
   });
 
   it('awaits onSuccess BEFORE queuing the notice and navigating (deferred-promise pattern)', async () => {
-    // C5: the resolved-order test below uses a deferred promise so we can
-    // observe that setPendingNotice + navigate are NOT called while
-    // onSuccess is still pending. The previous ordering-array trick would
-    // have passed even if the awaits ran in parallel; this version
-    // proves the await sequence.
+    // deferred promise proves setPendingNotice + navigate wait for onSuccess
     let resolveOnSuccess!: () => void;
     const onSuccessPromise = new Promise<void>((resolve) => {
       resolveOnSuccess = resolve;
@@ -208,19 +202,16 @@ describe('TokenVerificationPage success path – signed-in user', () => {
       renderPage({ onSuccess });
     });
 
-    // Let the onVerify().then() callback run up to the awaited onSuccess call,
-    // which is now pending on resolveOnSuccess.
+    // let the onVerify().then() chain run up to the pending onSuccess await
     await waitFor(() => {
       expect(onSuccess).toHaveBeenCalled();
     });
 
-    // Critical assertion: while onSuccess is still pending, neither the
-    // notice queue nor the navigation has fired yet. This catches the
-    // bug where the await is missing or accidentally fire-and-forget.
+    // while onSuccess is pending, nothing fires yet: catches a missing await
     expect(pendingNoticeModule.setPendingNotice).not.toHaveBeenCalled();
     expect(navigate).not.toHaveBeenCalled();
 
-    // Now resolve onSuccess and confirm the post-await steps fire.
+    // now resolve onSuccess and confirm the post-await steps fire
     await act(async () => {
       resolveOnSuccess();
     });
@@ -240,7 +231,7 @@ describe('TokenVerificationPage success path – signed-in user', () => {
       expect(navigate).toHaveBeenCalledWith('/unread', { replace: true });
     });
 
-    // No "Go to Linklater" button, no fa-circle-check success copy.
+    // no "Go to Linklater" button, no fa-circle-check success copy
     expect(
       screen.queryByRole('button', { name: /go to linklater/i }),
     ).not.toBeInTheDocument();

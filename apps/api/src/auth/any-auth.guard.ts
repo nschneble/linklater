@@ -47,8 +47,7 @@ export class AnyAuthGuard extends AuthGuard('jwt') {
         throw new UnauthorizedException();
       }
 
-      // Confine the special retrievable kinds (bookmarklet, API docs) to their
-      // single purpose before granting access – throws 403 or 429 as needed.
+      // confine bookmarklet/API-docs tokens to their purpose; 403/429 as needed
       await this.tokenScope.enforce({
         kind: validated.kind,
         tokenHash: validated.tokenHash,

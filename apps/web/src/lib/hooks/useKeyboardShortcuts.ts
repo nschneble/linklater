@@ -118,9 +118,7 @@ export function useKeyboardShortcuts({
       if (isTypingField) return;
 
       if (isShortcutsModalOpenReference.current) {
-        // `Z` is a single-character shortcut, so it only closes the modal when
-        // the preference is on. Escape and the modal's own controls still
-        // dismiss it either way.
+        // `Z` closes the modal only when single-key shortcuts are on
         if (
           singleKeyShortcutsEnabledReference.current &&
           event.key.toLowerCase() === 'z'
@@ -131,8 +129,7 @@ export function useKeyboardShortcuts({
         return;
       }
 
-      // Arrow navigation is handled before keyboard shortcuts so they
-      // can't be swallowed by the switch below.
+      // arrow navigation runs first so the switch can't swallow it
       switch (event.key) {
         case 'ArrowUp':
           event.preventDefault();
@@ -166,8 +163,7 @@ export function useKeyboardShortcuts({
         }
       }
 
-      // Single-character shortcuts below are the only handlers gated by the
-      // preference (WCAG 2.1.4). The named-key handlers above stay live.
+      // only these single-char shortcuts are gated by pref (WCAG 2.1.4)
       if (!singleKeyShortcutsEnabledReference.current) return;
 
       switch (event.key.toLowerCase()) {

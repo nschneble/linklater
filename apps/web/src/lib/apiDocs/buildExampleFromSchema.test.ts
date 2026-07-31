@@ -69,11 +69,7 @@ describe('buildExampleFromSchema', () => {
     expect(buildExampleFromSchema(undefined)).toEqual({});
   });
 
-  // Regression: a NestJS nullable typed-ref property (`meta` on the link
-  // response) reaches the builder wrapped in `allOf` with the referenced
-  // object's properties buried a level down. The resolver now flattens that
-  // wrapper, so the builder — which has no `allOf` handling by design — sees a
-  // plain object and renders the fully-populated example instead of `{}`.
+  // regression: builder has no allOf handling; resolver flattens nullable typed-refs first
   describe('nullable typed-ref property (allOf-wrapped) via the resolver', () => {
     const schemas: Record<string, OpenAPIV3.SchemaObject> = {
       Meta: {
@@ -89,7 +85,7 @@ describe('buildExampleFromSchema', () => {
         },
       },
     };
-    // Exactly the shape @nestjs/swagger emits (see schema-object-factory).
+    // exactly the shape @nestjs/swagger emits (see schema-object-factory)
     const nullableTypedReference = {
       nullable: true,
       type: 'object',

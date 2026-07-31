@@ -40,8 +40,7 @@ function ViewError({
   );
 }
 
-// Lazy-loaded because the modal is rarely open and this keeps it out of the
-// initial bundle.
+// lazy-loaded to keep the rarely-open modal out of the initial bundle
 const KeyboardShortcutsModal = lazy(() => import('./KeyboardShortcutsModal'));
 
 interface LinksViewProps {
@@ -158,10 +157,7 @@ export default function LinksView({
 
       {view.showLinkForm &&
         createPortal(
-          // Redundant mouse-only dismiss affordance. Hidden from assistive
-          // tech (aria-hidden + tabIndex -1) now that the dialog carries a
-          // keyboard-reachable Close button; keyboard dismissal is covered by
-          // Escape (useKeyboardShortcuts) and that button.
+          // mouse-only backdrop; keyboard uses Escape and the Close button
           <button
             type="button"
             aria-hidden="true"

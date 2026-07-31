@@ -53,7 +53,7 @@ export class EmailService {
    * Throws on SMTP failure so the caller can react. Every public send method
    * is invoked from the `email-send` pg-boss worker
    * (see {@link EmailQueueService}), never on the request thread, so a thrown
-   * failure surfaces to the worker – which lets pg-boss retry the job – rather
+   * failure surfaces to the worker - which lets pg-boss retry the job - rather
    * than to an HTTP handler. The exception type stays
    * `ServiceUnavailableException` for backwards compatibility with callers and
    * tests that assert on it.
@@ -64,12 +64,8 @@ export class EmailService {
              the email.
    */
   private async send(options: nodemailer.SendMailOptions) {
-    // testing-ui mode drops emails on the floor so the harness never
-    // depends on an SMTP relay being reachable and never logs a
-    // ServiceUnavailableException for a downstream that does not exist.
-    // Subject only – never the recipient. If TESTING_UI is ever
-    // accidentally set in a non-test env, this log path must not leak
-    // user email addresses.
+    // testing-ui drops emails so the harness needs no SMTP relay
+    // log the subject only, never the recipient (avoid leaking addresses)
     if (isTestingUi()) {
       const subject =
         options.subject === undefined

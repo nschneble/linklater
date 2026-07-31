@@ -123,8 +123,7 @@ describe('Header outside-interaction handling', () => {
     expect(onUserMenuClose).not.toHaveBeenCalled();
   });
 
-  // [accessibility-review REQUIRED] The scrim is the sole mobile
-  // outside-close path now that the document handler no-ops on sheet presses.
+  // [accessibility-review REQUIRED] scrim is the sole mobile close path
   it('closes when the sheet scrim is clicked', () => {
     const { container, onUserMenuClose } = renderHeader();
 
@@ -158,11 +157,7 @@ describe('Header outside-interaction handling', () => {
     expect(onUserMenuClose).not.toHaveBeenCalled();
   });
 
-  // The sheet's inner panel slider is `width: 200%` (two stacked panels) so it
-  // is twice the viewport wide. Without a horizontal clip on the fixed wrapper,
-  // that off-screen half lets iOS Safari pan the whole page sideways, which
-  // reads as the viewport growing past the device width. `overflow-x-hidden`
-  // on the wrapper contains it.
+  // 200%-wide panel slider needs overflow-x-hidden or iOS Safari pans page
   it('clips the bottom sheet horizontally so the panel slider cannot pan the page', () => {
     const { container } = renderHeader();
 

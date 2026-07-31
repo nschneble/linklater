@@ -46,8 +46,7 @@ export class LinksService {
     if (existing) {
       const link = await this.resurfaceLink(existing.id);
 
-      // Only re-fetch metadata if it has never been fetched before (e.g. the
-      // previous fetch attempt failed before producing a `fetchedAt` timestamp).
+      // re-fetch only if never fetched (prior attempt failed before fetchedAt)
       if (!existing.meta?.fetchedAt) {
         void this.queueService
           .send(
@@ -73,9 +72,7 @@ export class LinksService {
         include: META_INCLUDE,
       });
     } catch (error) {
-      // Concurrent POST /links for the same URL: a parallel request won
-      // the unique-constraint race and the row now exists. Fall back to
-      // the resurface path so the user gets a consistent response.
+      // concurrent POST lost the unique-constraint race; resurface instead
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
@@ -91,8 +88,7 @@ export class LinksService {
       throw error;
     }
 
-    // Fire-and-forget: metadata fetching is async and non-critical. Errors are
-    // logged but do not affect the HTTP response.
+    // fire-and-forget: metadata fetch errors are logged, not surfaced
     void this.queueService
       .send(
         QUEUES.METADATA_FETCH,

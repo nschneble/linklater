@@ -62,9 +62,7 @@ const MobileBottomSheet = forwardRef<HTMLDivElement, MobileBottomSheetProps>(
     const openerReference = useRef<HTMLElement | null>(null);
     const touchStartY = useRef(0);
 
-    // Modal-dialog contract: Tab must stay inside the sheet (not advance into
-    // the inert subtree behind the scrim) so keyboard users do not get
-    // stranded on <body>. Both panels use trap behavior.
+    // trap Tab inside the sheet so keyboard users aren't stranded on <body>
     useMenuNavigation(mainViewReference, onClose, { tabBehavior: 'trap' });
     useMenuNavigation(themeViewReference, handleBackToMain, {
       tabBehavior: 'trap',
@@ -86,10 +84,7 @@ const MobileBottomSheet = forwardRef<HTMLDivElement, MobileBottomSheetProps>(
       };
     }, [isOpen]);
 
-    // Capture the trigger that opened the sheet so focus can be restored to
-    // it on close. Without this, closing the sheet (Escape, scrim tap, swipe)
-    // leaves focus stranded inside the now-inert subtree and the browser
-    // falls back to <body>. WAI-ARIA APG dialog pattern.
+    // capture the opener so focus returns to it on close, not to <body>
     useEffect(() => {
       if (isOpen) {
         openerReference.current = document.activeElement as HTMLElement | null;
@@ -138,8 +133,7 @@ const MobileBottomSheet = forwardRef<HTMLDivElement, MobileBottomSheetProps>(
     }
 
     function handleDragHandleTouchStart(event: React.TouchEvent) {
-      // Multi-finger or synthetic events can dispatch with an empty touches
-      // list – accessing `[0].clientY` would throw and crash the sheet.
+      // empty touches list (multi-finger/synthetic) would throw on [0].clientY
       const firstTouch = event.touches[0];
       if (!firstTouch) return;
       touchStartY.current = firstTouch.clientY;

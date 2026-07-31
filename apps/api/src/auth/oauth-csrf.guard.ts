@@ -57,10 +57,7 @@ export function createOAuthCallbackGuard(
       const request = context.switchToHttp().getRequest<Request>();
       const response = context.switchToHttp().getResponse<Response>();
       if (!consumeOAuthState(request, response)) {
-        // A rejected Promise, not a synchronous throw – keeps this method's
-        // return type consistent (Nest's own AuthGuard.canActivate never
-        // throws synchronously either) and lets callers uniformly `await`
-        // or `.catch()` it.
+        // reject a Promise, not throw, to match AuthGuard.canActivate's return
         return Promise.reject(
           new UnauthorizedException('Invalid or expired OAuth state'),
         );

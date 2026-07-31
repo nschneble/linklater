@@ -22,7 +22,7 @@ vi.mock('../../lib/api', () => ({
   regenerateBookmarkletToken: vi.fn(),
 }));
 
-// Pure builder; a fixed string keeps env/URL resolution out of the test.
+// pure builder; a fixed string keeps env/URL resolution out of the test
 vi.mock('./bookmarkletCode', () => ({
   buildBookmarkletCode: () => 'javascript:void 0',
 }));
@@ -31,8 +31,7 @@ vi.mock('./useReanchorOnLoad', () => ({
   useReanchorOnLoad: vi.fn(),
 }));
 
-// Collapse the two-step ActionGuard confirm into a plain button so the test
-// can trigger a `toast.show(...)` without exercising the regenerate flow.
+// stub the ActionGuard confirm as a plain button that fires toast.show
 vi.mock('./BookmarkletRegenerateButton', () => ({
   default: ({
     onRegenerated,
@@ -66,12 +65,10 @@ beforeEach(() => {
 
 describe('BookmarkletSection toast announcement', () => {
   it('mirrors a regenerate result into its own announcement region', async () => {
-    // The generic announce={false} card + mirror-region ARIA contract is
-    // proven in ToastAnnouncer.test.tsx; this asserts only BookmarkletSection's
-    // own wiring: a regenerate result flows into its named mirror channel.
+    // ToastAnnouncer.test.tsx proves the generic contract; this checks wiring
     render(<BookmarkletSection />);
 
-    // The mirror is present from first paint, empty until a toast fires.
+    // the mirror is present from first paint, empty until a toast fires
     const region = screen.getByTestId('bookmarklet-toast-announcement');
     expect(region).toBeEmptyDOMElement();
 
@@ -80,7 +77,7 @@ describe('BookmarkletSection toast announcement', () => {
     });
     fireEvent.click(regenerate);
 
-    // Empty → populated is the transition a screen reader announces.
+    // empty → populated is the transition a screen reader announces
     await waitFor(() =>
       expect(region).toHaveTextContent('Bookmarklet regenerated'),
     );
@@ -89,16 +86,14 @@ describe('BookmarkletSection toast announcement', () => {
   it('keeps the mirror region distinct from the loading-status paragraph', async () => {
     render(<BookmarkletSection />);
 
-    // While the token is loading, the loading paragraph owns its own
-    // role="status" and text; the mirror region is a separate, empty node.
+    // while loading, the loading paragraph owns role="status", mirror empty
     const loadingParagraph = screen.getByText('Generating your bookmarklet…');
     const region = screen.getByTestId('bookmarklet-toast-announcement');
     expect(loadingParagraph).not.toBe(region);
     expect(loadingParagraph).toHaveAttribute('role', 'status');
     expect(region).toBeEmptyDOMElement();
 
-    // After load, the loading paragraph empties but stays a distinct node;
-    // the two role="status" regions never collapse into one.
+    // after load, the loading paragraph empties but stays a distinct node
     await screen.findByRole('button', { name: 'Regenerate' });
     const statusRegions = screen.getAllByRole('status');
     expect(statusRegions).toContain(loadingParagraph);

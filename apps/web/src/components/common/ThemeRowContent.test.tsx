@@ -23,7 +23,7 @@ describe('ThemeRowContent', () => {
     expect(container.querySelector('button')).toBeNull();
     expect(container.querySelector('[role]')).toBeNull();
     expect(container.querySelector('[tabindex]')).toBeNull();
-    // No selection state leaks into the role-agnostic primitive.
+    // no selection state leaks into the role-agnostic primitive
     expect(container.querySelector('[aria-checked]')).toBeNull();
     expect(container.querySelector('[aria-selected]')).toBeNull();
   });
@@ -51,7 +51,7 @@ describe('ThemeRowContent', () => {
         glyphSize="text-[0.5rem]"
       />,
     );
-    // Only the swatch span renders; no decorative <i> inside it.
+    // only the swatch span renders; no decorative <i> inside it
     expect(container.querySelector('i')).toBeNull();
   });
 
@@ -109,7 +109,7 @@ describe('ThemeRowContent', () => {
     const accessIndex = icons.findIndex((icon) =>
       icon.classList.contains('fa-universal-access'),
     );
-    // The host adornment sits before the accessible glyph in DOM order.
+    // the host adornment sits before the accessible glyph in DOM order
     expect(checkIndex).toBeGreaterThanOrEqual(0);
     expect(accessIndex).toBeGreaterThan(checkIndex);
   });

@@ -6,7 +6,7 @@
  *   - Stable aria-describedby="auth-form-error" on both form fields (new
  *     always-mounted Alert pattern means the reference is never dangling)
  *   - Error text appears in the role="alert" element when provided
- *   - The form always renders – no interstitial branch
+ *   - The form always renders; no interstitial branch
  *   - Mode-change tabs wire up correctly (login / sign up labels visible)
  *   - Forgot-password link present in login mode
  *   - Privacy policy link present in register mode, navigating to /privacy
@@ -122,7 +122,7 @@ describe('LoginRegisterView error display', () => {
 
   it('alert element is always mounted (empty but in DOM) when there is no error', () => {
     renderView({ error: null });
-    // The alert is mounted but aria-hidden=true and sr-only; it exists in DOM
+    // the alert stays mounted but aria-hidden and sr-only
     const errorElement = document.getElementById('auth-form-error');
     expect(errorElement).toBeInTheDocument();
   });

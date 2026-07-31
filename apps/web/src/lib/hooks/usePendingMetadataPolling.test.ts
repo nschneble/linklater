@@ -93,8 +93,7 @@ describe('usePendingMetadataPolling', () => {
       await vi.advanceTimersByTimeAsync(2000);
     });
 
-    // The poll carries a deadline signal alongside the id (see the request
-    // deadline suite for why); assert both so the additive arg is documented.
+    // poll carries a deadline AbortSignal alongside the id; assert both
     expect(apiModule.getLink).toHaveBeenCalledWith(
       'a',
       expect.any(AbortSignal),
@@ -116,8 +115,7 @@ describe('usePendingMetadataPolling', () => {
   });
 
   it('does not call onSettled when a poll comes back still pending', async () => {
-    // A pending copy must never be written to state: it would re-render for
-    // nothing and could overwrite a card the client already settled.
+    // a pending copy must never hit state: could overwrite a settled card
     vi.mocked(apiModule.getLink).mockResolvedValue(makeLink('a'));
     const onSettled = vi.fn();
 
@@ -135,13 +133,13 @@ describe('usePendingMetadataPolling', () => {
 
     renderPolling([makeLink('a')]);
 
-    // First poll at 2s.
+    // first poll at 2s
     await act(async () => {
       await vi.advanceTimersByTimeAsync(2000);
     });
     expect(polledIds()).toHaveLength(1);
 
-    // Second poll only after another 4s (doubled), so nothing fires at +3999ms.
+    // second poll only after another 4s (doubled); nothing fires at +3999ms
     await act(async () => {
       await vi.advanceTimersByTimeAsync(3999);
     });
@@ -154,8 +152,7 @@ describe('usePendingMetadataPolling', () => {
   });
 
   it('keeps polling past 60 seconds while a link stays pending', async () => {
-    // The old poller gave up after 60s. A slow metadata job (a pg-boss retry
-    // can land well past a minute) must still be caught.
+    // a slow metadata job (pg-boss retry past a minute) must be caught
     vi.mocked(apiModule.getLink).mockResolvedValue(makeLink('a'));
 
     renderPolling([makeLink('a')]);
@@ -183,7 +180,7 @@ describe('usePendingMetadataPolling', () => {
     const countAfterErrors = polledIds().length;
     expect(countAfterErrors).toBeGreaterThan(1);
 
-    // Well past the old 60s give-up: errors must not stop a rendered card.
+    // errors must not stop a rendered card, even far past 60s
     await act(async () => {
       await vi.advanceTimersByTimeAsync(120000);
     });
@@ -204,7 +201,7 @@ describe('usePendingMetadataPolling', () => {
     });
     expect(polledIds()).toContain('a');
 
-    // A second save prepends 'b'; both links are now pending in list state.
+    // a second save prepends 'b'; both links are now pending in list state
     rerender({ links: [makeLink('b'), makeLink('a')] });
     vi.mocked(apiModule.getLink).mockClear();
 
@@ -244,20 +241,19 @@ describe('usePendingMetadataPolling', () => {
   });
 
   it('rotates through every pending link when the set exceeds the per-tick cap', async () => {
-    // Five pending links, cap of three: no link may be silently dropped from
-    // the polling set, or its aria-busy would stay stale forever.
+    // cap of 3 must not silently drop a link, or its aria-busy stays stale
     vi.mocked(apiModule.getLink).mockResolvedValue(makeLink('pending'));
     const links = ['a', 'b', 'c', 'd', 'e'].map((id) => makeLink(id));
 
     renderPolling(links);
 
-    // First tick respects the cap: exactly three of the five are polled.
+    // first tick respects the cap: exactly three of the five are polled
     await act(async () => {
       await vi.advanceTimersByTimeAsync(2000);
     });
     expect(polledIds()).toHaveLength(3);
 
-    // The round-robin cursor covers the remaining links on the next tick.
+    // the round-robin cursor covers the remaining links on the next tick
     await act(async () => {
       await vi.advanceTimersByTimeAsync(4000);
     });
@@ -287,13 +283,12 @@ describe('usePendingMetadataPolling', () => {
       { initialProps: { links: [makeLink('a')] } },
     );
 
-    // Let the interval mature to the 16s cap through repeated misses.
+    // let the interval mature to the 16s cap through repeated misses
     await act(async () => {
       await vi.advanceTimersByTimeAsync(60000);
     });
 
-    // A fresh save joins the set; the back-off must snap back to ~2s rather
-    // than inheriting the matured 16s interval.
+    // a fresh save must snap the back-off back to ~2s, not the matured 16s
     rerender({ links: [makeLink('b'), makeLink('a')] });
     vi.mocked(apiModule.getLink).mockClear();
 
@@ -319,10 +314,7 @@ describe('usePendingMetadataPolling', () => {
   });
 
   it('does not reschedule after teardown when an in-flight poll resolves late', async () => {
-    // The post-resolve `if (cancelled) return;` guard is what stops a request
-    // that lands after teardown from queuing an orphaned timer that keeps
-    // polling a hook nobody renders. Deleting it survives every other test
-    // here, so pin it: leave a request in flight, unmount, then resolve.
+    // pins the cancelled guard: late resolve after teardown adds no timer
     let resolvePoll: (link: Link) => void = () => {};
     vi.mocked(apiModule.getLink).mockImplementation(
       () =>
@@ -333,27 +325,25 @@ describe('usePendingMetadataPolling', () => {
 
     const { unmount } = renderPolling([makeLink('a')]);
 
-    // First poll fires and its request is left unresolved.
+    // first poll fires and its request is left unresolved
     await act(async () => {
       await vi.advanceTimersByTimeAsync(2000);
     });
     expect(polledIds()).toHaveLength(1);
 
-    // Tear the effect down, then let the in-flight request resolve late.
+    // tear the effect down, then let the in-flight request resolve late
     unmount();
     await act(async () => {
       resolvePoll(makeLink('a'));
       await vi.advanceTimersByTimeAsync(120000);
     });
 
-    // No orphaned reschedule: the late resolve must not queue another tick.
+    // no orphaned reschedule: the late resolve must not queue another tick
     expect(polledIds()).toHaveLength(1);
   });
 
   it('keeps the matured back-off when the pending set only shrinks', async () => {
-    // Removing the `if (hasNewId)` guard would reset the interval on every
-    // membership change, a shrink included. A set that loses a settled link
-    // but stays non-empty must not rewind the back-off to its initial value.
+    // pins the hasNewId guard: a shrink must not rewind the back-off
     vi.mocked(apiModule.getLink).mockResolvedValue(makeLink('pending'));
 
     const { rerender } = renderHook(
@@ -362,23 +352,22 @@ describe('usePendingMetadataPolling', () => {
       { initialProps: { links: [makeLink('a'), makeLink('b')] } },
     );
 
-    // Let the interval mature to the 16s cap through repeated misses.
+    // let the interval mature to the 16s cap through repeated misses
     await act(async () => {
       await vi.advanceTimersByTimeAsync(60000);
     });
 
-    // 'a' settles and leaves the set; 'b' is still pending. Membership shrank
-    // with no new id, so the back-off must stay matured.
+    // shrink with no new id must keep the back-off matured
     rerender({ links: [settled('a'), makeLink('b')] });
     vi.mocked(apiModule.getLink).mockClear();
 
-    // At the initial 2s interval nothing fires: a reset would have polled here.
+    // nothing fires at the initial 2s: a reset would have polled here
     await act(async () => {
       await vi.advanceTimersByTimeAsync(2000);
     });
     expect(polledIds()).toHaveLength(0);
 
-    // Rotation continues once the matured interval elapses.
+    // rotation continues once the matured interval elapses
     await act(async () => {
       await vi.advanceTimersByTimeAsync(14000);
     });
@@ -386,9 +375,7 @@ describe('usePendingMetadataPolling', () => {
   });
 
   it('does not restart the poll timer when an unrelated settled sibling field changes', async () => {
-    // Keying the effect off `links` identity instead of the membership key
-    // would restart the timer on every list re-render. A settled sibling whose
-    // unrelated field changes must not disturb the pending link's cadence.
+    // keyed on membership, not links identity: sibling churn won't restart
     vi.mocked(apiModule.getLink).mockResolvedValue(makeLink('a'));
 
     const { rerender } = renderHook(
@@ -397,14 +384,13 @@ describe('usePendingMetadataPolling', () => {
       { initialProps: { links: [makeLink('a'), settled('b')] } },
     );
 
-    // First poll at 2s; the next is scheduled 4s out (at t=6s).
+    // first poll at 2s; the next is scheduled 4s out (at t=6s)
     await act(async () => {
       await vi.advanceTimersByTimeAsync(2000);
     });
     expect(polledIds()).toHaveLength(1);
 
-    // Two seconds into that 4s wait, a settled sibling's unrelated field
-    // changes while pending membership ({a}) stays identical.
+    // mid-wait a settled sibling's field changes; membership unchanged
     await act(async () => {
       await vi.advanceTimersByTimeAsync(2000);
     });
@@ -415,8 +401,7 @@ describe('usePendingMetadataPolling', () => {
       ],
     });
 
-    // The originally-scheduled poll still fires on time (2s later). A timer
-    // restart would have pushed it out and nothing would fire here.
+    // the scheduled poll still fires on time; a restart would push it out
     await act(async () => {
       await vi.advanceTimersByTimeAsync(2000);
     });
@@ -425,13 +410,10 @@ describe('usePendingMetadataPolling', () => {
 
   describe('request deadline', () => {
     it('keeps polling the other pending links after one request stalls past its deadline', async () => {
-      // apiFetch has no timeout, so a hung request used to block the whole
-      // Promise.all and freeze the rotation until the browser's socket-level
-      // timeout (minutes). Each poll now carries a client-side deadline: the
-      // stalled request aborts and the rotation continues for every other card.
+      // per-poll deadline: a hung request can't freeze the rotation
       vi.mocked(apiModule.getLink).mockImplementation((id, signal) => {
         if (id === 'stalled') {
-          // Never settles on its own; only the deadline's abort rejects it.
+          // never settles on its own; only the deadline's abort rejects it
           return new Promise<Link>((resolve, reject) => {
             signal?.addEventListener('abort', () =>
               reject(
@@ -445,15 +427,13 @@ describe('usePendingMetadataPolling', () => {
 
       renderPolling([makeLink('stalled'), makeLink('b')]);
 
-      // First tick fires; the stalled request hangs, so without a deadline the
-      // batch's Promise.all never settles and no further tick is scheduled.
+      // stalled request hangs; without a deadline the batch never settles
       await act(async () => {
         await vi.advanceTimersByTimeAsync(2000);
       });
       const countAfterFirstTick = polledIds().length;
 
-      // Past the 10s deadline and the next back-off: the stalled request aborts,
-      // the batch settles, and the rotation schedules and fires the next tick.
+      // past the deadline the stalled request aborts and rotation resumes
       await act(async () => {
         await vi.advanceTimersByTimeAsync(14000);
       });
@@ -461,16 +441,13 @@ describe('usePendingMetadataPolling', () => {
     });
 
     it('settles nothing from a poll that times out, even if it resolves late', async () => {
-      // A timed-out poll is a plain dropped error: it must write no state. Even
-      // if the underlying request would have resolved settled afterwards, the
-      // abort already rejected it, so an aborted promise stays rejected and the
-      // late resolution is a no-op (dropped like any stale result).
+      // a timed-out poll writes no state; a late resolve is a no-op
       vi.mocked(apiModule.getLink).mockImplementation(
         (id, signal) =>
           new Promise<Link>((resolve, reject) => {
-            // Would resolve settled well after its deadline...
+            // would resolve settled well after its deadline...
             setTimeout(() => resolve(settled(id)), 30000);
-            // ...but the deadline aborts it first.
+            // ...but the deadline aborts it first
             signal?.addEventListener('abort', () =>
               reject(
                 new DOMException('The operation was aborted', 'AbortError'),
@@ -482,8 +459,7 @@ describe('usePendingMetadataPolling', () => {
 
       renderPolling([makeLink('a')], onSettled);
 
-      // Past the first poll (2s), its 10s deadline, and where the late resolve
-      // (30s) would have landed: the timed-out poll never settles the card.
+      // past the deadline and the 30s late-resolve: the poll never settles
       await act(async () => {
         await vi.advanceTimersByTimeAsync(32000);
       });
@@ -494,8 +470,7 @@ describe('usePendingMetadataPolling', () => {
 
   describe('visibility awareness', () => {
     it('does not schedule any poll while mounted in a hidden tab', async () => {
-      // A backgrounded tab must make no metadata requests: the timer stays
-      // parked, so advancing well past the 16s cap still fires nothing.
+      // a backgrounded tab makes no requests: the timer stays parked
       vi.mocked(apiModule.getLink).mockResolvedValue(makeLink('a'));
       setVisibility('hidden');
 
@@ -519,8 +494,7 @@ describe('usePendingMetadataPolling', () => {
       });
       expect(apiModule.getLink).not.toHaveBeenCalled();
 
-      // On return to visible the deferred first poll arms and fires promptly
-      // (within the initial 2s), not after the matured interval.
+      // on return to visible the deferred first poll fires within 2s
       await act(async () => {
         fireVisibility('visible');
         await vi.advanceTimersByTimeAsync(2000);
@@ -536,20 +510,20 @@ describe('usePendingMetadataPolling', () => {
 
       renderPolling([makeLink('a')]);
 
-      // One poll fires while visible.
+      // one poll fires while visible
       await act(async () => {
         await vi.advanceTimersByTimeAsync(2000);
       });
       expect(polledIds()).toHaveLength(1);
 
-      // Hidden: no further polls, even far past the 16s cap.
+      // hidden: no further polls, even far past the 16s cap
       await act(async () => {
         fireVisibility('hidden');
         await vi.advanceTimersByTimeAsync(120000);
       });
       expect(polledIds()).toHaveLength(1);
 
-      // Visible again: polling resumes.
+      // visible again: polling resumes
       await act(async () => {
         fireVisibility('visible');
         await vi.advanceTimersByTimeAsync(2000);
@@ -558,26 +532,25 @@ describe('usePendingMetadataPolling', () => {
     });
 
     it('resets the back-off to the initial interval on refocus', async () => {
-      // A long-hidden tab must not wait out a matured 16s interval after
-      // refocus: the first poll on return fires within the initial 2s.
+      // after refocus the first poll fires within 2s, not the matured 16s
       vi.mocked(apiModule.getLink).mockResolvedValue(makeLink('a'));
 
       renderPolling([makeLink('a')]);
 
-      // Mature the interval to the 16s cap through repeated misses.
+      // mature the interval to the 16s cap through repeated misses
       await act(async () => {
         await vi.advanceTimersByTimeAsync(60000);
       });
       const countBeforeHide = polledIds().length;
 
-      // Hidden across a long stretch: nothing polls.
+      // hidden across a long stretch: nothing polls
       await act(async () => {
         fireVisibility('hidden');
         await vi.advanceTimersByTimeAsync(60000);
       });
       expect(polledIds()).toHaveLength(countBeforeHide);
 
-      // Refocus arms one poll at the reset 2s interval, not the matured 16s.
+      // refocus arms one poll at the reset 2s, not the matured 16s
       await act(async () => {
         fireVisibility('visible');
         await vi.advanceTimersByTimeAsync(2000);
@@ -586,9 +559,7 @@ describe('usePendingMetadataPolling', () => {
     });
 
     it('writes no state on a visibility transition itself', async () => {
-      // Pausing is transport idling, not abandonment: hiding then showing runs
-      // no request and settles nothing, so a rendered card keeps its skeleton
-      // (aria-busy stays true, driven by the untouched data model).
+      // hide/show runs no request and settles nothing; skeleton stays
       vi.mocked(apiModule.getLink).mockResolvedValue(makeLink('a'));
       const onSettled = vi.fn();
 
@@ -619,8 +590,7 @@ describe('usePendingMetadataPolling', () => {
     });
 
     it('keeps a single timer through a rapid hidden/visible flap', async () => {
-      // Each transition shares the one timer handle, so flapping must not leave
-      // two live timers that would double the poll rate after refocus.
+      // one shared timer handle; flapping must not leave two live timers
       vi.mocked(apiModule.getLink).mockResolvedValue(makeLink('a'));
 
       renderPolling([makeLink('a')]);
@@ -630,7 +600,7 @@ describe('usePendingMetadataPolling', () => {
       });
       expect(polledIds()).toHaveLength(1);
 
-      // Flap several times, ending visible.
+      // flap several times, ending visible
       await act(async () => {
         for (let round = 0; round < 5; round += 1) {
           fireVisibility('hidden');
@@ -638,8 +608,7 @@ describe('usePendingMetadataPolling', () => {
         }
       });
 
-      // A single armed timer fires exactly one poll at the reset 2s interval.
-      // A leaked second timer would fire an extra poll in the same window.
+      // one armed timer fires one poll; a leaked second fires an extra
       await act(async () => {
         await vi.advanceTimersByTimeAsync(2000);
       });
@@ -647,9 +616,7 @@ describe('usePendingMetadataPolling', () => {
     });
 
     it('does not double-schedule when the tab flaps while a poll is in flight', async () => {
-      // The real single-timer hazard: a request still in flight when the tab
-      // flaps. The resume arms a timer and the in-flight resolve reschedules;
-      // both must converge on one handle, not leave two live timers.
+      // flap mid-flight: resume and resolve reschedule share one handle
       let resolvePoll: () => void = () => {};
       vi.mocked(apiModule.getLink).mockImplementation(
         () =>
@@ -660,27 +627,26 @@ describe('usePendingMetadataPolling', () => {
 
       renderPolling([makeLink('a')]);
 
-      // First poll fires; its request is left in flight.
+      // first poll fires; its request is left in flight
       await act(async () => {
         await vi.advanceTimersByTimeAsync(2000);
       });
       expect(polledIds()).toHaveLength(1);
 
-      // Flap hidden/visible while the request is pending, then let it resolve.
+      // flap hidden/visible while pending, then let it resolve
       await act(async () => {
         fireVisibility('hidden');
         fireVisibility('visible');
         resolvePoll();
       });
 
-      // The in-flight poll completed and backed off to 4s, and the resume's
-      // 2s timer was superseded rather than left live: nothing fires at +2s.
+      // the in-flight poll backed off to 4s and superseded the resume's 2s
       await act(async () => {
         await vi.advanceTimersByTimeAsync(2000);
       });
       expect(polledIds()).toHaveLength(1);
 
-      // The single 4s timer then fires the next poll.
+      // the single 4s timer then fires the next poll
       await act(async () => {
         await vi.advanceTimersByTimeAsync(2000);
       });
@@ -688,8 +654,7 @@ describe('usePendingMetadataPolling', () => {
     });
 
     it('does not resume polling when an in-flight request lands after the tab hides', async () => {
-      // A request in flight when the tab hides must not reschedule on resolve:
-      // the poll loop stays parked until a visibilitychange re-arms it.
+      // a resolve after hide must not reschedule; loop stays parked
       let resolvePoll: () => void = () => {};
       vi.mocked(apiModule.getLink).mockImplementation(
         () =>
@@ -705,26 +670,22 @@ describe('usePendingMetadataPolling', () => {
       });
       expect(polledIds()).toHaveLength(1);
 
-      // Hide the tab, then resolve the in-flight request.
+      // hide the tab, then resolve the in-flight request
       await act(async () => {
         fireVisibility('hidden');
         resolvePoll();
         await vi.advanceTimersByTimeAsync(120000);
       });
 
-      // No reschedule happened while hidden.
+      // no reschedule happened while hidden
       expect(polledIds()).toHaveLength(1);
     });
 
     it('does not start a second batch when the tab flaps while one is in flight', async () => {
-      // A batch runs up to the 10s request deadline. Each refocus resets the
-      // back-off and arms a prompt poll; flapping faster than the batch settles
-      // fired successive poll() runs, each dispatching another batch on top of
-      // the one still in flight. The in-flight guard holds it to one: a refocus
-      // (or a firing timer) while a batch is in flight starts no second batch.
+      // in-flight guard: a refocus mid-batch starts no second batch
       vi.mocked(apiModule.getLink).mockImplementation(
         (_id, signal) =>
-          // Hangs until its deadline aborts it; never settles on its own.
+          // hangs until its deadline aborts it; never settles on its own
           new Promise<Link>((_resolve, reject) => {
             signal?.addEventListener('abort', () =>
               reject(
@@ -736,15 +697,13 @@ describe('usePendingMetadataPolling', () => {
 
       renderPolling([makeLink('a')]);
 
-      // First poll fires at 2s; its request hangs, so the batch stays in flight.
+      // first poll fires at 2s; its request hangs, batch stays in flight
       await act(async () => {
         await vi.advanceTimersByTimeAsync(2000);
       });
       expect(polledIds()).toHaveLength(1);
 
-      // Flap repeatedly while the batch is still in flight, advancing 2s after
-      // each refocus so any leaked resume timer would fire a second poll. Stay
-      // under the 10s deadline so the first batch is provably still pending.
+      // flap under the 10s deadline; a leaked timer would fire a poll
       await act(async () => {
         for (let round = 0; round < 4; round += 1) {
           fireVisibility('hidden');
@@ -754,8 +713,7 @@ describe('usePendingMetadataPolling', () => {
       });
       expect(polledIds()).toHaveLength(1);
 
-      // Past the 10s deadline the hung request aborts, the batch settles, and
-      // the rotation resumes: the guard bounds concurrency without stalling.
+      // past the deadline the batch settles and rotation resumes, no stall
       await act(async () => {
         await vi.advanceTimersByTimeAsync(10000);
       });
@@ -763,9 +721,7 @@ describe('usePendingMetadataPolling', () => {
     });
 
     it('clears the in-flight guard when a batch settles hidden so a later refocus resumes', async () => {
-      // A batch in flight when the tab hides must clear the guard when it
-      // settles, even though it parks rather than re-arms. Otherwise the guard
-      // would survive and block every poll after the next refocus.
+      // a batch settling hidden must clear the guard or refocus won't poll
       let resolvePoll: () => void = () => {};
       vi.mocked(apiModule.getLink).mockImplementation(
         () =>
@@ -782,8 +738,7 @@ describe('usePendingMetadataPolling', () => {
       });
       expect(polledIds()).toHaveLength(1);
 
-      // Hide, then settle the in-flight batch while hidden: it parks (no
-      // re-arm) but must still release the guard.
+      // settle the batch hidden: it parks but must still release the guard
       await act(async () => {
         fireVisibility('hidden');
         resolvePoll();
@@ -791,7 +746,7 @@ describe('usePendingMetadataPolling', () => {
       });
       expect(polledIds()).toHaveLength(1);
 
-      // Refocus: with the guard cleared, the resume arms and the next poll fires.
+      // refocus: guard cleared, the resume arms and the next poll fires
       await act(async () => {
         fireVisibility('visible');
         await vi.advanceTimersByTimeAsync(2000);
@@ -800,51 +755,41 @@ describe('usePendingMetadataPolling', () => {
     });
 
     it('resets the back-off on refocus even while a batch is in flight, so the settling batch re-arms promptly', async () => {
-      // The refocus resets the interval before the in-flight guard decides
-      // whether to arm. If that reset sat inside the guard it would be skipped
-      // whenever a batch is in flight, and the settling batch would re-arm off
-      // the stale matured interval instead of the initial one. Mature the
-      // back-off to the 16s cap, hang a batch in flight, refocus mid-flight,
-      // then settle it: the next poll must arm off the reset interval (2s base,
-      // so 4s after the doubling), not the matured 16s left over from before.
+      // reset lives outside the guard: batch re-arms off 2s not 16s
       let releaseHang: () => void = () => {};
       let hangNext = false;
       vi.mocked(apiModule.getLink).mockImplementation(() => {
         if (hangNext) {
-          // Once matured, this poll hangs in flight until the test settles it,
-          // so the refocus lands while a batch is running.
+          // hangs until the test settles it; refocus lands mid-batch
           return new Promise<Link>((resolve) => {
             releaseHang = () => resolve(makeLink('a'));
           });
         }
-        // A miss keeps 'a' pending, so the back-off doubles toward the 16s cap.
+        // a miss keeps 'a' pending, so the back-off doubles toward 16s
         return Promise.resolve(makeLink('a'));
       });
 
       renderPolling([makeLink('a')]);
 
-      // Mature the interval to the 16s cap through repeated misses.
+      // mature the interval to the 16s cap through repeated misses
       await act(async () => {
         await vi.advanceTimersByTimeAsync(60000);
       });
 
-      // The next poll hangs, leaving a batch in flight at the matured interval.
+      // the next poll hangs, a batch in flight at the matured interval
       hangNext = true;
       await act(async () => {
         await vi.advanceTimersByTimeAsync(2000);
       });
       const countBeforeResume = polledIds().length;
 
-      // Hide, then refocus while the batch is still in flight. The resume resets
-      // the back-off but skips arming (the in-flight batch re-arms itself).
+      // refocus mid-flight resets back-off, skips arming; batch re-arms
       await act(async () => {
         fireVisibility('hidden');
         fireVisibility('visible');
       });
 
-      // Settle the batch visible and advance one reset-interval doubling (2s
-      // base -> 4s). A poll fires here only if the resume reset the interval;
-      // had it stayed at the matured 16s cap, nothing would fire until 16s.
+      // a poll fires at 4s only if the resume reset the interval, not 16s
       await act(async () => {
         releaseHang();
         await vi.advanceTimersByTimeAsync(4000);
@@ -853,10 +798,7 @@ describe('usePendingMetadataPolling', () => {
     });
 
     it('detaches the visibility listener on unmount so a later refocus polls nothing', async () => {
-      // The teardown's removeEventListener is what unpins the listener. Drop it
-      // and a visibilitychange after unmount runs the stale resume path, which
-      // arms a timer and polls getLink for a hook nobody renders. Unmount, fire
-      // a refocus, and let the initial interval elapse: a live listener polls.
+      // pins removeEventListener: refocus after unmount polls nothing
       vi.mocked(apiModule.getLink).mockResolvedValue(makeLink('a'));
 
       const { unmount } = renderPolling([makeLink('a')]);

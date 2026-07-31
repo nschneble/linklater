@@ -6,7 +6,7 @@ describe('sha256Hex', () => {
   it('returns the SHA-256 hash of the input as 64 lowercase hex characters', () => {
     const hash = sha256Hex('hello world');
     expect(hash).toMatch(/^[0-9a-f]{64}$/);
-    // Known test vector for "hello world".
+    // known test vector for "hello world"
     expect(hash).toBe(
       'b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9',
     );
@@ -40,7 +40,7 @@ describe('generateHexToken', () => {
   });
 
   it('returns a different value on each invocation', () => {
-    // Probability of collision across two 256-bit values is effectively zero.
+    // collision across two 256-bit values is effectively zero
     const samples = new Set(
       Array.from({ length: 50 }, () => generateHexToken()),
     );

@@ -41,9 +41,7 @@ type Surface = NonNullable<LinkButtonProps['surface']>;
 const SURFACE_CLASSES: Record<Surface, string> = {
   base: 'text-[var(--base-alt-text)] hover:text-[var(--base-text)]',
   mount: 'text-[var(--mount-alt-text)] hover:text-[var(--mount-text)]',
-  // warn bundle has no separate alt-text tier the underline can rely on;
-  // text stays --warn-text and the permanent underline carries the link
-  // affordance.
+  // warn has no alt-text tier; the underline carries the affordance
   warn: 'text-[var(--warn-text)]',
 };
 

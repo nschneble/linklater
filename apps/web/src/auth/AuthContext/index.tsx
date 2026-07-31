@@ -5,9 +5,7 @@ import type { AuthContextValue, User } from './types';
 
 export type { User };
 
-// createContext with `undefined` forces consumers to check that they are
-// wrapped in `AuthProvider`. The custom `useAuth` hook throws a clear error
-// if the context value is still `undefined`.
+// undefined default so useAuth throws when used outside AuthProvider
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 /**

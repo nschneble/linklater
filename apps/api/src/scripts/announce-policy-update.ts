@@ -6,7 +6,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 /**
  * One-shot operator script: enqueues the privacy-policy change notice for
  * every verified account (docs/PRIVACY.md promises email notice before
- * material changes take effect). Unverified accounts are skipped — their
+ * material changes take effect). Unverified accounts are skipped; their
  * address was never proven to belong to the person who typed it.
  *
  * Delivery rides the normal `email-send` pg-boss queue, so the worker in the

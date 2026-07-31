@@ -121,13 +121,7 @@ export default function Toast({
 }: ToastProps) {
   const [exiting, setExiting] = useState(false);
 
-  // Mirror onDismiss into a ref so the auto-dismiss timer doesn't restart
-  // every time a parent re-renders with a fresh inline arrow. Consumers
-  // (AuthForm, LinksView, BookmarkletSection, SettingsView) pass
-  // `onDismiss={() => ...}` – without this ref the timer would extend
-  // each time the parent's local state flips mid-window (e.g.
-  // forgot-password sentinel-hold 5000ms after success → 5+5 = ~10s
-  // visible toast).
+  // hold onDismiss in a ref so parent re-renders don't restart the timer
   const onDismissReference = useRef(onDismiss);
   onDismissReference.current = onDismiss;
 
@@ -141,10 +135,7 @@ export default function Toast({
     return () => clearTimeout(timer);
   }, [handleDismiss, variant]);
 
-  // When `announce` is false the card carries no live-region semantics – the
-  // parent owns the announcement via a separate, always-mounted region.
-  // Otherwise the variant drives both the politeness and the role via the
-  // lookup records above (mirrors `variantIcons`/`variantContainerClasses`).
+  // announce=false: parent owns the live region; else variant picks role + live
   let ariaLive: 'assertive' | 'polite' | undefined;
   let role: 'alert' | 'status' | undefined;
   if (announce) {
@@ -152,16 +143,7 @@ export default function Toast({
     role = variantRole[variant];
   }
 
-  // Focus indicator on the dismiss button is `--{state}-highlight-fg` (the
-  // bundle's own highlight-fg) rather than the universal `--focus-ring`.
-  // Recovery Option A per a11y-lead brief: the dismiss button paints on the
-  // toast's `--{state}-highlight` background; the per-theme `--focus-ring`
-  // hex (historically aliased to `--accent`, now retired) failed 3:1
-  // against `--{state}-highlight` on most themes per looper culori
-  // verification. The highlight-fg color already clears 4.5:1 against
-  // highlight by the existing bundle contract, so the ring inherits a
-  // comfortable SC 1.4.11 margin by construction – an unconditional
-  // uplift regardless of per-theme variance.
+  // dismiss ring uses --{state}-highlight-fg; --focus-ring failed 3:1 on the highlight bg
   return (
     <div
       role={role}

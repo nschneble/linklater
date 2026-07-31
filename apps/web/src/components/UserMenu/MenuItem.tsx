@@ -42,8 +42,7 @@ export default function MenuItem({
   className = '',
   'aria-label': ariaLabel,
 }: MenuItemProps) {
-  // Records the pointer type of the most recent pointerdown so the mousedown
-  // handler can gate its focus-retention hack to mouse input only.
+  // record pointer type so the mousedown hack fires for mouse input only
   const lastPointerType = useRef<string | undefined>(undefined);
 
   return (
@@ -60,15 +59,7 @@ export default function MenuItem({
         lastPointerType.current = event.pointerType;
       }}
       onMouseDown={(event) => {
-        // Prevent the browser from removing focus on mousedown (macOS behaviour:
-        // clicking a button that already has programmatic focus fires blur before
-        // click, which loses the hover highlight on items that keep the menu open).
-        //
-        // Only do this for mouse input. On touch/pen engines, preventDefault on
-        // the synthesized mousedown suppresses the follow-on synthesized click,
-        // so a tap would never fire onClick. An unknown/undefined pointerType is
-        // treated as mouse (older engines fire mousedown without a preceding
-        // pointerdown; modern engines set the ref first).
+        // preventDefault holds focus (macOS blur-before-click); mouse-only, else taps break
         if (
           lastPointerType.current === undefined ||
           lastPointerType.current === 'mouse'

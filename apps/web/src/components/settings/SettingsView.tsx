@@ -58,12 +58,7 @@ export default function SettingsView({
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Flash messages from `?linked=…` / `?link_error=…`. `useFlashQueryParameters`
-  // owns the deferred-read + URL-strip dance (see its WHY block for the
-  // SR-announce, no-deps, and StrictMode rationale). The hook returns
-  // `null` synchronously on first paint, then the parsed flash once,
-  // stable thereafter – preserving the empty → populated transition NVDA
-  // and JAWS need to announce the Toast.
+  // hook returns null then the flash once, so SR announces the Toast
   const flash = useFlashQueryParameters(readOAuthFlashMessages, [
     'linked',
     'link_error',
@@ -74,15 +69,13 @@ export default function SettingsView({
     if (!flash) return;
     if (flash.toastMessage) toast.show(flash.toastMessage);
     if (flash.linkError) setLinkError(flash.linkError);
-    // Run once when the flash settles. `toast` is a stable hook return
-    // by construction; `flash` flips null → value exactly once.
+    // runs once: flash flips null→value once and toast is stable
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [flash]);
 
   const showIdPs = googleEnabled || appleEnabled;
 
-  // Sections are derived from user state and feature flags. Order matches
-  // the document order of the rendered groups; the sidebar depends on this.
+  // order must match the rendered groups; the sidebar relies on it
   const sections = useMemo<SettingsSection[]>(
     () => [
       { hash: 'account', label: 'Account', icon: 'fa-user' },
@@ -108,9 +101,7 @@ export default function SettingsView({
     sectionIds,
   });
 
-  // Honor a router-state `scrollTo` jump (e.g. the welcome modal linking to
-  // the bookmarks section). On arrival, activate + scroll to the target, then
-  // strip the state so a refresh or back navigation doesn't re-trigger it.
+  // honor a router-state scrollTo jump, then strip it so back won't repeat
   useEffect(() => {
     const scrollTo = (location.state as { scrollTo?: string } | null)?.scrollTo;
     if (scrollTo && sectionIds.includes(scrollTo)) {
@@ -122,12 +113,7 @@ export default function SettingsView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Clear the module-scope last-activated-section on unmount. Without this,
-  // navigating away from /settings and back lands the user on whichever
-  // section they last clicked: the React `activeSection` state resets on
-  // remount, but `useReanchorOnLoad` reads from the module global, so async
-  // leaves (PAT list, bookmarklet token) re-anchor scroll to the stale value
-  // once they settle.
+  // clear module-scope section on unmount or async leaves re-anchor stale
   useEffect(() => {
     return () => {
       setActiveSettingsSection('');

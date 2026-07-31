@@ -7,9 +7,7 @@ import { formatTotpCode, normalizeTotpInput } from '../../lib/totpCode';
 import { useEffect, useRef } from 'react';
 import type { FormEvent, RefObject } from 'react';
 
-// Wires `aria-describedby` for the TOTP input. SRs announce describedby
-// targets in order, so hint first + error second means the error is the
-// last thing heard before the user retries (WCAG 3.3.1 friendly).
+// SRs read aria-describedby in order: hint first, error last (WCAG 3.3.1)
 function describedBy(
   isRecovery: boolean,
   error: string | null,
@@ -47,7 +45,7 @@ export default function MfaView({
   const formReference = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    // Auto-submit only for TOTP (6-digit numeric) – recovery codes have no fixed length.
+    // TOTP auto-submits at 6 digits; recovery codes have no fixed length
     if (!isRecovery && !loading && /^\d{6}$/.test(mfaCode)) {
       formReference.current?.requestSubmit();
     }
@@ -72,7 +70,7 @@ export default function MfaView({
           {isRecovery ? 'Recovery code' : 'Authenticator code'}
         </label>
         {!isRecovery && (
-          // --*-subtle-text is BASE-only by design; mount hints collapse to alt-text
+          // --*-subtle-text is BASE-only; mount hints use alt-text
           <p
             className="text-[var(--mount-alt-text)] text-xs"
             id="mfa-totp-code-hint"

@@ -86,9 +86,7 @@ export default function ColorRow({
     setInputValue(currentValue);
   }, [currentValue]);
 
-  // Debounce the visible/announced failure note so a mid-edit value (e.g.
-  // `#3`) doesn't thrash it. `aria-invalid` is NOT debounced – it tracks the
-  // live state so the input styling reflects the current value immediately.
+  // debounce the note text; aria-invalid stays live (styling tracks now)
   const [debouncedFailure, setDebouncedFailure] = useState(failure);
   useEffect(() => {
     const timer = setTimeout(
@@ -119,8 +117,7 @@ export default function ColorRow({
   }
 
   const isAlpha = isAlphaValue(currentValue);
-  // The native color picker cannot represent alpha (it only does 6-digit hex),
-  // so alpha rows disable it and keep editing through the text input.
+  // native picker can't do alpha, so alpha rows edit via the text input
   const pickerDisabled = isAlpha;
   const pickerValue = isSixDigitHex(inputValue) ? inputValue : '#000000';
   const swatchBackground = isAlpha ? currentValue : pickerValue;
@@ -136,9 +133,8 @@ export default function ColorRow({
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
       {/*
         The slot label reads first but sits LAST in source order so the picker
-        and hex input stay DOM-adjacent siblings: focus moves picker → input
-        with nothing in between (Wave 4 A — the two editors of one value read as
-        a single paired control). `order-first` restores the visual lead.
+        and hex input stay DOM-adjacent: focus moves picker → input with
+        nothing between. `order-first` restores the visual lead.
       */}
       <div className="order-first flex-1 min-w-0">
         <p className="text-[var(--mount-text)] text-xs font-medium">{label}</p>

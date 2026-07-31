@@ -16,8 +16,7 @@ describe('useFocusReturn', () => {
     expect(document.activeElement).toBe(trigger);
 
     const { unmount } = renderHook(() => useFocusReturn(true));
-    // The hook only manages restoration; the open region itself is responsible
-    // for moving focus inward. Simulate that here so we can prove restoration.
+    // the hook only restores; the open region moves focus inward, simulated here
     const innerInput = document.createElement('input');
     document.body.appendChild(innerInput);
     innerInput.focus();
@@ -40,7 +39,7 @@ describe('useFocusReturn', () => {
     expect(document.activeElement).toBe(innerInput);
 
     unmount();
-    // Focus stays where it was because the hook never armed.
+    // focus stays where it was because the hook never armed
     expect(document.activeElement).toBe(innerInput);
 
     trigger.remove();
@@ -57,9 +56,7 @@ describe('useFocusReturn', () => {
 
     result.current.skipRestore();
     unmount();
-    // Focus stays where the consumer left it instead of returning to the
-    // captured trigger – important for navigation cases where the trigger
-    // is no longer the right destination.
+    // focus stays where the consumer left it, not the captured trigger (nav case)
     expect(document.activeElement).toBe(innerInput);
 
     trigger.remove();
@@ -73,21 +70,20 @@ describe('useFocusReturn', () => {
       { initialProps: { open: false } },
     );
 
-    // Move focus to a different element while closed.
+    // move focus to a different element while closed
     const triggerB = document.createElement('button');
     document.body.appendChild(triggerB);
     triggerB.focus();
     expect(document.activeElement).toBe(triggerB);
 
     rerender({ open: true });
-    // The region opens – pretend something inside takes focus.
+    // the region opens; pretend something inside takes focus
     const innerInput = document.createElement('input');
     document.body.appendChild(innerInput);
     innerInput.focus();
 
     unmount();
-    // Should restore to triggerB (focused when isOpen flipped to true),
-    // not triggerA (focused before the hook armed).
+    // should restore to triggerB (focused at flip), not triggerA (pre-arm)
     expect(document.activeElement).toBe(triggerB);
 
     triggerA.remove();

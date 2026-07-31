@@ -28,8 +28,7 @@ describe('RefreshTokenService', () => {
     extensionAuthCode: {
       deleteMany: jest.fn().mockResolvedValue({}),
     },
-    // Invoke the transaction callback with the same mock client so assertions
-    // on refreshToken.{delete,create} still match.
+    // run the transaction callback with the same mock so assertions match
     $transaction: jest
       .fn()
       .mockImplementation(

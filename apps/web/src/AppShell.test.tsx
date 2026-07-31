@@ -85,7 +85,7 @@ function makeUser(overrides = {}) {
     cvdMode: false,
     dyslexicFont: false,
     email: 'user@example.com',
-    // Unverified so the AppShell verification banner renders.
+    // unverified so the AppShell verification banner renders
     emailVerifiedAt: null,
     hasPassword: true,
     mode: 'light' as const,
@@ -94,7 +94,7 @@ function makeUser(overrides = {}) {
     pendingEmail: null,
     theme: 'scanner-darkly',
     userId: 'user-1',
-    // Non-null so the WelcomeModal branch stays closed.
+    // non-null so the WelcomeModal branch stays closed
     welcomedAt: '2024-01-01T00:00:00Z',
     ...overrides,
   };

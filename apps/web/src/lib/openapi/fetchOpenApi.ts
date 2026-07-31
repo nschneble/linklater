@@ -23,8 +23,8 @@ export function resolveOpenApiUrl(apiBaseUrl: string | undefined): string {
 }
 
 /**
- * Derives the API origin shown in the docs — the cURL example URLs and the
- * `WelcomePanel` Base URL — by stripping the `/openapi.json` suffix. An
+ * Derives the API origin shown in the docs - the cURL example URLs and the
+ * `WelcomePanel` Base URL - by stripping the `/openapi.json` suffix. An
  * absolute spec URL resolves to the API origin; a relative one resolves to ''
  * (same origin), which is correct behind a reverse proxy.
  */

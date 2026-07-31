@@ -46,10 +46,7 @@ export function useMultiFactor() {
   const [totpCode, setTotpCode] = useState('');
   const totpCodeInputReference = useRef<HTMLInputElement>(null);
   const addAuthenticatorReference = useRef<HTMLButtonElement>(null);
-  // Set by handleCancelTotpSetup so the next render that lands in State A
-  // can return focus to the "Add authenticator app" button. Without this
-  // the cancelled button unmounts and focus falls to <body>, dropping
-  // keyboard + screen-reader users out of context.
+  // State A refocuses add-authenticator so cancel-unmount can't hit <body>
   const shouldFocusAddAuthenticator = useRef(false);
 
   useEffect(() => {
@@ -58,7 +55,7 @@ export function useMultiFactor() {
     }
   }, [totpSetup]);
 
-  // Re-authentication state (for disable / regenerate)
+  // re-authentication state (for disable / regenerate)
   const [reauthAction, setReauthAction] = useState<ReauthAction | null>(null);
   const [reauthPassword, setReauthPassword] = useState('');
   const [reauthCode, setReauthCode] = useState('');
@@ -76,11 +73,7 @@ export function useMultiFactor() {
     } finally {
       setLoading(false);
     }
-    // Propagate the server-side `multiFactorPending` flag into AuthContext
-    // so navigating away and back to Settings restores the in-progress
-    // setup state rather than showing the stale "MFA off" view. Mirrors
-    // the post-verify refresh below: a refresh failure must not undo or
-    // shadow the successful setup transition.
+    // refresh so AuthContext learns multiFactorPending and keeps setup state
     if (started) {
       try {
         await refreshUser();
@@ -158,8 +151,7 @@ export function useMultiFactor() {
       shouldFocusAddAuthenticator.current = true;
       setTotpSetup(null);
       setTotpCode('');
-      // refreshUser() clears the server-side multiFactorPending flag so the
-      // UI drops out of the "Continue setup" recovery state too.
+      // refreshUser() clears multiFactorPending so UI leaves "Continue setup"
       await refreshUser();
     } catch (caught: unknown) {
       setError(getErrorMessage(caught, 'Failed to cancel setup'));

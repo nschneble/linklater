@@ -23,8 +23,8 @@ import { LinksService } from '../src/links/links.service.js';
  * - Decorator drift on `LinksController` (missing operationIds, broken
  *   response shapes).
  *
- * Boots a minimal testing module – `LinksController` with a stubbed
- * `LinksService` and a permissive `AnyAuthGuard` – so the test never hits
+ * Boots a minimal testing module - `LinksController` with a stubbed
+ * `LinksService` and a permissive `AnyAuthGuard` - so the test never hits
  * a database or queue.
  */
 describe('OpenAPI document (e2e)', () => {
@@ -55,11 +55,7 @@ describe('OpenAPI document (e2e)', () => {
       new DocumentBuilder()
         .setTitle('Linklater API')
         .setDescription(
-          // Mirror the auth-header example baked into `apps/api/src/main.ts`
-          // so the `info.description` assertion below has meaningful copy to
-          // match against. The literal "Authorization: Bearer ltk_…" is what
-          // the API docs page's "try it" affordance and downstream API
-          // clients read from.
+          // mirror the auth-header example from main.ts so the assertion below matches
           'Authenticate every request with a personal access token in the `Authorization` header: `Authorization: Bearer ltk_…`.',
         )
         .setVersion('test')
@@ -96,10 +92,7 @@ describe('OpenAPI document (e2e)', () => {
     expect(response.body.info.version).toBe('test');
   });
 
-  // Pins the PAT-auth example baked into `main.ts`'s `setDescription` against
-  // future copy edits. The API docs page's "try it" affordance uses the
-  // description as auth guidance, so the literal "Authorization: Bearer ltk_…"
-  // must survive.
+  // pins the PAT-auth example in main.ts's setDescription against copy edits
   it('embeds the Bearer-ltk auth header example in info.description', async () => {
     const response = await request(app.getHttpServer()).get('/openapi.json');
 

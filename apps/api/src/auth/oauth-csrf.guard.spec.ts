@@ -22,12 +22,7 @@ const makeResponse = () => ({ cookie: jest.fn(), clearCookie: jest.fn() });
 
 const DUMMY_STRATEGY_NAME = 'oauth-csrf-guard-spec-dummy';
 
-// A minimal real passport strategy, registered once for this suite, so
-// `super.canActivate` has something to delegate to. ts-jest's ESM mode
-// doesn't reliably intercept a `jest.mock('@nestjs/passport', ...)` factory
-// (the real `passport` module still gets resolved), so exercising a real
-// strategy is more robust here than fighting that limitation – and it
-// exercises the actual delegation path, not a stand-in for it.
+// real passport strategy: ts-jest ESM can't reliably mock @nestjs/passport
 class DummyStrategy {
   name = DUMMY_STRATEGY_NAME;
   authenticate(this: { success: (user: unknown) => void }) {
@@ -74,8 +69,7 @@ describe('oauth-csrf.guard', () => {
         query: { state: nonce },
       };
 
-      // The dummy strategy's `success` resolves canActivate `true` via
-      // @nestjs/passport's own (real, unmocked) AuthGuard machinery.
+      // dummy strategy's success resolves canActivate via real AuthGuard
       await expect(
         guard.canActivate(makeContext(request, makeResponse())),
       ).resolves.toBe(true);

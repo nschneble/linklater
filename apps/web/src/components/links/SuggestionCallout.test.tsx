@@ -1,12 +1,12 @@
 /*
- * Tests for SuggestionCallout – discovery callout under the unread empty
+ * Tests for SuggestionCallout - discovery callout under the unread empty
  * state and on the Stumble empty page.
  *
  * Covers the WCAG-2.4.3-safe post-Add-and-Read refetch path:
  *   - inNewTab=true success path triggers a second `getSuggestions` call
  *     so the just-read article isn't recommended back next time.
  *   - Refetch failure leaves the prior suggestion mounted (focus on the
- *     "Add and read" button must not be lost – flipping fetchFailed would
+ *     "Add and read" button must not be lost - flipping fetchFailed would
  *     unmount the populated card and send focus to <body>).
  */
 
@@ -56,8 +56,7 @@ function makeLink(overrides: Partial<{ id: string; url: string }> = {}) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // Default: window.open is a noop spy so click handlers don't error in
-  // jsdom (jsdom's window.open returns null and logs a noisy warning).
+  // window.open noop spy so click handlers don't error in jsdom
   vi.spyOn(window, 'open').mockReturnValue(null);
 });
 
@@ -86,11 +85,11 @@ describe('SuggestionCallout inNewTab refetch after Add-and-Read', () => {
       render(<SuggestionCallout inNewTab={true} />);
     });
 
-    // Initial fetch resolved
+    // initial fetch resolved
     expect(await screen.findByText('First Suggestion')).toBeInTheDocument();
     expect(apiModule.getSuggestions).toHaveBeenCalledTimes(1);
 
-    // Click "Add and read"
+    // click "Add and read"
     const button = screen.getByRole('button', {
       name: /add and read \(opens in new tab\)/i,
     });
@@ -98,12 +97,12 @@ describe('SuggestionCallout inNewTab refetch after Add-and-Read', () => {
       button.click();
     });
 
-    // After create+read settle, refetch fires and swaps the card text
+    // after create+read settle, refetch fires and swaps the card text
     await waitFor(() => {
       expect(apiModule.getSuggestions).toHaveBeenCalledTimes(2);
     });
     expect(await screen.findByText('Second Suggestion')).toBeInTheDocument();
-    // Prior suggestion is gone (swapped in place – same DOM node, new text)
+    // prior suggestion is gone (swapped in place - same DOM node, new text)
     expect(screen.queryByText('First Suggestion')).not.toBeInTheDocument();
   });
 
@@ -137,9 +136,7 @@ describe('SuggestionCallout inNewTab refetch after Add-and-Read', () => {
       expect(apiModule.getSuggestions).toHaveBeenCalledTimes(2);
     });
 
-    // Prior suggestion is still mounted. An empty refetch result must NOT
-    // unmount the populated card – doing so would drop focus from the
-    // "Add and read" button to <body> (WCAG 2.4.3).
+    // empty refetch keeps the card mounted so focus survives (WCAG 2.4.3)
     expect(screen.getByText('First Suggestion')).toBeInTheDocument();
     // "Add and read" button is still present (anchor of focus).
     expect(
@@ -150,7 +147,7 @@ describe('SuggestionCallout inNewTab refetch after Add-and-Read', () => {
   });
 
   it('leaves the prior suggestion mounted when the refetch fails', async () => {
-    // The refetch rejects on purpose; keep its warn branch out of the log.
+    // the refetch rejects on purpose; keep its warn branch out of the log
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     vi.mocked(apiModule.getSuggestions)
       .mockResolvedValueOnce({
@@ -178,15 +175,13 @@ describe('SuggestionCallout inNewTab refetch after Add-and-Read', () => {
       expect(apiModule.getSuggestions).toHaveBeenCalledTimes(2);
     });
 
-    // Prior suggestion is still mounted. The populated card branch must
-    // stay rendered to preserve focus on the "Add and read" button.
+    // populated card stays rendered to preserve focus on "Add and read"
     expect(screen.getByText('First Suggestion')).toBeInTheDocument();
-    // No transition to fetch-failed UI – that message would imply the card
-    // got unmounted (it's gated on !loading && !fetchFailed && suggestion).
+    // no fetch-failed UI - showing it would imply the card unmounted
     expect(
       screen.queryByText(/couldn't load suggestions right now/i),
     ).not.toBeInTheDocument();
-    // The "Add and read" button is still present (anchor of focus).
+    // the "Add and read" button is still present (anchor of focus)
     expect(
       screen.getByRole('button', {
         name: /add and read \(opens in new tab\)/i,
@@ -197,8 +192,7 @@ describe('SuggestionCallout inNewTab refetch after Add-and-Read', () => {
   });
 
   it('does NOT refetch in same-tab mode (inNewTab=false)', async () => {
-    // jsdom's window.location.assign is sealed – replace with a spy so the
-    // same-tab nav path doesn't throw.
+    // window.location.assign is sealed in jsdom; spy so nav doesn't throw
     const assignMock = vi.fn();
     Object.defineProperty(window, 'location', {
       configurable: true,
@@ -230,8 +224,7 @@ describe('SuggestionCallout inNewTab refetch after Add-and-Read', () => {
       );
     });
 
-    // Same-tab mode: page is about to unload, no point refetching. Only
-    // the mount-time fetch should fire.
+    // same-tab mode unloads the page, so only the mount-time fetch fires
     expect(apiModule.getSuggestions).toHaveBeenCalledTimes(1);
   });
 });

@@ -40,8 +40,7 @@ function renderStumblePage() {
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
 
-// jsdom's window.location is sealed – replace it with a configurable object so
-// we can spy on replace() without hitting "Cannot redefine property".
+// jsdom's window.location is sealed; redefine it as configurable to spy
 const replaceMock = vi.fn();
 
 beforeEach(() => {
@@ -58,7 +57,7 @@ beforeEach(() => {
 
 describe('StumblePage loading state', () => {
   it('shows a polite status region while waiting for the API call', () => {
-    // Never resolves – keeps the component in 'loading' state
+    // never resolves; keeps the component in 'loading' state
     vi.mocked(apiModule.stumbleLink).mockReturnValue(new Promise(() => {}));
 
     renderStumblePage();

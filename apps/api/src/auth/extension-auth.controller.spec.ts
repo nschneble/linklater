@@ -10,8 +10,7 @@ import { ExtensionAuthService } from './extension-auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import type { AuthRequest } from './auth-request.type';
 
-// The @Throttle decorator stores metadata directly on the method function
-// using keys `'THROTTLER:TTL' + bucketName` and `'THROTTLER:LIMIT' + bucketName`.
+// @Throttle stores method metadata under THROTTLER:TTL and THROTTLER:LIMIT
 const THROTTLER_TTL = 'THROTTLER:TTL';
 const THROTTLER_LIMIT = 'THROTTLER:LIMIT';
 

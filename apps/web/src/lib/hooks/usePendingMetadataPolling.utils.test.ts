@@ -8,7 +8,7 @@ describe('selectPollBatch', () => {
   it('returns the whole set when it fits within the cap', () => {
     const { batch, nextCursor } = selectPollBatch(['a', 'b'], 0, 3);
     expect(batch).toEqual(['a', 'b']);
-    // Cursor advances by the number actually polled, not by the cap.
+    // cursor advances by the number actually polled, not by the cap
     expect(nextCursor).toBe(2);
   });
 
@@ -27,15 +27,14 @@ describe('selectPollBatch', () => {
     const first = selectPollBatch(ids, 0, 3);
     const second = selectPollBatch(ids, first.nextCursor, 3);
     expect(first.batch).toEqual(['a', 'b', 'c']);
-    // Cursor 3 wraps: d, e, then back to a.
+    // cursor 3 wraps: d, e, then back to a
     expect(second.batch).toEqual(['d', 'e', 'a']);
     const covered = new Set([...first.batch, ...second.batch]);
     expect(covered).toEqual(new Set(ids));
   });
 
   it('keeps a monotonic cursor pointing to the right slot after the set shrinks', () => {
-    // A large cursor from earlier ticks must still land on a valid slot once
-    // the set shrinks, so rotation never throws or skips.
+    // a large cursor still lands on a valid slot after the set shrinks
     const { batch } = selectPollBatch(['b'], 42, 3);
     expect(batch).toEqual(['b']);
   });

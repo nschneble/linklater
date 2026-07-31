@@ -150,8 +150,7 @@ export function deriveForeground(
 ): string {
   const direction = FG_DIRECTION[mode];
   const backgroundLightness = lightnessOf(backgroundHex);
-  // Start a stride away from the bg so the first measurement is already biased
-  // toward contrast, then nudge further as needed.
+  // start a stride from bg so the first sample leans to contrast
   let lightness = clamp01(backgroundLightness + direction * NUDGE_STEP * 4);
 
   for (let step = 0; step < MAX_NUDGE_STEPS; step += 1) {
@@ -165,8 +164,7 @@ export function deriveForeground(
     lightness = next;
   }
 
-  // Rail reached without clearing (only possible for very low thresholds on a
-  // near-extreme bg): fall back to the pure contrast extreme.
+  // rail reached without clearing: fall back to the pure contrast extreme
   return direction === 1 ? '#ffffff' : '#000000';
 }
 
@@ -185,8 +183,7 @@ function deriveForegroundDualBackground(
   chroma: number,
 ): string {
   const direction = FG_DIRECTION[mode];
-  // Anchor the walk to whichever bg the fg must travel FURTHEST from to clear —
-  // in band-fixed mode that's the bg closest to the fg's contrast direction.
+  // anchor to whichever bg the fg must travel furthest from to clear
   const anchorLightness = Math.max(
     lightnessOf(backgroundHexA),
     lightnessOf(backgroundHexB),
@@ -216,7 +213,7 @@ function deriveForegroundDualBackground(
 /** A low-chroma background hue near `baseHue`, jittered slightly. */
 function neutralBackgroundHex(rng: Rng, mode: Mode, baseHue: number): string {
   const hue = (baseHue + (rng() - 0.5) * 30 + 360) % 360;
-  // Backgrounds carry only a whisper of chroma so text/border can reach AA.
+  // backgrounds carry a whisper of chroma so text/border can reach AA
   const chroma = 0.005 + rng() * 0.02;
   return oklchHex(randomBandLightness(rng, mode), chroma, hue);
 }
@@ -249,8 +246,7 @@ function deriveBundle(
 ): void {
   setSlot(palette, bundle, 'bg', bundleBgHex);
 
-  // Text slots: ≥4.5 against the bundle bg. Low chroma so the lightness solve
-  // has room to reach AA.
+  // text slots: ≥4.5 vs bundle bg; low chroma leaves room to reach AA
   setSlot(
     palette,
     bundle,
@@ -264,8 +260,7 @@ function deriveBundle(
     deriveForeground(bundleBgHex, 4.5, mode, (textHue + 20) % 360, 0.03),
   );
 
-  // Border + highlight: ≥3.0 against the bundle bg. The border ALSO answers to
-  // --base-bg on the card bundles (cross-bundle guard).
+  // border/highlight ≥3.0 vs bg; card-bundle border also clears --base-bg
   const borderHue = (textHue + 40) % 360;
   if (CARD_BUNDLES.includes(bundle)) {
     setSlot(
@@ -290,14 +285,7 @@ function deriveBundle(
     );
   }
 
-  // The highlight is a colored "button" surface that BOTH the bundle bg sees
-  // (≥3.0) AND its own highlight-fg reads on (≥4.5). Those two constraints pull
-  // in opposite directions, so the highlight is derived as a DARK saturated
-  // color carrying WHITE foreground text — the standard accent-button shape —
-  // which keeps highlight-fg trivially clearing 4.5 on both highlight states. A
-  // dark highlight clears 3:1 against the light bg in light mode directly; in
-  // dark mode it must be LIGHTER than the dark bg, so the highlight is solved as
-  // a mid-dark tone reading white text while still clearing the dark bg.
+  // highlight = dark accent + white text: clears ≥3 vs bg, ≥4.5 for fg
   const highlightHue = (textHue + 200) % 360;
   const { highlight, highlightHover, highlightFg } = deriveHighlightTriple(
     bundleBgHex,
@@ -359,9 +347,7 @@ export function deriveHighlightTriple(
   const foreground = '#ffffff';
   const chroma = 0.07 + rng() * 0.06;
 
-  // Walk the highlight lightness from dark→up until white reads at 4.5 on it AND
-  // it clears 3.0 against the bundle bg. Starting dark guarantees the white-fg
-  // constraint; raising lightness only helps the vs-bg constraint in dark mode.
+  // walk highlight L up from dark until white ≥4.5 on it and ≥3 vs bg
   const findHighlight = (startLightness: number): string => {
     let lightness = startLightness;
     let best = oklchHex(lightness, chroma, hue);
@@ -384,15 +370,7 @@ export function deriveHighlightTriple(
   };
 
   let highlight = findHighlight(0.18);
-  // Defensive only — UNREACHABLE for any in-band bundle bg. `findHighlight`
-  // always lands within `BG_BAND` (proven exhaustively in
-  // randomPalette.internals.test.ts: 0 misses across every in-band bg hue/
-  // chroma × every highlight hue/chroma, both modes). It can only miss for a
-  // mid-lightness bg this generator never produces — and in THAT case the 0.4-L
-  // tone here does NOT itself clear 3:1 vs such a bg; it is a placeholder the
-  // outer `failingForegrounds` → `forceExtreme` repair pass corrects. So this is
-  // a last-ditch guard against a future band change, not a passing-guaranteed
-  // safety net.
+  // defensive only: unreachable for in-band bgs; forceExtreme repairs it
   if (
     (computeContrastRatio(foreground, highlight) ?? 0) < 4.5 ||
     (computeContrastRatio(highlight, bundleBgHex) ?? 0) < 3
@@ -400,7 +378,7 @@ export function deriveHighlightTriple(
     highlight = oklchHex(0.4, chroma, hue);
   }
 
-  // Hover: a small lightness step that keeps BOTH constraints; else no-op.
+  // hover: a small lightness step that keeps both constraints; else no-op
   const highlightLightness = lightnessOf(highlight);
   const hoverCandidate = oklchHex(
     clamp01(highlightLightness + 0.06),
@@ -416,11 +394,9 @@ export function deriveHighlightTriple(
     hoverFgRatio >= 4.5 &&
     hoverBgRatio >= 3
   ) {
-    // The hover step kept both constraints — use it.
     highlightHover = hoverCandidate;
   } else {
-    // The step would break a constraint — a no-op hover still satisfies the
-    // contract.
+    // step broke a constraint; no-op hover still satisfies the contract
     highlightHover = highlight;
   }
 
@@ -441,8 +417,7 @@ function deriveFocusRing(
 ): string {
   const backgrounds = [baseBgHex, mountBgHex, orbitBgHex];
   const direction = FG_DIRECTION[mode];
-  // All three bgs sit in the same band, so a single walk away from the band
-  // clears all three together. Anchor to the band edge closest to the fg.
+  // all three bgs share the band, so one walk away clears all three
   const anchor =
     mode === 'light'
       ? Math.max(...backgrounds.map(lightnessOf))
@@ -478,7 +453,7 @@ function inputBgHex(rng: Rng, mode: Mode, baseHue: number): string {
 function buildAttempt(mode: Mode, rng: Rng): Palette {
   const palette: Palette = {};
 
-  // A) Fix --base-bg FIRST — the anchor every cross-bundle pair answers to.
+  // A) fix --base-bg FIRST: the anchor every cross-bundle pair answers to
   const baseHue = rng() * 360;
   const baseBgHex = neutralBackgroundHex(rng, mode, baseHue);
 
@@ -486,8 +461,7 @@ function buildAttempt(mode: Mode, rng: Rng): Palette {
   deriveBundle(palette, 'base', baseBgHex, baseBgHex, mode, rng, baseHue);
   palette['--base-input-bg' as ThemeVariable] = inputBgHex(rng, mode, baseHue);
 
-  // C) card bundles. mount/orbit stay near the base hue (low chroma); the 4
-  // state bundles get hues at a random rotation + 90° spacing for CVD spread.
+  // C) mount/orbit near base hue; state bundles 90°-spaced for CVD spread
   const stateRotation = rng() * 360;
   const stateBundles = ['alert', 'warn', 'info', 'success'] as const;
 
@@ -618,9 +592,7 @@ export function generateRandomPalette(
     const failures = failingForegrounds(palette, CONTRACT_PAIRS);
     if (failures.length === 0) break;
     if (attempt === MAX_ATTEMPTS - 1) {
-      // Final attempt: force every remaining failure to its contrast extreme.
-      // Repeat until stable, since forcing a border can change a cross-bundle
-      // pair (it can't, both share the same bg band, but verify defensively).
+      // force remaining failures to extremes; repeat until stable
       let remaining = failures;
       let guard = 0;
       while (remaining.length > 0 && guard < 8) {
@@ -633,17 +605,14 @@ export function generateRandomPalette(
     }
   }
 
-  // Completeness: every EDITABLE_VARS key must be present + 6-digit hex. Any
-  // slot the derivation didn't write (shouldn't happen) falls back to a band
-  // neutral so the map is never missing a key.
+  // every EDITABLE_VARS key present as 6-digit hex, else band fallback
   const complete = {} as Record<ThemeVariable, string>;
   for (const variable of EDITABLE_VARS) {
     const value = palette[variable];
     if (typeof value === 'string' && /^#[0-9a-fA-F]{6}$/.test(value)) {
       complete[variable] = value;
     } else {
-      // A slot the derivation didn't write (shouldn't happen): fall back to a
-      // band neutral so the map is never missing a key.
+      // derivation didn't write this slot (shouldn't happen): fallback
       complete[variable] = oklchHex(
         randomBandLightness(rng, mode),
         0.01,

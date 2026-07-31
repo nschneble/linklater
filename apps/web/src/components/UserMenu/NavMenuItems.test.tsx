@@ -1,10 +1,7 @@
 /*
- * Tests for the shared user-menu nav items.
- *
- * Focus: the custom-theme entry reads a single static label ("Craft your
- * theme") and routes to the theme-editor view. (The label no longer toggles on
- * whether a palette exists — going custom is now an in-editor edit, so the menu
- * entry is a plain, always-present entry point.)
+ * Tests for the shared user-menu nav items: the custom-theme entry
+ * reads a static label ("Craft your theme") and routes to the
+ * theme-editor view.
  */
 
 import NavMenuItems from './NavMenuItems';

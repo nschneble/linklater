@@ -20,7 +20,7 @@ vi.mock('../../../lib/api', () => ({
   revokeApiToken: vi.fn(),
 }));
 
-// useReanchorOnLoad is a side-effectful scroll helper – stub it out
+// useReanchorOnLoad is a side-effectful scroll helper - stub it out
 vi.mock('../useReanchorOnLoad', () => ({
   useReanchorOnLoad: vi.fn(),
 }));
@@ -220,14 +220,14 @@ describe('useApiTokens revoke flow', () => {
     const { result } = renderHook(() => useApiTokens());
     await waitFor(() => expect(result.current.loadError).toBeNull());
 
-    // First create so newToken is set
+    // first create so newToken is set
     await act(async () => {
       await result.current.handleCreate(fakeSubmitEvent());
     });
 
     expect(result.current.newToken?.id).toBe('new-one');
 
-    // Now revoke that same token
+    // now revoke that same token
     await act(async () => {
       await result.current.handleRevoke('new-one');
     });

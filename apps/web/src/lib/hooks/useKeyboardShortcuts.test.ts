@@ -99,7 +99,7 @@ describe('useKeyboardShortcuts', () => {
     fireKey('Escape');
     expect(options.onNavigateNextLink).toHaveBeenCalledOnce();
     expect(options.onNavigatePrevLink).toHaveBeenCalledOnce();
-    // ArrowLeft → unread, ArrowRight → read.
+    // ArrowLeft → unread, ArrowRight → read
     expect(options.onShowUnread).toHaveBeenCalledOnce();
     expect(options.onShowRead).toHaveBeenCalledOnce();
     expect(options.onOpenSelectedLink).toHaveBeenCalledOnce();

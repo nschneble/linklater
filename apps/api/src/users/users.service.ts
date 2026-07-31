@@ -87,8 +87,7 @@ export class UsersService {
       });
       return withoutPasswordHash(user);
     } catch (error) {
-      // Surface the unique-constraint race as a proper 409 instead of letting
-      // Prisma's P2002 escape as a 500.
+      // surface the unique-constraint race as a 409, not a leaked P2002 500
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
@@ -171,13 +170,9 @@ export class UsersService {
     }
 
     if (data.customTheme !== undefined) {
-      // The DTO only guarantees the broad `{ dark?, light? }` string-map shape.
-      // Guard against an oversized blob or unknown token keys before persisting
-      // (defense-in-depth; the editor already constrains what it sends).
+      // defense-in-depth: reject oversized blobs or unknown token keys
       assertValidCustomTheme(data.customTheme);
-      // The DTO guarantees a `{ dark?, light? }` map of string→string, which is
-      // JSON-safe, but its named-key interface lacks the index signature
-      // Prisma's `InputJsonValue` requires — assert across that structural gap.
+      // DTO's named keys lack the index signature InputJsonValue needs
       updateData.customTheme = data.customTheme as Prisma.InputJsonValue;
     }
 
@@ -316,8 +311,7 @@ export class UsersService {
       });
       return withoutPasswordHash(user);
     } catch (error) {
-      // Magic-link signup path uses the null return to fall back to a login
-      // link when the address is already registered (race or otherwise).
+      // null return lets magic-link signup fall back to a login link
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'

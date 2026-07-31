@@ -60,17 +60,7 @@ export default function SlidingTabBar({
 
   const widthPercent = 100 / tabs.length;
 
-  // Container fill paints one lift UP from the host bundle (base host →
-  // mount fill, mount host → orbit fill). Pill (active indicator) uses that
-  // same lifted bundle's primary text color so the active-tab label, which
-  // inverts to the lifted bundle bg, satisfies the bundle's own text/bg
-  // contrast contract by construction.
-  //
-  // Surface is forwarded via `data-surface` on the tablist (which carries
-  // `group` so descendants can read it via `group-data-[surface=...]`),
-  // dropping ternaries on the pill bg + per-tab label classes per the
-  // CLAUDE.md "no ternaries for state-driven styling when Tailwind has a
-  // variant" rule, extended to `data-*` attributes.
+  // one lift up from the host so the inverted active label meets contrast
 
   return (
     <div

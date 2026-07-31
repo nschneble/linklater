@@ -145,8 +145,7 @@ describe('parseOpenApi', () => {
     const order = api.endpoints.map(
       (endpoint) => `${endpoint.method} ${endpoint.path}`,
     );
-    // Both GETs precede the POST; within GET, `/links` sorts before
-    // `/links/{id}`.
+    // GETs precede POST; within GET, `/links` sorts before `/links/{id}`
     expect(order).toEqual(['get /links', 'get /links/{id}', 'post /links']);
   });
 

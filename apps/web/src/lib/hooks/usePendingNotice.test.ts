@@ -49,10 +49,7 @@ describe('usePendingNotice', () => {
     const { result } = renderHook(() => usePendingNotice());
     await act(async () => {});
     expect(result.current.notice).toBeNull();
-    // Variant default while notice is null is inert (announcer renders no
-    // visible toast and the mirror text is empty) – `'success'` keeps the
-    // sr-only mirror in its default polite/status shape until a real
-    // notice arrives.
+    // while notice is null `'success'` is inert: default sr-only shape
     expect(result.current.variant).toBe('success');
   });
 

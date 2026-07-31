@@ -60,25 +60,13 @@ async function bootstrap() {
     logger: new CompactLogger(),
   });
 
-  // Trust exactly one reverse-proxy hop. In production Caddy terminates TLS
-  // and forwards to this server, so without this Express reports Caddy's
-  // address as `req.ip` and the rate limiter collapses every client into a
-  // single per-route bucket. `1` makes Express read the client address from
-  // the last `X-Forwarded-For` entry Caddy sets; a value of `true` (trust
-  // all hops) would instead let a client spoof its own address via a forged
-  // header, so it is deliberately avoided. In development there is no proxy,
-  // where this setting is simply inert.
+  // trust one proxy hop (Caddy); `true` would let a client spoof its req.ip
   app.set('trust proxy', 1);
 
-  // Listen for SIGTERM/SIGINT so NestJS fires OnModuleDestroy hooks on
-  // shutdown. Container orchestrators send SIGTERM before killing a
-  // container; without this, pg-boss (QueueService) never drains in-flight
-  // jobs and Prisma (PrismaService) never releases its pool, dropping
-  // connections and redelivering jobs on the next boot.
+  // SIGTERM fires OnModuleDestroy so pg-boss drains + Prisma frees its pool
   app.enableShutdownHooks();
 
-  // First in the middleware chain so every response — including errors from
-  // later middleware — carries the security headers.
+  // first in the chain so even later errors carry the security headers
   applySecurityHeaders(app);
 
   app.useGlobalPipes(
@@ -89,9 +77,7 @@ async function bootstrap() {
     }),
   );
 
-  // Chrome Private Network Access: public pages (e.g. third-party sites
-  // where the bookmarklet runs) need this response header to be allowed
-  // to POST to localhost by Chrome's Private Network Access policy.
+  // Chrome Private Network Access: lets public pages POST to localhost
   app.use((request: Request, response: Response, next: NextFunction) => {
     if (request.headers['access-control-request-private-network']) {
       response.setHeader('access-control-allow-private-network', 'true');
@@ -99,21 +85,7 @@ async function bootstrap() {
     next();
   });
 
-  // CORS is intentionally open (`*`) by default so the bookmarklet can POST
-  // from any website. In production set `CORS_ORIGIN` to the union of the
-  // front-end domain and any extension origins
-  // (`chrome-extension://<id>`, `moz-extension://<id>`, etc.). `CORS_ORIGIN`
-  // accepts a single origin or a comma-separated list – `parseCorsOrigin`
-  // splits the list into the array form the `cors` middleware matches
-  // per-entry (a raw comma-joined string would be exact-matched as one
-  // literal origin and never match). The bookmarklet's `fetch` sends the host
-  // page's Origin and is therefore a CORS request from arbitrary third-party
-  // pages, so it only succeeds under an open `*` policy; narrowing
-  // `CORS_ORIGIN` to the front-end origin disables the bookmarklet (its
-  // requests never originate from that origin).
-  // `credentials: false` is required when `origin: '*'` and is
-  // harmless under a restricted origin since the API uses JWT Bearer tokens,
-  // not cookies.
+  // open `*` so the bookmarklet can POST from any site; credentials off for `*`
   app.enableCors({
     origin: parseCorsOrigin(process.env.CORS_ORIGIN),
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
@@ -121,12 +93,7 @@ async function bootstrap() {
     credentials: false,
   });
 
-  // Build the OpenAPI document for the Linklater API. Intentionally scoped to
-  // LinksModule – these are the only endpoints reachable with a personal
-  // access token (PAT), and the public docs page should describe exactly that
-  // surface and nothing else. Session-only routes (/auth, /users, /tokens)
-  // keep their decorators internally but are deliberately excluded from the
-  // user-facing spec.
+  // scope the spec to LinksModule: the only PAT-reachable endpoints
   const openapiDocument = SwaggerModule.createDocument(
     app,
     new DocumentBuilder()
@@ -155,9 +122,7 @@ async function bootstrap() {
     { include: [LinksModule] },
   );
 
-  // Expose the spec at /openapi.json. The schema itself is not sensitive (it
-  // documents shapes, not data), so no guard is applied. The endpoints it
-  // describes still require a valid token to call.
+  // spec isn't sensitive (shapes, not data), so no guard; calls still need a token
   app
     .getHttpAdapter()
     .get('/openapi.json', (_request: Request, response: Response) =>

@@ -45,7 +45,7 @@ export default function StumblePage() {
       .then((result) => {
         if (!isMountedReference.current) return;
         if (!result.url) {
-          // No unread links – backend signals this with a null/empty URL.
+          // no unread links - backend signals this with a null/empty URL
           setState('empty');
           return;
         }
@@ -53,9 +53,7 @@ export default function StumblePage() {
           window.location.replace(result.url);
           return;
         }
-        // URL came back but failed the safety check (e.g. legacy non-http
-        // row) – surface it as a recoverable error rather than the same
-        // view used for "you have no unread links".
+        // URL failed safety check: recoverable error, not the empty view
         setState('error');
       })
       .catch(() => {

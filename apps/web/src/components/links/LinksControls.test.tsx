@@ -1,11 +1,10 @@
 /*
- * Tests for LinksControls – desktop action buttons inside LinksToolbar.
+ * Tests for LinksControls: desktop action buttons inside LinksToolbar.
  *
- * Host-bundle contract – every IconButton AND PrimaryButton paints with
+ * Host-bundle contract: every IconButton and PrimaryButton paints with
  * `surface="base"` via the data-surface attribute. LinksToolbar lives at
  * page level on `--base-bg`, so a silent revert to either default
- * (`mount`) would mis-tier the elevated lift / primary fill. This is
- * caught for IconButton and extended to PrimaryButton.
+ * (`mount`) would mis-tier the elevated lift / primary fill.
  */
 
 import { describe, expect, it, vi } from 'vitest';
@@ -43,9 +42,7 @@ describe('LinksControls', () => {
   });
 
   it('Add-link trigger advertises the dialog it opens, not disclosure state', () => {
-    // The trigger opens a role="dialog" aria-modal panel, so it declares
-    // aria-haspopup="dialog" and must NOT carry aria-expanded (which would
-    // imply an in-place disclosure).
+    // opens a dialog, so aria-haspopup="dialog" and no aria-expanded
     render(<LinksControls {...baseProps} />);
     const button = screen.getByRole('button', { name: /add link/i });
     expect(button.getAttribute('aria-haspopup')).toBe('dialog');

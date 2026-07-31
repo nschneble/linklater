@@ -59,8 +59,7 @@ function rowWith(failure: TokenContrastFailure | undefined) {
 describe('ColorRow – slot-only accessible names (SC 2.4.6 de-dupe)', () => {
   it('names the picker + hex by slot alone, no bundle prefix', () => {
     renderRow();
-    // The enclosing tabpanel establishes the bundle, so the row names are
-    // slot-only ("...for Background"), never "...for Mount background".
+    // tabpanel sets the bundle, so names are slot-only, never "Mount background"
     expect(
       screen.getByLabelText('Color picker for Background'),
     ).toBeInTheDocument();
@@ -76,7 +75,7 @@ describe('ColorRow – silent invalid-hex revert', () => {
     fireEvent.change(input, { target: { value: 'nope' } });
     fireEvent.blur(input);
 
-    // Reverted to the prior value — no kept text, no flag.
+    // reverted to the prior value, no kept text, no flag
     expect(input.value).toBe('#123456');
     expect(input).not.toHaveAttribute('aria-invalid');
     expect(onOverride).not.toHaveBeenCalled();
@@ -99,8 +98,7 @@ describe('ColorRow – silent invalid-hex revert', () => {
     fireEvent.change(input, { target: { value: 'aabbcc' } });
     fireEvent.blur(input);
 
-    // Normalized to a prefixed hex, committed, and KEPT in the input (not
-    // reverted) — the missing `#` is added silently.
+    // normalized, committed, and kept in the input (not reverted); the # is added
     expect(input.value).toBe('#aabbcc');
     expect(onOverride).toHaveBeenCalledWith('--mount-bg', '#aabbcc');
   });
@@ -116,14 +114,7 @@ describe('ColorRow – silent invalid-hex revert', () => {
   });
 });
 
-/*
- * The inline contrast-failure note is now the SOLE inline contrast channel
- * (the standalone card + the human knobs that used to carry it are retired), so
- * its contract lives here, on the row that renders it. `aria-invalid` tracks the
- * LIVE failure (un-debounced) so the input border flags immediately; the visible
- * note + its `aria-describedby` wiring are DEBOUNCED so a half-typed value
- * doesn't thrash the announced text (BL1 / C1).
- */
+// aria-invalid is live so the border flags instantly; the note + describedby debounce
 describe('ColorRow – inline contrast-failure note', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -134,9 +125,7 @@ describe('ColorRow – inline contrast-failure note', () => {
   });
 
   it('flags aria-invalid immediately but debounces the visible note + describedby', () => {
-    // Start clean (passing), then the live edit fails: this is the transition
-    // the debounce actually guards — aria-invalid must flip at once while the
-    // visible note + describedby wait out the debounce.
+    // the fail transition the debounce guards: aria-invalid flips now, note waits
     const { rerender } = render(rowWith(undefined));
     const input = screen.getByLabelText(
       'Value for Background',
@@ -145,10 +134,9 @@ describe('ColorRow – inline contrast-failure note', () => {
 
     rerender(rowWith(makeFailure()));
 
-    // aria-invalid is live: the input border reflects the failing value at once,
-    // before the debounce elapses.
+    // aria-invalid is live: the border reflects the failing value at once
     expect(input).toHaveAttribute('aria-invalid', 'true');
-    // The visible note + its describedby link wait for the debounce.
+    // the visible note + its describedby link wait for the debounce
     expect(input).not.toHaveAttribute('aria-describedby');
     expect(screen.queryByText(/contrast is too low/i)).not.toBeInTheDocument();
 
@@ -156,8 +144,7 @@ describe('ColorRow – inline contrast-failure note', () => {
       vi.advanceTimersByTime(FAILURE_NOTE_DEBOUNCE_MS);
     });
 
-    // The rendered string matches ColorRow's format exactly: the partner slot
-    // label plus the measured ratio to one decimal.
+    // matches ColorRow's format: partner slot label plus the ratio to one decimal
     const note = screen.getByText('Text contrast is too low (2.8:1)');
     expect(note).toBeInTheDocument();
     // describedby now resolves to the rendered note's id.
@@ -179,11 +166,7 @@ describe('ColorRow – inline contrast-failure note', () => {
   });
 });
 
-/*
- * W-1 — the alpha-disabled picker path. An alpha value (rgba()/8-digit hex)
- * can't be represented by a native `<input type="color">`, so the picker is
- * disabled while the hex text input stays editable (the only way to edit alpha).
- */
+// alpha has no native <input type="color">, so the picker is off, hex stays editable
 describe('ColorRow – alpha disables the picker, keeps the text input editable', () => {
   it('disables the color picker for an rgba() value', () => {
     render(
@@ -223,13 +206,7 @@ describe('ColorRow – alpha disables the picker, keeps the text input editable'
   });
 });
 
-/*
- * The swatch preview lays the color over a transparency checkerboard so an
- * alpha value reads as transparent instead of a mystery solid. Opaque values
- * (alpha FF) fully occlude the checker, so the color layer MUST come first in
- * `background-image`. The swatch stays decorative — no role/label; the hex
- * input beside it owns the value — so these assertions target its style/class.
- */
+// color layer goes first in background-image so opaque values occlude the checker
 describe('ColorRow – swatch shows transparency over a checkerboard', () => {
   function getSwatch(currentValue: string): HTMLElement {
     render(
@@ -249,9 +226,7 @@ describe('ColorRow – swatch shows transparency over a checkerboard', () => {
     return swatch as HTMLElement;
   }
 
-  // The style is unit-tested off the helper: jsdom's CSSOM silently drops a
-  // modern `rgb(r g b / a)` gradient (real browsers accept it), so asserting
-  // through a rendered element's `.style.backgroundImage` is unreliable.
+  // jsdom's CSSOM drops modern rgb(r g b / a) syntax, so assert off the helper
   it('layers the color over a checkerboard, color first so opaque occludes it', () => {
     const image = String(buildSwatchStyle('#12345680').backgroundImage);
     expect(image).toContain('conic-gradient');
@@ -268,8 +243,7 @@ describe('ColorRow – swatch shows transparency over a checkerboard', () => {
   });
 
   it('keeps a forced-colors border so the swatch survives High Contrast mode', () => {
-    // Both background layers are stripped in forced-colors; the CanvasText
-    // border is what keeps the swatch a visible box (per a11y review).
+    // forced-colors strips both bg layers; the CanvasText border keeps the swatch a box
     expect(getSwatch('#12345680').className).toContain(
       'forced-colors:border-[CanvasText]',
     );

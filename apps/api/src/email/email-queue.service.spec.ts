@@ -56,8 +56,7 @@ describe('EmailQueueService', () => {
         { kind: 'verification', email: EMAIL, token: TOKEN, theme: THEME },
         RETRY_OPTIONS,
       );
-      // The SMTP send is deferred to the worker – enqueuing must not touch the
-      // transport, so a slow or down relay cannot block the caller.
+      // SMTP send is deferred to the worker; enqueue must not touch the transport
       expect(emailServiceMock.sendVerification).not.toHaveBeenCalled();
     });
 
@@ -118,8 +117,7 @@ describe('EmailQueueService', () => {
     });
 
     it('resolves even when the underlying transport would fail', async () => {
-      // Simulate a dead SMTP relay: the eventual send would reject. Enqueuing
-      // must still resolve, because it does not perform the send.
+      // dead SMTP relay: send would reject, but enqueue resolves without sending
       (emailServiceMock.sendVerification as jest.Mock).mockRejectedValue(
         new Error('SMTP down') as never,
       );
@@ -129,8 +127,7 @@ describe('EmailQueueService', () => {
       ).resolves.toBeUndefined();
       expect(emailServiceMock.sendVerification).not.toHaveBeenCalled();
 
-      // clearAllMocks() clears call history but not implementations, so restore
-      // the resolving default to avoid leaking the rejection into later tests.
+      // clearAllMocks() keeps implementations; reset so the reject doesn't leak
       (emailServiceMock.sendVerification as jest.Mock).mockReset();
     });
   });

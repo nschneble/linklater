@@ -1,12 +1,12 @@
 /*
- * Tests for SlidingTabBar – the shared animated-pill tablist.
+ * Tests for SlidingTabBar, the shared animated-pill tablist.
  *
  * Two contracts pinned here:
  * 1. The `surface` prop drives container bg + pill bg via the
  *    `data-surface` attribute on the tablist. `surface="base"` (default)
  *    paints from the mount bundle one lift up; `surface="mount"` paints
  *    from the orbit bundle. Forwarded to child `TabButton`s via DOM
- *    ancestry (group-data-* variants) – no prop passing needed.
+ *    ancestry (group-data-* variants), no prop passing needed.
  * 2. Pill geometry (translateX = activeIndex * 100%, width =
  *    calc(100/N% - 4px)) drives the sliding-pill animation. A regression
  *    here would silently break the active-tab indicator.
@@ -178,8 +178,7 @@ describe('SlidingTabBar', () => {
     render(
       <SlidingTabBar ariaLabel="example" activeIndex={0} tabs={makeTabs()} />,
     );
-    // `group` is what makes Tailwind's `group-data-[surface=...]` work on
-    // descendants; if a refactor strips it, the TabButton fg classes go dead.
+    // strip `group` and the TabButton fg group-data-* classes go dead
     expect(screen.getByRole('tablist').className).toContain('group');
   });
 });

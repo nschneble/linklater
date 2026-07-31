@@ -10,8 +10,7 @@ import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { User } from '../../auth/AuthContext/types';
 
-// Auth drives the visual branch: logged out → brand chrome, logged
-// in → the active theme. Mock it so tests can pick either branch.
+// auth drives the visual branch (brand chrome vs active theme); mock it
 vi.mock('../../auth/AuthContext', () => ({
   useAuth: vi.fn(),
 }));
@@ -21,7 +20,7 @@ import { useAuth } from '../../auth/AuthContext';
 
 const useAuthMock = vi.mocked(useAuth);
 
-/** Minimal logged-in user – only its presence (non-null) drives the branch. */
+/** Minimal logged-in user; presence (non-null) drives the branch. */
 const loggedInUser = { id: 'user-1', email: 'nick@example.com' } as User;
 
 function renderPage(user: User | null) {

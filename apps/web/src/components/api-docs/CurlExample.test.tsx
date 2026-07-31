@@ -1,9 +1,8 @@
 /*
  * Tests for CurlExample – the "Example request (cURL)" block.
  *
- * Contracts pinned here (consumer-owned behavior that stays in CurlExample
- * after the Wave 2 swap to the shared CopyButton; only `copied` + `onCopy`
- * cross the boundary):
+ * Contracts pinned here (consumer-owned behavior in CurlExample; only
+ * `copied` + `onCopy` cross the shared-CopyButton boundary):
  * 1. Clicking the copy button writes the built command to the clipboard.
  * 2. The `copied` state surfaces as `data-copied` on the button (the
  *    CSS-driven copy → check icon swap).
@@ -29,8 +28,7 @@ const props = {
   labelId: 'endpoint-post-links-request-curl',
 };
 
-// jsdom has no clipboard; define a writable mock once, then swap the spy
-// behavior per test in beforeEach.
+// jsdom has no clipboard; define a writable mock, swap the spy per test
 const writeText = vi.fn();
 Object.defineProperty(navigator, 'clipboard', {
   value: { writeText },
@@ -73,9 +71,7 @@ describe('CurlExample', () => {
 
   it('exposes the command as a focusable, labelled scroll group named from the visible label', () => {
     render(<CurlExample {...props} />);
-    // The <pre> matches the shared CodeBlock scroll contract: role=group,
-    // tabIndex 0, and an accessible name sourced from the visible label (via
-    // aria-labelledby to the label's id), never a hidden aria-label.
+    // <pre> follows the CodeBlock scroll contract: role=group, tabIndex 0, name from the visible label, not a hidden aria-label
     const group = screen.getByRole('group', { name: 'Example request' });
     expect(group.tagName).toBe('PRE');
     expect(group).toHaveAttribute('tabindex', '0');
@@ -108,8 +104,7 @@ describe('CurlExample', () => {
       expect(status.textContent).toBe('Copied to clipboard.'),
     );
 
-    // The status clears after COPIED_RESET_MS (1500ms) so the next copy is a
-    // genuine '' → message transition that re-announces.
+    // status clears after COPIED_RESET_MS (1500ms) so the next copy re-announces
     await waitFor(() => expect(status.textContent).toBe(''), { timeout: 3000 });
   });
 });

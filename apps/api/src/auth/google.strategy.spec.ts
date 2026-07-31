@@ -1,7 +1,6 @@
 import { jest } from '@jest/globals';
 
-// Required env vars must be set before GoogleStrategy is imported because the
-// constructor reads them eagerly (same pattern as google-link.strategy.spec.ts).
+// set env before importing GoogleStrategy; constructor reads it eagerly
 process.env.GOOGLE_CLIENT_ID = 'test-client-id';
 process.env.GOOGLE_CLIENT_SECRET = 'test-client-secret';
 process.env.GOOGLE_CALLBACK_URL = 'http://localhost/auth/google/callback';

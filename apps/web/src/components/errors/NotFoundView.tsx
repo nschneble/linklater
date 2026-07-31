@@ -13,10 +13,7 @@ export default function NotFoundView() {
     }
   }, [location.pathname, navigate]);
 
-  // NotFoundView is a TOP-LEVEL route (sibling to AppShell), so nothing
-  // precedes its <main>: no header, no skip link to protect. Unlike AppShell,
-  // focus unconditionally on mount so keyboard users land on the content
-  // rather than being stranded on <body> after the route miss (SC 2.4.3).
+  // no skip link here; focus on mount so keyboard users land (SC 2.4.3)
   useEffect(() => {
     mainReference.current?.focus();
   }, []);

@@ -14,7 +14,7 @@ describe('CodeBlock', () => {
     const label = screen.getByText('Example request body');
     expect(label.tagName).toBe('P');
     expect(label).toHaveAttribute('id', 'get-links-request-example');
-    // The label must NOT be a heading – it stays out of H-key navigation.
+    // the label must NOT be a heading; it stays out of H-key navigation
     expect(
       screen.queryByRole('heading', { name: 'Example request body' }),
     ).not.toBeInTheDocument();
@@ -24,9 +24,9 @@ describe('CodeBlock', () => {
     render(<CodeBlock {...props} />);
     const group = screen.getByRole('group', { name: 'Example request body' });
     expect(group.tagName).toBe('PRE');
-    // The <pre> is the scroll container, so a keyboard user can focus it.
+    // the <pre> is the scroll container, so a keyboard user can focus it
     expect(group).toHaveAttribute('tabindex', '0');
-    // Named from the visible label's id, never a hidden aria-label.
+    // named from the visible label's id, never a hidden aria-label
     expect(group).toHaveAttribute(
       'aria-labelledby',
       'get-links-request-example',
@@ -48,7 +48,7 @@ describe('CodeBlock', () => {
     expect(group).toHaveClass('border-[var(--mount-border)]');
     expect(group).toHaveClass('text-[var(--mount-text)]');
     expect(group).toHaveClass('select-text');
-    // Shared focus ring so the focus stop is visible under keyboard nav.
+    // shared focus ring so the focus stop is visible under keyboard nav
     expect(group).toHaveClass('focus-visible:ring-2');
   });
 });

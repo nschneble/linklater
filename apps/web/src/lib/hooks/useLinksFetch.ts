@@ -48,11 +48,7 @@ export function useLinksFetch(
   const [pagination, setPagination] = useState<Pagination>(null);
   const [hasSettledOnce, setHasSettledOnce] = useState(false);
 
-  // Ref-mirror of `hasSettledOnce` so the fetch effect can branch on its
-  // latest value without re-running on every settle. Reading state directly
-  // inside the effect would either be stale (closed over an old value) or
-  // require adding `hasSettledOnce` to the dep array, which would re-fire the
-  // fetch on first settle and produce an unwanted double-request.
+  // ref-mirror of `hasSettledOnce`; a dep-array entry would double-fire on first settle
   const hasSettledOnceReference = useRef(false);
 
   const [fetchParameters, dispatchFetchParameters] = useReducer(
@@ -71,16 +67,7 @@ export function useLinksFetch(
   useEffect(() => {
     let cancelled = false;
 
-    // Only blank the list on the very first page-1 fetch. After the user has
-    // seen real content once, keep the stale list mounted across re-fetches
-    // so search/filter changes leave the previous results in place between
-    // keystrokes instead of clearing back to blank.
-    // On settle the page-1 branch below merges the response over the current
-    // list (mergeSettledMetadata) instead of replacing it wholesale: a
-    // response that predates the metadata job carries a null meta.fetchedAt,
-    // and a blind replace would revert an already-settled card to its
-    // skeleton. An empty result still clears the list, since incoming wins
-    // membership.
+    // blank only on the first page-1 fetch; keep the stale list so keystrokes don't flash blank
     if (fetchParameters.page === 1 && !hasSettledOnceReference.current) {
       setLinks([]);
     }
@@ -98,13 +85,7 @@ export function useLinksFetch(
           if (fetchParameters.page === 1) {
             setLinks((previous) => mergeSettledMetadata(result.data, previous));
           } else {
-            // Append only rows not already loaded. Between page loads the list
-            // can shift under the server's `(page - 1) * limit` offset (a
-            // create's prependLink moves every row down one), so a later page
-            // can re-serve a row already on screen. Filtering by id keeps each
-            // card, its React key, and its pending-poll entry unique, and keeps
-            // `links.length` an honest count for the trailing-item math below.
-            // Incoming order is preserved for the genuinely new rows.
+            // append only new rows: a prepend shifts the offset, so a later page can re-serve an on-screen row
             setLinks((previous) => [
               ...previous,
               ...findNewLinks(result.data, previous),
@@ -135,15 +116,7 @@ export function useLinksFetch(
     dispatchFetchParameters({ type: 'load-more' });
   }, []);
 
-  // The sole mechanism for the "less doesn't need more" rule. Rather than
-  // varying the page limit to grab a trailing item early, which would
-  // desync the server's `(page - 1) * limit` offset and skip a row, we
-  // keep the limit constant and load the lone trailing item as its own
-  // next page. After any fetch settles, if exactly one item remains
-  // unloaded, auto-load it so the user never has to click a
-  // "Load more (1 remaining)" button. Guarded by a "last-fired" key so that
-  // a server returning fewer items than its own `total` cannot pull us into
-  // a refetch loop.
+  // "less doesn't need more": auto-load a lone trailing item as its own page; last-fired key stops a refetch loop
   const lastAutoFireKeyReference = useRef<string | null>(null);
   useEffect(() => {
     if (loadingLinks) return;

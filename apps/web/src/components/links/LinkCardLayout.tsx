@@ -39,21 +39,13 @@ interface LinkCardLayoutProps {
   onUnreadClick: (event: React.MouseEvent) => void;
 }
 
-// `animate-none` under prefers-reduced-motion drops the card-enter keyframe
-// entirely: the global clamp zeroes animation-duration but NOT animation-delay,
-// so without this a staggered element would sit blank for its delay before
-// snapping in. Removing the animation lets it rest on its natural visible state.
+// motion-reduce clamp zeroes duration but not delay, so drop the keyframe
 const CARD_ENTER_CLASS = 'animate-card-enter motion-reduce:animate-none';
 
-// How long the skeleton stays mounted after metadata settles so its lift-out
-// transition can play before React unmounts it. Matches the transition duration
-// in SKELETON_LIFT.
+// skeleton mounted post-settle so lift-out plays; matches SKELETON_LIFT
 const SKELETON_EXIT_MS = 300;
 
-// Inner skeleton layer: rests lifted-out-and-faded (the settled state) and drops
-// into place while the card is aria-busy. A transition (not a keyframe) keeps the
-// settle interruptible if a refetch re-pends the card; no transition-delay, so
-// the reduced-motion clamp collapses it to an instant, blank-free swap.
+// transition (not keyframe) so a refetch mid-settle stays interruptible
 const SKELETON_LIFT =
   'transition-[opacity,translate,filter] duration-300 ease-[cubic-bezier(0.2,0,0,1)] ' +
   'opacity-0 -translate-y-1.5 blur-[2px] ' +
@@ -128,15 +120,7 @@ function ThumbnailContent({ url, imageUrl, style }: ThumbnailContentProps) {
   }
 
   return (
-    /*
-      Locally generated placeholder: an inline SVG whose fills bind to
-      the mount-highlight pair (fill = --mount-highlight, text =
-      --mount-highlight-fg) so it inherits the WCAG 1.4.3 contrast
-      guarantee pinned in bundles.contrast.test.ts. Because the fills
-      are CSS variables, the placeholder recolors on both theme and
-      light/dark toggle with no JS read. Decorative: aria-hidden, the
-      anchor already carries the card's accessible name.
-    */
+    /* inline SVG fills bind the mount-highlight pair for WCAG 1.4.3 contrast */
     <svg
       aria-hidden="true"
       viewBox="0 0 240 126"
@@ -281,8 +265,7 @@ export default function LinkCardLayout({
 
   const isLinkSafe = isSafeRedirectUrl(link.url);
   const isPending = isMetadataPending(link);
-  // Keeps the skeleton in the DOM through its lift-out exit after metadata
-  // settles; a card that mounts already settled never renders one.
+  // keeps the skeleton mounted through its lift-out exit after settle
   const renderSkeleton = useSkeletonPresence(isPending, SKELETON_EXIT_MS);
   const hasTitle = Boolean(link.meta?.title);
   const displayTitle = link.meta?.title ?? '(No title)';
@@ -292,8 +275,7 @@ export default function LinkCardLayout({
     displayDescription =
       "This link can't be opened – the saved address isn't safe to open.";
   } else if (isPending) {
-    // The description slot renders a skeleton while metadata loads, so there is
-    // no text to show here yet.
+    // description slot shows a skeleton while loading, so no text yet
     displayDescription = null;
   } else if (rawDescription) {
     displayDescription = stripHtml(rawDescription);
@@ -308,11 +290,7 @@ export default function LinkCardLayout({
     [link.meta?.siteName, link.url],
   );
 
-  // The anchor name and the "Mark unread" label read from one subject so they
-  // can never describe the same card differently. While loading the title is
-  // unknown, so the subject is just the site name; the anchor adds a "loading
-  // details" hint that the button label omits. It flips to the real title in
-  // the same render fetchedAt arrives, with no cached state.
+  // anchor name and "Mark unread" label share one subject, never diverging
   const nameSubject = isPending
     ? displaySiteName
     : `${displayTitle} – ${displaySiteName}`;
@@ -323,9 +301,7 @@ export default function LinkCardLayout({
   } else if (nameSubject) {
     cardAriaLabel = `${nameSubject} – loading details, ${openHint}`;
   } else {
-    // While loading the subject is only the site name, which is empty for a
-    // hostname-less URL (a `javascript:` row parses to an empty hostname). Drop
-    // the leading "site – " so the name never opens on a dangling dash.
+    // hostname-less URL (javascript:) has no site name; avoid a dangling dash
     cardAriaLabel = `loading details, ${openHint}`;
   }
 
@@ -333,20 +309,7 @@ export default function LinkCardLayout({
     <div
       ref={cardReference}
       aria-busy={isMetadataPending(link) || undefined}
-      /*
-        `group` lets the skeleton layers key their pulse and lift-out off this
-        card's aria-busy attribute via `group-aria-busy:` variants.
-
-        border-shadow / hover:border-shadow are hand-written UNLAYERED classes
-        in theme/styles/border-shadow.css, so no `aria-busy:` variant can reach
-        them. They stay a conditional keyed off `isMetadataSettled`, while
-        aria-busy keys off `isMetadataPending`. Those two predicates are
-        complementary by construction in linksData.utils.ts, so the settled
-        border and the pending aria-busy can never drift. The classes are
-        withheld while pending on purpose: their unlayered box-shadow would
-        otherwise outrank the layered selection `ring-2` and swallow the
-        selection outline.
-      */
+      /* border-shadow is unlayered, so withheld while pending; else it outranks the selection ring-2 */
       className={`group relative overflow-visible pl-10 pr-8 py-4 bg-[var(--mount-bg)] border-l-4 border-[var(--mount-highlight)] aria-busy:border-[var(--mount-border)] rounded-r-xl ${isMetadataSettled(link) ? 'border-shadow hover:border-shadow' : ''} aria-busy:animate-meta-pulse-border ${isSelected ? 'ring-2 ring-[var(--mount-highlight)]/60' : ''}`}
     >
       {isMetadataSettled(link) ? (
@@ -403,14 +366,7 @@ export default function LinkCardLayout({
             */}
             <div className="relative w-full h-5">
               {!isPending && (
-                /*
-                  `w-full` pins the title to the min-w-0 column so `line-clamp-1`
-                  can clip an unbreakable long word. Without it, the parent's
-                  `items-start` sizes this <p> to its content width, letting a long
-                  title overflow the (now overflow-visible) card and inflate the
-                  320px mobile viewport. The sibling site-name <p> below is pinned
-                  the same way.
-                */
+                /* w-full pins the title to the min-w-0 column so line-clamp-1 can clip a long word; guards 320px reflow */
                 <p
                   style={childStyle(1)}
                   className={`w-full text-[var(--mount-text)] text-sm text-balance font-semibold tracking-tight sm:tracking-normal line-clamp-1 ${CARD_ENTER_CLASS}`}

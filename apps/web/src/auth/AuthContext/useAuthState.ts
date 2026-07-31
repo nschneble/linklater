@@ -85,7 +85,7 @@ export function useAuthState(): AuthContextValue {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
 
-  // On mount: hydrate auth state from the stored JWT, if any.
+  // on mount: hydrate auth state from the stored JWT, if any
   useEffect(() => {
     const token = getStoredToken();
     if (!token) {
@@ -99,16 +99,7 @@ export function useAuthState(): AuthContextValue {
         setUser(mapMeToUser(me));
       } catch (error) {
         console.error('Failed to fetch current user', error);
-        // Leave the stored token alone on a failed hydration. The token is the
-        // verdict: performTokenRefresh (lib/api/core) clears it only when
-        // /auth/refresh answered 401 or 403, the one server-confirmed
-        // dead-session signal, so if it is already gone the session really
-        // ended and the logged-out view shows because user stays null. If it
-        // survives, the failure was transient (a 5xx, a timeout, a network
-        // blip, or a plain non-auth error) and the token stays put so the next
-        // reload can retry. Reclearing it here would drop a live session on a
-        // passing fault, which is the cold-load gap this closes; core owns the
-        // clear, exactly as refreshUser below defers to it.
+        // leave the token on failed hydration; core clears it only on a 401/403
       } finally {
         setLoading(false);
       }
@@ -160,9 +151,7 @@ export function useAuthState(): AuthContextValue {
     setUser(null);
   }, []);
 
-  // Identity pass-through; `apiResendVerificationEmail` is module-level
-  // stable so a `useCallback` wrapper would add no value beyond the
-  // reference itself.
+  // module-level stable, so no useCallback wrapper needed
   const resendVerificationEmail = apiResendVerificationEmail;
   const resendEmailChangeVerification = apiResendEmailChangeVerification;
 
@@ -186,11 +175,7 @@ export function useAuthState(): AuthContextValue {
     }
   }, []);
 
-  // When the user returns to the tab, re-fetch the current user so state
-  // mutated elsewhere (another tab, another device, a server-side flag flip
-  // during MFA setup) is picked up automatically. Guarded by a 2s stale
-  // threshold so rapid tab-switching can't fan out N requests, and skipped
-  // when there is no signed-in user.
+  // re-fetch user on tab focus; 2s stale guard stops rapid-switch fan-out
   const lastVisibilityRefreshReference = useRef(0);
   useEffect(() => {
     const handleVisibilityChange = () => {

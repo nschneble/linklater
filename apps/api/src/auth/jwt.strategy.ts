@@ -5,14 +5,14 @@ import { PrismaService } from '../prisma/prisma.service.js';
 
 /**
  * The decoded contents of a Linklater JWT. The `subject` field stores the
- * user UUID – this intentionally mirrors the JWT standard "sub" claim name
+ * user UUID - this intentionally mirrors the JWT standard "sub" claim name
  * while keeping it explicit.
  *
  * NOTE: The JWT is signed with `JWT_SECRET` and is short-lived. It expires
  * after 1 hour (see `signOptions.expiresIn` in `auth.module.ts`). Sessions
  * outlive that hour via the longer-lived refresh token, which is rotated on
  * every use (see `RefreshTokenService`), so a leaked access token is only
- * usable for a short window – except that a stale-but-unexpired token can be
+ * usable for a short window - except that a stale-but-unexpired token can be
  * force-revoked early via `tokenVersion` (see `validate` below).
  */
 interface JwtPayload {
@@ -27,7 +27,7 @@ interface JwtPayload {
  * Registered under the name `'jwt'` so that `JwtAuthGuard` can reference it.
  *
  * `JWT_SECRET` is read from the environment at startup and throws immediately
- * if missing – this prevents the server from silently accepting unsigned tokens.
+ * if missing - this prevents the server from silently accepting unsigned tokens.
  */
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {

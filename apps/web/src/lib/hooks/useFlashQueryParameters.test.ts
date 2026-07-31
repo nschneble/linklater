@@ -5,7 +5,7 @@
  * contract is held by construction: the hook initializes its internal state
  * to `null` via `useState<T | null>(null)`, so the first render must return
  * `null`. A DOM-level synchronous peek before any deferred assertion is not
- * achievable here – RTL's `renderHook()` flushes mount-effects inside its
+ * achievable here; RTL's `renderHook()` flushes mount-effects inside its
  * internal `act()` before returning, so `result.current` is already
  * populated by the time test code sees it. The structural argument above
  * is the load-bearing proof for that half of the contract; the deferred

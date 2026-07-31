@@ -22,17 +22,7 @@ function scrollSettingsSection(
   if (!hash) return false;
   const element = document.getElementById(hash);
   if (!element) return false;
-  // When `scrollIntoView` would land the page at a `scrollY` smaller than
-  // the section's own `scroll-margin-top`, the resulting movement is by
-  // definition shorter than the gap the scroll-margin is meant to expose –
-  // i.e. there is no real content above worth scrolling past. The classic
-  // case is the first section: Account naturally sits ~111px down with
-  // `scroll-mt-24` (96px), so `scrollIntoView` would scroll the page 15px
-  // to anchor it at viewport y=96. That 15px drift makes click-to-section
-  // mismatch the fresh-load position. Snap to 0 in this regime so the two
-  // entry points agree visually; sections farther down the page (where the
-  // resulting `scrollY` exceeds the scroll-margin) keep the normal anchored
-  // behavior.
+  // near the top, snap to 0 so click matches the fresh-load position
   const scrollMarginTop =
     Number.parseInt(getComputedStyle(element).scrollMarginTop, 10) || 0;
   const naturalTop = element.getBoundingClientRect().top + window.scrollY;
@@ -43,13 +33,7 @@ function scrollSettingsSection(
     element.scrollIntoView({ behavior, block: 'start' });
   }
   if (skipFocus) return true;
-  // `focusVisible: true` forces the `:focus-visible` ring even when the
-  // call originates inside a mouse-click handler (e.g. sidebar nav). Without
-  // it, browsers' input-modality heuristic suppresses the ring on click-
-  // driven focus and the sidebar entry point silently diverges from
-  // deep-link entry. Unknown FocusOptions members are ignored silently, so
-  // the worst case in browsers without support is the prior behavior. Cast
-  // is needed until lib.dom catches up.
+  // `focusVisible` forces the ring on click focus so nav matches deep-link
   element.focus({ preventScroll: true, focusVisible: true } as FocusOptions);
   return true;
 }

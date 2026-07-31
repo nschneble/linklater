@@ -1,6 +1,5 @@
-// Unit tests for the pure sync logic. End-to-end coverage of the writer's
-// disk behavior lives in font-awesome-manifest.test.ts (which runs the
-// scanner against real source and asserts on the produced manifest).
+// unit tests for the pure sync logic; disk-behavior coverage lives in
+// font-awesome-manifest.test.ts
 
 import { describe, expect, it } from 'vitest';
 import {

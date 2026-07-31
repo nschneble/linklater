@@ -131,10 +131,7 @@ describe('AuthController', () => {
     expect(controller).toBeDefined();
   });
 
-  // Representative delegation smoke test for AuthController. The controllers
-  // delegate 100% to their services by convention, so one such assertion
-  // guards the wiring pattern; the guard-ordering and argument-narrowing
-  // assertions below carry the behavior that is genuinely at risk.
+  // one representative delegation guards the delegate-to-service wiring
   describe('register', () => {
     it('delegates to AuthService.register with email and password', async () => {
       const user = {
@@ -186,9 +183,7 @@ describe('AuthController', () => {
 
       const result = await controller.login(request);
 
-      // login(userId) – the controller no longer passes the full request.user
-      // object, eliminating the OAuth strategy-shape footgun. Kept as a
-      // regression guard for that narrowing, not as mock-plumbing.
+      // login takes userId, not full request.user: guards the OAuth shape footgun
       expect(authServiceMock.login).toHaveBeenCalledWith(USER_ID);
       expect(result).toEqual({ accessToken: ACCESS_TOKEN });
     });
@@ -249,9 +244,7 @@ describe('AuthController', () => {
       );
     });
 
-    // Representative delegation for MultiFactorController; also guards the
-    // nonce-from-MFA-token binding, which is a real argument transformation
-    // rather than a straight pass-through.
+    // MultiFactorController delegation; also guards the MFA-token nonce binding
     it('delegates to AuthService.verifyOtp with userId, code, method, and the nonce from the MFA token', async () => {
       const request = {
         user: { userId: USER_ID, nonce: 'mfa-nonce-abc' },

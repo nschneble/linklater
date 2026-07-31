@@ -12,7 +12,7 @@
  * astral-plane string literals.
  */
 
-// The downloaded subset covers the Orkhon + Yenisei letters U+10C00–U+10C48.
+// subset covers the Orkhon + Yenisei letters U+10C00-U+10C48
 const GLYPH_RANGE_START = 0x10c00;
 const GLYPH_RANGE_SIZE = 0x49;
 
@@ -73,8 +73,7 @@ export const MOCK_GLYPHS = {
   toggleMode: asemicLine([6, 2, 4, 4], 17),
   editTheme: asemicLine([4, 4, 5], 18),
   logOut: asemicLine([3, 3], 19),
-  // The Theme submenu trigger row: a short "Theme" label above the
-  // current-theme name, mirroring the real ThemeSubmenu's two-line trigger.
+  // themeLabel + themeName mirror ThemeSubmenu's two-line trigger
   themeLabel: asemicWord(5, 30),
   themeName: asemicWord(8, 31),
 } as const;

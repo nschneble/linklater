@@ -1,5 +1,5 @@
 /*
- * Tests for InlineThemeList – the mobile flat theme picker. After the row
+ * Tests for InlineThemeList, the mobile flat theme picker. After the row
  * content was extracted into the shared ThemeRowContent primitive, this locks
  * the host-owned SELECTION semantics that must NOT have moved into the
  * primitive: each row is a menuitemradio, the active theme is aria-checked, the
@@ -30,7 +30,7 @@ describe('InlineThemeList', () => {
 
   it('keeps the accessible-theme affordance on accessible rows', () => {
     render(<InlineThemeList baseTheme="apollo-10-1-2" onSelect={vi.fn()} />);
-    // Apollo is the accessible theme; its sr-only label is part of the row.
+    // Apollo is the accessible theme; its sr-only label is on the row
     expect(
       screen.getByRole('menuitemradio', { name: /accessible theme/i }),
     ).toHaveAccessibleName(/apollo/i);

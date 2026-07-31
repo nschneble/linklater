@@ -19,10 +19,10 @@ import { useAuth } from '../../auth/AuthContext';
  *   fires `deleteMe()` with no body; the API returns
  *   `requiresEmailConfirmation: true`, the user refreshes, and the
  *   `user.accountDeletionPending` server flag flips the UI into a
- *   "Check your email" panel. No logout in this branch – the email click
+ *   "Check your email" panel. No logout in this branch - the email click
  *   finishes the deletion.
  *
- * While `useAuth()` is still loading, branch-specific UI is suppressed – the
+ * While `useAuth()` is still loading, branch-specific UI is suppressed - the
  * section renders only a disabled idle trigger to avoid flickering the
  * magic-link-default branch for a user who is actually credentialed. Gating
  * `loading`/`user` here lets both flows receive an already-narrowed,

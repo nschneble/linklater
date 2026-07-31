@@ -28,8 +28,7 @@ describe('OAuthCallbackPage', () => {
     navigate.mockReset();
     loginWithToken.mockResolvedValue(undefined);
     replaceStateSpy = vi.spyOn(window.history, 'replaceState');
-    // Drain any stale pending notice from a previous test so the
-    // catalog-drift guard in setPendingNotice doesn't carry across.
+    // drain a stale pending notice so the guard doesn't carry across tests
     consumePendingNotice();
   });
 

@@ -1,7 +1,6 @@
 import { jest } from '@jest/globals';
 
-// Required env vars must be set before AppleStrategy is imported because the
-// constructor reads them eagerly (same pattern as google-link.strategy.spec.ts).
+// env must be set before AppleStrategy import; constructor reads eagerly
 process.env.APPLE_CALLBACK_URL = 'http://localhost/auth/apple/callback';
 process.env.APPLE_CLIENT_ID = 'test-client-id';
 process.env.APPLE_KEY_ID = 'test-key-id';
@@ -14,8 +13,7 @@ import { OAuthAccountService } from './oauth-account.service';
 const APPLE_PROFILE_ID = 'apple-profile-789';
 const PROVIDER_EMAIL = 'test@example.com';
 
-// Apple's profile exposes the email directly as `profile.email`, distinct from
-// Google's `profile.emails[0].value` shape.
+// Apple exposes email as profile.email, not Google's emails[0].value
 function makeProfile(email?: string) {
   return {
     id: APPLE_PROFILE_ID,

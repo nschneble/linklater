@@ -56,7 +56,7 @@ describe('useThemeSave', () => {
     expect(setCustomThemeMock).toHaveBeenCalledTimes(1);
     expect(updateMe).toHaveBeenCalledTimes(1);
     const persisted = setCustomThemeMock.mock.calls[0][0];
-    // Current mode is dark – every editable token landed under `dark`.
+    // current mode is dark, so every editable token landed under `dark`
     expect(Object.keys(persisted.dark).length).toBe(EDITABLE_VARS.length);
     expect(persisted.dark['--mount-bg']).toBe('#123456');
     expect(persisted.light).toEqual({});
@@ -117,7 +117,7 @@ describe('useThemeSave', () => {
   });
 
   it('suppresses a re-entrant save while one is already in flight', async () => {
-    // Hold the first updateMe open so isSaving stays true across the gap.
+    // hold the first updateMe open so isSaving stays true across the gap
     let releaseUpdate: () => void = () => undefined;
     vi.mocked(updateMe).mockReturnValue(
       new Promise<void>((resolve) => {
@@ -127,15 +127,14 @@ describe('useThemeSave', () => {
 
     const { result } = renderHook(() => useThemeSave('dark'));
 
-    // First save: starts and parks on the pending updateMe (sets isSaving).
+    // first save: starts and parks on the pending updateMe (sets isSaving)
     let firstSave: Promise<boolean> | undefined;
     act(() => {
       firstSave = result.current.save(buildColorValues('#555555'));
     });
     expect(result.current.isSaving).toBe(true);
 
-    // Second save while in flight: the re-render gave us a save closure that
-    // sees isSaving=true, so it short-circuits and never hits updateMe again.
+    // second save sees isSaving=true, short-circuits before updateMe
     let secondOutcome: boolean | undefined;
     await act(async () => {
       secondOutcome = await result.current.save(buildColorValues('#666666'));
@@ -153,12 +152,7 @@ describe('useThemeSave', () => {
 
 describe('custom-theme token vocabulary', () => {
   it('mirrors the 53-token count the API guard enforces', () => {
-    // Numeric cross-workspace sync anchor. The API mirror
-    // (apps/api/src/users/custom-theme.spec.ts) asserts
-    // CUSTOM_THEME_TOKEN_KEYS.size === 53. Locking the same absolute count on
-    // the web side means adding or removing a bundle/slot trips a test on BOTH
-    // sides, rather than the web tests passing while the API silently rejects
-    // the new token.
+    // cross-workspace anchor: CUSTOM_THEME_TOKEN_KEYS.size === 53 on API
     expect(EDITABLE_VARS.length).toBe(53);
   });
 });

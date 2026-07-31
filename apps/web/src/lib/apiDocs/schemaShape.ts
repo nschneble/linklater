@@ -18,7 +18,7 @@ export type NestedShape =
   | { kind: 'object'; schema: OpenAPIV3.SchemaObject; label: string }
   /** An array whose item object should render as a child table. */
   | { kind: 'array'; schema: OpenAPIV3.SchemaObject; label: string }
-  /** Too deep to expand this wave – render a text note instead. */
+  /** Too deep to expand - render a text note instead. */
   | { kind: 'note' }
   /** A scalar (string/number/boolean/etc.) – no nesting. */
   | null;
@@ -40,11 +40,7 @@ export function describeType(
   if (!schema) return 'unknown';
   if (schema.enum) return 'enum';
   if (schema.type === 'array') {
-    // Bare "array" is an intentional compact type label (arrays render simply
-    // as "array" by product decision). For an array of OBJECTS the item shape
-    // is still expanded by `describeNested`'s nested item table; for an array
-    // of SCALARS `describeNested` returns null, so there is no nested table and
-    // the element type is deliberately omitted for compactness.
+    // bare "array" is an intentional compact label; object items still expand via describeNested
     return 'array';
   }
   if (Array.isArray(schema.type)) return schema.type.join(' | ');
@@ -87,8 +83,7 @@ export function describeNested(
 ): NestedShape {
   if (!schema) return null;
 
-  // Read the array's item schema up front so the later array branch does not
-  // depend on `schema` being narrowed away by the object type guard above.
+  // read the item schema up front so the array branch survives the object guard's narrowing
   const arrayItems =
     schema.type === 'array'
       ? (schema.items as OpenAPIV3.SchemaObject | undefined)

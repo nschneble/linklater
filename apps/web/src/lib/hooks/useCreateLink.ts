@@ -51,12 +51,7 @@ export function useCreateLink({
   onSaved,
   prependLink,
 }: UseCreateLinkOptions): UseCreateLinkResult {
-  // GOTCHA: links and onSaved are stored in refs so handleCreated always reads
-  // the latest values without including them in its dependency array. Adding
-  // either would recreate handleCreated on every fetch/mutation (links changes
-  // constantly, onSaved is a fresh closure each render), which in turn recreates
-  // handleDirectSave and unnecessarily re-registers the paste event listener in
-  // usePasteDetection.
+  // GOTCHA: refs keep handleCreated stable; no paste-listener re-register
   const linksReference = useRef(links);
   linksReference.current = links;
   const onSavedReference = useRef(onSaved);

@@ -103,7 +103,7 @@ describe('useAuthForm', () => {
   describe('notice – deferred read', () => {
     it('is null on first render before useEffect flushes', () => {
       const { result } = renderAuthFormHook();
-      // Synchronous read – effect has not yet flushed
+      // synchronous read: effect has not yet flushed
       expect(result.current.notice).toBeNull();
     });
 
@@ -286,8 +286,7 @@ describe('useAuthForm', () => {
       expect(result.current.error).toBe('Invalid credentials');
     });
 
-    // Branch 8: login + password + no MFA result (explicit void return path –
-    //           same execution as Branch 4 but verifies loading resets to false)
+    // Branch 8: login + password, no MFA; asserts loading resets to false (cf. Branch 4)
     it('resets loading to false after a successful login', async () => {
       const loginMock = vi.fn().mockResolvedValue(undefined);
       vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
@@ -326,11 +325,7 @@ describe('useAuthForm', () => {
     });
   });
 
-  // WARN-4: a successful magic-link request releases `loading` immediately
-  // (so the button doesn't read "Working…" while the toast is announcing
-  // the outcome) and engages `magicLinkSentJustNow` for the toast's full
-  // 5000ms auto-dismiss window. The button stays disabled during that
-  // window via the success-state label, preventing a second click.
+  // magic-link success frees loading at once but holds the 5000ms toast window so the button stays disabled
   describe('WARN-4 – magic-link success-state hold', () => {
     beforeEach(() => {
       vi.useFakeTimers();
@@ -351,9 +346,7 @@ describe('useAuthForm', () => {
         await result.current.handleSubmit(event);
       });
 
-      // Loading is released as soon as the API resolves so the button can
-      // flip into its success-state label without a "Working…" flash that
-      // contradicts the freshly-shown toast.
+      // loading frees at once so the button skips a "Working…" flash
       expect(result.current.loading).toBe(false);
     });
 
@@ -402,13 +395,13 @@ describe('useAuthForm', () => {
         await result.current.handleSubmit(event);
       });
 
-      // 2500ms in – old behavior would have released the hold here.
+      // 2500ms in: still within the 5000ms hold
       act(() => {
         vi.advanceTimersByTime(2500);
       });
       expect(result.current.magicLinkSentJustNow).toBe(true);
 
-      // Past 5000ms – hold releases.
+      // past 5000ms: hold releases
       act(() => {
         vi.advanceTimersByTime(2500);
       });
@@ -433,10 +426,7 @@ describe('useAuthForm', () => {
       expect(result.current.error).toBe('Network down');
     });
 
-    // C2: a mode change BEFORE the 5000ms hold expires must clear the
-    // pending timer synchronously and reset magicLinkSentJustNow to false.
-    // Otherwise the stale timeout fires later on a hook that has already
-    // moved on, or worse races with a subsequent magic-link submission.
+    // C2: a mode change mid-hold must clear the timer, else a stale timeout races a later submit
     it('clears the success-state timer synchronously when the user changes mode mid-hold', async () => {
       vi.mocked(apiModule.requestMagicLink).mockResolvedValue(undefined);
       const { result } = renderAuthFormHook('/login');
@@ -448,21 +438,17 @@ describe('useAuthForm', () => {
         await result.current.handleSubmit(event);
       });
 
-      // Hold is engaged.
+      // hold is engaged
       expect(result.current.magicLinkSentJustNow).toBe(true);
 
       await act(async () => {
         result.current.handleModeChange('register');
       });
 
-      // Synchronously after the mode change, the hold is released – the
-      // effect resets it without waiting for the 5000ms timer.
+      // mode change releases the hold synchronously, not on the 5000ms timer
       expect(result.current.magicLinkSentJustNow).toBe(false);
 
-      // Advance past the original 5000ms window. If the timer were still
-      // pending, it would call setMagicLinkSentJustNow(false) again – but
-      // since we've already observed false, this asserts the state stays
-      // false without spurious flips.
+      // advance past 5000ms: a still-pending timer would re-flip state; assert it stays false
       act(() => {
         vi.advanceTimersByTime(5000);
       });
@@ -471,10 +457,7 @@ describe('useAuthForm', () => {
     });
   });
 
-  // Mirrors the WARN-4 magic-link suite for the forgot-password flow. The
-  // submit button and toast must stay in sync – both render the "Reset link
-  // sent!" state for the toast's 5000ms auto-dismiss window. A mode change
-  // mid-hold cancels the timer synchronously.
+  // forgot-password mirror of the WARN-4 hold: button + toast sync for 5000ms, mode change cancels the timer
   describe('forgot-password success-state hold', () => {
     beforeEach(() => {
       vi.useFakeTimers();
@@ -543,13 +526,13 @@ describe('useAuthForm', () => {
         await result.current.handleSubmit(event);
       });
 
-      // 2500ms in – half the hold window.
+      // 2500ms in: half the hold window
       act(() => {
         vi.advanceTimersByTime(2500);
       });
       expect(result.current.forgotPasswordSentJustNow).toBe(true);
 
-      // Past 5000ms – hold releases.
+      // past 5000ms: hold releases
       act(() => {
         vi.advanceTimersByTime(2500);
       });
@@ -574,11 +557,7 @@ describe('useAuthForm', () => {
       expect(result.current.error).toBe('Network down');
     });
 
-    // Carry-over from the magic-link hold: a mode change BEFORE the 5000ms
-    // hold expires must clear the pending timer synchronously and reset
-    // forgotPasswordSentJustNow to false. Otherwise the stale timeout fires
-    // later on a hook that has already moved on, or worse races with a
-    // subsequent forgot-password submission.
+    // a mode change mid-hold must clear the timer, else a stale timeout races a later submit
     it('clears the forgot-password success-state timer synchronously when the user changes mode mid-hold', async () => {
       vi.mocked(apiModule.forgotPassword).mockResolvedValue(undefined);
       const { result } = renderAuthFormHook('/forgot-password');
@@ -590,17 +569,17 @@ describe('useAuthForm', () => {
         await result.current.handleSubmit(event);
       });
 
-      // Hold is engaged.
+      // hold is engaged
       expect(result.current.forgotPasswordSentJustNow).toBe(true);
 
       await act(async () => {
         result.current.handleModeChange('login');
       });
 
-      // Synchronously after the mode change, the hold is released.
+      // synchronously after the mode change, the hold is released
       expect(result.current.forgotPasswordSentJustNow).toBe(false);
 
-      // Advance past the original 5000ms window – assert no spurious flips.
+      // advance past 5000ms; assert no spurious flips
       act(() => {
         vi.advanceTimersByTime(5000);
       });
@@ -609,13 +588,7 @@ describe('useAuthForm', () => {
     });
   });
 
-  // Part D: when a cross-route error toast is still visible at submit time,
-  // the form must dismiss it before firing its own form-level error Alert.
-  // Otherwise the user receives two simultaneous assertive announcements
-  // on the same SR channel (toast role="alert" + Alert role="alert"), which
-  // is implementation-defined on most SRs per ARIA 1.2 §5.2.8.4. The
-  // success channel doesn't have this collision (polite + assertive don't
-  // overlap), so a queued success notice is preserved.
+  // Part D: dismiss a lingering error toast before the form's own error Alert, else two role="alert" announcements collide (ARIA 1.2 §5.2.8.4)
   describe('coalesce-on-submit (error toast dismissed at handleSubmit start)', () => {
     it('dismisses a queued error-variant notice at the top of handleSubmit', async () => {
       vi.mocked(pendingNoticeModule.consumePendingNotice).mockReturnValue({
@@ -626,8 +599,7 @@ describe('useAuthForm', () => {
 
       const { result } = renderAuthFormHook('/login');
 
-      // Wait for the consume effect to populate the notice from the mocked
-      // pendingNotice read.
+      // wait for the consume effect to populate the notice
       await waitFor(() => {
         expect(result.current.notice).toEqual({
           message: 'Verification link expired.',
@@ -642,11 +614,7 @@ describe('useAuthForm', () => {
         await result.current.handleSubmit(event);
       });
 
-      // After submit, the queued error notice is gone – but the new
-      // success notice from the magic-link request has taken its place,
-      // proving the dismiss happened at the TOP of handleSubmit (otherwise
-      // it would also clobber the success notice fired later in the same
-      // handler).
+      // success notice replaced the error one, proving the dismiss ran at the TOP of handleSubmit
       expect(result.current.notice).toEqual({
         message: 'Magic link sent!',
         variant: 'success',
@@ -682,9 +650,7 @@ describe('useAuthForm', () => {
         await result.current.handleSubmit(event);
       });
 
-      // The success notice should still be present – only error-variant
-      // notices are coalesced. The form-level error Alert is the assertive
-      // channel; the success toast is polite, so they don't collide.
+      // success notice survives: only error-variant notices coalesce (polite toast vs assertive Alert don't collide)
       expect(result.current.notice).toEqual({
         message: 'Your email has been verified.',
         variant: 'success',
@@ -696,7 +662,7 @@ describe('useAuthForm', () => {
   describe('focus management – mode change', () => {
     it('focuses emailReference when email is empty on mode change', async () => {
       const { result } = renderAuthFormHook('/login');
-      // Email ref needs a real DOM node; simulate one
+      // email ref needs a real DOM node; simulate one
       const emailInput = document.createElement('input');
       const focusSpy = vi.spyOn(emailInput, 'focus');
       Object.defineProperty(result.current.emailReference, 'current', {
@@ -735,24 +701,18 @@ describe('useAuthForm', () => {
       expect(focusSpy).toHaveBeenCalled();
     });
 
-    // FLAG-2: when a pending notice is queued (e.g. account-deleted toast
-    // about to be surfaced by AuthForm), the mode-change effect must NOT
-    // auto-focus the email input – focusing a text input switches NVDA/JAWS
-    // into forms mode and can swallow the polite announcement mid-read.
+    // FLAG-2: don't auto-focus email when a notice is queued - focusing a text input flips NVDA/JAWS to forms mode and swallows the announcement
     it('does not auto-focus the email input on mount when hasPendingNotice is true', async () => {
       vi.mocked(pendingNoticeModule.hasPendingNotice).mockReturnValue(true);
 
-      // Render with a ref pre-wired so we can observe focus calls during
-      // the initial mode-change effect on mount.
+      // pre-wire the ref to observe focus during the mount effect
       const emailInput = document.createElement('input');
       const focusSpy = vi.spyOn(emailInput, 'focus');
 
       const { result } = renderHook(
         () => {
           const hook = useAuthForm();
-          // Assign the input to the ref before the effect runs (refs are
-          // wired during render commit, so this mirrors what happens when
-          // the real input mounts).
+          // assign the ref before the effect runs, mirroring real input mount
           if (hook.emailReference.current === null) {
             hook.emailReference.current = emailInput;
           }
@@ -764,11 +724,11 @@ describe('useAuthForm', () => {
         },
       );
 
-      // Allow effects to flush
+      // allow effects to flush
       await act(async () => {});
 
       expect(focusSpy).not.toHaveBeenCalled();
-      // Sanity: the hook itself rendered successfully
+      // sanity: the hook itself rendered successfully
       expect(result.current.mode).toBe('login');
     });
 
@@ -804,10 +764,7 @@ describe('useAuthForm', () => {
       expect(passwordFocusSpy).not.toHaveBeenCalled();
     });
 
-    // C4: negative control for FLAG-2 – when NO pending notice is queued,
-    // focus MUST fire as normal. Proves the guard is wired correctly
-    // (gated on hasPendingNotice), not just "focus happens to be absent
-    // here because the test setup is broken."
+    // C4: negative control for FLAG-2 - no pending notice, so focus must fire, proving the guard is gated not just absent
     it('DOES auto-focus the email input on mount when hasPendingNotice is false (negative control)', async () => {
       vi.mocked(pendingNoticeModule.hasPendingNotice).mockReturnValue(false);
 
@@ -891,7 +848,7 @@ describe('useAuthForm', () => {
         result.current.setError(null);
       });
 
-      // Focus should not have been called again after clearing
+      // focus should not have been called again after clearing
       expect(focusSpy.mock.calls.length).toBe(callCountAfterSet);
     });
   });

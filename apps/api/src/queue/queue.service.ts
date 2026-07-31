@@ -53,8 +53,8 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
 
   /** Stops pg-boss gracefully, waiting for in-flight jobs to complete. */
   async onModuleDestroy(): Promise<void> {
-    // Flip the flag first so a health probe racing shutdown reports the queue
-    // as down while in-flight jobs are still draining.
+    // flip the flag first so a health probe racing shutdown reports the
+    // queue down while in-flight jobs are still draining
     this.running = false;
     await this.boss.stop();
   }

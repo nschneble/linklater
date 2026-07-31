@@ -30,12 +30,7 @@ export default function App() {
     isDyslexicFont,
   } = useTheme();
 
-  // Syncs server-side theme and mode preferences into ThemeContext after
-  // login, so a theme change on one device shows up on another. The
-  // applyServer* helpers skip the update when the user made a local change in
-  // the last 30s (optimistic race guard). applyServerTheme is skipped entirely
-  // while CVD mode is active (server or local): the CVD sync below owns the
-  // active theme and would otherwise stomp Apollo 10½ on a cold-load device.
+  // skip applyServerTheme while CVD is active so it can't stomp Apollo 10½
   useEffect(() => {
     if (!user) return;
     const localCvdOn = readLocalStorage(CVD_MODE_KEY) === 'on';
@@ -54,10 +49,7 @@ export default function App() {
     isCvdMode,
   ]);
 
-  // Syncs CVD mode and the dyslexic font from the server, each with a 30s
-  // local-change guard that skips the sync right after an optimistic toggle.
-  // CVD mode also swaps the active color theme; the dyslexic font is
-  // theme-independent, so it has no applyServerTheme interaction to guard.
+  // sync CVD + dyslexic font from server with a 30s local-change guard
   useServerBooleanPrefSync(
     user?.cvdMode,
     isCvdMode,

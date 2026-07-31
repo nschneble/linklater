@@ -40,8 +40,7 @@ function Harness({
   failures = new Map<string, TokenContrastFailure>(),
 } = {}) {
   const [activeBundle, setActiveBundle] = useState<Bundle>(initial);
-  // Mirror the real parent (ColorEditor): the tablist is named by the region's
-  // "Color Bundles" h2, passed in via tablistLabelledBy.
+  // mirror ColorEditor: the tablist is named by the "Color Bundles" h2
   return (
     <>
       <h2 id="color-bundles-heading">Color Bundles</h2>
@@ -69,13 +68,13 @@ describe('BundleTabs – per-bundle contrast-error indicator', () => {
   it('flags the tab whose bundle owns a failing token, and no others', () => {
     render(<Harness failures={new Map([['--mount-bg', A_FAILURE]])} />);
 
-    // sr-only suffix reaches AT; the visible "Mount" stays the name base (2.5.3).
+    // sr-only suffix reaches AT; visible "Mount" stays the name base (2.5.3)
     const mountTab = screen.getByRole('tab', {
       name: 'Mount, has contrast errors',
     });
     expect(mountTab.querySelector('.fa-triangle-exclamation')).not.toBeNull();
 
-    // A bundle with no failing token carries neither the glyph nor the note.
+    // a bundle with no failing token has neither the glyph nor the note
     const baseTab = screen.getByRole('tab', { name: 'Base' });
     expect(baseTab.querySelector('.fa-triangle-exclamation')).toBeNull();
   });
@@ -107,9 +106,7 @@ describe('BundleTabs – per-bundle contrast-error indicator', () => {
 describe('BundleTabs – hover affordance (parity with the page tab pills)', () => {
   it('brightens the border and adds a shadow on hover', () => {
     render(<Harness />);
-    // Mirrors the real SlidingTabBar/LinksToolbar `border-shadow` hover; the
-    // border only increases contrast (--mount-border → --mount-text), so it
-    // never weakens the pill's 1.4.11 boundary.
+    // hover only strengthens the border, never weakens the 1.4.11 boundary
     const pill = tab('mount');
     expect(pill).toHaveClass('hover:border-[var(--mount-text)]');
     expect(pill).toHaveClass('hover:border-shadow');
@@ -137,7 +134,7 @@ describe('BundleTabs – tablist structure', () => {
       .getAllByRole('tab')
       .filter((element) => element.getAttribute('tabindex') === '0');
     expect(tabbable).toEqual(selected);
-    // Every non-active tab is removed from the Tab order (roving).
+    // every non-active tab is removed from the Tab order (roving)
     const roved = screen
       .getAllByRole('tab')
       .filter((element) => element.getAttribute('tabindex') === '-1');
@@ -155,9 +152,7 @@ describe('BundleTabs – tablist structure', () => {
 
   it('points EVERY tab aria-controls at the one fixed panel (AUD-W2)', () => {
     render(<Harness />);
-    // The single physical panel never changes identity, so a non-active tab's
-    // aria-controls must resolve to that same live panel — not a per-bundle id
-    // that points at nothing while another bundle is shown.
+    // one fixed panel; every tab's aria-controls resolves to it, not a dead id
     const panel = screen.getByRole('tabpanel');
     for (const bundle of BUNDLES) {
       expect(tab(bundle)).toHaveAttribute('aria-controls', panel.id);
@@ -166,8 +161,7 @@ describe('BundleTabs – tablist structure', () => {
 
   it('does not make the panel a focusable tab stop (AUD-W1)', () => {
     render(<Harness />);
-    // The panel always contains focusable slot rows, so it must NOT itself be a
-    // tab stop (no tabIndex) — an inert stop would be a redundant APG violation.
+    // panel holds focusable rows, so no tabIndex (a stop would violate APG)
     expect(screen.getByRole('tabpanel')).not.toHaveAttribute('tabindex');
   });
 });
@@ -199,7 +193,7 @@ describe('BundleTabs – automatic activation + roving tabindex', () => {
   it('does NOT wrap past the first or last tab', () => {
     render(<Harness />);
     fireEvent.keyDown(tab('base'), { key: 'ArrowLeft' });
-    // Still on the first bundle — no wrap to the last.
+    // still on the first bundle, no wrap to the last
     expect(tab('base')).toHaveAttribute('aria-selected', 'true');
 
     const last = BUNDLES[BUNDLES.length - 1];
@@ -276,7 +270,7 @@ describe('BundleTabs – filled-pill selected-state contract (SC 1.4.1)', () => 
     expect(selected.className).toContain(
       'aria-selected:text-[var(--mount-bg)]',
     );
-    // The non-color second channel lives inside the selected tab.
+    // the non-color second channel lives inside the selected tab
     expect(selected.querySelector('.fa-circle-dot')).not.toBeNull();
   });
 });

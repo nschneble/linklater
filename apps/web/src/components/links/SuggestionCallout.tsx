@@ -66,18 +66,10 @@ export default function SuggestionCallout({
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Distinguishes the mount-time fetch from a post-Add-and-Read refetch.
-  // Refetch failures intentionally leave the prior suggestion mounted (the
-  // populated card branch must stay rendered to preserve WCAG 2.4.3 focus
-  // on the "Add and read" button), so only the initial fetch is allowed to
-  // flip `loading` / `fetchFailed` and unmount the populated card.
+  // only the initial fetch may unmount the card, preserving focus (WCAG 2.4.3)
   const isInitialFetchRef = useRef(true);
 
-  // Tracks mount state so both the useEffect-driven initial fetch AND the
-  // imperative refetch from `handleAddAndRead` skip their state updates if
-  // the component unmounted mid-flight. A per-call `cancelled` closure
-  // would only protect the mount-effect path; the imperative call from the
-  // success branch of Add-and-Read discards its returned cleanup.
+  // guards effect + imperative refetch against setState after unmount
   const isMountedRef = useRef(true);
 
   const fetchSuggestion = useCallback(() => {
@@ -91,9 +83,7 @@ export default function SuggestionCallout({
           setLoading(false);
           isInitialFetchRef.current = false;
         } else if (next) {
-          // Refetch path: only swap when we got a non-null result. An empty
-          // refetch leaves the prior populated card mounted so focus stays
-          // on the "Add and read" button (WCAG 2.4.3).
+          // refetch swaps only on non-null, keeping focus on the card (WCAG 2.4.3)
           setSuggestion(next);
           setSourceName(response.sourceName);
         }
@@ -108,9 +98,7 @@ export default function SuggestionCallout({
           setLoading(false);
           isInitialFetchRef.current = false;
         }
-        // Refetch failure: leave prior suggestion + sourceName mounted so
-        // focus stays on the "Add and read" button. Silent fallback by
-        // design – the user already navigated to the article in a new tab.
+        // refetch failure keeps the card for focus; silent, user already navigated
       });
   }, []);
 
@@ -138,11 +126,7 @@ export default function SuggestionCallout({
       return;
     }
 
-    // For new-tab mode, open the tab synchronously inside the click
-    // handler. Waiting for `await createLink` first puts the
-    // `window.open` outside the user-activation window and many browsers
-    // will block the popup. The create + read calls then run in the
-    // background; if they fail the alert appears on the original tab.
+    // open synchronously in the handler; awaiting first loses user activation (popup blocked)
     if (inNewTab) {
       window.open(url, '_blank', 'noopener,noreferrer');
     }
@@ -154,12 +138,7 @@ export default function SuggestionCallout({
         if (!inNewTab) {
           window.location.assign(url);
         } else {
-          // Tab is already open; clear the busy state so a returning user
-          // sees the original callout in its idle state, then refetch a
-          // fresh suggestion so the just-added (now read) article isn't
-          // recommended back to them next time they look. The populated
-          // card stays mounted during the refetch – see `fetchSuggestion`
-          // – so focus stays on the "Add and read" button (WCAG 2.4.3).
+          // clear busy, then refetch so the just-added article isn't re-suggested
           setAdding(false);
           fetchSuggestion();
         }
@@ -172,8 +151,7 @@ export default function SuggestionCallout({
     })();
   }
 
-  // No suggestion returned (empty result) – show caller-provided fallback.
-  // Fetch errors are kept in the live region instead so screen readers hear them.
+  // empty result shows the fallback; fetch errors go to the live region
   if (!loading && !fetchFailed && (!suggestion || !sourceName)) {
     return <>{fallback}</>;
   }

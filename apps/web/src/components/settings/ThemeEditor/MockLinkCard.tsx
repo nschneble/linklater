@@ -8,7 +8,7 @@ import { MOCK_GLYPHS } from './mockGlyphs';
  * site name, and a description line below. Decorative only: the favicon is a
  * CSS-painted <span> and the thumbnail is a placeholder panel (no <img>), and
  * there are no focusable descendants. Paints every mount slot the real card
- * uses — the accent border (mount-highlight), the favicon badge
+ * uses - the accent border (mount-highlight), the favicon badge
  * (mount-highlight-hover), the thumbnail (mount-highlight fill + mount-highlight-fg
  * label, mirroring the real inline-SVG placeholder), the title (mount-text), and the
  * site name + description (mount-alt-text). The visible copy is asemic Old Turkic

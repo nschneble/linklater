@@ -47,14 +47,11 @@ describe('LinksController', () => {
       providers: [
         { provide: LinksService, useValue: linksServiceMock },
         { provide: LinksQueryService, useValue: linksQueryMock },
-        // AnyAuthGuard (applied at the controller level) pulls in
-        // TokenScopeService, which depends on the throttler storage; a stub
-        // keeps this controller unit test from booting that whole graph.
+        // AnyAuthGuard needs TokenScopeService; stub avoids booting it
         { provide: TokenScopeService, useValue: { enforce: jest.fn() } },
       ],
     })
-      // The route-level CustomThrottlerGuard on `create` needs the whole
-      // ThrottlerModule graph; override it so this unit test does not boot it.
+      // CustomThrottlerGuard needs the ThrottlerModule graph; override it
       .overrideGuard(CustomThrottlerGuard)
       .useValue({ canActivate: () => true })
       .compile();
@@ -116,9 +113,7 @@ describe('LinksController', () => {
       expect(ttl).toBeUndefined();
     });
 
-    // The controller no longer parses query strings – that moved to
-    // ListLinksQueryDto (see list-links-query.dto.spec.ts). Here we only prove
-    // the already-validated DTO is forwarded verbatim to the service.
+    // query parsing lives in ListLinksQueryDto; this proves forwarding
     it('forwards the validated query DTO to LinksQueryService.findAll', async () => {
       const paginated = { data: [], limit: 25, page: 2, total: 0 };
       (linksQueryMock.findAll as jest.Mock).mockResolvedValue(paginated);
@@ -161,8 +156,7 @@ describe('LinksController', () => {
   });
 
   describe('random', () => {
-    // `read` is coerced/validated by RandomLinkQueryDto; when omitted it stays
-    // undefined and LinksQueryService.getRandom applies its own default (unread).
+    // `read` omitted stays undefined; getRandom defaults to unread
     it('forwards undefined read so the service defaults to unread', async () => {
       (linksQueryMock.getRandom as jest.Mock).mockResolvedValue(null);
 
@@ -227,9 +221,7 @@ describe('LinksController', () => {
   });
 
   describe('remove', () => {
-    // findOne/read/unread/remove each take (userId, id): two same-typed string
-    // arguments, so one representative delegation test guards the argument
-    // order (tsc cannot catch a (userId, id) -> (id, userId) transposition).
+    // (userId, id) are same-typed; one test guards order tsc can't catch
     it('delegates to LinksService.remove with userId then id', async () => {
       const deleted = { id: LINK_ID };
       (linksServiceMock.remove as jest.Mock).mockResolvedValue(deleted);

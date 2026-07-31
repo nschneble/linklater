@@ -78,7 +78,7 @@ describe('SchemaTable', () => {
     expect(trigger).toHaveAttribute('type', 'button');
     expect(trigger).toHaveAttribute('aria-expanded');
     expect(trigger).toHaveAttribute('aria-controls');
-    // The toggle sits inside the property's row header (single-column table).
+    // toggle sits inside the property's row header (single-column table)
     expect(trigger.closest('th')).toHaveAttribute('scope', 'row');
 
     // A scalar property never gets a toggle.
@@ -97,7 +97,7 @@ describe('SchemaTable', () => {
     expect(panelForTrigger(metadataTrigger)).toHaveAttribute('hidden');
     expect(panelForTrigger(ownerTrigger)).toHaveAttribute('hidden');
 
-    // The collapsed panels' contents are out of the accessibility tree.
+    // collapsed panels' contents are out of the accessibility tree
     expect(screen.queryByRole('rowheader', { name: /source/ })).toBeNull();
     expect(screen.queryByRole('rowheader', { name: /id/ })).toBeNull();
   });
@@ -114,7 +114,7 @@ describe('SchemaTable', () => {
     const trigger = screen.getByRole('button', { name: 'data' });
     expect(trigger).toHaveAttribute('aria-expanded', 'true');
     expect(panelForTrigger(trigger)).not.toHaveAttribute('hidden');
-    // The single property's nested value is in the tree without a click.
+    // single property's nested value is in the tree without a click
     expect(screen.getByRole('rowheader', { name: /id/ })).toBeInTheDocument();
   });
 
@@ -153,12 +153,11 @@ describe('SchemaTable', () => {
     };
     render(<SchemaTable caption="Response body" schema={schema} />);
 
-    // Top level (depth 0, one row) is expanded...
+    // top level (depth 0, one row) is expanded...
     const outerTrigger = screen.getByRole('button', { name: 'outer' });
     expect(outerTrigger).toHaveAttribute('aria-expanded', 'true');
 
-    // ...but the nested `mid` (depth 1) stays contracted despite being the
-    // only row at its level — the exception is depth 0 only.
+    // ...but nested `mid` (depth 1) stays contracted; exception is depth 0 only
     const midTrigger = screen.getByRole('button', { name: 'mid' });
     expect(midTrigger).toHaveAttribute('aria-expanded', 'false');
     expect(panelForTrigger(midTrigger)).toHaveAttribute('hidden');
@@ -171,12 +170,12 @@ describe('SchemaTable', () => {
     const trigger = screen.getByRole('button', { name: 'metadata' });
     const panel = panelForTrigger(trigger);
 
-    // Starts contracted.
+    // starts contracted
     expect(trigger).toHaveAttribute('aria-expanded', 'false');
     expect(panel).toHaveAttribute('hidden');
     expect(screen.queryByRole('rowheader', { name: /source/ })).toBeNull();
 
-    // Expands.
+    // expands
     fireEvent.click(trigger);
     expect(trigger).toHaveAttribute('aria-expanded', 'true');
     expect(panel).not.toHaveAttribute('hidden');
@@ -184,7 +183,7 @@ describe('SchemaTable', () => {
       screen.getByRole('rowheader', { name: /source/ }),
     ).toBeInTheDocument();
 
-    // Re-contracts.
+    // re-contracts
     fireEvent.click(trigger);
     expect(trigger).toHaveAttribute('aria-expanded', 'false');
     expect(panel).toHaveAttribute('hidden');
@@ -199,7 +198,7 @@ describe('SchemaTable', () => {
     );
     const cell = panel.querySelector('td');
     expect(cell).not.toBeNull();
-    // Single-column table: no colSpan attribute (defaults to 1), never 4.
+    // single-column table: no colSpan attribute (defaults to 1), never 4
     expect(cell).not.toHaveAttribute('colspan');
   });
 
@@ -225,10 +224,10 @@ describe('SchemaTable', () => {
     };
     render(<SchemaTable caption="Response body" schema={deepSchema} />);
 
-    // `outer` is expanded by default; `mid` must be opened to reach the cap.
+    // `outer` is expanded by default; `mid` must be opened to reach cap
     fireEvent.click(screen.getByRole('button', { name: 'mid' }));
 
-    // At depth 2, `inner` collapses to a note rather than a third toggle.
+    // at depth 2, `inner` collapses to a note rather than a third toggle
     expect(
       screen.getByText(/Nested object – see full schema\./),
     ).toBeInTheDocument();

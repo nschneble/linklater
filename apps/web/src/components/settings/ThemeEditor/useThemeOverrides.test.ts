@@ -44,8 +44,7 @@ beforeEach(() => {
 describe('useThemeOverrides – disabled (custom theme off)', () => {
   it('contentThemeStyle mirrors colorValues so the tabs repaint the preview', () => {
     const { result } = renderHook(() => useThemeOverrides('light'));
-    // In jsdom the probe resolves nothing, so the read-only mirror is empty —
-    // the contract under test is that the style tracks colorValues, not {}.
+    // in jsdom the probe is empty; the contract is style tracks colorValues, not {}
     expect(result.current.contentThemeStyle).toEqual(
       result.current.colorValues,
     );
@@ -69,7 +68,7 @@ describe('useThemeOverrides – enabled (editing the custom theme)', () => {
 
   it('contentThemeStyle carries the full resolved palette (branding fallback)', () => {
     const { result } = renderHook(() => useThemeOverrides('light'));
-    // An empty custom theme resolves to the branding defaults for every var.
+    // an empty custom theme resolves to the branding defaults for every var
     expect(result.current.contentThemeStyle['--mount-bg']).toBeTruthy();
     expect(result.current.contentThemeStyle['--base-text']).toBeTruthy();
     expect(

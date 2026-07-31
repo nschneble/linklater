@@ -33,7 +33,7 @@ export class TokensService {
   /**
    * Generates a new PAT, stores only its hash, and returns the raw token
    * to the caller. The raw token is never stored and cannot be retrieved
-   * later – the user must copy it immediately.
+   * later - the user must copy it immediately.
    *
    * @param userId - The UUID of the owning user.
    * @param name - A user-provided label (e.g. "Chrome Extension").
@@ -60,7 +60,7 @@ export class TokensService {
    * Returns all PAT summaries for the given user, ordered newest-first.
    * The `tokenHash` field is never included in the response.
    *
-   * Bookmarklet tokens (`kind = BOOKMARKLET`) are excluded – they are
+   * Bookmarklet tokens (`kind = BOOKMARKLET`) are excluded - they are
    * managed through the dedicated bookmarklet endpoints, not the regular
    * token list, because their lifecycle is "always one, never shown in the
    * list".
@@ -91,7 +91,7 @@ export class TokensService {
    * retrievable secret-backed kinds are protected: a BOOKMARKLET is rotated
    * through `BookmarkletTokensService.regenerate` so the user always has a
    * working bookmarklet, and the API_DOCS token is auto-provisioned and never
-   * surfaced for deletion – revoking either via this endpoint would silently
+   * surfaced for deletion - revoking either via this endpoint would silently
    * invalidate a raw token the user may have pasted elsewhere.
    *
    * @param userId - The UUID of the owning user (scope guard).
@@ -138,7 +138,7 @@ export class TokensService {
    *
    * The token `kind` and `tokenHash` ride along so the auth layer can scope
    * what the special retrievable kinds (BOOKMARKLET, API_DOCS) are allowed to
-   * do and rate-limit them per token – see `TokenScopeService`.
+   * do and rate-limit them per token - see `TokenScopeService`.
    *
    * @param rawToken - The full raw token string (including `ltk_` prefix).
    * @returns The owning user plus the token's `kind` and `tokenHash`, or

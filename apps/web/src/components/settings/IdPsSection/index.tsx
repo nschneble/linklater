@@ -36,11 +36,7 @@ export default function IdPsSection({
   const findConnection = (provider: string) =>
     connectedProviders.find((entry) => entry.provider === provider) ?? null;
 
-  // Apple linking from Settings is not supported yet: the API exposes
-  // `/auth/google/link` but no `/auth/apple/link`. Apple sign-in (sign-up
-  // flow) still works from the login page and auto-links on first sign-in,
-  // so existing Apple connections are still shown here for disconnect, but
-  // the broken "Connect Apple" affordance is hidden entirely.
+  // no /auth/apple/link yet: hide Connect Apple, keep disconnect
   const appleConnection = findConnection('apple');
   const showAppleRow = appleEnabled && appleConnection !== null;
 
@@ -65,9 +61,7 @@ export default function IdPsSection({
     return null;
   }
 
-  // Single error slot so only one `role="alert"` mounts at a time. A retry
-  // click sets `connectError`, which takes precedence over the URL-derived
-  // `linkError` from a prior redirect.
+  // single error slot: connectError wins over the URL-derived linkError
   const displayedError = connectError ?? linkError;
 
   return (

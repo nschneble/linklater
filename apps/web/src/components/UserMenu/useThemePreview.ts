@@ -75,16 +75,12 @@ export function useThemePreview(
   const resetTransitionTimeout = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
-  // Stores the data-cvd value that was active when preview started
-  // so resetPreview can restore it after the submenu closes.
+  // data-cvd active at preview start, so resetPreview can restore it
   const previewCvdValue = useRef<string | undefined>(undefined);
   const submenuOpenedByKeyboard = useRef(false);
   const themeRowReference = useRef<HTMLDivElement | null>(null);
 
-  // Latest Custom palette + mode, read inside the preview callbacks without
-  // recreating them on every edit. The Custom theme injects inline `style`
-  // tokens (higher specificity than any stylesheet), so previewing into or out
-  // of `custom` must apply/clear those tokens alongside the `data-theme` swap.
+  // Custom's inline style tokens must be applied/cleared with data-theme
   const customThemeReference = useRef(customTheme);
   customThemeReference.current = customTheme;
   const modeReference = useRef(mode);
@@ -130,27 +126,19 @@ export function useThemePreview(
     const root = document.documentElement;
     const savedsavedCvd = previewCvdValue.current;
     previewCvdValue.current = undefined;
-    // The preview theme currently painted on the document, captured now so the
-    // deferred restore below can tell whether it is still the thing on screen.
+    // capture the painted theme so the deferred restore can detect a swap
     const previewedTheme = root.dataset.theme;
-    // Defer CSS var mutations to rAF so React re-renders first (removing the
-    // Theme row highlight instantly) before the 600ms transition is applied.
+    // defer CSS var writes to rAF so React repaints before the transition
     resetRafHandle.current = requestAnimationFrame(() => {
       resetRafHandle.current = null;
-      // Bail if an authoritative React repaint replaced the preview between
-      // scheduling and now — e.g. logging out flips the paint to the off-book
-      // `branding` chrome (useThemeState's unauthenticated gate). Restoring the
-      // committed film theme here would stomp `branding` back to that theme,
-      // and because the paint effect's deps never change again, the stale film
-      // theme would then stick across every logged-out auth surface.
+      // bail if React repainted, else a stale theme stomps branding
       if (root.dataset.theme !== previewedTheme) return;
       root.style.setProperty('--theme-transition-duration', '600ms');
       root.style.setProperty('--theme-transition-easing', 'ease-out');
       root.dataset.theme = currentBaseTheme;
-      // Re-apply (or clear) the Custom inline tokens for the committed theme so
-      // a preview into another theme doesn't leave the Custom palette behind.
+      // re-sync Custom tokens so a preview elsewhere leaves none behind
       syncCustomTokens(currentBaseTheme);
-      // Restore data-cvd if it was cleared during preview
+      // restore data-cvd if it was cleared during preview
       if (savedsavedCvd !== undefined) {
         root.dataset.cvd = savedsavedCvd;
       }
@@ -170,13 +158,10 @@ export function useThemePreview(
       root.style.setProperty('--theme-transition-duration', '150ms');
       root.style.setProperty('--theme-transition-easing', 'ease-out');
       root.dataset.theme = themeId;
-      // Apply the Custom palette when previewing `custom`, clear it for every
-      // other theme so its inline tokens stop overriding the previewed theme.
+      // apply the Custom palette for custom, clear it for other themes
       syncCustomTokens(themeId);
 
-      // If CVD mode is on and the previewed theme isn't the CVD base
-      // theme, temporarily clear data-cvd so the preview looks correct.
-      // resetPreview will restore it.
+      // clear data-cvd while previewing a non-CVD-base theme
       const currentsavedCvd = root.dataset.cvd;
 
       if (

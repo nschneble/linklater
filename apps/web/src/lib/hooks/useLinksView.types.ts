@@ -7,7 +7,7 @@ export interface UseLinksViewResult {
   /**
    * Most-recently-set error across the five sub-error fields below. Drives
    * the single visible `Alert` so that `role="alert"` mounts/unmounts at
-   * most once per transition – concurrent failures (e.g. background fetch +
+   * most once per transition; concurrent failures (e.g. background fetch +
    * user save) no longer cascade multiple assertive announcements.
    */
   error: string | null;
@@ -22,7 +22,7 @@ export interface UseLinksViewResult {
   onNavigateUnread: () => void;
   onSearch: (value: string) => void;
   onToggleShortcuts: () => void;
-  // Forwarded from useLinks
+  // forwarded from useLinks
   deleteError: string | null;
   fetchError: string | null;
   handleClearRead: () => Promise<void>;

@@ -61,11 +61,11 @@ describe('ComponentShowcase – the explanation is real app UI', () => {
   it('renders a VISIBLE (not sr-only) explanation OUTSIDE the aria-hidden mock', () => {
     renderShowcase('mount');
     const explanation = screen.getByText(/raised components like cards/i);
-    // Real app UI: NOT visually hidden.
+    // real app UI: NOT visually hidden
     expect(explanation).not.toHaveClass('sr-only');
-    // App-themed: outside the styled, aria-hidden mock subtree.
+    // app-themed: outside the styled, aria-hidden mock subtree
     expect(getMock().contains(explanation)).toBe(false);
-    // App-theme token pair, never a custom-palette token.
+    // app-theme token pair, never a custom-palette token
     expect(explanation.className).toContain('text-[var(--base-alt-text)]');
   });
 
@@ -96,7 +96,7 @@ describe('ComponentShowcase – the explanation is real app UI', () => {
     for (const bundle of BUNDLES) {
       const { unmount } = renderShowcase(bundle);
       const explanation = screen.getByText(BUNDLE_EXPLANATIONS[bundle]);
-      // Real app UI: visible + outside the aria-hidden mock subtree.
+      // real app UI: visible + outside the aria-hidden mock subtree
       expect(explanation).not.toHaveClass('sr-only');
       expect(getMock().contains(explanation)).toBe(false);
       unmount();
@@ -116,8 +116,7 @@ describe('ComponentShowcase – whole-frame preview with grayscale muting', () =
   });
 
   it('keeps the component the active bundle paints in color', () => {
-    // The header paints orbit, so on the orbit bundle its subtree is NOT
-    // muted; the toolbar (base) + link card (mount) are.
+    // header paints orbit, so only it stays un-muted on the orbit bundle
     renderShowcase('orbit');
     expect(
       screen.getByText(MOCK_GLYPHS.wordmark).closest('[data-muted]'),
@@ -131,8 +130,7 @@ describe('ComponentShowcase – whole-frame preview with grayscale muting', () =
   });
 
   it('mutes the components the non-active bundles paint', () => {
-    // On the base bundle only the toolbar stays in color; the header (orbit)
-    // and link card (mount) render grayscale.
+    // on the base bundle only the toolbar (base) stays in color
     renderShowcase('base');
     expect(
       screen.getByText(MOCK_GLYPHS.addLink).closest('[data-muted]'),
@@ -146,8 +144,7 @@ describe('ComponentShowcase – whole-frame preview with grayscale muting', () =
   });
 
   it('keeps the banner + toast in color only for a status bundle', () => {
-    // The banner + toast paint the active status bundle, so they stay in color
-    // for success but render grayscale for base/mount/orbit.
+    // banner + toast paint the status bundle, so muted unless it's active
     const { unmount } = renderShowcase('success');
     expect(
       screen
@@ -171,14 +168,7 @@ describe('ComponentShowcase – whole-frame preview with grayscale muting', () =
   });
 });
 
-/*
- * Hovering the preview reveals the whole theme in color. This is CSS-only
- * (`group` on the aria-hidden mock + `group-hover:` overrides on each muted
- * wrapper), which jsdom can't exercise via a real `:hover`, so these pin the
- * wiring by class presence instead. The `!` important is load-bearing: the
- * `data-muted:` mute compiles LATER than `group-hover:` at equal specificity,
- * so without it the mute would win over the hover reveal.
- */
+// `!` un-mute is load-bearing: `data-muted:` compiles after `group-hover:` at equal specificity
 describe('ComponentShowcase – preview hover reveals full color', () => {
   it('marks the aria-hidden mock container as the hover group', () => {
     renderShowcase('base');
@@ -197,10 +187,7 @@ describe('ComponentShowcase – preview hover reveals full color', () => {
 
 describe('ComponentShowcase – toolbar tab pills mirror the real switcher', () => {
   it('paints the Unread/Read pills in mount-tier tokens, not a one-off', () => {
-    // The real page Unread/Read switcher (SlidingTabBar surface=base) lifts to
-    // mount: --mount-text pill / --mount-bg label / --mount-alt-text idle. The
-    // mock must match it (and the editor's own bundle tabs), not paint a
-    // bespoke base-highlight fill.
+    // mock mirrors the real base→mount switcher tokens, not a bespoke fill
     renderShowcase('base');
     const selected = screen.getByText(MOCK_GLYPHS.unread);
     expect(selected).toHaveClass('bg-[var(--mount-text)]');
@@ -224,7 +211,7 @@ describe('ComponentShowcase – preview-scope inversion (PRD point 9)', () => {
       '--mount-bg': '#102030',
     } as CSSProperties);
     const region = container.querySelector('section') as HTMLElement;
-    // The region wrapper is unstyled; only the inner mock carries the palette.
+    // region wrapper is unstyled; only the inner mock carries the palette
     expect(region.getAttribute('style')).toBeNull();
   });
 });
@@ -288,18 +275,14 @@ describe('ComponentShowcase – decorative mock contract (per bundle)', () => {
 });
 
 describe('ComponentShowcase – grayscale muting mechanism', () => {
-  // Muting is driven off a `data-muted` DOM attribute plus the Tailwind
-  // `data-muted:grayscale` variant (no JS style ternary), so the muted state
-  // and the filter cannot drift apart. Exactly the components the non-active
-  // bundle paints carry the attribute.
+  // `data-muted` + its Tailwind variant drive the mute, so it can't drift
   it('drives every mute off the data-muted attribute + data-muted:grayscale variant', () => {
     for (const bundle of BUNDLES) {
       const { unmount } = renderShowcase(bundle);
       const muted = screen
         .getByTestId('app-mock')
         .querySelectorAll('[data-muted]');
-      // Every non-active piece is muted; at least one always is (the active
-      // bundle only ever paints a subset of the frame).
+      // at least one piece is always muted (active bundle paints only a subset)
       expect(muted.length).toBeGreaterThan(0);
       muted.forEach((piece) => {
         expect(piece.className).toContain('data-muted:grayscale');
@@ -309,8 +292,7 @@ describe('ComponentShowcase – grayscale muting mechanism', () => {
   });
 
   it('mutes four of five frame pieces for a surface bundle, three for a status bundle', () => {
-    // base/mount/orbit each paint one frame piece, leaving four muted; a status
-    // bundle paints both the banner + toast, leaving three muted.
+    // surface bundles paint one piece (4 muted); status paints two (3 muted)
     const { unmount } = renderShowcase('base');
     expect(
       screen.getByTestId('app-mock').querySelectorAll('[data-muted]'),
@@ -351,9 +333,7 @@ describe('ComponentShowcase – re-stagger key (PRD points 10 + 12)', () => {
         contentThemeStyle={{}}
       />,
     );
-    // A bundle swap is absent from the key, so React reconciles the SAME node in
-    // place — the `data-muted` grayscale/opacity flip transitions on stable DOM
-    // instead of hard-cutting on a remount.
+    // bundle isn't keyed, so React reuses the node; the mute flip transitions
     expect(screen.getByTestId('app-mock')).toBe(before);
   });
 
@@ -396,8 +376,7 @@ describe('ComponentShowcase – re-stagger key (PRD points 10 + 12)', () => {
         contentThemeStyle={{}}
       />,
     );
-    // Only the inner mock is keyed; the named region + heading stay mounted, so
-    // nothing re-announces and focus cannot move.
+    // only the inner mock is keyed, so the region + heading never re-announce
     expect(screen.getByRole('region', { name: 'Live preview' })).toBe(
       sectionBefore,
     );
@@ -430,8 +409,7 @@ describe('ComponentShowcase – asemic Old Turkic copy (decorative)', () => {
   it('leaves NO Latin copy inside the aria-hidden mock for any bundle (a11y Seal 6)', () => {
     for (const bundle of BUNDLES) {
       const { unmount } = renderShowcase(bundle);
-      // Nothing crosses the boundary: the mock holds only asemic glyphs (plus
-      // word-boundary spaces and icon-only <i> elements), never Latin copy.
+      // the mock holds only asemic glyphs + icon-only <i>, never Latin copy
       expect(getMock().textContent ?? '').not.toMatch(/[A-Za-z]/);
       unmount();
     }
@@ -459,7 +437,7 @@ describe('ComponentShowcase – asemic font scope', () => {
     expect(screen.getByText(/raised components like cards/i)).not.toHaveClass(
       'app-mock-asemic',
     );
-    // The marker exists exactly once, on the mock container itself.
+    // the marker exists exactly once, on the mock container itself
     expect(container.querySelectorAll('.app-mock-asemic')).toHaveLength(1);
   });
 });

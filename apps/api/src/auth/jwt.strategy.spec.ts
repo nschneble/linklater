@@ -3,8 +3,7 @@ import { jest } from '@jest/globals';
 const USER_EMAIL = 'email@addy.com';
 const USER_ID = 'user-1';
 
-// JWT_SECRET must be set before JwtStrategy is imported because the constructor
-// reads it eagerly.
+// JWT_SECRET must be set before importing JwtStrategy (eager constructor)
 process.env.JWT_SECRET = 'test-secret-for-unit-tests';
 
 import { PrismaService } from '../prisma/prisma.service';

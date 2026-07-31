@@ -80,7 +80,7 @@ export function collectTokens(
 }
 
 /**
- * Whether the Custom theme is "set up" – the user has saved at least one token
+ * Whether the Custom theme is "set up": the user has saved at least one token
  * in either mode. Until then the picker entry carries an sr-only ", not set
  * up" qualifier (WCAG 2.5.3).
  */
@@ -97,7 +97,7 @@ export function isCustomThemeConfigured(
 /**
  * The screen-reader-only qualifier appended to the custom theme's picker label
  * ("Yours"). A bare possessive pronoun has no referent when announced amid a
- * radio list of film titles, so assistive tech hears "Yours, custom theme" —
+ * radio list of film titles, so assistive tech hears "Yours, custom theme",
  * plus the "not set up" tail until the user has authored a palette (WCAG
  * 2.4.6). Shared by all three pickers so the announced name can't drift.
  */
@@ -166,7 +166,7 @@ export function applyCustomThemeTokens(
  * Pure variant of `applyCustomThemeTokens`: resolves the Custom theme's full
  * palette for `mode` (saved token ?? branding default) into a `{ '--var':
  * value }` map instead of writing to an element. Used by the Theme Editor to
- * style its preview subtree with inline custom properties — so the custom
+ * style its preview subtree with inline custom properties, so the custom
  * palette can be previewed WITHOUT changing the global `:root` theme. Stays
  * inside the trust boundary: only allowlisted `CUSTOM_TOKEN_KEYS` are emitted.
  */
