@@ -35,11 +35,7 @@ export class AppleStrategy extends PassportStrategy(
       keyID: process.env.APPLE_KEY_ID,
       scope: ['email', 'name'],
       teamID: process.env.APPLE_TEAM_ID,
-      // `state: false` opts out of the library's session-backed state store
-      // (this app has no session middleware) – NOT out of CSRF protection.
-      // The route guards (`createOAuthInitiateGuard`/`createOAuthCallbackGuard`
-      // in `oauth-csrf.guard.ts`) supply and verify a cookie-bound state
-      // value per request instead.
+      // state:false = no session state store (we have none), not disabled CSRF
       state: false,
     });
   }

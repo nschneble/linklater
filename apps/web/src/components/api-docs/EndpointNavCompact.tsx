@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react';
 import type { NormalizedEndpoint } from '../../lib/openapi';
 
 /**
- * Mobile horizontal endpoint picker – the compact stand-in for `EndpointNav`
+ * Mobile horizontal endpoint picker - the compact stand-in for `EndpointNav`
  * below `md`. A scrollable `<nav>` of chips, modeled on `SettingsSectionNav`.
  * Same model as desktop: plain buttons + `aria-current`, no tablist, no arrow
  * roving. Selecting a chip swaps the detail region below it.

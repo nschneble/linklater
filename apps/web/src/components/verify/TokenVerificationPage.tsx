@@ -79,14 +79,7 @@ export default function TokenVerificationPage({
   const { user } = useAuth();
   const hasVerified = useRef(false);
 
-  // Mirror `user` into a ref so the auth-state branch inside the
-  // onVerify().then() callback reads the LATEST value rather than the
-  // render-time closure. Today's verify endpoints don't issue session
-  // cookies (apps/api/src/auth/auth.controller.ts), so the closure is
-  // safe by accident – this ref makes correctness independent of that
-  // server behavior. If a future verify endpoint creates a session via
-  // onSuccess (e.g. await refreshUser() flipping user from null → non-null),
-  // the post-await read will see the new value and route correctly.
+  // ref-mirror user so the post-await read sees latest, not stale closure
   const userReference = useRef(user);
   useEffect(() => {
     userReference.current = user;
@@ -105,9 +98,7 @@ export default function TokenVerificationPage({
 
     onVerify(token)
       .then(async () => {
-        // Refresh auth state BEFORE queuing the notice + navigating so the
-        // destination page renders against the latest user profile (e.g.
-        // post-verification `emailVerifiedAt` timestamp or updated email).
+        // refresh auth first so the destination sees a fresh profile
         await onSuccess?.();
         const isSignedIn = userReference.current !== null;
         const noticeKey = isSignedIn ? signedInNotice : signedOutNotice;

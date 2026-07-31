@@ -48,13 +48,12 @@ describe('Toast', () => {
     const { container } = render(
       <Toast message="Link saved!" onDismiss={() => {}} announce={false} />,
     );
-    // No role="status"/"alert" and no aria-live: the parent owns the
-    // announcement via a separate always-mounted region.
+    // no role/aria-live here: the parent owns the announcement region
     expect(screen.queryByRole('status')).toBeNull();
     expect(screen.queryByRole('alert')).toBeNull();
     const card = container.firstElementChild;
     expect(card?.getAttribute('aria-live')).toBeNull();
-    // The visible message + dismiss button still render.
+    // the visible message + dismiss button still render
     expect(card?.textContent).toContain('Link saved!');
     expect(screen.getByRole('button', { name: 'Dismiss' })).toBeInTheDocument();
   });
@@ -96,12 +95,7 @@ describe('Toast', () => {
     );
   });
 
-  // Windows High Contrast / forced-colors mode overrides the arbitrary bg
-  // paint to system Canvas and strips the box-shadow that border-shadow
-  // produces. Without a forced-colors-visible border the toast would lose
-  // every visible boundary against the page (WCAG 1.4.11 Non-text Contrast).
-  // CanvasText is the system foreground token; ButtonText is reserved for
-  // the interactive dismiss button's outline.
+  // forced-colors strips the shadow; CanvasText border keeps it, WCAG 1.4.11
   it('paints a CanvasText border + text fallback in forced-colors mode', () => {
     render(<Toast message="x" onDismiss={() => {}} />);
     const toast = screen.getByRole('status');
@@ -133,8 +127,7 @@ describe('Toast', () => {
       vi.advanceTimersByTime(4999);
     });
     expect(handleDismiss).not.toHaveBeenCalled();
-    // Crossing the 5000ms boundary fires the auto-dismiss timer, which
-    // triggers a React state update (setExiting(true)) – wrap in act().
+    // crossing 5000ms fires the timer's state update, so wrap in act()
     act(() => {
       vi.advanceTimersByTime(1);
     });
@@ -155,9 +148,7 @@ describe('Toast', () => {
     const handleDismiss = vi.fn();
 
     function Wrapper({ tick }: { tick: number }) {
-      // new inline arrow each render – mirrors the AuthForm consumer pattern
-      // where setForgotPasswordSentJustNow(false) fires 5000ms after success
-      // and causes the parent to hand Toast a fresh onDismiss identity
+      // new inline arrow each render: a fresh onDismiss identity, like AuthForm
       return (
         <Toast message={`tick ${tick}`} onDismiss={() => handleDismiss(tick)} />
       );

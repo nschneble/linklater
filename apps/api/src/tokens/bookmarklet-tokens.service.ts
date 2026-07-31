@@ -11,7 +11,7 @@ const BOOKMARKLET_TOKEN_NAME = 'Bookmarklet';
  *
  * Unlike regular PATs, the bookmarklet token's raw value is stored in
  * `secretValue` so the settings page can embed it in the `javascript:`
- * URL on every load – including from a new device.
+ * URL on every load - including from a new device.
  *
  * The raw-token minting primitive is imported directly from
  * `./mint-raw-token` rather than reached through `TokensService`. Keeping
@@ -37,9 +37,7 @@ export class BookmarkletTokensService {
       return this.toSummary(existing);
     }
 
-    // Row exists but secretValue is missing (data-integrity glitch, manual
-    // patch, partial restore). Self-heal by regenerating instead of 500ing
-    // every settings-page load.
+    // missing secretValue: self-heal by regenerating, don't 500 the page
     if (existing) {
       return this.regenerate(userId);
     }
@@ -52,10 +50,7 @@ export class BookmarkletTokensService {
       });
       return this.toSummary(stored);
     } catch (error) {
-      // Two tabs opened simultaneously can both hit the create branch; the
-      // partial unique index on (userId) WHERE kind = 'BOOKMARKLET' wins
-      // one and rejects the other with P2002. Re-fetch the row the winning
-      // tab inserted and return its raw value.
+      // concurrent create: partial unique index rejects the loser with P2002
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
@@ -124,10 +119,7 @@ export class BookmarkletTokensService {
     secretValue: string | null;
   }) {
     if (!stored.secretValue) {
-      // Every BOOKMARKLET row must have a secretValue populated at creation.
-      // A null here means a data-integrity violation – throw so it produces a
-      // visible 500 rather than silently returning an empty token that leaves
-      // the bookmarklet anchor stuck at href="#" with no error shown.
+      // null secretValue: fail loud vs a silently broken bookmarklet
       throw new Error(
         `Bookmarklet token ${stored.id} is missing secretValue – data integrity violation`,
       );

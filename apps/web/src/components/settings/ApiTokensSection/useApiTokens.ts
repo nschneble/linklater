@@ -52,10 +52,7 @@ export function useApiTokens() {
     void loadTokens();
   }, []);
 
-  // The PAT list resolves after first paint and expands this section, which
-  // can shift a deep-linked section below it off the top edge. Re-anchor the
-  // active section once the list settles. This is the bottom-most async
-  // section, so its load transition is the last one that can drift layout.
+  // re-anchor once the async PAT list expands and shifts sections
   useReanchorOnLoad(loaded);
 
   useEffect(() => {

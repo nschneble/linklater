@@ -242,9 +242,7 @@ describe('TotpService', () => {
       const { encrypt } = await import('../common/crypto.js');
       const encryptedSecret = encrypt(secret, process.env.TOTP_ENCRYPTION_KEY!);
 
-      // First request wins the CAS; the second arrives in the same 30s
-      // step, otplib accepts it as valid, but updateTotpLastUsedStep
-      // returns false because totpLastUsedStep is already >= usedStep.
+      // first wins the CAS; second (same 30s step) fails the step update
       (
         userMfaServiceMock.updateTotpLastUsedStep as jest.Mock
       ).mockResolvedValue(false);
@@ -270,7 +268,7 @@ describe('TotpService', () => {
       const { encrypt } = await import('../common/crypto.js');
       const encryptedSecret = encrypt(secret, process.env.TOTP_ENCRYPTION_KEY!);
 
-      // Simulate the current 30-second window having already been consumed
+      // simulate the current 30-second window having already been consumed
       const currentStep = Math.floor(Date.now() / 1000 / 30);
       const user = makeUser({
         totpSecret: encryptedSecret,

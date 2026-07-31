@@ -141,9 +141,7 @@ describe('DangerZone credentialed branch (hasPassword: true)', () => {
     expect(screen.getByLabelText(/current password/i)).toBeInTheDocument();
   });
 
-  // M2: ReauthForm focusOnMount lands keyboard users in the password field
-  // the instant the form reveals, instead of leaving focus on the (now
-  // unmounted) trigger and dropping to <body>.
+  // M2: focusOnMount lands keyboard users in the password field, not on the unmounted trigger
   it('opening reauth autofocuses the current-password field (focusOnMount)', () => {
     renderDangerZone();
     fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
@@ -212,7 +210,7 @@ describe('DangerZone credentialed branch (hasPassword: true)', () => {
     });
 
     expect(screen.getByRole('alert')).toHaveTextContent(/incorrect password/i);
-    // ReauthForm still visible – phase is 'reauth'
+    // ReauthForm still visible - phase is 'reauth'
     expect(screen.getByLabelText(/current password/i)).toBeInTheDocument();
   });
 
@@ -248,9 +246,7 @@ describe('DangerZone credentialed branch (hasPassword: true)', () => {
     ).toBeInTheDocument();
   });
 
-  // M1: closeReauth schedules triggerReference.current?.focus() on a
-  // requestAnimationFrame so focus lands after the idle trigger remounts.
-  // waitFor polls past the rAF tick (real timers, jsdom rAF is a macrotask).
+  // M1: closeReauth refocuses the trigger on rAF; waitFor polls past the tick (jsdom rAF is a macrotask)
   it('cancel returns focus to the trigger button (rAF-scheduled)', async () => {
     renderDangerZone();
     fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
@@ -301,8 +297,7 @@ describe('DangerZone credentialed branch (MFA-only: hasPassword=false, multiFact
     ).not.toBeInTheDocument();
   });
 
-  // M2: focusOnMount falls through to the code field when there is no
-  // password input to claim focus first.
+  // M2: focusOnMount falls through to the code field when there's no password input
   it('opening reauth autofocuses the code field (focusOnMount)', () => {
     renderDangerZone();
     fireEvent.click(screen.getByRole('button', { name: /delete my account/i }));
@@ -332,11 +327,7 @@ describe('DangerZone credentialed branch (MFA-only: hasPassword=false, multiFact
 });
 
 describe('DangerZone email-confirm branch (magic-link-only: hasPassword=false, no MFA)', () => {
-  // The email-confirm branch is driven by `user.accountDeletionPending` (a
-  // server-derived flag) so the panel survives navigation away from
-  // Settings and back. Tests in this branch model that contract: the
-  // useAuth mock is wired stateful so refreshUser actually mutates the
-  // user object the component reads on re-render.
+  // email-confirm keys off server-derived accountDeletionPending, so the mock is stateful (refreshUser mutates the user)
   function setupStatefulAuth(initialPending: boolean) {
     let currentUser = makeUser({
       hasPassword: false,
@@ -346,8 +337,7 @@ describe('DangerZone email-confirm branch (magic-link-only: hasPassword=false, n
     let listeners: Array<() => void> = [];
     const logout = vi.fn();
     const refreshUser = vi.fn(async () => {
-      // Server source of truth: a pending deletion token from deleteMe;
-      // Never mind clears it via cancelPendingAccountDeletion.
+      // server truth: deleteMe sets pending, cancelPendingAccountDeletion clears it
       const deleteCalls = vi.mocked(apiModule.deleteMe).mock.calls.length;
       const cancelCalls = vi.mocked(apiModule.cancelPendingAccountDeletion).mock
         .calls.length;
@@ -409,9 +399,7 @@ describe('DangerZone email-confirm branch (magic-link-only: hasPassword=false, n
     });
   });
 
-  // M4: CheckYourEmailPanel's tabIndex={-1} section pulls focus on mount so
-  // the success announcement is the focused element right after the
-  // email-confirm transition, not a stranded <body>.
+  // M4: CheckYourEmailPanel's tabIndex={-1} section pulls focus on mount, not a stranded <body>
   it('the "Check your email" panel receives focus on the email-confirm transition', async () => {
     vi.mocked(apiModule.deleteMe).mockResolvedValue({
       success: true,
@@ -517,10 +505,7 @@ describe('DangerZone email-confirm branch (magic-link-only: hasPassword=false, n
     });
   });
 
-  // M3: the never-mind path runs while ActionGuard is unmounted, so
-  // EmailConfirmDeleteFlow's own shouldFocusTriggerOnIdle effect returns
-  // focus to the trigger after refreshUser() flips the server flag and the
-  // idle trigger remounts.
+  // M3: never-mind runs with ActionGuard unmounted, so EmailConfirmDeleteFlow's shouldFocusTriggerOnIdle refocuses the trigger
   it('"Never mind" returns focus to the trigger after the panel unmounts', async () => {
     vi.mocked(apiModule.deleteMe).mockResolvedValue({
       success: true,

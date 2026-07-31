@@ -63,10 +63,6 @@ import {
   verifyTotpSetup,
 } from '.';
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
 function mockFetch(body: unknown, status = 200): Mock {
   const mock = vi.fn().mockResolvedValue({
     ok: status >= 200 && status < 300,
@@ -105,10 +101,6 @@ function mockFetchEmptyBody(status = 200): Mock {
   return mock;
 }
 
-// ---------------------------------------------------------------------------
-// Setup / teardown
-// ---------------------------------------------------------------------------
-
 beforeEach(() => {
   localStorage.clear();
   clearStoredToken();
@@ -118,10 +110,6 @@ beforeEach(() => {
 afterEach(() => {
   vi.restoreAllMocks();
 });
-
-// ---------------------------------------------------------------------------
-// Token helpers
-// ---------------------------------------------------------------------------
 
 describe('token helpers', () => {
   it('getStoredToken returns null when no token is set', () => {
@@ -156,10 +144,6 @@ describe('token helpers', () => {
     expect(localStorage.getItem('linklater_refresh_token')).toBeNull();
   });
 });
-
-// ---------------------------------------------------------------------------
-// apiFetch – core helper
-// ---------------------------------------------------------------------------
 
 describe('apiFetch', () => {
   it('attaches Content-Type application/json header', async () => {
@@ -265,14 +249,14 @@ describe('apiFetch', () => {
     globalThis.fetch = vi
       .fn()
       .mockResolvedValueOnce({
-        // First attempt → 401
+        // first attempt → 401
         ok: false,
         status: 401,
         text: () =>
           Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
       })
       .mockResolvedValueOnce({
-        // Token refresh → 200
+        // token refresh → 200
         ok: true,
         status: 200,
         text: () =>
@@ -289,7 +273,7 @@ describe('apiFetch', () => {
           }),
       })
       .mockResolvedValueOnce({
-        // Retry → 200
+        // retry → 200
         ok: true,
         status: 200,
         text: () => Promise.resolve(JSON.stringify({ id: 'result' })),
@@ -343,8 +327,7 @@ describe('apiFetch', () => {
       }) as unknown as typeof fetch;
 
     await expect(apiFetch('/test')).rejects.toBeInstanceOf(ApiError);
-    // A 403 is the server answering that the refresh token may not be used:
-    // the session is genuinely dead, so the tokens go with the 401 above.
+    // 403 means the refresh token is rejected: session dead, clear the tokens
     expect(getStoredToken()).toBeNull();
     expect(getStoredRefreshToken()).toBeNull();
   });
@@ -368,8 +351,7 @@ describe('apiFetch', () => {
       }) as unknown as typeof fetch;
 
     await expect(apiFetch('/test')).rejects.toBeInstanceOf(ApiError);
-    // A 5xx is a server-side fault, not a spent session: the tokens survive so
-    // a later request can retry the refresh.
+    // 5xx is a server fault, not a spent session, so tokens survive to retry
     expect(getStoredToken()).toBe('expired-jwt');
     expect(getStoredRefreshToken()).toBe('valid-refresh');
   });
@@ -380,14 +362,14 @@ describe('apiFetch', () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce({
-        // First request → 401
+        // first request → 401
         ok: false,
         status: 401,
         text: () =>
           Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
       })
       .mockResolvedValueOnce({
-        // Refresh → 500 (transient); the tokens must survive untouched
+        // refresh → 500 (transient); the tokens must survive untouched
         ok: false,
         status: 500,
         text: () =>
@@ -401,14 +383,14 @@ describe('apiFetch', () => {
 
     (fetchMock as unknown as Mock)
       .mockResolvedValueOnce({
-        // Second request → 401
+        // second request → 401
         ok: false,
         status: 401,
         text: () =>
           Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
       })
       .mockResolvedValueOnce({
-        // Refresh → 200; the surviving refresh token now rotates cleanly
+        // refresh → 200; the surviving refresh token now rotates cleanly
         ok: true,
         status: 200,
         text: () =>
@@ -425,7 +407,7 @@ describe('apiFetch', () => {
           }),
       })
       .mockResolvedValueOnce({
-        // Retry → 200
+        // retry → 200
         ok: true,
         status: 200,
         text: () => Promise.resolve(JSON.stringify({ id: 'recovered' })),
@@ -452,10 +434,7 @@ describe('apiFetch', () => {
   });
 
   it('clears the dead access token when a 401 finds no refresh token to renew it', async () => {
-    // An access token with no refresh token alongside it: a 401 proves the
-    // access token is spent, and nothing exists to refresh it with, so it is
-    // dead for good. It must be cleared rather than left to linger across
-    // reloads granting nothing.
+    // no refresh token, so a 401 proves the access token is dead: clear it
     setStoredToken('dead-jwt');
     const fetchMock = vi.fn().mockResolvedValue({
       ok: false,
@@ -465,12 +444,12 @@ describe('apiFetch', () => {
     globalThis.fetch = fetchMock;
 
     const error = await apiFetch('/test').catch((caught: unknown) => caught);
-    // The original 401 still reaches the caller unchanged.
+    // the original 401 still reaches the caller unchanged
     expect(error).toBeInstanceOf(ApiError);
     expect((error as ApiError).status).toBe(401);
-    // The dead access token is gone.
+    // the dead access token is gone
     expect(getStoredToken()).toBeNull();
-    // Only the original request ran; no refresh leg fired.
+    // only the original request ran; no refresh leg fired
     expect((fetchMock as unknown as Mock).mock.calls).toHaveLength(1);
   });
 
@@ -628,10 +607,6 @@ describe('apiFetch', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// apiFetch – token-refresh deadline
-// ---------------------------------------------------------------------------
-
 describe('apiFetch token-refresh deadline', () => {
   afterEach(() => {
     vi.useRealTimers();
@@ -645,8 +620,7 @@ describe('apiFetch token-refresh deadline', () => {
       (input: RequestInfo | URL, options?: RequestInit) => {
         const url = typeof input === 'string' ? input : input.toString();
         if (url.includes('/auth/refresh')) {
-          // A socket that never answers on its own. The promise settles only
-          // once the refresh's own deadline aborts it.
+          // a socket that never answers; settles only when the deadline aborts it
           return new Promise((_resolve, reject) => {
             options?.signal?.addEventListener('abort', () =>
               reject(
@@ -664,19 +638,16 @@ describe('apiFetch token-refresh deadline', () => {
       },
     ) as unknown as typeof fetch;
 
-    // Attach the rejection handler before advancing so the abort-driven
-    // rejection is never briefly flagged unhandled while time moves.
+    // attach the reject handler before advancing so the abort isn't unhandled
     const caught = apiFetch('/test').catch((error: unknown) => error);
-    // Nothing resolves the refresh until its 10s deadline fires (see
-    // REFRESH_DEADLINE_MS in core.ts).
+    // nothing resolves the refresh until REFRESH_DEADLINE_MS (10s) in core.ts
     await vi.advanceTimersByTimeAsync(10_000);
 
     const error = await caught;
     expect(error).toBeInstanceOf(ApiError);
-    // The caller sees the original 401, not a refresh-specific error.
+    // the caller sees the original 401, not a refresh-specific error
     expect((error as ApiError).status).toBe(401);
-    // A deadline abort is a transient failure: this request fails, but the
-    // refresh never reached a verdict, so the tokens survive for a later retry.
+    // a deadline abort is transient: no verdict reached, so tokens survive
     expect(getStoredToken()).toBe('expired-jwt');
     expect(getStoredRefreshToken()).toBe('valid-refresh');
   });
@@ -698,8 +669,7 @@ describe('apiFetch token-refresh deadline', () => {
     }) as unknown as typeof fetch;
 
     await expect(apiFetch('/test')).rejects.toBeInstanceOf(ApiError);
-    // Same class as the deadline abort above: a refresh that never reached the
-    // server leaves the tokens in place rather than reading it as a rejection.
+    // same as the deadline abort: a refresh not reaching server keeps tokens
     expect(getStoredToken()).toBe('expired-jwt');
     expect(getStoredRefreshToken()).toBe('valid-refresh');
   });
@@ -713,10 +683,7 @@ describe('apiFetch token-refresh deadline', () => {
       (input: RequestInfo | URL, options?: RequestInit) => {
         const url = typeof input === 'string' ? input : input.toString();
         if (url.includes('/auth/refresh')) {
-          // Answers at 9s: slow, but inside the 10s deadline, so it must not be
-          // aborted. It still rejects on abort (mirroring the hung-refresh mock
-          // above), so a deadline that fired too early would abort this leg
-          // rather than let the 9s answer sail through unnoticed.
+          // answers at 9s, inside the 10s deadline: must complete, not abort
           return new Promise((resolve, reject) => {
             options?.signal?.addEventListener('abort', () =>
               reject(
@@ -770,10 +737,6 @@ describe('apiFetch token-refresh deadline', () => {
     expect(getStoredRefreshToken()).toBe('new-refresh');
   });
 });
-
-// ---------------------------------------------------------------------------
-// Auth endpoints
-// ---------------------------------------------------------------------------
 
 describe('register', () => {
   it('POSTs to /auth/register without an Authorization header', async () => {
@@ -1020,10 +983,6 @@ describe('resetPassword', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// Link endpoints
-// ---------------------------------------------------------------------------
-
 describe('getLink', () => {
   it('GETs /links/:id', async () => {
     const fetchMock = mockFetch({ id: 'link-1', url: 'https://example.com' });
@@ -1198,10 +1157,6 @@ describe('deleteMe', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// MFA endpoints
-// ---------------------------------------------------------------------------
-
 describe('setupTotp', () => {
   it('POSTs to /auth/mfa/totp/setup with auth', async () => {
     setStoredToken('my-jwt');
@@ -1270,12 +1225,7 @@ describe('registerMagicLink', () => {
 });
 
 describe('verifyMagicLink', () => {
-  // verifyMagicLink does NOT auto-store the returned token pair anymore – the
-  // VerifyLoginPage caller first compares the returned `userId` against the
-  // currently signed-in user and decides whether to swap sessions, keep the
-  // existing one (same-account click), or revoke B's sessions first
-  // (cross-account click). The server still consumes the magic-link token
-  // on every call – single-use semantics hold at the API layer.
+  // verifyMagicLink returns tokens without storing; caller swaps sessions
   it('POSTs to /auth/verify-magic-link with token and returns the response without storing', async () => {
     const fetchMock = mockFetch({
       accessToken: 'ml-jwt',
@@ -1299,9 +1249,7 @@ describe('verifyMagicLink', () => {
     expect(getStoredToken()).toBeNull();
   });
 
-  // MFA-enabled accounts hitting a magic link get a challenge back from
-  // the server. The response must be returned as-is so the caller can
-  // surface MfaView instead of trying to destructure a missing accessToken.
+  // MFA accounts get a challenge back; return as-is so caller shows MfaView
   it('returns the mfa challenge unchanged and does not store any token', async () => {
     mockFetch({ mfaToken: 'pending-mfa-token', mfaMethod: 'totp' });
 

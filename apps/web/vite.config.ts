@@ -15,9 +15,7 @@ const mkcertHosts = ['localhost', `${bareHostname}.local`];
 // https://vite.dev/config/
 export default defineConfig({
   build: {
-    // ApiDocsView is route-lazy (React.lazy, loads only on /docs).
-    // The chunk is intentionally large because it bundles the full OpenAPI
-    // renderer; raising the limit silences the warning without hiding real bloat.
+    // ApiDocsView is a large lazy chunk (OpenAPI renderer); raise limit
     chunkSizeWarningLimit: 3000,
     rollupOptions: {
       output: {

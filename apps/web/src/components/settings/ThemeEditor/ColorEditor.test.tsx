@@ -46,8 +46,7 @@ describe('ColorEditor – named Color Bundles region (a11y brief §3)', () => {
     });
     const region = screen.getByRole('region', { name: 'Color Bundles' });
     expect(region).toContainElement(heading);
-    // The bundle tablist lives inside the named region and is labelled by the
-    // same "Color Bundles" h2.
+    // tablist sits inside the region, labelled by the same "Color Bundles" h2
     expect(
       within(region).getByRole('tablist', { name: /color bundles/i }),
     ).toBeInTheDocument();
@@ -95,7 +94,7 @@ describe('ColorEditor – tab order', () => {
   it('orders bundle tablist → slot rows', () => {
     renderEditor();
     const baseTab = screen.getByRole('tab', { name: 'Base' });
-    // The default active bundle (base) shows its Background slot row first.
+    // the default active bundle (base) shows its Background slot row first
     const firstSlot = screen.getByLabelText('Color picker for Background');
 
     expect(precedes(baseTab, firstSlot)).toBe(true);

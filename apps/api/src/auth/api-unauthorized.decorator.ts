@@ -5,7 +5,7 @@ import { ApiResponse } from '@nestjs/swagger';
  * Attaches the standard 401 response shape used by every PAT-callable
  * endpoint. Composed via `applyDecorators` so the rendered OpenAPI is
  * byte-for-byte identical to the inline `@ApiResponse({ status: 401, ... })`
- * it replaces – OpenAPI consumers see no change. Use on any controller
+ * it replaces; OpenAPI consumers see no change. Use on any controller
  * method guarded by `AnyAuthGuard` or `JwtAuthGuard`.
  *
  * @example

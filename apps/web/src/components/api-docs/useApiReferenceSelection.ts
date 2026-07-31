@@ -52,8 +52,7 @@ export function useApiReferenceSelection(
     ? endpointSlug(matched.method, matched.path)
     : '';
 
-  // Armed only by an explicit selectEndpoint call so data-driven or
-  // history-driven slug changes never steal focus (see the WHY block).
+  // armed only by explicit selectEndpoint so back/forward never steals focus
   const pendingFocusRef = useRef(false);
 
   function selectEndpoint(slug: string) {
@@ -70,8 +69,7 @@ export function useApiReferenceSelection(
     document
       .getElementById(headingId)
       ?.focus({ preventScroll: true } as FocusOptions);
-    // Re-run when the resolved selection changes; `matched` is recomputed each
-    // render from the same hash, so keying on the slug is sufficient.
+    // `matched` recomputes each render from the hash; keying on slug suffices
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSlug]);
 

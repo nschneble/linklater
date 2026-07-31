@@ -5,7 +5,7 @@ import type { LinksFilter } from './types';
  * filter/search changes & load-more increments can be handled atomically.
  */
 export interface FetchParameters {
-  /** The current tab – `'unread'` or `'read'`. */
+  /** The current tab: `'unread'` or `'read'`. */
   filter: LinksFilter;
   /** The current pagination page number, starting at 1. */
   page: number;

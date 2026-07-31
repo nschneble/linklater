@@ -73,9 +73,7 @@ describe('useFocusTrap', () => {
     middle.focus();
 
     pressKey(getByTestId('trap'), 'Tab');
-    // The browser-native Tab behavior would move focus forward; the trap only
-    // intercepts at the edges, so document.activeElement stays unchanged in
-    // the test environment (no real Tab navigation).
+    // jsdom has no real Tab nav; the trap only intercepts at the edges
     expect(document.activeElement).toBe(middle);
   });
 
@@ -135,9 +133,7 @@ describe('useFocusTrap', () => {
     const realLast = getByText('Real Last');
     realLast.focus();
 
-    // With the disabled button excluded, 'Real Last' is the last focusable, so
-    // Tab wraps forward to the first. If the disabled button were counted, Tab
-    // from 'Real Last' (now a middle element) would not wrap.
+    // disabled button excluded, so 'Real Last' is last and Tab wraps to first
     pressKey(getByTestId('trap'), 'Tab');
     expect(document.activeElement).toBe(first);
   });
@@ -157,8 +153,7 @@ describe('useFocusTrap', () => {
     const realLast = getByText('Real Last');
     realLast.focus();
 
-    // The inert descendant is filtered out, so 'Real Last' is the last
-    // focusable and Tab wraps forward to the first.
+    // inert descendant filtered out, so 'Real Last' is last and Tab wraps first
     pressKey(getByTestId('trap'), 'Tab');
     expect(document.activeElement).toBe(first);
   });
@@ -172,7 +167,7 @@ describe('useFocusTrap', () => {
     }
     const { rerender } = render(<Wrapper open={true} />);
     rerender(<Wrapper open={false} />);
-    // No assertion needed – verifies cleanup doesn't throw on subsequent renders.
+    // no assertion; verifies cleanup doesn't throw on later renders
     expect(reference.current).toBeNull();
   });
 });

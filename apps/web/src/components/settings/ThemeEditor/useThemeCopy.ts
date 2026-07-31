@@ -69,15 +69,13 @@ export function useThemeCopy({
   const [savedCount, setSavedCount] = useState(0);
   const [savedMessage, setSavedMessage] = useState('Your theme saved.');
 
-  // A consume-once reason the next settled save announces.
+  // a consume-once reason the next settled save announces
   const pendingSaveReasonReference = useRef<string | null>(null);
 
   const onSaveFailedReference = useRef(onSaveFailed);
   onSaveFailedReference.current = onSaveFailed;
 
-  // A success consumes the pending reason (or the generic message) so each
-  // settled save announces exactly one thing; a failure routes to the editor's
-  // assertive Toast.
+  // consume the pending reason on success so each save announces one thing
   const handleAutoSaveOutcome = useCallback((outcome: 'saved' | 'failed') => {
     if (outcome === 'saved') {
       const reason = pendingSaveReasonReference.current ?? 'Your theme saved.';
@@ -89,10 +87,7 @@ export function useThemeCopy({
     }
   }, []);
 
-  // Push a one-off message through the same polite channel the settled-save
-  // announcements use (engage/copy utterances). Clearing-then-setting is the
-  // live region's job (in `useAnnouncer`); here we just bump the count so the
-  // region re-fires with the new message.
+  // bump the count so the region re-fires; useAnnouncer does the clear/set
   const announce = useCallback((message: string) => {
     setSavedMessage(message);
     setSavedCount((previous) => previous + 1);

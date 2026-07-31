@@ -74,10 +74,7 @@ describe('ApiReference', () => {
   it('keeps a single persistent spec-load live region outside the swapping detail', async () => {
     renderReference();
     await screen.findByRole('heading', { level: 3 });
-    // Only the spec-load-state region lives at this level now – the live "try
-    // it out" form (and the request-status region it fed) has been removed, so
-    // no auth-gated announcer remains. The welcome panel carries no status
-    // region, so the load-state region is the sole status node here.
+    // the load-state region is the only status node; the welcome panel has none
     expect(screen.getAllByRole('status')).toHaveLength(1);
   });
 
@@ -103,7 +100,7 @@ describe('ApiReference', () => {
     expect(
       await screen.findByRole('heading', { level: 3, name: 'GET /links' }),
     ).toBeInTheDocument();
-    // Welcome heading is gone – the detail replaced it.
+    // welcome heading is gone; the detail replaced it
     expect(
       screen.queryByRole('heading', { name: /save, read, and delete links/i }),
     ).not.toBeInTheDocument();

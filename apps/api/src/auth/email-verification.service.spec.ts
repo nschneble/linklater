@@ -658,9 +658,7 @@ describe('EmailVerificationService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    // The pendingEmail uniqueness check at request time races with another
-    // user claiming the same address before confirm runs. Before this map,
-    // the Prisma P2002 escaped as an opaque 500.
+    // pendingEmail uniqueness races a rival claim; P2002 -> Conflict, not 500
     it('throws ConflictException when the pending email was claimed in the meantime', async () => {
       (
         userTokensServiceMock.findByPendingEmailToken as jest.Mock

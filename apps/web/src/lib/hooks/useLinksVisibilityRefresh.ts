@@ -49,11 +49,7 @@ export function useLinksVisibilityRefresh({
   paginationReference,
   onRefreshed,
 }: UseLinksVisibilityRefreshOptions): string {
-  // The clear-then-set re-announce lives in the shared `useReannounce` hook:
-  // each arrival bumps `announceToken` (so an identical consecutive count still
-  // re-fires), and `pendingMessage` carries the text the hook reads at fire
-  // time. `announceToken` is state (not a ref) so a repeat bump with an
-  // unchanged message still forces the render that re-runs the hook's effect.
+  // `announceToken` is state not a ref, so identical bumps still re-render
   const [announceToken, setAnnounceToken] = useState(0);
   const [pendingMessage, setPendingMessage] = useState('');
   const newLinksAnnouncement = useReannounce(announceToken, pendingMessage, 0);
@@ -69,33 +65,27 @@ export function useLinksVisibilityRefresh({
         limit: paginationReference.current?.limit,
       });
 
-      // Stale fire: a newer refresh started, the hook was disabled, or the
-      // component unmounted while this request was in flight. Discard.
+      // stale fire: newer refresh, disabled, or unmounted mid-flight; discard
       if (token !== activeTokenReference.current) return;
 
       const additions = findNewLinks(result.data, linksReference.current);
 
       if (additions.length > 0) {
         onRefreshed(additions, { total: result.total, limit: result.limit });
-        // Hand the message + a fresh token to `useReannounce`, which owns the
-        // clear-then-set so an identical consecutive count still re-fires. The
-        // bump happens on the same tick as the (already-passed) staleness check
-        // above, so a stale in-flight refresh can't fire a phantom announcement.
+        // bump rides the same tick as the staleness check, so no phantom announce
         setPendingMessage(formatNewLinksAnnouncement(additions.length));
         setAnnounceToken((current) => current + 1);
       } else {
         onRefreshed([], { total: result.total, limit: result.limit });
       }
     } catch {
-      // Silent: next user navigation will retry. We don't surface a
-      // background-refresh failure as a UI error.
+      // silent: next navigation retries, no UI error for a background refresh
     }
   }, [linksReference, paginationReference, onRefreshed]);
 
   useEffect(() => {
     if (!enabled) {
-      // Invalidate any in-flight refresh so a result that arrives after the
-      // filter switch cannot leak into the new consumer state.
+      // invalidate any in-flight refresh so a late result can't leak into state
       activeTokenReference.current++;
       return;
     }
@@ -116,19 +106,13 @@ export function useLinksVisibilityRefresh({
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      // Invalidate so cleanup-after-unmount drops any in-flight result.
-      // Reading the latest .current here is intentional – we want to
-      // invalidate WHATEVER token is active at cleanup time, not capture
-      // a stale value on attachment.
+      // invalidate whatever token is active at cleanup, not a captured value
       // eslint-disable-next-line react-hooks/exhaustive-deps
       activeTokenReference.current++;
     };
   }, [enabled, runVisibilityRefresh]);
 
-  // Empty the announcement after the TTL so the live region doesn't leave a
-  // stale count in the DOM. Clearing goes through the same trigger/message
-  // inputs `useReannounce` owns: blank the pending message, then bump the token
-  // so the hook re-runs and settles the region back to ''.
+  // clear the announcement after the TTL so no stale count lingers in the DOM
   useEffect(() => {
     if (!newLinksAnnouncement) return;
     const timeoutId = setTimeout(() => {

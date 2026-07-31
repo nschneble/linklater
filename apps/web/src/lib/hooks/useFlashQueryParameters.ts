@@ -54,7 +54,7 @@ export function useFlashQueryParameters<T>(
     if (hasAnyKey) {
       setSearchParameters({}, { replace: true });
     }
-    // Mount-only by design – see WHY block above.
+    // mount-only by design; see the WHY block above
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

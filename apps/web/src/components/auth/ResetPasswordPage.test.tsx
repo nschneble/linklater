@@ -147,7 +147,7 @@ describe('ResetPasswordPage success path (non-MFA)', () => {
   });
 
   it('renders an sr-only polite status while the reset is in flight', async () => {
-    // Hold the API call open so the loading state stays mounted.
+    // hold the API call open so the loading state stays mounted
     let resolveReset: (value: {
       accessToken: string;
       refreshToken: string;
@@ -295,10 +295,7 @@ describe('ResetPasswordPage MFA path', () => {
 });
 
 describe('ResetPasswordPage branding pin', () => {
-  // The reset-password surface must always render in the off-book `branding`
-  // chrome, never a stale film/custom palette from a lingering session. Every
-  // return branch (form, in-flight spinner, MFA) carries `data-theme="branding"`
-  // so the paint can't inherit the document theme. See branding.css.
+  // branding pin: every branch sets data-theme="branding", never inherited
   it('renders the form in a branding-scoped wrapper', () => {
     const { container } = renderPage();
     expect(container.querySelector('[data-theme="branding"]')).not.toBeNull();

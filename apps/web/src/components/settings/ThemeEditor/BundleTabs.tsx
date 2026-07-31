@@ -36,9 +36,7 @@ function tabId(bundle: Bundle): string {
   return `bundle-tab-${bundle}`;
 }
 
-// One physical panel whose contents swap, so it carries ONE fixed id. Every
-// tab's `aria-controls` points here (the panel never changes identity); only
-// the panel's `aria-labelledby` tracks the active tab (AUD-W2).
+// one swapping panel, one fixed id; aria-labelledby tracks the active tab
 const PANEL_ID = 'bundle-panel';
 
 /**
@@ -124,9 +122,7 @@ export default function BundleTabs({
         className="grid grid-cols-3 gap-1.5"
       >
         {VAR_GROUPS.map((group) => {
-          // A bundle "has a failure" when any token rendered in ITS panel is a
-          // failing endpoint. `group.items` is that exact token set (focus-ring
-          // included via the base group), so this needs no bundle-prefix parsing.
+          // group.items is exactly this panel's tokens, so no prefix parsing needed
           const hasFailure = group.items.some(({ variable }) =>
             contrastFailures.has(variable),
           );

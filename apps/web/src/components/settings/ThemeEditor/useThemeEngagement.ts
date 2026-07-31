@@ -103,11 +103,7 @@ export function useThemeEngagement({
   setCustomThemeEnabled,
   onError,
 }: UseThemeEngagementOptions): UseThemeEngagementResult {
-  // Guards the engage-on-first-edit + engage-on-randomize paths: a native color
-  // picker fires a burst of `onChange`s during a single drag, and the enabled
-  // flag only commits between events, so this stops two of them firing two engage
-  // PATCHes. Reset in `commitEngagement`'s `finally` so a settled (or failed)
-  // engage always re-arms it.
+  // guards a color picker's onChange burst from firing two engage PATCHes
   const engagingReference = useRef(false);
 
   const { commitEngagement } = useCustomThemeEngagement({
@@ -119,9 +115,7 @@ export function useThemeEngagement({
     onError,
   });
 
-  // Seeds both engage paths (see `buildThemeSeed`): the edited mode carries the
-  // caller's tokens, the other mode is preserved. Memoized so the two engage
-  // callbacks below keep stable identities across renders.
+  // shared seed builder: edited mode gets caller tokens, other mode kept
   const buildSeed = useCallback(
     (editedModeTokens: Record<string, string>): CustomTheme =>
       buildThemeSeed(editedModeTokens, baseTheme, customTheme, editorMode),
@@ -135,14 +129,11 @@ export function useThemeEngagement({
       postEditValues,
       onSuccess,
     }: EngageFromEditArguments) => {
-      // The guard absorbs a color picker's drag burst. The caller has already
-      // applied the visual edit for this tick.
+      // guard absorbs the drag burst; caller already applied this tick's edit
       if (engagingReference.current) return;
       engagingReference.current = true;
 
-      // The edited mode's slots: either the edited slot merged into the saved
-      // palette (re-engage after a revert) or the full post-edit snapshot
-      // (fresh).
+      // edited slots: saved palette + edit (re-engage) or full snapshot (fresh)
       const editedModeTokens = isCustomThemeConfigured(customTheme)
         ? {
             ...(customTheme?.[editorMode] ?? {}),

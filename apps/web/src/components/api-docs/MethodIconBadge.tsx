@@ -3,7 +3,7 @@ import { useAuth } from '../../auth/AuthContext';
 
 /**
  * Icon variant of MethodBadge: the HTTP method as a decorative Font Awesome
- * glyph inside an `aria-hidden` span. Same two-paint model as MethodBadge —
+ * glyph inside an `aria-hidden` span. Same two-paint model as MethodBadge -
  * neutral mount tokens logged-in, brand palette logged-out. The method reaches
  * assistive tech through a neighboring sr-only path (EndpointNav), so the
  * glyph and its color are decorative. `aria-hidden` lives on the span; that
@@ -25,7 +25,7 @@ export default function MethodIconBadge({ method }: MethodIconBadgeProps) {
   const { user } = useAuth();
   const methodIcon = resolveMethodIcon(method);
 
-  // Themed (logged-in): neutral mount token on both the border and the glyph.
+  // themed (logged-in): neutral mount token on border and glyph
   if (user !== null) {
     return (
       <span
@@ -39,7 +39,7 @@ export default function MethodIconBadge({ method }: MethodIconBadgeProps) {
     );
   }
 
-  // Brand (logged-out): per-method palette; the glyph inherits the span color.
+  // brand (logged-out): per-method palette; glyph inherits span color
   const palette = resolveMethodPalette(method);
   return (
     <span

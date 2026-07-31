@@ -64,8 +64,7 @@ export function useLinkSelection({
     if (selectedLinkIndex === null) return;
     const link = links[selectedLinkIndex];
     if (!link) return;
-    // A legacy non-http(s) row (see isSafeRedirectUrl) never opens – matches
-    // LinkCardLayout's card-click guard for the same URL.
+    // legacy non-http(s) rows never open, matching LinkCardLayout's guard
     if (!isSafeRedirectUrl(link.url)) return;
     window.open(link.url, '_blank', 'noreferrer');
     if (!link.readAt) {
@@ -73,21 +72,19 @@ export function useLinkSelection({
     }
   }
 
-  // Resets the selection whenever the filter changes (e.g. switching between
-  // the unread and read tabs).
+  // reset selection when the filter changes (unread/read tabs)
   useEffect(() => {
     setSelectedLinkIndex(null);
   }, [filter]);
 
-  // Clamps selection when the list shrinks (e.g. after a link is marked as read).
+  // clamp selection when the list shrinks (e.g. a link is marked read)
   useEffect(() => {
     if (selectedLinkIndex !== null && selectedLinkIndex >= links.length) {
       setSelectedLinkIndex(links.length > 0 ? links.length - 1 : null);
     }
   }, [links.length, selectedLinkIndex]);
 
-  // Resets selection when search changes, so the highlighted card matches the
-  // new result set.
+  // reset selection when search changes, so the highlight matches results
   useEffect(() => {
     setSelectedLinkIndex(null);
   }, [debouncedSearch]);

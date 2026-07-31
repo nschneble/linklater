@@ -6,8 +6,7 @@ import { AuthService } from './auth.service';
 import { CustomThrottlerGuard } from './custom-throttler.guard';
 import { MagicLinkController } from './magic-link.controller';
 
-// The @Throttle decorator stores metadata directly on the method function
-// using keys `'THROTTLER:TTL' + bucketName` and `'THROTTLER:LIMIT' + bucketName`.
+// @Throttle stores method metadata under THROTTLER:TTL and THROTTLER:LIMIT
 const THROTTLER_TTL = 'THROTTLER:TTL';
 const THROTTLER_LIMIT = 'THROTTLER:LIMIT';
 

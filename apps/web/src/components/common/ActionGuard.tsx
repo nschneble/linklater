@@ -85,9 +85,7 @@ export default function ActionGuard({
 
   useFocusFirstButton(confirmReference, confirming);
 
-  // Dev-only sanity check: catch missing-ref bugs in new callers without
-  // adding production cost. Schedules on rAF so the ref has had a chance to
-  // attach after the render that flipped `confirming` true.
+  // dev-only: rAF-defer so the ref has attached, then warn if it's still null
   useEffect(() => {
     if (!confirming) return;
     if (!import.meta.env.DEV) return;
@@ -102,9 +100,7 @@ export default function ActionGuard({
     return () => cancelAnimationFrame(handle);
   }, [confirming]);
 
-  // Return focus to the trigger when the confirm row closes for any reason
-  // *other than* an error. Reading `error` from state (not a ref) makes the
-  // ordering vs the focus-alert effect explicit, not load-bearing.
+  // return focus to the trigger when the row closes without an error
   const previouslyConfirming = useRef(confirming);
   useEffect(() => {
     if (previouslyConfirming.current && !confirming && !error) {
@@ -113,21 +109,17 @@ export default function ActionGuard({
     previouslyConfirming.current = confirming;
   }, [confirming, error, triggerId]);
 
-  // Pull focus into the error alert on failure – `role="alert"` alone is not
-  // reliable when a sibling button keeps focus.
+  // focus the alert; role=alert alone is unreliable if a sibling has focus
   useEffect(() => {
     if (error) {
       document.getElementById(errorId)?.focus();
     }
   }, [error, errorId]);
 
-  // Always-mounted live region: clear the message after 5s so repeats
-  // re-announce cleanly. Mounting/unmounting the region itself can cause
-  // some screen readers to miss the first announcement.
+  // clear after 5s so repeats re-announce; unmount would drop the first
   useTransientState(announcement, '', setAnnouncement, 5000);
 
-  // Global Escape closes the confirm row – matches user expectation that
-  // Escape always backs out, regardless of where focus currently is.
+  // document-level Escape backs out regardless of where focus is
   useEffect(() => {
     if (!confirming) return;
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -174,17 +166,7 @@ export default function ActionGuard({
     </Alert>
   ) : null;
 
-  // The sr-only live region is rendered as the *first* child of the wrapper
-  // and is `position: absolute` (via `sr-only`), so two things hold:
-  //   1. It never participates in normal flow, so it doesn't push the rows
-  //      below it visually.
-  //   2. The trigger row stays the last in-flow child, so Tailwind v4's
-  //      `space-y-*` (`:where(& > :not(:last-child)) { margin-block-end }`)
-  //      never forces a `margin-bottom` onto it – preserving `items-center`
-  //      alignment in parents.
-  // Returning a single root (not a fragment with a sibling sr-only) also
-  // prevents the live region from leaking into a caller's parent `space-y-*`
-  // and adding a phantom bottom gutter to the surrounding section.
+  // absolute sr-only region in one root won't disturb parent space-y-* spacing
   return (
     <div className={className}>
       <span className="sr-only" role="status">

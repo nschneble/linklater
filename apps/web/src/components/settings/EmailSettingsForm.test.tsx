@@ -341,18 +341,10 @@ describe('EmailSettingsForm pending-email resend', () => {
   });
 });
 
-// Regression: a prior implementation set a transient `emailMessage` AND wrote
-// the new address into `user.pendingEmail`, so the success-path UI rendered
-// two near-identical polite-status Alerts back-to-back – once from the
-// ephemeral state, once from server-state. Screen reader users heard the
-// "verification email sent" announcement twice (WCAG 1.3.1, 4.1.3).
-//
-// The form now relies solely on the persistent `hasPendingEmail` Alert.
+// regression: exactly one polite-status Alert, not two (WCAG 1.3.1, 4.1.3)
 describe('EmailSettingsForm post-submit notice – no duplicate', () => {
   it('renders exactly one verification notice after a successful submit', async () => {
-    // Stateful mock: when `setPendingEmail` fires, re-render `useAuth` with
-    // the updated `user.pendingEmail` so the persistent Alert appears (same
-    // behavior the real AuthContext provides).
+    // stateful mock: setPendingEmail re-renders useAuth so the Alert appears
     let currentUser: User = makeUser({ pendingEmail: null });
     const setPendingEmail = vi.fn((pending: string) => {
       currentUser = { ...currentUser, pendingEmail: pending };
@@ -374,7 +366,7 @@ describe('EmailSettingsForm post-submit notice – no duplicate', () => {
       fireEvent.submit(container.querySelector('form')!);
     });
 
-    // Re-render so the form picks up the mutated `useAuth` return value.
+    // re-render so the form picks up the mutated `useAuth` return value
     rerender(<EmailSettingsForm />);
 
     await waitFor(() => {

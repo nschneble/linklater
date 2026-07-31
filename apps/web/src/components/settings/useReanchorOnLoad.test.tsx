@@ -20,16 +20,13 @@ let scrollIntoViewMock: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // The active section is module-level state shared across tests – reset it so
-  // a value set by one test can't leak into the next.
+  // active section is module-level state; reset so it can't leak across tests
   setActiveSettingsSection('');
   scrollIntoViewMock = vi.fn();
   Element.prototype.scrollIntoView = scrollIntoViewMock;
   const target = document.createElement('section');
   target.id = 'integrations';
-  // Stub a non-zero document offset so the scroll helper takes the normal
-  // `scrollIntoView` path (its snap-to-0 branch fires only when a section
-  // naturally sits within its own scroll-margin of the page top).
+  // non-zero offset routes through scrollIntoView, not the snap-to-0 branch
   target.getBoundingClientRect = () =>
     ({
       top: 1000,
@@ -56,8 +53,7 @@ describe('useReanchorOnLoad', () => {
 
     rerender(harnessTree(true));
 
-    // A re-anchor is always a correction of an already-settled position, so it
-    // must scroll instantly – a smooth scroll would read as a visible lurch.
+    // re-anchor corrects a settled position; instant avoids a visible lurch
     expect(scrollIntoViewMock).toHaveBeenCalledWith(
       expect.objectContaining({ behavior: 'auto', block: 'start' }),
     );
@@ -69,8 +65,7 @@ describe('useReanchorOnLoad', () => {
     rerender(harnessTree(true));
     expect(scrollIntoViewMock).toHaveBeenCalledTimes(1);
 
-    // `loaded` stays true across later re-renders (e.g. a regenerate flow that
-    // updates unrelated state). The re-anchor must not fire again.
+    // `loaded` stays true on later re-renders; re-anchor must not fire again
     rerender(harnessTree(true));
     rerender(harnessTree(true));
     expect(scrollIntoViewMock).toHaveBeenCalledTimes(1);
@@ -86,8 +81,7 @@ describe('useReanchorOnLoad', () => {
     setActiveSettingsSection('danger');
     const { rerender } = renderHarness(false);
     rerender(harnessTree(true));
-    // Only an `#integrations` element exists in the DOM; `#danger` does not, so
-    // the helper has nothing to scroll and must no-op.
+    // only `#integrations` exists in the DOM; `#danger` has nothing to scroll
     expect(scrollIntoViewMock).not.toHaveBeenCalled();
   });
 

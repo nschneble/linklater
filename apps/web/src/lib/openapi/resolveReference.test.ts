@@ -104,8 +104,7 @@ describe('resolveSchema', () => {
       },
       schemas,
     );
-    // The members are merged into the parent so downstream consumers (which do
-    // not understand `allOf`) see one plain object with every property present.
+    // allOf members merge into the parent, so consumers see one flat object
     expect(resolved?.allOf).toBeUndefined();
     expect(resolved).toMatchObject({ type: 'object' });
     expect(resolved?.properties?.id).toEqual({ type: 'string' });
@@ -114,10 +113,7 @@ describe('resolveSchema', () => {
   });
 
   it('flattens a NestJS nullable typed-ref property (allOf + sibling nullable/type)', () => {
-    // Mirrors exactly what @nestjs/swagger emits for
-    // `@ApiPropertyOptional({ type: () => Meta, nullable: true, description })`:
-    // a `$ref` cannot carry sibling keywords, so it is wrapped in `allOf` while
-    // `nullable`/`type: 'object'`/`description` sit alongside it.
+    // @nestjs/swagger wraps a typed-ref in allOf: a $ref can't carry siblings
     const resolved = resolveSchema(
       {
         nullable: true,
@@ -129,12 +125,10 @@ describe('resolveSchema', () => {
       schemas,
     );
     expect(resolved?.allOf).toBeUndefined();
-    // The referenced object's properties surface directly on the merged schema…
+    // the referenced object's properties surface on the merged schema
     expect(resolved?.properties?.id).toEqual({ type: 'string' });
     expect(resolved?.properties?.url).toEqual({ type: 'string' });
-    // …while the wrapper's own keywords are preserved. `nullable` staying true
-    // must NOT collapse the schema to a scalar/null — it stays a populated
-    // object so the docs can render its full shape.
+    // nullable: true must NOT collapse it to scalar/null - stays an object
     expect(resolved).toMatchObject({ type: 'object', nullable: true });
     expect(resolved?.description).toBe(
       'Extracted metadata. Null until the fetch worker completes.',
@@ -192,8 +186,7 @@ describe('resolveSchema', () => {
       },
       schemas,
     );
-    // The dangling member resolves to undefined and is filtered out rather
-    // than leaving a hole in the union.
+    // the dangling member resolves to undefined and is dropped from the union
     const members = resolved?.oneOf as OpenAPIV3.SchemaObject[];
     expect(members).toHaveLength(1);
     expect(members[0].properties?.url).toEqual({ type: 'string' });
@@ -204,8 +197,7 @@ describe('resolveSchema', () => {
       { $ref: '#/components/schemas/Node' },
       schemas,
     );
-    // The first level resolves; the cyclic `next` is left as a shallow,
-    // non-recursed placeholder rather than recursing forever.
+    // first level resolves; cyclic `next` left shallow, not recursed forever
     expect(resolved).toMatchObject({ type: 'object' });
     expect(resolved?.properties?.value).toEqual({ type: 'string' });
     expect(resolved?.properties?.next).toBeDefined();

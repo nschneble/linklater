@@ -1,5 +1,5 @@
 /**
- * Tests for ActionGuard – the shared two-step confirmation primitive behind
+ * Tests for ActionGuard, the shared two-step confirmation primitive behind
  * Settings' guarded actions (Delete account, Revoke PAT, Regenerate
  * bookmarklet, unlink identity provider).
  *
@@ -33,10 +33,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 // ─── Harness ──────────────────────────────────────────────────────────────────
 
-// Mirrors the real consumers' render-prop shape: the destructive button renders
-// FIRST in DOM order, the safe (Cancel) button renders second and carries the
-// focus marker. `attachReference` lets one test starve ActionGuard's dev sanity
-// check by never attaching the confirm-row ref.
+// mirrors the real consumers' render-prop shape: the destructive button
+// renders FIRST in DOM order, the safe (Cancel) button second with the focus
+// marker. `attachReference` lets one test starve the dev sanity check
 function ActionGuardHarness({
   onConfirm,
   errorFallback = 'Fallback message',
@@ -122,9 +121,9 @@ describe('ActionGuard confirm/trigger state machine', () => {
     expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
   });
 
-  // Proves ActionGuard passes `confirmReference` through to useFocusFirstButton,
+  // proves ActionGuard passes `confirmReference` to useFocusFirstButton,
   // which focuses the marker-attributed safe button (not the DOM-first
-  // destructive one) on the next animation frame. waitFor polls past the rAF.
+  // destructive one) on the next animation frame; waitFor polls past the rAF
   it('focuses the marker-attributed safe button on open, not the destructive one', async () => {
     render(<ActionGuardHarness onConfirm={vi.fn()} />);
     openConfirmRow();
@@ -266,7 +265,7 @@ describe('ActionGuard failure handling', () => {
     const alert = screen.getByRole('alert');
     expect(alert).toHaveTextContent(/token is invalid/i);
     expect(alert).toHaveFocus();
-    // The confirm row collapses back to the trigger on failure.
+    // the confirm row collapses back to the trigger on failure
     expect(
       screen.queryByRole('button', { name: /yes, delete/i }),
     ).not.toBeInTheDocument();

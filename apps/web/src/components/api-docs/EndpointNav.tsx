@@ -4,20 +4,20 @@ import { FOCUS_RING } from '../../lib/styles';
 import type { NormalizedEndpoint } from '../../lib/openapi';
 
 /**
- * Desktop sticky endpoint list – the master half of the master-detail
+ * Desktop sticky endpoint list - the master half of the master-detail
  * reference. A `<nav>` landmark of plain `<button>`s (not tabs): selecting one
  * swaps the detail region client-side, so navigation semantics + `aria-current`
  * are correct, and the detail's own form never fights a tablist for arrow keys.
  *
  * The selected item is signalled THREE redundant ways (not color alone, SC
- * 1.4.1): an `--orbit-border` ring, `font-semibold`, and the `--orbit-bg` fill –
+ * 1.4.1): an `--orbit-border` ring, `font-semibold`, and the `--orbit-bg` fill -
  * all driven off the `aria-current` attribute via Tailwind `aria-[current]:`
  * variants, so the visual and ARIA state are locked together. The orbit accent
  * is measured against the page `--base-bg` (not the card surface), the project's
  * most-missed contrast rule.
  *
  * Each item's accessible name is the full "GET /links" (method first) via an
- * sr-only span – the `MethodIconBadge` is decorative and the visible path is
+ * sr-only span - the `MethodIconBadge` is decorative and the visible path is
  * `aria-hidden`, so AT hears method+path exactly once.
  */
 

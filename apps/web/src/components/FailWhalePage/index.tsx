@@ -25,9 +25,7 @@ const FAILWHALE_ASCII = String.raw`
 export default function FailWhalePage() {
   const [shouldCrash, setShouldCrash] = useState(false);
 
-  // Mount a robots=noindex meta tag so search engines do not surface
-  // this destructive easter egg. App has no SSR head manager
-  // (react-helmet, etc.), so inject directly and clean up on unmount.
+  // inject a robots=noindex meta so the crash easter egg isn't indexed
   useEffect(() => {
     const meta = document.createElement('meta');
     meta.name = 'robots';

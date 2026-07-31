@@ -47,10 +47,7 @@ export default function VerifyLoginPage() {
   const [searchParameters] = useSearchParams();
   const navigate = useNavigate();
   const { loginWithToken, refreshUser, user } = useAuth();
-  // The verify effect reads `user` once on mount and routes based on
-  // whether the magic-link userId matches. Mirror into a ref so the
-  // post-await branch sees the value from the moment the effect fired,
-  // not a stale closure capture if the user state mutates mid-flow.
+  // mirror user into a ref so post-await reads the effect-time value, not a stale closure
   const userReference = useRef(user);
   useEffect(() => {
     userReference.current = user;
@@ -60,9 +57,7 @@ export default function VerifyLoginPage() {
   const [mfaChallenge, setMfaChallenge] = useState<MfaChallenge>('totp');
   const [mfaCode, setMfaCode] = useState('');
   const [mfaLoading, setMfaLoading] = useState(false);
-  // `mfaError` is scoped to OTP-submission failures only – the verify-link
-  // failure paths redirect to /login and surface as toasts, never landing
-  // in MfaView. Keeping the state name disambiguated avoids future drift.
+  // mfaError is only for OTP failures; verify-link failures redirect to /login
   const [mfaError, setMfaError] = useState<string | null>(null);
   const mfaErrorReference = useRef<HTMLParagraphElement>(null);
   const mfaInputReference = useRef<HTMLInputElement>(null);
@@ -81,9 +76,7 @@ export default function VerifyLoginPage() {
 
     verifyMagicLink(token)
       .then(async (result) => {
-        // MFA-enabled accounts that authenticate via a magic link still need
-        // to clear the OTP challenge before a session is issued – mirror the
-        // password login flow and surface the same MfaView.
+        // MFA accounts via magic link still must clear the OTP challenge first
         if ('mfaToken' in result) {
           setMfaToken(result.mfaToken);
           setMfaChallenge(result.mfaMethod);
@@ -98,20 +91,14 @@ export default function VerifyLoginPage() {
           currentUser !== null && currentUser.userId !== result.userId;
 
         if (isSameAccount) {
-          // Server already consumed the magic-link token (single-use intact),
-          // but the existing session is still valid – discard the freshly
-          // issued tokens rather than rotating the JWT in open tabs.
+          // same account: keep the session, discard fresh tokens (no JWT rotation)
           setPendingNotice('already-logged-in');
           navigate('/unread', { replace: true });
           return;
         }
 
         if (isAccountSwitch) {
-          // Revoke the OLD user's sessions FIRST (uses the current bearer,
-          // which still points at the old user because we have not called
-          // loginWithToken yet). Then swap in the new tokens. This sequence
-          // never lets the React `user` state flip to null, so the catch-all
-          // auth-redirect cannot race in and bounce us to `/login` mid-flow.
+          // revoke old sessions before swapping tokens so user never flips null (no redirect race)
           await revokeAllSessions();
           await loginWithToken(result.accessToken, result.refreshToken);
           setPendingNotice('account-switched');
@@ -119,8 +106,7 @@ export default function VerifyLoginPage() {
           return;
         }
 
-        // No prior session – standard fresh login, no toast (the destination
-        // is the confirmation that auth succeeded).
+        // fresh login: no toast, the destination confirms success
         await loginWithToken(result.accessToken, result.refreshToken);
         navigate('/unread', { replace: true });
       })
@@ -131,8 +117,7 @@ export default function VerifyLoginPage() {
       });
   }, [loginWithToken, navigate, searchParameters]);
 
-  // Focus the MfaView error when it appears. The ref is only attached while
-  // the MFA step is mounted, so this is a no-op outside that branch.
+  // focus the MfaView error; the ref only attaches during the MFA step
   useEffect(() => {
     if (mfaError) {
       mfaErrorReference.current?.focus();
@@ -182,11 +167,7 @@ export default function VerifyLoginPage() {
     );
   }
 
-  // The verifying state is a bare centered spinner with an sr-only polite
-  // status – the page is purely transient and any card chrome would flash
-  // visibly for sub-second windows before the redirect fires, which reads
-  // as "page loaded and immediately bounced." Failures surface as
-  // error-variant toasts on /login rather than a full error card.
+  // bare spinner, no card chrome that would flash before the redirect fires
   return (
     <main className="flex items-center justify-center min-h-screen bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none">
       <p role="status" aria-live="polite" className="sr-only">

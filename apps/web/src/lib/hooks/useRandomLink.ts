@@ -47,8 +47,7 @@ export function useRandomLink({
       if (!link) {
         onNoLinks?.();
       } else if (!isSafeRedirectUrl(link.url)) {
-        // Legacy non-http(s) row (see isSafeRedirectUrl) – matches
-        // LinkCardLayout's card-click guard for the same URL.
+        // legacy non-http(s) row; matches LinkCardLayout's card-click guard
         setRandomError("This link can't be opened – try again for another.");
       } else {
         window.open(link.url, '_blank', 'noopener,noreferrer');

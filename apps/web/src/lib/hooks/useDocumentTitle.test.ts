@@ -28,8 +28,7 @@ describe('useDocumentTitle', () => {
   });
 
   it('does NOT restore the previous title on unmount', () => {
-    // Each top-level route component is expected to call useDocumentTitle
-    // on mount, so the next mount always re-establishes the page title
+    // every route calls useDocumentTitle on mount; next mount resets it
     document.title = 'Linklater – Save links now, read them later.';
 
     const { unmount } = renderHook(() =>

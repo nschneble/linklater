@@ -74,8 +74,7 @@ export class EmailVerificationService {
       throw new BadRequestException('No email change is pending');
     }
 
-    // MFA was already enforced at request time; rotating the token to the
-    // same pendingEmail does not need a fresh OTP.
+    // MFA already enforced at request time; token rotation needs no fresh OTP
     const rawToken = generateHexToken();
     const tokenHash = sha256Hex(rawToken);
     const expiresAt = expiresInMs(TWENTY_FOUR_HOURS_MS);
@@ -199,10 +198,7 @@ export class EmailVerificationService {
       throw new BadRequestException('Invalid or expired email change link');
     }
 
-    // The pendingEmail uniqueness check at request time is racy with another
-    // user claiming the same address between request and confirm. Catch the
-    // unique-constraint violation here and surface it as a clean 409 rather
-    // than letting Prisma's P2002 escape as a 500.
+    // request-time uniqueness check is racy; map P2002 to a clean 409 here
     try {
       await this.usersService.confirmPendingEmail(user.id, user.pendingEmail);
     } catch (error) {

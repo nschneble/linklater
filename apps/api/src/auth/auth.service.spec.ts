@@ -384,9 +384,7 @@ describe('AuthService', () => {
     });
 
     it('forces MFA even when the caller supplies only a userId – closing the OAuth-strategy bypass', async () => {
-      // Regression for the audit finding: previously the OAuth path called
-      // login(request.user) where request.user lacked totpEnabledAt, so the
-      // MFA branch never fired. login(userId) now fetches internally.
+      // login(userId) fetches internally; MFA fires without totpEnabledAt
       (usersServiceMock.findById as jest.Mock).mockResolvedValue({
         id: USER_ID,
         email: USER_EMAIL,
@@ -1019,8 +1017,7 @@ describe('AuthService', () => {
     });
 
     it('returns an MFA challenge instead of a full session when MFA is enabled', async () => {
-      // Magic-link verification now routes through login(), so a TOTP-enrolled
-      // user cannot bypass MFA simply by clicking a magic link.
+      // magic-link verify goes through login(); TOTP users can't skip MFA
       (magicLinkServiceMock.verifyToken as jest.Mock).mockResolvedValue({
         id: USER_ID,
         email: USER_EMAIL,

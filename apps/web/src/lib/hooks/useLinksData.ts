@@ -51,23 +51,10 @@ export function useLinksData(
     updateLink,
   } = useLinksMutations({ setLinks, setPagination });
 
-  // Poll metadata for every rendered link that is still pending
-  // (`!meta.fetchedAt`), settling each in place via `updateLink`. Deriving the
-  // pending set from list state (rather than a per-create slot) means links
-  // that arrive pending by any route are covered: a fresh save, a burst of
-  // saves, a mid-job reload, pagination, or a visibility prepend.
+  // poll pending metadata; deriving from list state covers every arrival route
   usePendingMetadataPolling(links, updateLink);
 
-  // Soft refresh on tab return. When the user saves a link via the
-  // bookmarklet on another tab and switches back, we want the unread list
-  // to surface the new link without a manual reload. Scoped to the default
-  // unread, no-search view: paginated/searched/read views fall outside the
-  // bookmarklet flow and refresh on the next deliberate user action.
-  //
-  // Existing items keep their positions and React keys (LinksList keys
-  // by `link.id`), so focus inside a card is preserved across the refresh.
-  // Newly-arrived items are announced via a polite live region rendered
-  // by LinksView so screen-reader users learn that the list updated.
+  // soft-refresh unread on tab return to catch a bookmarklet save elsewhere
   const linksReference = useRef(links);
   linksReference.current = links;
   const paginationReference = useRef(pagination);
@@ -76,8 +63,7 @@ export function useLinksData(
   const handleVisibilityRefreshed = useCallback(
     (additions: Link[], result: { total: number; limit: number }) => {
       if (additions.length > 0) {
-        // Deduplicate against the latest state inside the updater to guard
-        // against races where a concurrent update already prepended some items.
+        // dedupe inside the updater to guard against a concurrent prepend race
         setLinks((previous) => [
           ...findNewLinks(additions, previous),
           ...previous,

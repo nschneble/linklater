@@ -1,9 +1,9 @@
 /*
- * Tests for readThemeTokens – the off-screen probe that reads a theme+mode's
+ * Tests for readThemeTokens - the off-screen probe that reads a theme+mode's
  * resolved tokens. jsdom does NOT apply the [data-theme] stylesheet cascade, so
  * these assert the STRUCTURAL contract (probe mounts with the right dataset,
  * reads every CUSTOM_TOKEN_KEYS entry, allowlist-only output, and cleans up the
- * node), not resolved hex values — those are covered by visual regression.
+ * node), not resolved hex values - those are covered by visual regression.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -13,8 +13,7 @@ import { readThemeTokens } from './themeProbe';
 const realGetComputedStyle = window.getComputedStyle;
 
 beforeEach(() => {
-  // Stub getComputedStyle to echo the probe's data-theme/data-mode for every
-  // known token, so we can assert the probe was set up correctly per call.
+  // stub getComputedStyle to echo the probe's data-theme/data-mode per token
   vi.spyOn(window, 'getComputedStyle').mockImplementation((element) => {
     const dataset = (element as HTMLElement).dataset;
     return {

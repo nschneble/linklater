@@ -87,7 +87,7 @@ export class LinksController {
   @ApiUnauthorized()
   @AllowsBookmarkletToken()
   @UseGuards(CustomThrottlerGuard)
-  // 60/min: ceiling on outbound metadata-fetch amplification (bookmarklet/extension burst-save still fits)
+  // 60/min ceiling on outbound metadata-fetch amplification
   @Throttle({ default: { ttl: 60000, limit: 60 } })
   @ThrottleMessage('Too many links saved')
   @Post()

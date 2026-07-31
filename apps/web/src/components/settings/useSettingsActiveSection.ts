@@ -40,8 +40,7 @@ export function useSettingsActiveSection({
   const activeSectionRef = useRef<string>('');
   const clearTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Mirror the state into a ref so the document-level listeners can read the
-  // current value without re-binding every time it changes.
+  // ref lets document listeners read the latest value without re-binding
   useEffect(() => {
     activeSectionRef.current = activeSection;
   }, [activeSection]);
@@ -59,11 +58,7 @@ export function useSettingsActiveSection({
   const activateSection = useCallback(
     (hash: string) => {
       if (!sectionIds.includes(hash)) return;
-      // Sync the ref BEFORE moving focus: `scrollToSettingsSection` focuses the
-      // target, which fires `focusin`. The clear-guard reads `activeSectionRef`
-      // to decide whether that focus landed inside the active section; if the
-      // ref still held the previous value, the guard would clear the state we
-      // just set.
+      // sync ref before focus or focusin's guard wipes the just-set state
       setActiveSection(hash);
       activeSectionRef.current = hash;
       setActiveSettingsSection(hash);

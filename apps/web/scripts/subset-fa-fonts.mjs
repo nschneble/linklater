@@ -5,7 +5,7 @@
 //
 // The manifest itself is rewritten from the source scan by sync-fa-manifest.mjs,
 // which is chained ahead of this script via `npm run subset-fa`. To add a new
-// icon, just use its class in source – the next subset-fa picks it up.
+// icon, just use its class in source - the next subset-fa picks it up.
 //
 // CSS rule shape lives in fa-scan.mjs (parseCodepoints). Two escape kinds:
 // `\HEX` (1-6 hex digits) maps to that unicode codepoint; `\X` for any other
@@ -60,11 +60,7 @@ async function subsetFamily(family, names) {
   const text = String.fromCodePoint(...wanted);
 
   const sourceBuffer = await readFile(config.source);
-  // Byte-stable output across runs (verified empirically) depends on the
-  // lockfile-pinned `subset-font` version. The package doesn't contract for
-  // byte stability across minor versions, so a future bump could re-shuffle
-  // harfbuzz tables and produce CI diff noise without any manifest change.
-  // If that happens, this is the call to inspect.
+  // byte stability depends on the pinned subset-font version; bump churns CI
   const subsetBuffer = await subsetFont(sourceBuffer, text, {
     targetFormat: 'woff2',
   });

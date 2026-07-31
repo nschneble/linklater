@@ -6,9 +6,7 @@ interface MockToastProps {
   text: string;
 }
 
-// Bundles that aren't status colors. When the editor sits on one of these, the
-// toast paints a bundle the user isn't editing, so it renders muted (grayscale)
-// to read as "not the selected color".
+// non-status bundles the editor isn't coloring; render muted (grayscale)
 const MUTED_BUNDLES = new Set<Bundle>(['base', 'mount', 'orbit']);
 
 export default function MockToast({ bundle, icon, text }: MockToastProps) {

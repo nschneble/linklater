@@ -43,8 +43,7 @@ export function setShortcutsEnabled(enabled: boolean): void {
       );
     }
   } catch {
-    // Storage can be blocked (private browsing); still notify subscribers so
-    // the in-session UI stays consistent even if the choice will not persist.
+    // storage may be blocked (private browsing); still notify subscribers
   }
   for (const listener of listeners) {
     listener();

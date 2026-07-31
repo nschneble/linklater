@@ -47,7 +47,7 @@ describe('ChangePasswordForm hidden current-password pattern', () => {
   it('current-password input is in the DOM even when new-password is empty', () => {
     renderForm();
 
-    // The input must be present (not unmounted), just hidden
+    // the input must be present (not unmounted), just hidden
     const currentPasswordInput = document.getElementById('current-password');
     expect(currentPasswordInput).toBeInTheDocument();
   });
@@ -75,12 +75,12 @@ describe('ChangePasswordForm hidden current-password pattern', () => {
   it('current-password input is still in the DOM after clearing the new-password field', () => {
     renderForm();
 
-    // Type a new password to reveal the container
+    // type a new password to reveal the container
     fireEvent.change(screen.getByLabelText(/new password/i), {
       target: { value: 'new-secret-pass' },
     });
 
-    // Clear new password – current-password should still be in the DOM
+    // clear new password; current-password should still be in the DOM
     fireEvent.change(screen.getByLabelText(/new password/i), {
       target: { value: '' },
     });

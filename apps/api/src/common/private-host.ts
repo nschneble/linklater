@@ -25,15 +25,10 @@ export function isPrivateAddress(address: string): boolean {
 
   if (lower === '::1' || lower === '[::1]') return true;
 
-  // IPv6 unspecified address (like 0.0.0.0/8): connecting to it routes to a
-  // local service, so block it explicitly rather than relying on a failed
-  // resolution to reject it.
+  // IPv6 unspecified `::` routes to a local service; block explicitly
   if (lower === '::' || lower === '[::]') return true;
 
-  // IPv6 unique-local (fc00::/7) and link-local (fe80::/10). Anchored to
-  // IPv6 literal syntax (hex segment + colon) so public DNS hostnames
-  // starting with 'fc'/'fd'/'fe8'–'feb' (e.g. fcc.gov, fdic.gov, febreze.com)
-  // are not matched, as those contain dots, not colons.
+  // IPv6 unique-local/link-local; colon-anchored so fcc.gov etc don't match
   if (/^\[?(?:f[cd][0-9a-f]{0,2}|fe[89ab][0-9a-f]?):/i.test(lower)) return true;
 
   // IPv4-mapped IPv6: unwrap and fall through to IPv4 checks below

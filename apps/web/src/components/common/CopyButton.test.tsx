@@ -1,5 +1,5 @@
 /*
- * Tests for CopyButton – shared copy-to-clipboard button.
+ * Tests for CopyButton, the shared copy-to-clipboard button.
  *
  * Contracts pinned here:
  * 1. Name contract (WCAG 2.5.3 Label in Name): visible text comes from

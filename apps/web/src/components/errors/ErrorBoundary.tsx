@@ -69,8 +69,7 @@ export default class ErrorBoundary extends Component<
 
   render() {
     if (this.state.hasError) {
-      // Honor an explicit `null` fallback – only fall through to the default
-      // UI when the prop is genuinely omitted.
+      // honor an explicit null fallback; only default when the prop is omitted
       if (this.props.fallback !== undefined) {
         return this.props.fallback;
       }

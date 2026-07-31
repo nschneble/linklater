@@ -30,8 +30,7 @@ export function useLinksMutations({
 }: UseLinksMutationsOptions): UseLinksMutationsResult {
   const prependLink = useCallback(
     (link: Link) => {
-      // Deduplicate by id in case the link was already in the list, e.g.
-      // from a polling update that arrived before the create callback ran.
+      // dedupe by id; a polling update may have added it before create ran
       setLinks((previous) => [
         link,
         ...previous.filter((item) => item.id !== link.id),

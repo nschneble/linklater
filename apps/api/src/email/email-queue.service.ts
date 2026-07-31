@@ -196,10 +196,7 @@ export class EmailQueueService implements OnModuleInit {
         );
         return;
       default: {
-        // Exhaustiveness guard: an unknown kind means a job was enqueued by
-        // code the worker does not understand. Log and swallow rather than
-        // retry forever – a bad discriminator will never become valid. Only
-        // the kind is logged, never the payload (it carries the recipient).
+        // unknown kind: log and swallow (retry never helps); log the kind only, never the payload (recipient)
         const unknownJob: never = job;
         this.logger.error(
           `Dropping email-send job with unknown kind: ${String(

@@ -6,9 +6,9 @@
  * only as a TS map and is never parsed by `bundles.contrast.test.ts` (which
  * scans `BUNDLES_CSS`). This suite feeds the map through the SAME
  * `bundles-color-utils` helpers so the light default satisfies the identical
- * WCAG-AA contract the .css themes do — text/alt-text/state-text ≥ 4.5:1,
+ * WCAG-AA contract the .css themes do - text/alt-text/state-text ≥ 4.5:1,
  * border/highlight ≥ 3:1, highlight-fg ≥ 4.5:1, card borders ≥ 3:1 vs the page
- * bg — plus the CVD-distinguishability invariant (axis A: ΔE2000 ≥ 10 under all
+ * bg - plus the CVD-distinguishability invariant (axis A: ΔE2000 ≥ 10 under all
  * three dichromacies, OR axis B: luminance ratio ≥ 1.4) for every state-bundle
  * pair. All backgrounds are solid hex, so no alpha compositing is needed.
  *

@@ -15,9 +15,7 @@ const API_ENV_PATH = join(API_DIR, '.env');
 // Bcrypt minimum; this script seeds a known-plaintext test password.
 const BCRYPT_ROUNDS = 4;
 
-// Pin every timestamp to a stable value so server-written User fields
-// never drift across runs (the client-side `frozenTime` in
-// tuffgal.config.ts only freezes Date.now() in the browser).
+// pin server timestamps; frozenTime only freezes the browser clock
 const FIXED_DATE = '2026-01-01T12:00:00.000Z';
 
 const execFileAsync = promisify(execFile);
@@ -27,7 +25,7 @@ const execFileAsync = promisify(execFile);
  * run repeatedly. Creates `linklater_testing_ui` if missing, runs every
  * committed Prisma migration, and upserts the deterministic test user.
  * Subsequent test runs reset state through the `database.reset` callback
- * declared in `tuffgal.config.ts` — they no longer touch this script.
+ * declared in `tuffgal.config.ts`; they no longer touch this script.
  */
 async function main(): Promise<void> {
   const devUrl = await readDatabaseUrl(API_ENV_PATH);
@@ -54,7 +52,7 @@ async function createTestDatabaseIfMissing(devUrl: string): Promise<void> {
       [TEST_DB_NAME],
     );
     if (rows.length === 0) {
-      // Identifiers cannot be parameterised. Whitelisted constant is safe.
+      // identifiers can't be parameterised; allowlisted constant is safe
       await admin.query(`CREATE DATABASE "${TEST_DB_NAME}"`);
       process.stdout.write(`Created database ${TEST_DB_NAME}.\n`);
     } else {
@@ -93,10 +91,7 @@ async function seedTestUser(testUrl: string): Promise<void> {
   const client = new pg.Client({ connectionString: testUrl });
   await client.connect();
   try {
-    // Kill any orphan row that shares our email but not our id — a
-    // previous dev experiment could have left one behind, and the
-    // following INSERT would otherwise fail the email uniqueness
-    // constraint with no recovery path.
+    // drop an orphan row: our email, different id; else INSERT collides
     await client.query(`DELETE FROM "User" WHERE "email" = $1 AND "id" <> $2`, [
       TEST_USER.email,
       TEST_USER.id,

@@ -48,7 +48,7 @@ export interface UseLinksDataResult {
   resetTotal: () => void;
   /**
    * Replaces the matching cached entry in local state. Not the same as the
-   * API-layer `refreshLink` – this mutates the in-memory list only and never
+   * API-layer `refreshLink` - this mutates the in-memory list only and never
    * round-trips to the server.
    */
   updateLink: (link: Link) => void;

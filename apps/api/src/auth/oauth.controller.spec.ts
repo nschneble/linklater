@@ -77,7 +77,7 @@ describe('OAuthController', () => {
   });
 
   // ──────────────────────────────────────────────
-  // googleCallback / completeOAuthLogin – normal path
+  // googleCallback / completeOAuthLogin - normal path
   // ──────────────────────────────────────────────
 
   describe('googleCallback', () => {
@@ -112,7 +112,7 @@ describe('OAuthController', () => {
   });
 
   // ──────────────────────────────────────────────
-  // appleCallback – delegates to same completeOAuthLogin
+  // appleCallback - delegates to same completeOAuthLogin
   // ──────────────────────────────────────────────
 
   describe('appleCallback', () => {
@@ -202,7 +202,7 @@ describe('OAuthController', () => {
   });
 
   // ──────────────────────────────────────────────
-  // googleLink – guard is applied
+  // googleLink - guard is applied
   // ──────────────────────────────────────────────
 
   describe('googleLink', () => {

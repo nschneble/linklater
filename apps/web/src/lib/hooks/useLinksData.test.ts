@@ -7,8 +7,7 @@ vi.mock('../api', () => ({
   getLinks: vi.fn(),
 }));
 
-// Stub the metadata poller for the whole suite so it never fires real timers
-// or `getLink` requests; one wiring test below asserts it is driven correctly.
+// stub the metadata poller: no real timers/getLink; one test asserts wiring
 let capturedPollingLinks: Link[] | null = null;
 let capturedOnSettled: ((link: Link) => void) | null = null;
 
@@ -348,8 +347,7 @@ describe('useLinksData hasSettledOnce', () => {
 
     rerender({ filter: 'unread', search: 'query' });
 
-    // Loading flag flips on for the second fetch, but the previous list
-    // remains mounted instead of being cleared to [] mid-fetch.
+    // loading flips on for the refetch; prior list stays mounted, not cleared
     await waitFor(() => expect(result.current.loadingLinks).toBe(true));
     expect(result.current.links).toHaveLength(1);
     expect(result.current.links[0].id).toBe('a');
@@ -392,8 +390,7 @@ describe('useLinksData hasSettledOnce', () => {
     rerender({ filter: 'unread', search: 'no-match' });
 
     await waitFor(() => expect(result.current.loadingLinks).toBe(true));
-    // No mid-fetch flash to empty: the prior three items remain rendered
-    // until the second response arrives.
+    // no mid-fetch flash to empty: prior three items stay until the 2nd response
     expect(result.current.links).toHaveLength(3);
 
     await act(async () => {
@@ -435,11 +432,7 @@ describe('useLinksData handleLoadMore', () => {
   });
 
   it('appends only rows a later page has not already served', async () => {
-    // A create between page loads shifts every row down one under the
-    // server's `(page - 1) * limit` offset, so page 2 can re-serve a row
-    // already on screen. Append must drop the re-served copy: the list gains
-    // only the genuinely new rows, each id (and its React key and pending-poll
-    // entry) stays unique, and the new rows keep their incoming order.
+    // a create between pages shifts rows under the offset, re-serving one; append must drop the dupe so keys stay unique
     const existing = makeLink({ id: 'link-a' });
     const reserved = makeLink({ id: 'link-a' });
     const newB = makeLink({ id: 'link-b' });
@@ -488,11 +481,7 @@ describe('useLinksData handleLoadMore', () => {
 
 describe('useLinksData "less doesn\'t need more"', () => {
   it('never drops or duplicates a row when the tail is one item past a full page', async () => {
-    // 21 items at the default limit of 10: page 1 loads rows 0–9, load-more
-    // loads rows 10–19, leaving exactly one trailing row. The old limit-bump
-    // desynced the server's (page - 1) * limit offset, so it skipped row 10 and
-    // re-served row 20 (a duplicate React key). Honoring the offset here means
-    // that regression is now visible.
+    // 21 items at limit 10 leave a lone trailing row; a limit-bump desyncs the offset and dups a key, so honoring it exposes the regression
     const backing = makeBacking(21);
     mockOffsetRespectingEndpoint(backing);
 
@@ -504,24 +493,21 @@ describe('useLinksData "less doesn\'t need more"', () => {
       result.current.handleLoadMore();
     });
 
-    // load-more fills rows 10–19, then the auto-load net pulls the single
-    // trailing row 20 as its own page 3.
+    // load-more fills rows 10-19, then auto-load pulls the lone row 20 as page 3
     await waitFor(() => expect(result.current.links).toHaveLength(21));
 
     const ids = result.current.links.map((link) => link.id);
     expect(ids).toEqual(backing.map((link) => link.id));
     expect(new Set(ids).size).toBe(21);
 
-    // The limit is never bumped: every request keeps the server offset stable
-    // by leaving `limit` unset (the server falls back to its default).
+    // limit stays unset so the server offset holds (server uses its default)
     for (const call of vi.mocked(apiModule.getLinks).mock.calls) {
       expect(call[0]?.limit).toBeUndefined();
     }
   });
 
   it('loads every row without an extra fetch when the tail fills the last page exactly', async () => {
-    // 20 items at the default limit of 10: two full pages, no trailing item.
-    // The absent-tail direction, in which the auto-load net must not over-fetch.
+    // 20 items at limit 10: two full pages, no trailing item, so auto-load must not over-fetch
     const backing = makeBacking(20);
     mockOffsetRespectingEndpoint(backing);
 
@@ -538,14 +524,12 @@ describe('useLinksData "less doesn\'t need more"', () => {
     const ids = result.current.links.map((link) => link.id);
     expect(ids).toEqual(backing.map((link) => link.id));
     expect(new Set(ids).size).toBe(20);
-    // No lone trailing item remains, so no auto-load fires: exactly two pages.
+    // no lone trailing item, so no auto-load fires: exactly two pages
     expect(vi.mocked(apiModule.getLinks)).toHaveBeenCalledTimes(2);
   });
 
   it('auto-loads a lone trailing item left by the first page', async () => {
-    // 11 items at the default limit of 10: page 1 leaves exactly one item.
-    // The auto-load net fetches it with no user interaction, keeping the
-    // limit constant across both pages (total ≡ 1 mod page-size boundary).
+    // 11 items at limit 10: page 1 leaves one, auto-load fetches it with the limit constant
     const backing = makeBacking(11);
     mockOffsetRespectingEndpoint(backing);
 

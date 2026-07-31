@@ -80,10 +80,7 @@ describe('ThemeEditor copy control + heading outline', () => {
   it('renders the single copy button + h2 "Colors", no master switch', () => {
     render(<ThemeEditor />);
 
-    // The SettingsGroup card wrapper is dropped (PRD point 8); the picker is now
-    // a bare strip. The editing surface's region title is the "Color Bundles" h2,
-    // distinct from the page h1 "Theme editor" (SC 2.4.6) — no "Craft your theme"
-    // card h2.
+    // region title is the "Color Bundles" h2, not the h1 (SC 2.4.6)
     expect(
       screen.getByRole('heading', { level: 1, name: /theme editor/i }),
     ).toBeInTheDocument();
@@ -93,10 +90,9 @@ describe('ThemeEditor copy control + heading outline', () => {
     expect(
       screen.getByRole('heading', { level: 2, name: 'Color Bundles' }),
     ).toBeInTheDocument();
-    // The master switch is gone — going custom is an edit, not a toggle.
+    // no master switch: going custom is an edit, not a toggle
     expect(screen.queryByRole('switch')).toBeNull();
-    // The 10-theme copy MENU is replaced by ONE button that names its source
-    // theme (R-E2). The old menu trigger is gone.
+    // one copy button names its source theme (R-E2), not a menu
     expect(
       screen.getByRole('button', { name: /copy boyhood/i }),
     ).toBeInTheDocument();
@@ -104,7 +100,7 @@ describe('ThemeEditor copy control + heading outline', () => {
       screen.queryByRole('button', { name: /start from a theme/i }),
     ).toBeNull();
     expect(screen.queryByRole('menu')).toBeNull();
-    // The off-ramp is gone — there is no path back to the prior theme by design.
+    // no path back to the prior theme, by design
     expect(
       screen.queryByRole('button', { name: /back to boyhood/i }),
     ).toBeNull();
@@ -180,8 +176,7 @@ describe('ThemeEditor mode toggle in the header toolbar', () => {
     let node: HTMLElement | null = screen.getByRole('tablist', {
       name: /palette to edit/i,
     });
-    // No ancestor carries an inline custom-property style, so a hostile prior
-    // palette can never strand this recovery control (a11y brief §3/§5).
+    // no custom-property ancestor: a hostile palette can't strand it
     while (node) {
       expect(node.getAttribute('style') ?? '').not.toContain('--');
       node = node.parentElement;
@@ -193,18 +188,14 @@ describe('ThemeEditor live preview highlights the selected bundle', () => {
   it('opens on base and mutes the rest, then swaps the highlight + explanation when a bundle is picked', () => {
     render(<ThemeEditor />);
 
-    // The whole app frame renders for every bundle; only the active bundle's
-    // component stays in color. On base the toolbar (its asemic "Add link"
-    // stand-in) is NOT muted, and its app-themed explanation shows.
+    // only the active bundle stays in color; on base the toolbar shows
     const mock = screen.getByTestId('app-mock');
     expect(
       within(mock).getByText(MOCK_GLYPHS.addLink).closest('[data-muted]'),
     ).toBeNull();
     expect(screen.getByText(/page defaults/i)).toBeInTheDocument();
 
-    // Picking the mount bundle moves the highlight to the link card. The inner
-    // mock REMOUNTS on a bundle change (re-query the live node), the explanation
-    // swaps, and the toolbar — still rendered — is now muted.
+    // mount bundle: the mock REMOUNTS on change, so re-query the node
     fireEvent.click(screen.getByRole('tab', { name: 'Mount' }));
     expect(
       screen.getByText(/raised components like cards/i),
@@ -235,10 +226,9 @@ describe('ThemeEditor live preview highlights the selected bundle', () => {
   it('paints the custom palette on the aria-hidden mock ONLY, not the Colors card', () => {
     render(<ThemeEditor />);
     const mock = screen.getByTestId('app-mock');
-    // The decorative mock carries the inline custom-property scope.
+    // the decorative mock carries the inline custom-property scope
     expect(mock.getAttribute('style')).toBeTruthy();
-    // The left Color Bundles region (and its tablist) is NOT inside the styled
-    // mock.
+    // the Color Bundles region is NOT inside the styled mock
     const colors = screen.getByRole('region', { name: 'Color Bundles' });
     expect(mock.contains(colors)).toBe(false);
   });
@@ -249,14 +239,14 @@ describe('ThemeEditor live preview highlights the selected bundle', () => {
       name: /copy boyhood/i,
     });
     const mock = screen.getByTestId('app-mock');
-    // No ancestor of the copy button carries an inline custom-property style.
+    // no ancestor of the copy button has an inline custom-property style
     let node: HTMLElement | null = copyButton;
     while (node) {
       const style = node.getAttribute('style') ?? '';
       expect(style).not.toContain('--');
       node = node.parentElement;
     }
-    // And it is not nested inside the styled mock.
+    // and it is not nested inside the styled mock
     expect(mock.contains(copyButton)).toBe(false);
   });
 });
@@ -264,8 +254,7 @@ describe('ThemeEditor live preview highlights the selected bundle', () => {
 describe('ThemeEditor polite live region', () => {
   it('mounts an unconditional sr-only role=status region (survives custom off)', () => {
     render(<ThemeEditor />);
-    // Custom is off in the default mock — the region must still be mounted so a
-    // later engage/copy announcement has somewhere to speak (a11y brief §1).
+    // region stays mounted while custom is off, so announcements can speak
     expect(screen.getByRole('status')).toBeInTheDocument();
   });
 
@@ -286,14 +275,14 @@ describe('ThemeEditor go-custom-on-first-edit', () => {
     editBaseBackground('#123456');
 
     expect(mockTheme.setCustomThemeEnabled).toHaveBeenCalledWith(true);
-    // Other mode (light) is probed; the edited mode (dark) is the post-edit map.
+    // other mode (light) probed; edited mode (dark) is the post-edit map
     expect(readThemeTokens).toHaveBeenCalledWith('boyhood', 'light');
     const expectedSeed = {
       dark: { '--mount-bg': 'boyhood-dark', '--base-bg': '#123456' },
       light: { '--mount-bg': 'boyhood-light' },
     };
     expect(mockTheme.setCustomTheme).toHaveBeenCalledWith(expectedSeed);
-    // The editor NEVER changes the global theme.
+    // the editor NEVER changes the global theme
     expect(mockTheme.setBaseTheme).not.toHaveBeenCalled();
 
     await waitFor(() =>
@@ -303,7 +292,7 @@ describe('ThemeEditor go-custom-on-first-edit', () => {
       }),
     );
 
-    // The single merged engage utterance lands in the polite region.
+    // the single merged engage utterance lands in the polite region
     await waitFor(() =>
       expect(
         screen.getByText('Your theme is on and saved.'),

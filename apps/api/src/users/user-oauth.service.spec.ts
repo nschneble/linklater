@@ -151,7 +151,7 @@ describe('UserOAuthService', () => {
     });
 
     it('is a no-op (no error) when the row no longer exists – concurrent unlink safety', async () => {
-      // updateMany with count: 0 means no rows matched – this should not throw
+      // updateMany with count: 0 means no rows matched, so it must not throw
       (prismaMock.oAuthAccount.updateMany as jest.Mock).mockResolvedValue({
         count: 0,
       });

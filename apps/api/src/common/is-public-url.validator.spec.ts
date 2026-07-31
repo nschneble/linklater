@@ -1,10 +1,7 @@
 import { IsPublicUrlConstraint } from './is-public-url.validator.js';
 import type { HostResolver } from './safe-fetch.js';
 
-// Literal / scheme cases never reach the resolver (they short-circuit on the
-// lexical `isPrivateHost` check or the scheme guard), so the default
-// constraint is safe to use – its resolver is never invoked. A resolver that
-// throws if called guards that assumption.
+// these inputs short-circuit before the resolver; throwing guards that
 const throwingResolver: HostResolver = () => {
   throw new Error('resolver should not be called for this input');
 };

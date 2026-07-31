@@ -28,7 +28,7 @@ const BARE_HEX_BODY = /^[0-9a-fA-F]{3}$|^[0-9a-fA-F]{6}$/;
  */
 export function normalizeToSixDigitHex(value: string): string {
   const trimmed = value.trim();
-  // Prepend `#` to a bare hex body before the 3→6 expansion below picks it up.
+  // prepend `#` so the 3→6 expansion below catches a bare hex body
   const prefixed = BARE_HEX_BODY.test(trimmed) ? `#${trimmed}` : trimmed;
   if (HEX3.test(prefixed)) {
     const digits = prefixed.slice(1).toLowerCase();

@@ -48,12 +48,7 @@ describe('oauth-state-cookie', () => {
       );
     });
 
-    // Always Secure/None, unconditionally – not gated on NODE_ENV. Apple's
-    // callback is a cross-site POST (form_post); SameSite=None is required
-    // for the cookie to survive that navigation at all, and None mandates
-    // Secure. Both local dev (mkcert) and production (Caddy) terminate TLS
-    // in front of this server, so the browser's connection is HTTPS either
-    // way – see the docstring on `issueOAuthState`.
+    // Apple's cross-site callback needs SameSite=None (mandates Secure)
     it('marks the cookie secure regardless of NODE_ENV', () => {
       const response = makeResponse();
 

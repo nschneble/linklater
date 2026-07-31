@@ -335,7 +335,7 @@ const FIXTURES: readonly CascadeFixture[] = [
  * to be dropped. Don't pre-emptively edit; let the test guide.
  */
 const SHAPE_REDUNDANCY_WAIVERS: ReadonlySet<string> = new Set([
-  // :root (default light) – 3 warm-vs-warm or red-green pairs survive
+  // :root (default light) - 3 warm-vs-warm or red-green pairs survive
   //   axis A pruning:
   //   - alert-warn: rose-50/amber-100 bg's collapse under tritanopia
   //     (dE 4.4 bg / 4.2 border, well under 10); rose-800/amber-800
@@ -344,41 +344,31 @@ const SHAPE_REDUNDANCY_WAIVERS: ReadonlySet<string> = new Set([
   //     deuteranopia (dE 2.5 bg / 9.6 border, just under 10).
   //   - success-warn: emerald vs amber bg's collapse under protanopia
   //     (dE 8.8 bg / 8.0 border, both under 10).
-  //   alert-info, info-warn, info-success were waived because
-  //   they collapsed on luminance, but the CVD math proves blue stays
-  //   distinct from rose/amber/emerald under all three dichromacies, so
-  //   those three waivers were dropped.
   'root::alert-warn',
   'root::alert-success',
   'root::success-warn',
 
-  // [data-mode='dark'] (default dark) – 1 warm-vs-warm pair survives.
+  // [data-mode='dark'] (default dark) - 1 warm-vs-warm pair survives.
   //   - alert-warn: rose-400 vs amber-400 borders collapse under tritan
   //     (dE 7.9 border); both bg's are alpha-tinted page bg at similar
   //     lightness so luminance gap also fails.
-  //   alert-info and info-warn were waived earlier on luminance, but the CVD math proves
-  //   blue-400 stays distinct from rose-400 / amber-400 under all three
-  //   dichromacies, so both waivers were dropped.
   'dark::alert-warn',
 
-  // school-of-rock light – 3 of 4 original waivers survive. Palette is
+  // school-of-rock light - 3 waivers survive. Palette is
   // leather/cream earth tones by design (no blues); info was re-hued to
   // brown because success was originally green (per the school-of-rock
   // re-hue documented in feedback-bundle-hue-separation). Without a
   // blue/cool anchor, three pairs collapse on both axes:
   //   - alert-info: red vs brown bg's are identical (#fadcd6, dE 0);
   //     borders separate barely on protan (dE 14.6) but bg has no signal.
-  //     Test passes if EITHER bg or border survives – here only border
+  //     Test passes if EITHER bg or border survives - here only border
   //     does for protan/deuter, and tritan fails outright (border dE 7.5).
   //   - success-warn: cream vs cream bg's (dE 2.4-4.8 across CVDs);
   //     brown vs amber borders survive protan (13.1) but tritan border
   //     also fails (need >=10 under ALL three).
   //   - info-success: brown vs cream bg + brown vs green border; deuter
-  //     border 1.86 dE, protan border 5.89 – collapses on both bg and
+  //     border 1.86 dE, protan border 5.89 - collapses on both bg and
   //     border under multiple dichromacies.
-  //   alert-success was waived earlier on luminance, but the CVD math proves the red-vs-green
-  //   border passes (alert-border #a32010 vs success-border survives
-  //   tritan); waiver dropped.
   'school-of-rock-light::alert-info',
   'school-of-rock-light::success-warn',
   'school-of-rock-light::info-success',
@@ -390,7 +380,7 @@ const SHAPE_REDUNDANCY_WAIVERS: ReadonlySet<string> = new Set([
   //   axis A or axis B unwaived.
   'school-of-rock-dark::info-success',
 
-  // nouvelle-vague (light + dark) – grayscale-by-design theme (PRD
+  // nouvelle-vague (light + dark) - grayscale-by-design theme (PRD
   // footnote). The whole palette is true neutrals; axis A is definitionally
   // near-zero (Brettel maps monochromatic → monochromatic) so axis B
   // (luminance ratio) carries every state-pair separation. State pairs
@@ -399,9 +389,7 @@ const SHAPE_REDUNDANCY_WAIVERS: ReadonlySet<string> = new Set([
   //
   //   - Alert.tsx renders `error` with fa-circle-exclamation and `success`
   //     with fa-circle-check unconditionally (not gated by theme). Both
-  //     glyphs ship across every theme; nouvelle-vague's .tsx
-  //     cleanup removes the per-theme branch but the unconditional icon
-  //     selection stays – the redundancy citation remains valid.
+  //     glyphs ship across every theme.
   //   - Toast.tsx repaints onto the same alert-highlight /
   //     success-highlight slots and reuses the same icon-glyph pair
   //     (fa-circle-exclamation for error variant, fa-circle-check for
@@ -413,21 +401,19 @@ const SHAPE_REDUNDANCY_WAIVERS: ReadonlySet<string> = new Set([
   //     shape/icon combinations are unconditional, so the info-warn
   //     redundancy holds across every theme including nouvelle-vague.
   //
-  // Three pairs land here (matches the brief's pre-flight estimate, well
-  // under the 8-12 hedge band):
-  //   light: alert-success – alert/success share #393939 border and #1a1a1a
+  // Three pairs land here:
+  //   light: alert-success - alert/success share #393939 border and #1a1a1a
   //          highlight by design (no available darker neutral that clears
   //          WCAG against the bundle bg #ebebeb).
-  //   dark:  alert-success – alert/success share #aaaaaa border by design
+  //   dark:  alert-success - alert/success share #aaaaaa border by design
   //          (no available lighter neutral that clears WCAG against the
   //          composited dark bundle bg).
-  //   dark:  info-warn      – info/warn share #878787 border by design.
+  //   dark:  info-warn      - info/warn share #878787 border by design.
   //
   // The unwaived light pairs separate via axis B alone:
   //   alert/warn       border lum 2.22x (#393939 vs #555555)
   //   alert/info       border lum 3.59x (#393939 vs #6b6b6b)
-  //   warn/info        border lum 1.62x (#555555 vs #6b6b6b – brief flagged
-  //                    as razor 1.41 +0.01, verified 1.62, M-L1 NOT applied)
+  //   warn/info        border lum 1.62x (#555555 vs #6b6b6b)
   //   warn/success     border lum 2.22x (#555555 vs #393939)
   //   info/success     border lum 3.59x (#6b6b6b vs #393939)
   // The unwaived dark pairs each clear axis B at 1.66x via the
@@ -545,11 +531,7 @@ function evaluatePair(colors: PairColors): PairDistinguishability {
     ]),
   ) as PairDistinguishability['cvdDeltaEs'];
 
-  /*
-   * Pair survives a single CVD type if EITHER bg or border stays distinct
-   * after simulation – mirrors axis B's "bg OR border" disjunction. Pair
-   * passes axis A only if it survives ALL three dichromacies.
-   */
+  // axis A passes only if bg OR border stays distinct under all three CVDs
   const passesAxisA = CVD_TYPES.every(
     (cvd) =>
       cvdDeltaEs[cvd].bg >= CVD_DELTA_E_THRESHOLD ||
@@ -621,15 +603,8 @@ describe('bundle CVD-distinguishability (axis A: CVD-simulated dE2000 >=10; axis
     });
   }
 
-  /*
-   * Stale-waiver guard: every entry in SHAPE_REDUNDANCY_WAIVERS must
-   * correspond to a (cascade × pair) that currently fails BOTH axes. If
-   * a palette change closes a gap on either axis, the waiver becomes a
-   * lie – the test would pass either way, so a human reading the waivers
-   * list would believe shape redundancy is load-bearing when in fact
-   * luminance or hue separation has taken over. Force the waiver entry
-   * to be deleted when no longer needed.
-   */
+  // stale-waiver guard: a waiver whose pair now passes either axis is a lie
+  // (the test passes regardless), so force the entry to be deleted
   describe('waiver hygiene', () => {
     it('every documented waiver corresponds to a pair that fails both axes today', () => {
       const reachableFailingKeys = new Set<string>();

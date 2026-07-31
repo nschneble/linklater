@@ -114,8 +114,7 @@ export const createValidatingLookup =
   (hostname, options, callback): void => {
     assertPublicHost(hostname, resolver)
       .then((addresses) => {
-        // Honour the family undici asked for (0 = any) so a dual-stack host
-        // never hands back a wrong-family address that would fail the connect.
+        // honour the family undici asked for (0 = any); wrong family fails connect
         const results = addresses
           .map((address) => ({ address, family: isIP(address) || 4 }))
           .filter(
@@ -133,7 +132,7 @@ export const createValidatingLookup =
           callback(null, results[0].address, results[0].family);
         }
       })
-      // On rejection undici only inspects the error; the address is ignored.
+      // on rejection undici only inspects the error; the address is ignored
       .catch((error: Error) => callback(error, [], 0));
   };
 
@@ -192,9 +191,7 @@ export async function safeFetch(
       throw new Error(`Refusing non-http(s) scheme: ${parsed.protocol}`);
     }
 
-    // Eager resolve+validate: fast, well-logged early reject before opening a
-    // socket. The pinned connect in `safeAgent` re-validates and is what
-    // actually closes the rebind window on the real network path.
+    // fast early reject; `safeAgent`'s pinned connect is what closes the rebind
     await assertPublicHost(parsed.hostname, resolver);
 
     const response = await fetchImpl(currentUrl, {
@@ -210,11 +207,11 @@ export async function safeFetch(
 
     const location = response.headers.get('location');
     if (!location) {
-      // A 3xx with no Location has nothing to follow, so hand it back as-is.
+      // a 3xx with no Location has nothing to follow, so return it as-is
       return response;
     }
 
-    // Discard the intermediate body so the pooled socket is released.
+    // discard the intermediate body so the pooled socket is released
     await response.body?.cancel().catch(() => undefined);
     currentUrl = new URL(location, currentUrl).toString();
   }

@@ -27,7 +27,7 @@ import { UsersService } from './users.service.js';
 
 /**
  * Endpoints for the authenticated user to read and manage their own account.
- * Every route requires a valid JWT – no user can access another user's data.
+ * Every route requires a valid JWT - no user can access another user's data.
  */
 @ApiTags('users')
 @ApiBearerAuth()
@@ -58,7 +58,7 @@ export class UsersController {
   /**
    * Updates the current user's account settings. Accepts any combination of
    * `password`, `theme`, `mode`, `cvdMode`, `dyslexicFont`, `customTheme`, and
-   * `customThemeEnabled` – all fields are optional. Changing the password
+   * `customThemeEnabled` - all fields are optional. Changing the password
    * requires `currentPassword` as well.
    */
   @ApiOperation({
@@ -89,7 +89,7 @@ export class UsersController {
    * - Accounts with a password or TOTP must supply `currentPassword` OR a
    *   `code` (TOTP / recovery). Wrong creds return 401; missing creds 400.
    * - Magic-link-only-no-MFA accounts have no inline credential to
-   *   challenge – the service emails a confirmation link instead and
+   *   challenge - the service emails a confirmation link instead and
    *   returns `{ requiresEmailConfirmation: true }` without deleting.
    *
    * Rate-limited via the shared `auth-reauth` bucket (5 attempts / 15

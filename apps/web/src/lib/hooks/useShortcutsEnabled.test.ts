@@ -21,13 +21,7 @@ describe('useShortcutsEnabled', () => {
   it('reads a stored "off" preference on the first committed render, before any effect', () => {
     window.localStorage.setItem(KEYBOARD_SHORTCUTS_KEY, 'off');
 
-    // Record the value seen on every committed render. `useSyncExternalStore`
-    // reads the snapshot during render, so the stored "off" is visible on the
-    // very first commit. An effect-based regression (useState default of `true`
-    // plus a useEffect that reads storage and corrects to `false`) would render
-    // `true` first and only settle to `false` after the effect, producing a
-    // second render. Locking both the first value and the render count keeps
-    // this a real tripwire for the speech-input race.
+    // tripwire: an effect-based read renders true first, then re-renders
     const committedRenders: boolean[] = [];
     function Probe() {
       committedRenders.push(useShortcutsEnabled());

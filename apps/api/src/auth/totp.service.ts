@@ -64,8 +64,7 @@ export class TotpService {
       );
     }
 
-    // If setup is already pending (secret stored but not yet verified), return
-    // the same QR code so concurrent calls don't invalidate a scan in progress.
+    // return the pending QR so a concurrent call can't void an in-progress scan
     if (user.totpSecret && !user.totpEnabledAt) {
       const existingSecret = decrypt(
         user.totpSecret,
@@ -191,11 +190,7 @@ export class TotpService {
 
     if (result.valid) {
       const usedStep = Math.floor(Date.now() / 1000 / 30) + result.delta;
-      // Compare-and-swap. Two parallel verify-otp requests inside the same
-      // 30-second TOTP step would both pass `verify()` (the otplib check
-      // honors `afterTimeStep` but isn't atomic with the DB write). The
-      // first to land here advances `totpLastUsedStep`; any subsequent
-      // request gets `false` and is rejected as a replay.
+      // verify() isn't atomic with the write; CAS blocks same-step replays
       const advanced = await this.userMfaService.updateTotpLastUsedStep(
         user.id,
         usedStep,

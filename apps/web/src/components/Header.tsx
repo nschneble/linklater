@@ -70,14 +70,7 @@ export default function Header({
 
     function handleOutsideInteraction(event: MouseEvent | TouchEvent) {
       const target = event.target as Node;
-      // The desktop dropdown and the mobile bottom sheet are separate
-      // subtrees. A press inside either one is "inside" the menu – only a
-      // press outside both should close it. Without the sheet check, tapping
-      // a bottom-sheet item fires touchstart on a node outside the desktop
-      // container, closing the sheet before the tap's click can register.
-      // On mobile this handler is effectively a no-op for closing (the sheet
-      // scrim owns tap-outside-to-close); don't restore an unscoped close here
-      // or the tap-eating bug returns.
+      // without the sheet check, a sheet tap self-closes before its click
       if (
         userMenuContainerReference.current?.contains(target) ||
         bottomSheetReference.current?.contains(target)

@@ -20,10 +20,7 @@ export class OAuthAccountService {
       providerId,
     );
     if (account) {
-      // The provider may have updated the email between sign-ins. Mirror the
-      // current value so the IdPs section in Settings stays truthful without
-      // needing a manual refresh. Identity is keyed by (provider, providerId),
-      // not email, so this is purely informational.
+      // mirror provider email; identity keys on (provider, providerId), not email
       if (account.providerEmail !== email) {
         await this.userOAuthService.updateOAuthProviderEmail(
           account.userId,
@@ -43,14 +40,8 @@ export class OAuthAccountService {
         providerId,
         email,
       );
-      // Auto-verification here is safe because we matched the user *by* this
-      // email – the provider's verified-email assertion applies to the same
-      // address. The link-from-Settings path (`linkOAuthAccountToUser` below)
-      // gates auto-verify on an equality check for the same reason. A
-      // password set on this row before now was never proven to belong to
-      // this email's real owner, so it's invalidated in the same breath as
-      // marking verified (account-pre-hijacking closure – see
-      // `UsersService.verifyEmailAndInvalidateStalePassword`).
+      // matched by this email, so auto-verify is safe; invalidate any stale
+      // password to close the account-pre-hijack window
       if (!existingUser.emailVerifiedAt) {
         await this.usersService.verifyEmailAndInvalidateStalePassword(
           existingUser.id,
@@ -81,9 +72,7 @@ export class OAuthAccountService {
         }
         const raceUser = await this.usersService.findByEmail(email);
         if (raceUser) {
-          // Same pre-hijack window as the merge branch above, reached via
-          // the narrow concurrent-registration race instead of a normal
-          // lookup – same closure applies.
+          // same pre-hijack closure as above, reached via the registration race
           if (!raceUser.emailVerifiedAt) {
             await this.usersService.verifyEmailAndInvalidateStalePassword(
               raceUser.id,
@@ -149,11 +138,7 @@ export class OAuthAccountService {
       providerEmail,
     );
 
-    // Auto-verify only when the provider's email matches the account email.
-    // Once federation is relaxed to allow mismatched provider emails, a
-    // foreign provider email cannot be used as proof that the user controls
-    // their own account email. Do NOT delete this conditional – see the
-    // identity-federation design notes.
+    // a foreign provider email is no proof of ownership; keep this guard
     if (!user.emailVerifiedAt && providerEmail === user.email) {
       await this.usersService.markEmailVerified(userId);
     }

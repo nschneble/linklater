@@ -1,5 +1,5 @@
 /*
- * Tests for FormInput – the themed text input shared across forms.
+ * Tests for FormInput, the themed text input shared across forms.
  *
  * The load-bearing piece is the `surface` prop. It names the host bundle
  * (base = page chrome, mount = card / settings panel / auth card) and the

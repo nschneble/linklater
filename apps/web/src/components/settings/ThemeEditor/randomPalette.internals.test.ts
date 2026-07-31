@@ -51,7 +51,7 @@ describe('forceExtreme: the guaranteed last-resort repair', () => {
 
     forceExtreme(palette, pair);
 
-    // White maximally clears a dark bg, so it is the chosen extreme...
+    // white maximally clears a dark bg, so it is the chosen extreme...
     expect(palette['--mount-text']).toBe('#ffffff');
     // ...and it actually passes the threshold the pair demanded.
     const ratio = computeContrastRatio(palette['--mount-text']!, '#201e43');
@@ -83,14 +83,10 @@ describe('forceExtreme: the guaranteed last-resort repair', () => {
 });
 
 describe('deriveForeground: the 0/1 lightness rail fallback', () => {
-  // These inputs are tuned so the colored nudge candidate can never reach the
-  // threshold before the lightness walk clamps at the 0/1 rail — exercising the
-  // `return direction === 1 ? '#ffffff' : '#000000'` fallback. The chosen pure
-  // extreme still clears the (rail-only) threshold.
+  // inputs tuned so no colored candidate clears before the walk hits the rail
 
   it('returns #ffffff at the rail in dark mode and still clears the threshold', () => {
-    // Dark mode walks UP; a mid-gray bg with a high-chroma hue keeps every
-    // colored candidate below 3:1 until the walk hits L=1.
+    // dark walks up; mid-gray high-chroma bg keeps candidates below 3:1 to L=1
     const result = deriveForeground('#8a8a8a', 3, 'dark' as Mode, 60, 0.22);
     expect(result).toBe('#ffffff');
     const ratio = computeContrastRatio(result, '#8a8a8a');
@@ -99,8 +95,7 @@ describe('deriveForeground: the 0/1 lightness rail fallback', () => {
   });
 
   it('returns #000000 at the rail in light mode and still clears the threshold', () => {
-    // Light mode walks DOWN; a mid-gray bg with a high-chroma hue keeps every
-    // colored candidate below 4.5:1 until the walk hits L=0.
+    // light walks down; mid-gray high-chroma bg keeps candidates below 4.5:1 to L=0
     const result = deriveForeground('#7a7a7a', 4.5, 'light' as Mode, 280, 0.25);
     expect(result).toBe('#000000');
     const ratio = computeContrastRatio(result, '#7a7a7a');
@@ -110,19 +105,7 @@ describe('deriveForeground: the 0/1 lightness rail fallback', () => {
 });
 
 describe('deriveHighlightTriple: the 0.4-L safety branch is unreachable in band', () => {
-  /*
-   * The 0.4-L fallback in `deriveHighlightTriple` is dead code for any bg this
-   * generator actually produces. Backgrounds live in `BG_BAND` (dark
-   * [0.1,0.18] / light [0.92,0.98]); across EVERY in-band bg hue/chroma × every
-   * highlight hue/chroma, the window search lands a real highlight, so the
-   * triple's three contract pairs all hold BY CONSTRUCTION and the 0.4 tone is
-   * never emitted. We prove that by checking the live output of the real
-   * function over a dense in-band sample.
-   *
-   * (Out of band the 0.4 tone does NOT itself clear 3:1 vs a mid-L bg — it is a
-   * defensive placeholder the outer forceExtreme repair would correct — which is
-   * exactly why this is asserted as unreachable rather than as a passing net.)
-   */
+  // 0.4-L fallback is dead code in-band; dense sampling proves the window lands
 
   const RNG = () => 0.5; // deterministic chroma pick inside deriveHighlightTriple
   const MODES: Mode[] = ['light', 'dark'];
@@ -151,8 +134,7 @@ describe('deriveHighlightTriple: the 0.4-L safety branch is unreachable in band'
                 highlightHue,
                 RNG,
               );
-              // The triple's two hard pairs hold by construction — which only
-              // happens when findHighlight landed, NOT when the 0.4 tone fired.
+              // pairs hold only if findHighlight landed, not if the 0.4 tone fired
               const fgOnHighlight = computeContrastRatio(
                 highlightFg,
                 highlight,
@@ -169,7 +151,7 @@ describe('deriveHighlightTriple: the 0.4-L safety branch is unreachable in band'
           }
         }
       }
-      // Guard against an empty loop silently passing the describe.
+      // guard against an empty loop silently passing the describe
       expect(combinations).toBeGreaterThan(0);
     });
   }

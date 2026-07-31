@@ -64,8 +64,6 @@ export default function CurlExample({
   const [copied, setCopied] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // The check icon and the success announcement both linger COPIED_RESET_MS
-  // then revert; the hook also cancels its pending timer on unmount.
   useTransientState(copied, false, setCopied, COPIED_RESET_MS);
 
   async function handleCopy() {
@@ -80,10 +78,7 @@ export default function CurlExample({
     }
   }
 
-  // The success confirmation is derived from `copied` so it clears in lockstep
-  // with the icon, making the NEXT copy a genuine '' → message transition that
-  // re-announces (a polite region is silent when the text node doesn't change).
-  // The manual-copy fallback takes precedence and persists until the next copy.
+  // status tracks copied so repeats re-announce; polite regions ignore unchanged text
   const status = errorMessage || (copied ? 'Copied to clipboard.' : '');
 
   return (
@@ -99,9 +94,7 @@ export default function CurlExample({
       <pre
         role="group"
         aria-labelledby={labelId}
-        // SC 2.1.1: the <pre> is the scroll container for the clipped command,
-        // so a keyboard user must be able to focus it to scroll. role="group"
-        // is a deliberately non-interactive (non-landmark) nameable role.
+        // SC 2.1.1: pre is the scroll container, so it must be keyboard-focusable
         // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
         tabIndex={0}
         className={`max-h-80 overflow-auto px-3 py-2.5 bg-[var(--mount-input-bg)] border border-[var(--mount-border)] text-[var(--mount-text)] text-xs leading-relaxed select-text ${FOCUS_RING} rounded-lg`}

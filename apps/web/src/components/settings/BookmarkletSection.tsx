@@ -43,9 +43,7 @@ export default function BookmarkletSection() {
 
   const code = rawToken ? buildBookmarkletCode(rawToken) : null;
 
-  // GOTCHA: React sanitizes `javascript:` URLs that are set declaratively via
-  // the `href` prop (replaces them with `about:blank`). Setting it via
-  // `setAttribute` after render bypasses this. See:
+  // React sanitizes javascript: hrefs; setAttribute bypasses it
   // https://github.com/facebook/react/issues/16382
   useEffect(() => {
     if (!bookmarkletReference.current || !code) return;
@@ -53,10 +51,6 @@ export default function BookmarkletSection() {
   }, [code]);
 
   const loading = rawToken === null && !loadError;
-
-  // The bookmarklet token resolves after first paint and expands this
-  // section, sliding any deep-linked section below it (Integrations, Danger)
-  // off the top edge. Re-anchor the active section once the token settles.
   useReanchorOnLoad(!loading);
 
   return (

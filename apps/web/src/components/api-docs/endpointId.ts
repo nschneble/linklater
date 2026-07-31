@@ -1,7 +1,7 @@
 /**
  * Deterministic, collision-free identifiers for one API endpoint, derived from
  * its method + path. Shared by the endpoint nav, the detail region, and the URL
- * hash deep-link – so all three agree on a single stable slug per endpoint and
+ * hash deep-link - so all three agree on a single stable slug per endpoint and
  * never drift.
  *
  * `endpointSlug` is the bare slug ("get-links") used as the URL hash and the

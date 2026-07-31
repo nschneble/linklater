@@ -66,8 +66,7 @@ export default tseslint.config(
     },
   },
 
-  // injects Node globals + Vitest rule set used by the manifest sync test
-  // since build scripts run in Node (not the browser)
+  // Node globals + Vitest rules; build scripts run in Node, not browser
   {
     files: ['scripts/**/*.{ts,mjs}'],
     languageOptions: {
@@ -90,10 +89,7 @@ export default tseslint.config(
       ...vitest.configs.recommended.rules,
       'local/type-imports-after-value': 'error',
       'vitest/no-focused-tests': 'error',
-      // Vitest supports `expect(value, message)` but the plugin's
-      // `valid-expect` rule enforces Jest's one-argument shape and the
-      // manifest sync test relies on the two-argument method for
-      // diagnostic guidance
+      // valid-expect enforces Jest's 1-arg; the manifest test uses 2-arg
       // See https://vitest.dev/api/expect.html
       'vitest/valid-expect': 'off',
     },

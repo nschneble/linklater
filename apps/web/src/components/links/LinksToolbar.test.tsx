@@ -70,11 +70,7 @@ describe('LinksToolbar search input', () => {
   });
 
   it('recovers focus to the input when search is reset while the clear button is focused', () => {
-    // Simulates the stray-focus path in `useSearchDebounce`: a filter change
-    // (tab switch / back-forward nav) resets `search` to '' independently of
-    // the clear button's own click handler. If the button holds focus when it
-    // unmounts, focus would fall to <body>; the safety-net layout effect must
-    // pull it back to the input.
+    // stray-focus: outside reset unmounts the focused button, effect recovers
     const searchInputReference = createRef<HTMLInputElement>();
     const { rerender } = render(
       <LinksToolbar
@@ -89,7 +85,7 @@ describe('LinksToolbar search input', () => {
     clearButton.focus();
     expect(document.activeElement).toBe(clearButton);
 
-    // Search is cleared by an outside force (not the button's click handler).
+    // search is cleared by an outside force, not the button's click handler
     rerender(
       <LinksToolbar
         {...baseProps}
@@ -108,11 +104,11 @@ describe('LinksToolbar search input', () => {
       name: /search through your links/i,
     });
 
-    // Guards the iOS auto-zoom regression: 16px on mobile, 14px on desktop.
+    // guards the iOS auto-zoom regression: 16px on mobile, 14px on desktop
     expect(input).toHaveClass('text-base');
     expect(input).toHaveClass('sm:text-sm');
 
-    // Guards against the native WebKit "x" colliding with the custom button.
+    // guards against the native WebKit "x" colliding with the custom button
     expect(input.className).toContain(
       '[&::-webkit-search-cancel-button]:appearance-none',
     );

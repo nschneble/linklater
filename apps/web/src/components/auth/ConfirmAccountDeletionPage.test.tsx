@@ -99,8 +99,7 @@ describe('ConfirmAccountDeletionPage verifying state', () => {
     const status = screen.getByRole('status');
     expect(status).toBeInTheDocument();
     expect(status).toHaveTextContent(/verifying your deletion link/i);
-    // The status node carries `sr-only` – verifying state is visually a bare
-    // spinner. No card heading is rendered (errors redirect to /login).
+    // the status node is `sr-only`; verifying is visually a bare spinner
     expect(status).toHaveClass('sr-only');
   });
 
@@ -172,8 +171,7 @@ describe('ConfirmAccountDeletionPage success path (auto-redirect)', () => {
       renderPage();
     });
 
-    // Wait for navigate to fire, then confirm no success heading was rendered
-    // along the way (state collapses verifying → auto-redirect).
+    // wait for navigate, then confirm no success heading rendered en route
     await waitFor(() => {
       expect(navigate).toHaveBeenCalledWith('/login', { replace: true });
     });

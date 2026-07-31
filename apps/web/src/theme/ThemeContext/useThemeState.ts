@@ -95,59 +95,27 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
   const [customThemeEnabled, setCustomThemeEnabledState] = useState<boolean>(
     () => readLocalStorage(CUSTOM_THEME_ENABLED_KEY) === 'on',
   );
-  // Transient, non-persisting preview overlay. When set, the page PAINTS in
-  // this theme (data-theme + custom-token injection) while the committed
-  // `baseTheme` is left untouched, so nothing downstream of the real selection
-  // changes. Used by the editor's copy-palette picker to peek at a film theme.
+  // transient preview paint; committed baseTheme untouched (editor peek)
   const [previewTheme, setPreviewTheme] = useState<BaseTheme | null>(null);
 
-  // The theme actually PAINTED on the document (`data-theme`). Unauthenticated
-  // visitors always get the off-book `branding` chrome — their stored film
-  // palettes and the per-user `custom` palette are only theirs to show once a
-  // session exists — so branding wins HERE, before the `=== 'custom'`
-  // token-injection gate below. `branding !== 'custom'`, so no tokens are
-  // injected and no stale/hostile stored custom palette can plant a
-  // low-contrast focus ring on the login controls. The raw `baseTheme`
-  // selection is left untouched (and restores the instant the session
-  // confirms), so nothing here persists.
-  //
-  // When authenticated, a transient preview wins over the committed selection
-  // (the editor's copy-palette picker) but is likewise never persisted. There
-  // is no unauthenticated preview path: the editor is the only caller and is
-  // authenticated-only, and branding short-circuits every unauth paint anyway.
+  // unauth paints branding, not 'custom', so no stored custom palette can taint the logged-out auth controls
   const paintedTheme: PaintedTheme = !isAuthenticated
     ? BRANDING_THEME_ID
     : (previewTheme ?? baseTheme);
 
-  // Ref to always have the current baseTheme available in callbacks
-  // without them needing to be recreated on every theme change.
+  // keeps current baseTheme reachable in callbacks without recreating them
   const baseThemeRef = useRef<BaseTheme>(baseTheme);
   useLayoutEffect(() => {
     baseThemeRef.current = baseTheme;
   }, [baseTheme]);
 
-  // useLayoutEffect ensures data-theme/data-mode are set before any child
-  // useEffect reads getComputedStyle (e.g. useThemeOverrides).
+  // set data-theme/mode before child effects call getComputedStyle
   useLayoutEffect(() => {
     document.documentElement.dataset.theme = paintedTheme;
     document.documentElement.dataset.mode = mode;
   }, [paintedTheme, mode]);
 
-  // Injects the user's stored Custom theme tokens for the current mode as
-  // inline CSS custom properties on the document root while the `'custom'`
-  // theme is active. Unlike the film themes (whose palettes live in CSS files
-  // keyed off `[data-theme]`), the Custom palette is per-user data, so it has
-  // to be applied imperatively.
-  //
-  // When the Custom theme is active but no tokens are saved for a slot, that
-  // slot falls back to the off-book `branding` palette for the current mode
-  // (BRANDING_DEFAULTS dark / BRANDING_DEFAULTS_LIGHT light) so a fresh Custom
-  // theme "defaults to branding" in both modes. Only the allowlisted
-  // CUSTOM_TOKEN_KEYS are ever written, so the branding fallback stays inside
-  // the same trust boundary as user data — never a trusted bypass. When
-  // switching away from Custom (or to the other mode), the cleanup removes
-  // every previously injected property so the values can't leak onto another
-  // theme.
+  // per-user custom tokens injected imperatively; cleanup clears them on switch so they can't leak to another theme
   useLayoutEffect(() => {
     if (paintedTheme !== 'custom') return;
     const root = document.documentElement;
@@ -163,11 +131,7 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
     }
   }, [isCvdMode]);
 
-  // Toggles the `data-dyslexic-font="on"` attribute the OpenDyslexic override
-  // block in index.css keys off. `dataset.dyslexicFont` writes the kebab-cased
-  // `data-dyslexic-font` attribute, matching that block's `[data-dyslexic-font
-  // ='on']` selector. Unlike CVD mode this is a pure attribute toggle: it does
-  // not switch the active color theme.
+  // dataset.dyslexicFont sets data-dyslexic-font, keyed off by the OpenDyslexic block in index.css
   useLayoutEffect(() => {
     if (isDyslexicFont) {
       document.documentElement.dataset.dyslexicFont = 'on';
@@ -185,8 +149,7 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
         updatedAtKey: THEME_UPDATED_AT_KEY,
       });
 
-      // If the user manually switches away from Apollo while CVD mode
-      // is on, clear CVD mode so the two don't become out-of-sync.
+      // leaving Apollo with CVD on clears CVD so the two can't desync
 
       if (isCvdMode && theme !== CVD_BASE_THEME) {
         setIsCvdMode(false);
@@ -197,9 +160,7 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
     [isCvdMode],
   );
 
-  // Animates the page-wide background/color/border swap when light/dark mode
-  // toggles. Without this, mode swaps use the default 80ms transition, which
-  // feels abrupt next to the 150ms/600ms transitions used by the theme picker.
+  // lengthens the mode-toggle swap so it isn't abrupt next to the picker
   const modeTransitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
@@ -349,11 +310,7 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
     return previousTheme;
   }, []);
 
-  // Enabling/disabling the dyslexic font is a self-contained attribute toggle:
-  // it writes only its own `localStorage` key + timestamp (the App.tsx race
-  // guard reads the timestamp) and never touches the active theme, so (unlike
-  // `enableCvdMode`/`disableCvdMode`) it returns nothing for callers to fold
-  // into a server PATCH's `theme` field.
+  // self-contained: writes only its own localStorage key+timestamp, no theme change, so it returns nothing (unlike enableCvdMode)
   const enableDyslexicFont = useCallback(() => {
     setIsDyslexicFont(true);
     persistWithTimestamp({

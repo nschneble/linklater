@@ -18,8 +18,7 @@ export const FOCUS_RING =
 
 /**
  * Shared Tailwind CSS class string for disabled button states.
- * Applied to `PrimaryButton` and `IconButton` so that any disabled button
- * consistently reduces opacity and shows a wait cursor.
+ * Applied to `PrimaryButton` and `IconButton`.
  */
 export const DISABLED = 'disabled:opacity-60 disabled:cursor-not-allowed';
 

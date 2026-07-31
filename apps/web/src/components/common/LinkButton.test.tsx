@@ -1,5 +1,5 @@
 /*
- * Tests for LinkButton – inline underline-style action button.
+ * Tests for LinkButton: inline underline-style action button.
  *
  * Pins the surface-prop paint matrix (base / mount / warn) and the focus-ring
  * presence. Hover paint is asserted at the class-string level

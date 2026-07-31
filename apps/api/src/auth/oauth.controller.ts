@@ -46,7 +46,7 @@ export class OAuthController {
   @UseGuards(createOAuthInitiateGuard('google'))
   @Get('google')
   async googleAuth() {
-    // Passport redirects to Google – no body needed
+    // Passport redirects to Google - no body needed
   }
 
   @ApiOperation({ summary: 'Google OAuth callback' })
@@ -60,7 +60,7 @@ export class OAuthController {
   @UseGuards(createOAuthInitiateGuard('apple'))
   @Get('apple')
   async appleAuth() {
-    // Passport redirects to Apple – no body needed
+    // Passport redirects to Apple - no body needed
   }
 
   @ApiOperation({ summary: 'Apple Sign In callback' })
@@ -102,10 +102,8 @@ export class OAuthController {
   @UseGuards(JwtAuthGuard)
   @Get('google/link')
   googleLink(@Req() request: AuthRequest): { url: string } {
-    // Returns JSON instead of redirecting because the SPA initiates this
-    // flow with `fetch` (so it can attach the bearer JWT). A top-level
-    // browser navigation cannot send an Authorization header, which is
-    // why the previous redirect-based design produced a 401.
+    // JSON not redirect: the SPA fetches this to attach the bearer JWT
+    // (a top-level navigation can't send an Authorization header)
     return this.oauthAccountService.buildGoogleLinkUrl(request.user.userId);
   }
 
@@ -137,10 +135,8 @@ export class OAuthController {
         );
         return;
       }
-      // Anything else – DB outage, network blip linking the row, etc. –
-      // must not escape as a NestJS HTML 500 inside the OAuth-callback
-      // popup. Log it for triage, then redirect to a generic error state
-      // the SPA already knows how to render.
+      // don't let an unexpected error escape as HTML 500 in the OAuth popup;
+      // log it, then redirect to a generic error state the SPA can render
       this.logger.error(
         `Unexpected error linking google account for user ${request.user.userId}: ${String(error)}`,
       );

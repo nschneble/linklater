@@ -4,7 +4,7 @@ import type { OpenAPIV3 } from 'openapi-types';
  * Normalized model the custom API docs UI renders. The raw OpenAPI document
  * is deliberately collapsed into this flatter shape so the UI never has to
  * walk `$ref`s, merge `paths`/`operations`, or reason about the difference
- * between an inline schema and a referenced one – `parseOpenApi` does all of
+ * between an inline schema and a referenced one - `parseOpenApi` does all of
  * that once, up front.
  *
  * Resolved schemas are kept as `OpenAPIV3.SchemaObject` (never
@@ -61,8 +61,8 @@ export interface NormalizedInfo {
 export interface NormalizedApi {
   info: NormalizedInfo;
   /**
-   * Origin the docs point requests at — the URL shown in each cURL example and
-   * the Base URL in `WelcomePanel` — derived from the spec URL (the served
+   * Origin the docs point requests at - the URL shown in each cURL example and
+   * the Base URL in `WelcomePanel` - derived from the spec URL (the served
    * document declares no `servers`). Empty string means same-origin.
    */
   serverOrigin: string;

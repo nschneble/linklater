@@ -52,12 +52,9 @@ describe('MenuItem', () => {
     const mouseDownNotCancelled = fireEvent.mouseDown(button);
     fireEvent.click(button);
 
-    // `true` == the mousedown was NOT preventDefaulted, so the real-browser
-    // synthesized click would survive on touch. This is the real bug oracle.
+    // `true` == mousedown NOT preventDefaulted, so the touch click survives (bug oracle)
     expect(mouseDownNotCancelled).toBe(true);
-    // Intent-doc only: jsdom has no touch -> mouse -> click compat cascade, so
-    // this passes even on the buggy (always-preventDefault) code. The assertion
-    // above is the actual regression oracle.
+    // intent-doc only: jsdom can't reproduce the cascade, so the real oracle is above
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
@@ -78,10 +75,7 @@ describe('MenuItem', () => {
     render(<MenuItem icon="fa-bookmark" label="Test" onClick={onClick} />);
     const button = screen.getByRole('menuitem');
 
-    // Older engines fire mousedown without a preceding pointerdown, so
-    // `lastPointerType` stays `undefined`. That branch must still preventDefault
-    // so the desktop blur-retention hack keeps working. This covers the
-    // `lastPointerType.current === undefined` arm of the gate.
+    // no preceding pointerdown leaves `lastPointerType` undefined; that arm must still preventDefault
     const mouseDownNotCancelled = fireEvent.mouseDown(button);
 
     expect(mouseDownNotCancelled).toBe(false);
@@ -92,7 +86,7 @@ describe('MenuItem', () => {
     render(<MenuItem icon="fa-bookmark" label="Test" onClick={onClick} />);
     const button = screen.getByRole('menuitem');
 
-    // Native button Enter/Space dispatches a click with no mousedown/pointerdown.
+    // native Enter/Space dispatches a click with no mousedown/pointerdown
     fireEvent.click(button);
 
     expect(onClick).toHaveBeenCalledTimes(1);

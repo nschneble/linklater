@@ -145,9 +145,7 @@ describe('LinksService', () => {
   });
 
   it('recovers from a concurrent-create P2002 by resurfacing the row that won the race', async () => {
-    // Both POST /links calls hit findFirst at the same moment and saw no
-    // existing row. The first to reach .create wins; the second hits the
-    // unique constraint, then re-queries and finds the now-existing row.
+    // both saw no row; first .create wins, second hits P2002 then re-queries
     const racedExisting = makeLink({ readAt: new Date(), meta: null });
     const resurfaced = makeLink({ readAt: null });
     (prismaMock.link.findFirst as jest.Mock)
@@ -177,9 +175,7 @@ describe('LinksService', () => {
   });
 
   it('re-throws the original P2002 when findFirst returns null after the race (row vanished between constraint error and recovery query)', async () => {
-    // The race winner created the row but immediately deleted it. The recovery
-    // findFirst finds nothing, so the service has no row to resurface – it
-    // must propagate the original P2002 rather than swallow it silently.
+    // recovery findFirst finds nothing (row vanished), so P2002 must propagate
     const p2002 = new (
       Prisma as {
         PrismaClientKnownRequestError: typeof MockPrismaClientKnownRequestError;

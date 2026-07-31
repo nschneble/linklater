@@ -13,8 +13,7 @@ import {
 import { BRANDING_DEFAULTS, BRANDING_DEFAULTS_LIGHT } from './brandingDefaults';
 import { CUSTOM_THEME_STORAGE_KEY } from './storage';
 
-// A token in the canonical set and one that is not, so the trust-boundary
-// filtering can be exercised without hard-coding the whole 53-key list.
+// a known + an unknown token, to exercise trust-boundary filtering
 const KNOWN_KEY = '--mount-border';
 const UNKNOWN_KEY = '--not-a-real-token';
 
@@ -162,7 +161,7 @@ describe('resolveCustomThemeTokens', () => {
       'dark',
     );
     expect(resolved['--mount-border']).toBe('#abcdef');
-    // Unsaved slot falls back to branding (dark).
+    // unsaved slot falls back to branding (dark)
     expect(resolved['--base-bg']).toBe(BRANDING_DEFAULTS['--base-bg']);
   });
 

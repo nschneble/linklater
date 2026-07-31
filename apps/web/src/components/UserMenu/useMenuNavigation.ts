@@ -92,9 +92,7 @@ export function useMenuNavigation(
       }
 
       if (event.key === 'Escape') {
-        // stopPropagation prevents outer containers (e.g. the main menu)
-        // from also seeing this ESC and closing themselves when only the
-        // submenu should close.
+        // stopPropagation so an outer menu doesn't also close on this Escape
         event.stopPropagation();
         onClose();
         return;
@@ -102,18 +100,12 @@ export function useMenuNavigation(
 
       if (event.key === 'Tab') {
         if (tabBehavior === 'close') {
-          // Closes the menu and lets focus move naturally to the next
-          // page-level element. `onTabClose` (falling back to `onClose`)
-          // deliberately omits any refocus-the-trigger side effect so the
-          // browser's native Tab target is preserved.
+          // onTabClose omits refocus-the-trigger so native Tab target is preserved
           (onTabClose ?? onClose)();
           return;
         }
 
-        // Trap: cycle focus between menu items so the modal-dialog
-        // contract (focus stays inside the dialog) is honoured. Without
-        // this, Tab would advance to a now-inert subtree and the browser
-        // would dump focus to <body>.
+        // trap: cycle focus inside so Tab doesn't escape to the inert body
         const items = Array.from(
           container!.querySelectorAll<HTMLElement>(itemSelector),
         ).filter((item) => !item.closest('[inert]'));

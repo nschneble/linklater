@@ -1,5 +1,5 @@
 /*
- * Tests for CopyRevealPanel – shared one-shot secret reveal.
+ * Tests for CopyRevealPanel: shared one-shot secret reveal.
  *
  * Three contracts pinned here:
  * 1. Single-secret vs multi-secret rendering branches: `<code>` for one
@@ -88,7 +88,7 @@ describe('CopyRevealPanel', () => {
       <CopyRevealPanel {...baseProps} secrets={['x']} copied />,
     );
     const liveRegions = container.querySelectorAll('[role="status"]');
-    // Two status regions: heading + the sr-only announcement region
+    // two status regions: heading + the sr-only announcement region
     expect(liveRegions).toHaveLength(2);
     const announcer = liveRegions[1];
     expect(announcer.textContent).toBe(baseProps.copiedAnnouncement);

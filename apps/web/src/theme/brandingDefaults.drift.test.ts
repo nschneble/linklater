@@ -24,9 +24,7 @@ describe('BRANDING_DEFAULTS stays in sync with branding.css', () => {
    * (absent from EDITABLE_VARS/CUSTOM_TOKEN_KEYS), so they are deliberately
    * excluded from the `BRANDING_DEFAULTS` snapshot. `--page-gradient-{from,to}`
    * back the logged-out AuthCard wrapper and `--border-shadow-color` pins the
-   * mode-independent card-edge tint; both live only in branding.css. Excluded
-   * from the byte-for-byte comparison so the Custom-fallback snapshot stays
-   * scoped to the injectable palette.
+   * mode-independent card-edge tint; both live only in branding.css.
    */
   const CHROME_ONLY_KEYS = [
     '--page-gradient-from',

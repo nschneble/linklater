@@ -102,13 +102,7 @@ describe('pairsForBundle', () => {
   });
 });
 
-/*
- * The static `bundles.contrast.test.ts` CONTRACT, mirrored here as slot
- * fg/bg/threshold triples. The superset assertion below proves the runtime
- * `pairsForBundle` set covers every static contract pair for every bundle, so
- * the live editor checker can never silently omit a contract the compiled
- * suite enforces. Keep this list in sync with the static CONTRACT.
- */
+// mirrors the static bundles.contrast.test.ts contract; keep the two in sync
 const STATIC_CONTRACT: ReadonlyArray<{
   fg: string;
   bg: string;
@@ -124,9 +118,7 @@ const STATIC_CONTRACT: ReadonlyArray<{
 
 describe('pairsTouchingToken keys failures by BOTH endpoints', () => {
   it('reports a failure under the background token, not just the foreground', () => {
-    // A too-light `--mount-bg` makes "text / bg" fail; the slot row whose
-    // token is `--mount-bg` must see it even though it is the background,
-    // never the foreground.
+    // a too-light `--mount-bg` fails "text / bg"; the bg token's row must see it too
     const pair = makePair({
       label: 'text / bg',
       foreground: '--mount-text',
@@ -145,16 +137,13 @@ describe('pairsTouchingToken keys failures by BOTH endpoints', () => {
     } as unknown as ContrastResults;
 
     const touching = pairsTouchingToken(results);
-    // Both endpoints carry the failure — including the background token, which
-    // a foreground-only view would have omitted.
+    // both endpoints carry the failure, including the bg token a fg-only view omits
     expect(touching.get('--mount-text')?.ratio).toBe(2.8);
     expect(touching.get('--mount-bg')?.ratio).toBe(2.8);
   });
 
   it('keeps the WORST-deficit failure when two pairs share an endpoint', () => {
-    // `--mount-bg` is the shared endpoint of two failing pairs. The note must
-    // report the pair the token misses by the MOST (largest threshold − ratio),
-    // so the row surfaces its hardest constraint — regardless of pair order.
+    // `--mount-bg` is shared by two failing pairs; report the worst deficit, any order
     const mildPair = makePair({
       label: 'border / bg',
       foreground: '--mount-border',
@@ -174,7 +163,7 @@ describe('pairsTouchingToken keys failures by BOTH endpoints', () => {
         {
           bundle: 'mount',
           label: 'mount',
-          // mild deficit 3 − 2.6 = 0.4; severe deficit 4.5 − 1.5 = 3.0.
+          // mild deficit 3 - 2.6 = 0.4; severe deficit 4.5 - 1.5 = 3.0
           pairs: [
             { pair: mildPair, ratio: 2.6 },
             { pair: severePair, ratio: 1.5 },
@@ -184,18 +173,13 @@ describe('pairsTouchingToken keys failures by BOTH endpoints', () => {
     } as unknown as ContrastResults;
 
     const touching = pairsTouchingToken(results);
-    // The shared `--mount-bg` row shows the severe pair (the bigger deficit),
-    // even though the mild pair came first.
-    // The partner endpoint of the `--mount-bg` row in the severe text/bg pair
-    // is `--mount-text` — same bundle, so the label is the bare slot name.
+    // the `--mount-bg` row shows the severe pair; same-bundle partner = bare slot name
     expect(touching.get('--mount-bg')?.partnerLabel).toBe('Text');
     expect(touching.get('--mount-bg')?.ratio).toBe(1.5);
   });
 
   it('bundle-qualifies a partner that lives in a different bundle', () => {
-    // The card border-vs-page-bg adjacency: the two endpoints are in different
-    // bundles, so a bare "Background"/"Border" would be ambiguous. Each row must
-    // name its partner WITH the partner's bundle (SC 3.3.1 disambiguation).
+    // cross-bundle endpoints need bundle-qualified partner labels (SC 3.3.1)
     const crossBundle = makePair({
       label: 'border / base-bg',
       foreground: '--mount-border',
@@ -241,26 +225,10 @@ describe('pairsTouchingToken keys failures by BOTH endpoints', () => {
   });
 });
 
-/*
- * C1 COMPLETENESS INVARIANT — the standalone contrast card is gone, so every
- * failing pair must remain reachable inline. The editing surface is now a
- * bundle tablist whose panel renders one slot row per editable token; an edit
- * to token X can only change pairs that TOUCH X, so surfacing each pair on BOTH
- * endpoints (`pairsTouchingToken`) guarantees the note lands on whichever slot
- * row the user just edited. This mechanizes that no failing pair can fall
- * through: every contract-pair endpoint must be an editable token, i.e. it
- * renders a slot row under some bundle panel.
- */
+// C1: every contract-pair endpoint must be an editable slot row, so none fall through
 describe('C1 premise: every slot row is an editable token (VAR_GROUPS ⇄ EDITABLE_VARS)', () => {
   it('renders exactly one slot row per editable token, no more no less', () => {
-    // The C1 test asserts every contract-pair endpoint is in EDITABLE_VARS
-    // ("has a slot row"), but the panels actually render rows from
-    // VAR_GROUPS[].items. They are equal only by parallel construction —
-    // EDITABLE_VARS flatMaps the slot arrays in customThemeTokens.ts while
-    // VAR_GROUPS branches per-bundle in useThemeOverrides.ts, two independent
-    // build-ups. This locks them in lockstep so a future VAR_GROUPS filter can't
-    // silently drop a slot row while C1 stays green. The set equality is
-    // bidirectional: a dropped row OR an extra editable token both fail.
+    // EDITABLE_VARS and VAR_GROUPS build independently; this locks them equal both ways
     const slotRows = new Set(
       VAR_GROUPS.flatMap((group) => group.items.map((item) => item.variable)),
     );
@@ -272,7 +240,7 @@ describe('C1: every failing pair self-reports inline (card retired)', () => {
   const editable = new Set<string>(EDITABLE_VARS);
 
   it('keeps BOTH endpoints of every contract pair editable, so editing either self-reports (C3)', () => {
-    // Any endpoint that is not an editable slot row surfaces here by name.
+    // any endpoint that is not an editable slot row surfaces here by name
     const nonEditableEndpoints = allContractPairs().flatMap((pair) =>
       [pair.foreground, pair.background].filter(
         (token) => !editable.has(token),

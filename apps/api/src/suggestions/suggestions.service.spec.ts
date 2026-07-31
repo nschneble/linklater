@@ -90,8 +90,7 @@ describe('SuggestionsService', () => {
 
     it('kicks off a one-shot bootstrap refresh', async () => {
       await service.onModuleInit();
-      // The bootstrap refresh runs inside an IIFE so we need to yield to
-      // the microtask queue once for it to land.
+      // bootstrap refresh runs in an IIFE; yield a microtask so it lands
       await Promise.resolve();
 
       expect(rssFeedServiceMock.refreshAll).toHaveBeenCalled();
@@ -115,9 +114,7 @@ describe('SuggestionsService', () => {
       ]);
       (rssFeedServiceMock.getLatest as jest.Mock).mockResolvedValue([]);
 
-      // Force the random pick to Wikipedia by making all other adapters
-      // empty – the service will exhaust them all and end on Wikipedia
-      // if Wikipedia is the last surviving candidate.
+      // force the pick to Wikipedia by leaving all other adapters empty
       const result = await service.getSuggestions(1, TEST_USER_ID);
 
       expect(result).not.toBeNull();
@@ -125,8 +122,7 @@ describe('SuggestionsService', () => {
     });
 
     it('falls back to another source when the first picked source returns no entries', async () => {
-      // Two sources tried, first returns nothing, second returns one
-      // entry. Math.random is forced so the order is deterministic.
+      // two sources; first empty, second returns one; Math.random forced for order
       jest
         .spyOn(Math, 'random')
         .mockReturnValueOnce(0)
@@ -164,9 +160,7 @@ describe('SuggestionsService', () => {
 
       const result = await service.getSuggestions(1, TEST_USER_ID);
 
-      // Either Wikipedia gets picked then fails (we recover) or another
-      // source is picked first and returns the safe entry – both are
-      // acceptable outcomes, the contract is "result is not null".
+      // either pick order works; contract is only "result is not null"
       expect(result).not.toBeNull();
     });
 
@@ -196,7 +190,7 @@ describe('SuggestionsService', () => {
 
       await service.getSuggestions(5, TEST_USER_ID);
 
-      // At least one adapter saw count=5 and returned non-empty.
+      // at least one adapter saw count=5 and returned non-empty
       expect(seen).toContain(5);
     });
 
@@ -262,8 +256,7 @@ describe('SuggestionsService', () => {
 
       expect(result).not.toBeNull();
       expect(result!.suggestions[0].url).toBe('https://example.com/fresh');
-      // Both adapters may run depending on random pick order – the
-      // contract is just that we recovered to a non-saved suggestion.
+      // either adapter may run; contract is recovery to a non-saved suggestion
       expect(wikipediaCalled + rssCalled).toBeGreaterThan(0);
     });
 
@@ -274,8 +267,7 @@ describe('SuggestionsService', () => {
       (rssFeedServiceMock.getLatest as jest.Mock).mockResolvedValue([
         aSuggestion('https://example.com/saved'),
       ]);
-      // Every URL passed in comes back as "saved" – total duplicate
-      // collision.
+      // every URL passed in comes back as "saved" (total duplicate collision)
       (prismaMock.link.findMany as jest.Mock).mockImplementation(
         async ({ where }: { where: { url: { in: string[] } } }) =>
           where.url.in.map((url) => ({ url })),

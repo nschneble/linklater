@@ -66,7 +66,7 @@ describe('useAggregatedError', () => {
 
     expect(result.current).toBe('Read failed');
 
-    // No field changed value; the aggregated error must hold steady.
+    // no field changed value; the aggregated error must hold steady
     rerender({ ...noErrors, readError: 'Read failed' });
 
     expect(result.current).toBe('Read failed');

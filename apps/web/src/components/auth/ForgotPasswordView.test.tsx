@@ -3,7 +3,7 @@
  *
  * This is a pure presentational component; all behavior comes from
  * useAuthForm (tested separately). The "Check your email"
- * interstitial branch – the form always renders, the success path fires a
+ * interstitial branch; the form always renders, the success path fires a
  * toast via PendingNoticeAnnouncer and holds the submit button in a
  * "Reset link sent!" state for the toast's 5000ms window.
  *
@@ -71,7 +71,7 @@ describe('ForgotPasswordView always renders the form', () => {
 
   it('renders the email input even when forgotPasswordSentJustNow is true', () => {
     renderView({ forgotPasswordSentJustNow: true });
-    // The form no longer collapses into a "Check your email" interstitial.
+    // the form no longer collapses into a "Check your email" interstitial
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
   });
 

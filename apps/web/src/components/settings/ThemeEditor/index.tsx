@@ -23,14 +23,10 @@ const EDITOR_MODE_LABELS: Record<Mode, string> = {
   dark: 'Dark',
 };
 
-// The editing content row is the single `role="tabpanel"` the Light/Dark tabs
-// control; its `aria-labelledby` tracks the active mode tab (same physical panel
-// whose contents swap, mirroring the Unread/Read switcher + BundleTabs).
+// single role="tabpanel" the Light/Dark tabs control
 const EDITOR_PANEL_ID = 'theme-editor-panel';
 
-// The visually-hidden reason the copy button points at (via aria-describedby)
-// while it is aria-disabled, so an AT user hears WHY copying is unavailable
-// rather than a silent dimmed control.
+// aria-describedby target naming why copy is disabled, for AT users
 const COPY_REDUNDANT_HINT_ID = 'theme-editor-copy-redundant-hint';
 
 /**
@@ -84,21 +80,13 @@ export default function ThemeEditor() {
     setCustomThemeEnabled,
   } = useTheme();
 
-  // The editor's color mode is LOCAL — the Light/Dark toggle in the header
-  // toolbar swaps which mode's palette the content shows + edits, WITHOUT
-  // flipping the global site mode (navigating away leaves the app on whatever
-  // mode it was).
-  // Seeded once from the site mode so the editor opens on the expected palette.
+  // local editor mode; seeded once from site mode so it opens as expected
   const [editorMode, setEditorMode] = useState<Mode>(mode);
 
-  // The active bundle is OWNED here (not inside the tablist) so BOTH the tablist
-  // and the live preview read the same selection: picking a bundle both swaps
-  // the editable slots AND swaps the previewed component (PRD point 4).
+  // owned here (not in the tablist) so tablist + preview share one selection
   const [activeBundle, setActiveBundle] = useState<Bundle>(BUNDLES[0]);
 
-  // Bumped on every Randomize so the live preview re-staggers in with the fresh
-  // palette (PRD point 12). It only feeds ComponentShowcase's mock remount key —
-  // it never touches the palette itself.
+  // bumped on Randomize to re-stagger the preview; only remounts the mock
   const [randomizeNonce, setRandomizeNonce] = useState(0);
 
   const { colorValues, contentThemeStyle, setOverride, loadOverrides } =
@@ -108,10 +96,7 @@ export default function ThemeEditor() {
   const baseThemeLabel =
     THEMES.find((theme) => theme.id === baseTheme)?.label ?? baseTheme;
 
-  // The copy action is a no-op — and so aria-disabled — when there's nothing to
-  // copy: either custom is OFF (the editor already previews the base film theme)
-  // or the custom theme is ITSELF the active theme (copying "Your Theme" onto
-  // itself changes nothing). The visually-hidden reason names WHY per case.
+  // no-op (aria-disabled) when nothing to copy: custom off, or custom active
   const copyDisabled = !customThemeEnabled || baseTheme === 'custom';
   const copyDisabledReason = !customThemeEnabled
     ? `Already using ${baseThemeLabel}'s colors. Edit a color or Randomize to start a custom theme.`
@@ -124,9 +109,7 @@ export default function ThemeEditor() {
     () => toast.show('custom-theme-toggle-failed'),
     [toast],
   );
-  // The whole go-custom orchestration (shared re-entrancy mutex, seed building,
-  // both engage paths) lives in `useThemeEngagement`; this component only wires
-  // the two call sites with their announce strings + visual-apply step.
+  // go-custom orchestration lives in useThemeEngagement; here just wiring
   const { engageFromEdit, engageFromRandom } = useThemeEngagement({
     baseTheme,
     customTheme,
@@ -139,9 +122,7 @@ export default function ThemeEditor() {
 
   const contrastResults = useContrastResults(colorValues);
 
-  // Each slot row reads the both-endpoints view, so a too-light BACKGROUND
-  // flags on whichever slot set it — not only on the far foreground slot (C3).
-  // The standalone contrast card is retired; this map is the inline guardrail.
+  // both-endpoints view: a too-light bg flags on whichever slot set it
   const failures = useMemo(
     () => pairsTouchingToken(contrastResults),
     [contrastResults],
@@ -164,13 +145,7 @@ export default function ThemeEditor() {
     onSaveFailed,
   });
 
-  // Randomize dispatcher: while custom is already on it is a copy-over
-  // (`handleApplyRandom`); while off it goes custom (`engageFromRandom`), which
-  // loads the palette into the preview INSIDE its mutex guard (a rapid second
-  // click is a full no-op) and announces once after the PATCH lands. Either way
-  // the palette is generated ONCE for the current editor mode and the OTHER mode
-  // is left untouched (HARD scope: cross-bundle pairs are only guaranteed within
-  // one mode's generated palette).
+  // on: copy-over; off: go custom. only the current mode is regenerated
   const handleRandomize = useCallback(() => {
     const palette = generateRandomPalette(editorMode);
     setRandomizeNonce((current) => current + 1);
@@ -193,13 +168,7 @@ export default function ThemeEditor() {
     loadOverrides,
   ]);
 
-  // The single toolbar copy action: overwrite the live palette with the
-  // CURRENTLY ACTIVE film theme's current-mode colors. It is a no-op — and
-  // aria-disabled — while custom is OFF (the editor already previews that exact
-  // theme) or when the custom theme is ITSELF active (copying it onto itself
-  // changes nothing); the button names why in each case. Otherwise it is a
-  // copy-over sharing the same path as Randomize-while-on (`applyPalette`):
-  // custom stays on, no engage/re-enable.
+  // overwrite live palette with the active film theme's current-mode colors
   const handleCopyFromBaseTheme = useCallback(() => {
     if (!customThemeEnabled || baseTheme === 'custom') return;
     applyPalette(
@@ -208,10 +177,7 @@ export default function ThemeEditor() {
     );
   }, [applyPalette, baseTheme, baseThemeLabel, customThemeEnabled, editorMode]);
 
-  // Apply an edit to a slot: the first edit goes custom (engaging once), later
-  // edits debounce-save. `setOverride` runs on EVERY drag-burst tick so the
-  // swatch always tracks the drag; `engageFromEdit` owns the mutex that collapses
-  // the burst into a single engage PATCH.
+  // first edit goes custom, later edits debounce-save; mutex collapses burst
   function handleOverride(
     variable: Parameters<typeof setOverride>[0],
     value: string,
@@ -232,21 +198,13 @@ export default function ThemeEditor() {
 
   const toastView = useMemo(() => resolveToast(toast.message), [toast.message]);
 
-  // The single polite live region's rendered text, re-triggered (clear-then-set)
-  // on each settled save / engage so even an identical consecutive message
-  // re-announces (a11y brief §1).
+  // clear-then-set re-trigger so an identical repeat message re-announces
   const announcement = useAnnouncer(savedCount, savedMessage);
 
-  // Contrast roll-up for the title-row status icon — a SUPPLEMENTARY summary of
-  // the per-slot row failures (which stay the authoritative SC 3.3.1 report).
-  // Binary on whether any contract pair fails (a11y brief R-A2/R-A4).
+  // supplementary roll-up for title-row status icon; rows stay authoritative
   const hasContrastIssue = failures.size > 0;
 
-  // Each content card carries the shared mount surface + the link-card enter
-  // fade. The stagger comes from the per-card animation delay; reduced-motion is
-  // handled globally (the CSS clamp). The cards always render now (turning custom
-  // off only swaps the previewed palette, it never unmounts the controls), so
-  // the enter fade plays once on page load.
+  // mount surface + card-enter fade; per-card delay staggers; always mounted
   const cardClassName =
     'p-4 bg-[var(--mount-bg)] border border-[var(--mount-border)] rounded-xl animate-card-enter';
   function cardDelayStyle(index: number): CSSProperties {

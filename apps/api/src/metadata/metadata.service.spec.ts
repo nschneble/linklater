@@ -15,26 +15,12 @@ jest.mock('../prisma/prisma.service', () => ({
 }));
 jest.mock('../prisma/generated/client', () => ({ Prisma: {} }));
 
-// `safeFetch` runs an EAGER `assertPublicHost` before it ever calls the fetch
-// impl, and for a DNS-name host that does a real `node:dns/promises` lookup.
-// In a network-restricted sandbox that lookup throws `ENOTFOUND`, so `safeFetch`
-// rejects before the mocked fetch runs and every DNS-name test sees empty
-// metadata – a false failure that looks exactly like a broken fetch mock. Stub
-// the resolver to hand back a fixed PUBLIC IP for name hosts so the suite is
-// green identically under sandbox and networked execution. The SSRF-block tests
-// are unaffected: `isPrivateHost`'s literal pre-check rejects private hosts
-// (e.g. `192.168.1.1`) before any DNS lookup runs, so this stub never turns a
-// private host into a public one.
+// stub DNS to a public IP so name-host tests pass in a no-network sandbox
 jest.unstable_mockModule('node:dns/promises', () => ({
   lookup: jest.fn(async () => [{ address: '93.184.216.34', family: 4 }]),
 }));
 
-// safeFetch dispatches through `undici`'s own `fetch` so its dispatcher (an
-// `undici` Agent) and the fetch come from one `undici` instance (see
-// safe-fetch.ts). Mock that module – in ESM that means `unstable_mockModule`
-// plus a dynamic import of the modules under test – and forward its `fetch` to
-// `global.fetch`, which these tests already drive, so every existing
-// `global.fetch` expectation stays intact.
+// mock undici's fetch, forwarding to global.fetch that these tests drive
 const undiciFetchMock = jest.fn();
 jest.unstable_mockModule('undici', () => ({
   Agent: class {},
@@ -134,8 +120,7 @@ const mockFetch = (
 };
 
 const mockFetchOversize = (totalBytes: number) => {
-  // Streams chunks of 1 MB until the total exceeds the requested size, so we
-  // can prove `readBodyWithCap` cancels mid-stream rather than buffering.
+  // stream >size in 1 MB chunks to prove readBodyWithCap cancels mid-stream
   global.fetch = jest.fn().mockResolvedValue({
     headers: {
       get: (key: string) =>
@@ -509,12 +494,12 @@ describe('MetadataService', () => {
           new Error('Network error'),
         ) as unknown as typeof fetch;
 
-      // First call (inside catch) also throws, second is irrelevant.
+      // first call (inside catch) also throws, second is irrelevant
       (prismaMock.meta.upsert as jest.Mock)
         .mockRejectedValueOnce(new Error('DB down'))
         .mockResolvedValue({});
 
-      // Should not propagate – swallowed by the inner .catch()
+      // should not propagate; swallowed by the inner .catch()
       await expect(
         service.fetchAndStore(LINK_ID, LINK_URL),
       ).resolves.not.toThrow();
@@ -559,7 +544,7 @@ describe('MetadataService', () => {
     });
 
     it('truncates resolved URLs longer than MAX_URL_LENGTH', async () => {
-      // Build an OG image URL that, once resolved, will exceed MAX_URL_LENGTH
+      // build an OG image URL that resolves longer than MAX_URL_LENGTH
       const longPath = '/image/' + 'a'.repeat(2100);
       mockFetch(makeHtml({ ogImage: longPath }));
 
@@ -568,14 +553,14 @@ describe('MetadataService', () => {
       const call = (prismaMock.meta.upsert as jest.Mock).mock.calls[0][0] as {
         create: { imageUrl: string | null };
       };
-      // Either null (if resolution fails) or truncated to MAX_URL_LENGTH
+      // either null (if resolution fails) or truncated to MAX_URL_LENGTH
       if (call.create.imageUrl !== null) {
         expect(call.create.imageUrl.length).toBeLessThanOrEqual(2000);
       }
     });
 
     it('falls back to empty string for an invalid relative URL', async () => {
-      // An href that cannot be resolved (e.g., malformed data URI without valid base)
+      // an href that cannot be resolved (e.g. malformed data URI, no base)
       mockFetch(makeHtml({ faviconHref: '://bad-url', faviconRel: 'icon' }));
 
       await service.fetchAndStore(LINK_ID, LINK_URL);
@@ -583,7 +568,7 @@ describe('MetadataService', () => {
       const call = (prismaMock.meta.upsert as jest.Mock).mock.calls[0][0] as {
         create: { faviconUrl: string | null };
       };
-      // resolveUrl returns '' on parse failure – upsert should still be called
+      // resolveUrl returns '' on parse failure; upsert still called
       expect(prismaMock.meta.upsert).toHaveBeenCalled();
       expect(typeof call.create.faviconUrl).toBe('string');
     });
@@ -601,7 +586,7 @@ describe('MetadataService', () => {
 
       await service.fetchAndStore(LINK_ID, LINK_URL);
 
-      // Body should not be parsed – title field stays null because empty metadata.
+      // body not parsed, so title stays null (empty metadata)
       expect(prismaMock.meta.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           create: expect.objectContaining({ title: null, source: null }),

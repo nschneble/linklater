@@ -109,9 +109,7 @@ describe('pickerThemes', () => {
   });
 
   it('always lists the active theme (exactly-one-checked invariant)', () => {
-    // The picker drives aria-checked off `active === theme.id`. If the active
-    // theme were ever filtered out, the radio group would report zero checked
-    // items. The active theme must always survive the filter.
+    // aria-checked keys off `active === theme.id`; active theme must survive
     for (const theme of THEMES) {
       const visibleIds = pickerThemes(theme.id, false).map((entry) => entry.id);
       expect(visibleIds).toContain(theme.id);

@@ -37,8 +37,7 @@ export function useServerBooleanPrefSync(
     if (serverValue && !isEnabled) {
       enable();
     } else if (!serverValue && isEnabled) {
-      // Only disable if the local state disagrees AND there was no recent
-      // local write.
+      // only disable when the local value isn't 'on' (second guard)
       const localState = readLocalStorage(valueKey);
       if (localState !== 'on') {
         disable();

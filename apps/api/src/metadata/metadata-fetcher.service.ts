@@ -46,17 +46,12 @@ export class MetadataFetcherService {
     try {
       hostname = new URL(url).hostname;
     } catch {
-      // Malformed URL reaching the fetcher is itself a signal – log so ops
-      // alerts catch the bypass attempt instead of silently dropping it.
+      // a malformed URL here is a signal; log so ops catch the bypass attempt
       this.logger.warn(`Blocked SSRF attempt – invalid URL: ${url}`);
       return this.emptyMetadata();
     }
 
-    // Cheap literal fast-fail: an obviously-private literal host (loopback,
-    // RFC 1918, etc.) is refused outright and returns pure empty metadata (no
-    // favicon fallback that would point at a private address). DNS-resolving
-    // and redirect-following hosts are additionally guarded inside `fetchHtml`
-    // via `safeFetch`.
+    // literal private hosts refused with empty metadata (no favicon to a private IP)
     if (isPrivateHost(hostname)) {
       this.logger.warn(`Blocked SSRF attempt to private host: ${url}`);
       return this.emptyMetadata();
@@ -122,9 +117,7 @@ export class MetadataFetcherService {
 
       return await this.readBodyWithCap(response, url);
     } catch (error) {
-      // An SSRF block (private host / bad scheme / redirect cap) or a network
-      // failure lands here – log and fall back to empty metadata rather than
-      // surfacing the error to the queue worker.
+      // SSRF block or network failure: log and fall back to empty, not to the worker
       const message = error instanceof Error ? error.message : String(error);
       this.logger.warn(
         `Metadata fetch blocked or failed for ${url}: ${message}`,
@@ -132,8 +125,7 @@ export class MetadataFetcherService {
       return null;
     } finally {
       clearTimeout(timeout);
-      // Abort guarantees the socket is released even when we bailed early
-      // (oversize body, unsupported content type, etc.).
+      // abort releases the socket even when we bailed early (oversize, bad type)
       controller.abort();
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Tests for useThemeCopy – the apply-random / undo / save-routing state machine
+ * Tests for useThemeCopy: the apply-random / undo / save-routing state machine
  * extracted from the editor. Covers: applying a random palette loads it,
  * persists immediately, and snapshots the prior values; undo restores the
  * snapshot and announces "reverted"; a mode/theme change drops a stale snapshot;

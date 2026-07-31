@@ -64,12 +64,7 @@ export function useThemeAutoSave({
     null,
   );
 
-  // Serialize saves: never let two PATCHes overlap. A save fired while one is
-  // in flight just stashes its values; the running save drains them when it
-  // settles. Without this, an overlapping save trips the save hook's re-entry
-  // guard, which resolves a no-op `false` and would surface a FALSE "save
-  // failed" while dropping the real save's success. Only the final drained
-  // outcome is announced, so the user still hears one settled result.
+  // serialize saves: an overlap trips the re-entry guard, faking a failure
   const flush = useCallback(async (values: Record<ThemeVariable, string>) => {
     if (inFlightReference.current) {
       pendingValuesReference.current = values;
@@ -107,7 +102,7 @@ export function useThemeAutoSave({
     [flush],
   );
 
-  // Drop any pending save when the editor unmounts.
+  // drop any pending save when the editor unmounts
   useEffect(() => {
     return () => {
       if (timerReference.current) clearTimeout(timerReference.current);

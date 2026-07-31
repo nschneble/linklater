@@ -87,18 +87,14 @@ export class RssFeedService {
       ];
     });
 
-    // Dedup by URL so a feed that emits the same <link> twice does not race
-    // two parallel updateMany calls against the same row. Last entry wins,
-    // matching the previous per-item upsert behavior where later items in
-    // the feed overwrote earlier ones in iteration order.
+    // dedup by URL; a repeated <link> races two updateMany calls, last wins
     const byUrl = new Map<string, (typeof validItems)[number]>();
     for (const entry of validItems) {
       byUrl.set(entry.suggestion.url, entry);
     }
     const deduped = Array.from(byUrl.values());
 
-    // Partition new vs existing so the update pass touches only rows that
-    // already exist; freshly-inserted rows do not get a redundant write.
+    // partition new vs existing so the update pass skips freshly-inserted rows
     const existing = await this.prisma.rssEntry.findMany({
       where: {
         sourceKey: source.key,
@@ -116,13 +112,7 @@ export class RssFeedService {
     );
 
     if (toCreate.length > 0) {
-      // skipDuplicates guards the read-then-partition race: two overlapping
-      // refreshes (the bootstrap refresh racing the scheduled worker, or two
-      // app instances) can both compute the same toCreate set and both insert
-      // the same (sourceKey, url). Without it the unique-constraint collision
-      // (P2002) rejects the whole batch and the source silently misses that
-      // refresh cycle. With it, Postgres skips the colliding rows and inserts
-      // the rest. The happy path with no race still inserts every new entry.
+      // skipDuplicates: concurrent inserts collide, else P2002 fails the batch
       await this.prisma.rssEntry.createMany({
         data: toCreate.map(({ suggestion, publishedAt }) => ({
           sourceKey: source.key,

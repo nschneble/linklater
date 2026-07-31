@@ -7,12 +7,12 @@ import type { ButtonHTMLAttributes, Ref } from 'react';
  * using outside a form.
  *
  * When `hidden` is `true` the button fades out and becomes non-interactive
- * while still occupying layout space – same pattern as `IconButton`.
+ * while still occupying layout space - same pattern as `IconButton`.
  *
- * The `surface` prop names the bundle of the parent surface – i.e. which
+ * The `surface` prop names the bundle of the parent surface - i.e. which
  * bundle hosts this button. The fill/hover/text resolve from that bundle's
  * highlight slots (`--{surface}-highlight` / `-highlight-fg` /
- * `-highlight-hover`). Defaults to `'mount'` – most consumers live inside a
+ * `-highlight-hover`). Defaults to `'mount'` - most consumers live inside a
  * `SettingsGroup`, `AuthCard`, or modal panel.
  *
  * Same `surface` semantics as `IconButton` / `LinkButton` / `FormInput` /
@@ -55,7 +55,7 @@ export default function PrimaryButton({
     ? 'opacity-0 scale-95 pointer-events-none'
     : 'opacity-100 scale-100';
 
-  // Skip DISABLED when hidden – see IconButton for the full rationale.
+  // skip disabled when hidden (disabled:opacity-60 outranks opacity-0)
   const disabledClasses = hidden ? '' : DISABLED;
 
   return (
@@ -63,7 +63,7 @@ export default function PrimaryButton({
       className={`inline-flex items-center justify-center gap-1.5 pl-3.5 pr-4 py-2 ${fillByHost[surface]} border-shadow hover:border-shadow text-xs font-semibold ${FOCUS_RING} rounded-full ${disabledClasses} transition duration-200 active:scale-[0.96] disabled:active:scale-100 cursor-pointer ${visibilityClasses} ${className}`}
       type={type}
       data-surface={surface}
-      // GOTCHA: same disabled + aria-hidden pattern as IconButton – see that file for rationale.
+      // disabled + aria-hidden hide from AT; disabled already blocks focus
       disabled={hidden || disabled}
       aria-hidden={hidden || undefined}
       tabIndex={hidden ? -1 : undefined}

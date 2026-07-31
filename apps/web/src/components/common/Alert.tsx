@@ -45,10 +45,7 @@ const defaultIcons: Record<AlertProps['variant'], string> = {
   success: 'fa-circle-check',
 };
 
-// All themes route through the alert/success color bundles (see
-// `theme/styles/bundles.css`). Per-theme overrides previously lived here as
-// inline Tailwind branches; now every theme – including Nouvelle Vague's
-// grayscale-by-design palette – defines its own bundle cascade.
+// variants read alert/success bundle tokens; each theme owns its cascade
 const variantClasses: Record<AlertProps['variant'], string> = {
   error:
     'bg-[var(--alert-bg)] border-[var(--alert-border)] text-[var(--alert-text)]',
@@ -71,9 +68,7 @@ export default function Alert({
   tabIndex,
   variant,
 }: AlertProps) {
-  // When no content is provided, keep the element in the DOM so any
-  // `aria-describedby` pointing at `id` is never a dangling reference, but
-  // hide it visually and from assistive technology.
+  // keep an empty node in the DOM so aria-describedby to id never dangles
   if (!children) {
     return <p id={id} inert={inert} aria-hidden="true" className="sr-only" />;
   }

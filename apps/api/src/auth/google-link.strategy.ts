@@ -16,7 +16,7 @@ const FIVE_MINUTES_MS = 5 * 60 * 1000;
  * the OAuth callback belongs to an authenticated Linklater user and that
  * the flow was initiated within the last 5 minutes.
  *
- * NOTE: `state: false` is intentional – we manage state manually via HMAC
+ * NOTE: `state: false` is intentional - we manage state manually via HMAC
  * rather than relying on passport-google-oauth20's built-in state handling,
  * which would require a session store.
  */
@@ -49,7 +49,7 @@ export class GoogleLinkStrategy extends PassportStrategy(
    * Google profile data needed by the controller to link the account.
    *
    * @param request - The incoming HTTP request (used to read `query.state`).
-   * @param _accessToken - Google access token (unused – we only need the profile).
+   * @param _accessToken - Google access token (unused - we only need the profile).
    * @param _refreshToken - Google refresh token (unused).
    * @param profile - The Google OAuth profile.
    * @returns `{ userId, providerId, providerEmail }` attached to `request.user`.

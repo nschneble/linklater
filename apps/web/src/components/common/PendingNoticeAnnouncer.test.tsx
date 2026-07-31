@@ -3,7 +3,7 @@
  *
  * The primitive pairs a conditional `<Toast>` with a pre-mounted sr-only
  * mirror. The mirror's role/aria-live MUST match the toast's variant per
- * a11y-lead – a polite mirror under an assertive toast lets the two regions
+ * a11y-lead - a polite mirror under an assertive toast lets the two regions
  * race on the SR's announcement queue with mismatched priorities.
  *
  * Coverage:
@@ -44,7 +44,7 @@ describe('PendingNoticeAnnouncer mirror – success variant', () => {
       />,
     );
 
-    // Success icon is fa-circle-check (vs fa-circle-exclamation for error).
+    // success icon is fa-circle-check (error uses fa-circle-exclamation)
     expect(container.querySelector('.fa-circle-check')).toBeInTheDocument();
     expect(
       container.querySelector('.fa-circle-exclamation'),
@@ -95,7 +95,7 @@ describe('PendingNoticeAnnouncer null notice', () => {
       />,
     );
 
-    // No icon = no toast (the Toast is the only thing that emits icons here).
+    // no icon = no toast (only the Toast emits icons here)
     expect(document.querySelector('.fa-circle-check')).not.toBeInTheDocument();
     expect(
       document.querySelector('.fa-circle-exclamation'),
@@ -128,9 +128,7 @@ describe('PendingNoticeAnnouncer null notice', () => {
       />,
     );
 
-    // The shape is inert (empty text) but pre-mounting with the correct
-    // ARIA shape means the empty → populated transition will fire under
-    // the right politeness if a notice arrives via a state update.
+    // pre-mount the ARIA shape so a later notice fires at the right politeness
     const mirror = document.querySelector(
       'span.sr-only[role="alert"][aria-live="assertive"][aria-atomic="true"]',
     );

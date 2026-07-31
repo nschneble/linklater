@@ -31,27 +31,27 @@ describe('useToastAnnouncement', () => {
       { initialProps: { message: null as string | null } },
     );
 
-    // First save: the message lands after the (0ms) clear-then-set settles.
+    // first save: the message lands after the (0ms) clear-then-set settles
     rerender({ message: 'Link saved!' });
     act(() => {
       vi.advanceTimersByTime(0);
     });
     expect(result.current).toBe('Link saved!');
 
-    // Part-way through the 5000ms window the region still holds the message.
+    // part-way through the 5000ms window the region still holds the message
     act(() => {
       vi.advanceTimersByTime(2000);
     });
     expect(result.current).toBe('Link saved!');
 
-    // The Toast auto-dismisses (message → null) then the user saves again,
-    // yielding the SAME string before the window elapses.
+    // the Toast auto-dismisses (message → null) then the user saves again,
+    // yielding the SAME string before the window elapses
     rerender({ message: null });
     rerender({ message: 'Link saved!' });
 
-    // The region must clear to '' first so the re-set is a real text-node
+    // the region must clear to '' first so the re-set is a real text-node
     // change. A naive `setState(sameString)` mirror would bail out here and
-    // leave 'Link saved!' in place, so no second announcement would ever fire.
+    // leave 'Link saved!' in place, so no second announcement would ever fire
     expect(result.current).toBe('');
 
     act(() => {
@@ -74,7 +74,7 @@ describe('useToastAnnouncement', () => {
     expect(result.current).toBe('Link saved!');
 
     rerender({ message: 'Link deleted.' });
-    // Cleared first, then the new text lands.
+    // cleared first, then the new text lands
     expect(result.current).toBe('');
     act(() => {
       vi.advanceTimersByTime(0);
@@ -112,15 +112,15 @@ describe('useToastAnnouncement', () => {
       { initialProps: { message: 'Link saved!' as string | null, nonce: 0 } },
     );
 
-    // The message lands after the (0ms) clear-then-set settles; the single
-    // 5000ms auto-clear timer starts here.
+    // the message lands after the (0ms) clear-then-set settles; the single
+    // 5000ms auto-clear timer starts here
     act(() => {
       vi.advanceTimersByTime(0);
     });
     expect(result.current).toBe('Link saved!');
 
-    // Part-way through the window, the host re-renders twice for reasons
-    // unrelated to the toast (the message prop is unchanged).
+    // part-way through the window, the host re-renders twice for reasons
+    // unrelated to the toast (the message prop is unchanged)
     act(() => {
       vi.advanceTimersByTime(2000);
     });
@@ -132,7 +132,7 @@ describe('useToastAnnouncement', () => {
     });
     expect(result.current).toBe('Link saved!');
 
-    // Advance just past the ORIGINAL 5000ms clear time (2000 + 3001). With a
+    // advance just past the ORIGINAL 5000ms clear time (2000 + 3001). With a
     // stable clear callback the one timer still fires on its original
     // schedule. With an unstable inline arrow each re-render rescheduled a
     // fresh 5000ms timer, so the region would still show 'Link saved!' here.

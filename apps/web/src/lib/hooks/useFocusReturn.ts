@@ -13,7 +13,7 @@ import { useCallback, useEffect, useRef } from 'react';
  * the region.
  *
  * The returned `skipRestore` lets the consumer suppress restoration for the
- * upcoming unmount – useful when the consumer is about to navigate away or
+ * upcoming unmount; useful when the consumer is about to navigate away or
  * intentionally move focus elsewhere, where restoring focus to the trigger
  * would either fail (trigger unmounted) or be disorienting.
  *

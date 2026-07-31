@@ -1,11 +1,8 @@
 /*
- * Tests for RandomizeButton — the theme editor's "Stumble for colors". The die
- * ROLLS on each activation (PRD point 12), echoing Stumble's spin energy. The
- * roll is a CSS-driven one-shot (`animate-dice-roll`) replayed by remounting the
- * icon, so it inherits the global prefers-reduced-motion clamp; we assert the
- * mechanism (the class appears on click, the icon stays decorative) and trust
- * the clamp for reduced-motion safety. The button name stays "Randomize" and the
- * die stays aria-hidden, so the spin carries zero semantic load.
+ * Tests for RandomizeButton, the theme editor's "Stumble for colors". The die
+ * rolls on each activation (PRD point 12) via a CSS one-shot replayed by
+ * remounting the icon, so it inherits the reduced-motion clamp. We assert the
+ * mechanism; the die stays aria-hidden so the spin carries no semantic load.
  */
 
 import RandomizeButton from './RandomizeButton';
@@ -50,8 +47,7 @@ describe('RandomizeButton – dice roll (PRD point 12)', () => {
     fireEvent.click(button);
     const dieAfterFirst = getDie();
     fireEvent.click(button);
-    // The key bump remounts the icon, so React gives us a fresh node and the
-    // animation restarts from frame zero rather than diffing in place.
+    // key bump remounts the icon so the animation restarts from frame zero
     expect(getDie()).not.toBe(dieAfterFirst);
     expect(getDie()).toHaveClass('animate-dice-roll');
   });

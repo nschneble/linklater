@@ -34,8 +34,7 @@ vi.mock('../../lib/hooks/useDocumentTitle', () => ({
   useDocumentTitle: vi.fn(),
 }));
 
-// SettingsLayout drops the sidebar/skip-link chrome; the test only cares
-// about the children + toast slot, which all render straight under it.
+// SettingsLayout mock keeps only children + the toast slot the test needs
 vi.mock('./SettingsLayout', () => ({
   default: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="settings-layout">{children}</div>
@@ -121,22 +120,16 @@ beforeEach(() => {
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('SettingsView OAuth-link flash toast', () => {
-  // The always-mounted sr-only mirror region (data-testid="toast-announcement")
-  // is in the DOM from first paint, but empty: `toast.message` is initialized
-  // to `null` via `useToast`, so the first commit renders no message. The
-  // mount-effect then flips state via `toast.show`, `useToastAnnouncement`
-  // mirrors it into the region, and the empty → populated transition that
-  // NVDA/JAWS require is observable by watching the region's text content.
-  // The generic announce={false} card + mirror-region ARIA contract is proven
-  // in ToastAnnouncer.test.tsx; this suite only asserts the provider-code →
-  // message mapping SettingsView layers on top.
+  // the mirror region is mounted-but-empty at first paint, then filled by the
+  // mount-effect - the empty → populated transition is observable via its
+  // text. This suite only asserts provider-code → message mapping; the generic
+  // ARIA contract lives in ToastAnnouncer.test.tsx.
 
   it('maps the linked provider code to its success message in the mirror region', async () => {
     renderAt('/settings?linked=google');
 
     const region = screen.getByTestId('toast-announcement');
-    // Empty → populated is the transition SRs need; the region is present the
-    // whole time, so only its content changes.
+    // empty → populated is the transition SRs need; the region stays mounted
     await waitFor(() =>
       expect(region).toHaveTextContent('Google account connected.'),
     );
@@ -146,8 +139,7 @@ describe('SettingsView OAuth-link flash toast', () => {
     renderAt('/settings?linked=google');
 
     const dismiss = await screen.findByRole('button', { name: 'Dismiss' });
-    // User did not initiate focus; the Toast must render with no focus
-    // side-effect. The dismiss button is naturally Tab-reachable.
+    // user didn't initiate focus, so the Toast must not steal it on render
     expect(document.activeElement).not.toBe(dismiss);
     expect(document.activeElement).toBe(document.body);
   });
@@ -162,13 +154,12 @@ describe('SettingsView OAuth-link flash toast', () => {
   it('passes the linkError text down to IdPsSection inline Alert (no Toast)', async () => {
     renderAt('/settings?link_error=already_linked');
 
-    // Wait for the mount-effect to flush.
+    // wait for the mount-effect to flush
     await act(async () => {});
 
     const error = screen.getByRole('alert');
     expect(error.textContent).toContain('That account is already linked');
-    // No toast: the always-mounted mirror region stays empty and no Toast
-    // card mounts (its dismiss button is the tell).
+    // no toast: mirror region stays empty and no Toast card mounts
     expect(screen.getByTestId('toast-announcement')).toBeEmptyDOMElement();
     expect(screen.queryByRole('button', { name: 'Dismiss' })).toBeNull();
   });
@@ -189,8 +180,7 @@ describe('SettingsView OAuth-link flash toast', () => {
     const dismiss = await screen.findByRole('button', { name: 'Dismiss' });
     fireEvent.click(dismiss);
 
-    // The Toast card unmounts after its exit animation; the always-mounted
-    // mirror region is unaffected (it clears on its own transient timer).
+    // Toast card unmounts after its exit animation; mirror region unaffected
     await waitFor(() => {
       expect(screen.queryByRole('button', { name: 'Dismiss' })).toBeNull();
     });

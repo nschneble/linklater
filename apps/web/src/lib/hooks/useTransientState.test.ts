@@ -40,7 +40,7 @@ describe('useTransientState', () => {
     act(() => vi.advanceTimersByTime(1000));
     act(() => result.current.setValue('other'));
     act(() => vi.advanceTimersByTime(500));
-    // 1500ms total from initial busy, but the second setValue restarted the timer.
+    // 1500ms elapsed total, but the second setValue restarted the timer
     expect(result.current.value).toBe('other');
     act(() => vi.advanceTimersByTime(1500));
     expect(result.current.value).toBe('idle');

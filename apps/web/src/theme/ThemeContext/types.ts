@@ -90,8 +90,8 @@ export interface ThemeContextValue {
    */
   customTheme: CustomTheme | null;
   /**
-   * Sets the Custom theme from a user action (the Theme Editor's Save in
-   * wave 3). Persists to `localStorage` with a timestamp so a subsequent
+   * Sets the Custom theme from a user action (the Theme Editor's Save).
+   * Persists to `localStorage` with a timestamp so a subsequent
    * server sync cannot overwrite a very recent change.
    */
   setCustomTheme: (customTheme: CustomTheme) => void;

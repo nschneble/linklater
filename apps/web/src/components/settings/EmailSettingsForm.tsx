@@ -197,8 +197,7 @@ export default function EmailSettingsForm() {
         placeholder={`Leave blank to keep ${user?.email ?? 'current email'}`}
         value={emailInput}
         onChange={(event) => setEmailInput(event.target.value)}
-        // only set when the error element exists in the DOM –
-        // see LinkForm for the rationale
+        // only when the error element exists; see LinkForm for rationale
         aria-describedby={emailError ? 'account-email-error' : undefined}
       />
 

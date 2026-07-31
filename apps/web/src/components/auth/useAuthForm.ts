@@ -37,49 +37,19 @@ export function useAuthForm() {
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  // Mirrors the toast's lifecycle for magic-link success. Drives the submit
-  // button's "Magic link sent!" label, check-mark icon, and disabled state
-  // for the same 5000ms the toast is visible. Holding the button in a
-  // success state (rather than re-enabling immediately) prevents the user
-  // from re-clicking and triggering a second magic-link request while the
-  // first email is still arriving.
+  // holds the button "sent!" for the toast's 5000ms, blocking a re-request
   const [magicLinkSentJustNow, setMagicLinkSentJustNow] = useState(false);
-  // Same shape as magicLinkSentJustNow but for the forgot-password flow.
-  // The "Send password reset link" → "Working…" → "Reset link sent!" arc
-  // mirrors the magic-link button's three-state lifecycle and holds for
-  // the toast's 5000ms window so the two surfaces never disagree.
+  // forgot-password version of magicLinkSentJustNow, held for 5000ms
   const [forgotPasswordSentJustNow, setForgotPasswordSentJustNow] =
     useState(false);
   const [mfaChallenge, setMfaChallenge] = useState<MfaChallenge | null>(null);
   const [mfaCode, setMfaCode] = useState('');
   const [mfaToken, setMfaToken] = useState<string | null>(null);
-  // The cross-route notice (e.g. account-deleted) is read once on mount.
-  // Deferred to a useEffect (not synchronous render) because NVDA and
-  // sometimes JAWS only announce an aria-live region when its content
-  // changes after mount – content present on first paint is treated as
-  // part of page load and skipped. Deferring guarantees the region
-  // transitions empty → populated, which all major SRs announce reliably.
-  //
-  // useAuthForm reads this directly via `consumePendingNotice` (not via
-  // the `usePendingNotice` hook) so the peek-before-consume ordering with
-  // the mode-change effect below stays intact – effects fire in
-  // declaration order, and the peek (`hasPendingNotice()` inside the
-  // mode-change effect) must run BEFORE this consume effect clears the
-  // sessionStorage key. See [[feedback-peek-before-consume-effect-order]].
-  // `LinksView` consumes via the `usePendingNotice` hook because it has
-  // no peek requirement.
-  //
-  // Notice now carries a variant so error-keyed entries (e.g.
-  // `verification-link-invalid`) render with assertive ARIA + error paint.
+  // read in an effect (not render) so aria-live fires on empty->populated
   const [notice, setNotice] = useState<FormNotice | null>(null);
   const [password, setPassword] = useState('');
 
-  // WARN-4: hold the submit button and toast in their "sent!" success state
-  // for the toast's 5000ms auto-dismiss window so the two surfaces never
-  // disagree, then auto-release. useTransientState schedules the release and
-  // cancels the pending timer on unmount or on a fresh transition. The
-  // mode-change effect below flips each flag back to false, which cancels a
-  // pending release when the user navigates away before it fires.
+  // hold both "sent!" flags for the toast's 5000ms, then auto-release
   useTransientState(magicLinkSentJustNow, false, setMagicLinkSentJustNow, 5000);
   useTransientState(
     forgotPasswordSentJustNow,
@@ -99,12 +69,7 @@ export function useAuthForm() {
     return (location.state as { from?: string })?.from ?? '/unread';
   }
 
-  // Declared before the consume effect below so that on mount this peek
-  // sees the queued notice before consumePendingNotice clears it. After
-  // this effect returns, the consume effect fires and the next mode
-  // change will (correctly) get hasPendingNotice() === false. Effects
-  // fire in declaration order – see
-  // [[feedback-peek-before-consume-effect-order]].
+  // must precede the consume effect so the peek sees the notice first
   useEffect(() => {
     setPassword('');
     setError(null);
@@ -112,10 +77,7 @@ export function useAuthForm() {
     setMagicLinkSentJustNow(false);
     setForgotPasswordSentJustNow(false);
 
-    // Skip auto-focus when a pending notice is queued – focusing a text
-    // input switches NVDA/JAWS into forms mode and can swallow the polite
-    // announcement mid-read (WCAG 4.1.3 status messages). The user can
-    // Tab in deliberately after hearing the toast.
+    // skip auto-focus with a notice queued: focus flips SRs to forms mode
     if (hasPendingNotice()) return;
 
     const emailInputValue = emailReference.current?.value ?? '';
@@ -137,10 +99,7 @@ export function useAuthForm() {
     }
   }, [mfaChallenge]);
 
-  // move focus to the form-level error when it first appears so keyboard and
-  // screen-reader users land on the message. the error Alert is unmounted
-  // while error is null, so the ref is null then and focus only fires on the
-  // empty -> populated transition, never on clears or unrelated re-renders.
+  // focus the form error on the empty->populated transition, never on clears
   useEffect(() => {
     if (error) {
       errorReference.current?.focus();
@@ -150,16 +109,7 @@ export function useAuthForm() {
   const handleSubmit = async (formEvent: FormEvent) => {
     formEvent.preventDefault();
 
-    // Part D: coalesce-on-submit. If a cross-route error toast is still
-    // visible when the user attempts a new auth action, dismiss it so the
-    // upcoming form-level error Alert is the sole assertive announcement.
-    // Without this coalesce, the user would receive two simultaneous
-    // assertive announcements (toast + Alert) on the same channel – see
-    // WCAG 4.1.3 status messages and ARIA 1.2 §5.2.8.4 (live region
-    // politeness must be honored predictably; stacking two assertive
-    // regions in the same tick is implementation-defined on most SRs).
-    // Success-variant toasts stay visible: they don't fight an upcoming
-    // form alert because the channels (polite vs assertive) don't overlap.
+    // drop a lingering error toast on submit; two assertive regions clash
     if (notice !== null && notice.variant === 'error') {
       setNotice(null);
     }
@@ -178,14 +128,7 @@ export function useAuthForm() {
           message: 'Magic link sent!',
           variant: 'success',
         });
-        // WARN-4: on success, release loading immediately so the button no
-        // longer reads "Working…" while the toast is already announcing the
-        // outcome – that desync is what made the prior flow look
-        // contradictory. The button then enters the success-state hold
-        // (`magicLinkSentJustNow`) for 5000ms, matching the toast's own
-        // auto-dismiss window. The hold also prevents a second click during
-        // that window. A throw skips this block entirely and falls through
-        // to the finally reset.
+        // release loading on success so the button isn't "Working…" mid-toast
         setLoading(false);
         setMagicLinkSentJustNow(true);
         return;
@@ -202,12 +145,7 @@ export function useAuthForm() {
         await register(email, password);
       } else {
         await apiForgotPassword(email);
-        // Forgot-password success mirrors the magic-link flow: fire the toast
-        // and hold the submit button in a "Reset link sent!" success state
-        // for the toast's 5000ms auto-dismiss window so the two surfaces
-        // never read as contradictory. The hold also prevents a second
-        // click during that window – re-submitting before the email arrives
-        // would just queue a duplicate reset request.
+        // mirrors magic-link: hold "sent!" for 5000ms, blocking a duplicate reset
         setNotice({
           message: 'Reset link sent!',
           variant: 'success',
@@ -217,10 +155,7 @@ export function useAuthForm() {
         return;
       }
 
-      // Both login (no MFA) and register fall through to here; the
-      // forgot-password branch returned early above, so the prior
-      // `mode !== 'forgot-password'` guard is now an unconditional
-      // navigate to the post-login destination.
+      // login (no MFA) and register land here; forgot-password returned earlier
       navigate(postLoginDestination(), { replace: true });
     } catch (caught: unknown) {
       setError(

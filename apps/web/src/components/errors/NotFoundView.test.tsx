@@ -12,8 +12,7 @@ import { describe, expect, it } from 'vitest';
 import NotFoundView from './NotFoundView';
 
 function renderNotFound() {
-  // Start already at /not-found so the internal redirect effect is a no-op and
-  // the component mounts once (matching a genuine 404 landing).
+  // start at /not-found so the redirect effect is a no-op (single mount)
   return render(
     <MemoryRouter initialEntries={['/not-found']}>
       <NotFoundView />

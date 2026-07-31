@@ -18,7 +18,7 @@ import type { NormalizedApi } from '../../lib/openapi';
  *
  * The single `role="status"` region lives HERE, outside the swapping detail, so
  * its announcement survives the detail swapping: it announces spec
- * loading/ready/error. The visible UI is aria-hidden from announcement – the
+ * loading/ready/error. The visible UI is aria-hidden from announcement - the
  * region is the sole announcer.
  */
 
@@ -112,7 +112,7 @@ function Reference({ api }: ReferenceProps) {
   return (
     <>
       {/* Bypass the endpoint nav: jump straight to the detail heading. A button
-          (not an anchor) because the URL hash already encodes the selection –
+          (not an anchor) because the URL hash already encodes the selection -
           a fragment href would overwrite it. */}
       <button
         type="button"

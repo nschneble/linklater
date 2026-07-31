@@ -94,9 +94,7 @@ describe('formatNewLinksAnnouncement', () => {
 
 describe('mergeSettledMetadata', () => {
   it('keeps the existing settled meta when the incoming copy has null metadata', () => {
-    // The bug this guards: a page-1 response that predates the metadata job
-    // carries meta: null for a link the client already settled. Without the
-    // merge the card reverts to its skeleton and aria-busy flips false -> true.
+    // guards: a stale page-1 meta:null must not un-settle a card to skeleton
     const settled = makeLink({ id: 'x', meta: settledMeta() });
     const stale = makeLink({ id: 'x', meta: null });
 
@@ -107,8 +105,7 @@ describe('mergeSettledMetadata', () => {
   });
 
   it('keeps existing meta when the incoming copy has meta present but no fetchedAt', () => {
-    // A partial-but-unfinished response (meta object exists, fetchedAt still
-    // nullish) must not regress a settled card either.
+    // a partial response (fetchedAt nullish) must not regress a settled card
     const settled = makeLink({ id: 'x', meta: settledMeta() });
     const stale = makeLink({
       id: 'x',
@@ -121,8 +118,7 @@ describe('mergeSettledMetadata', () => {
   });
 
   it('adopts incoming settled meta over a pending existing copy', () => {
-    // Reverse direction: the merge must not freeze stale pending state when
-    // the fresh response finally carries settled metadata.
+    // reverse: don't freeze pending state when the fresh response is settled
     const pending = makeLink({ id: 'x', meta: null });
     const fresh = makeLink({ id: 'x', meta: settledMeta({ title: 'Fresh' }) });
 
@@ -133,8 +129,7 @@ describe('mergeSettledMetadata', () => {
   });
 
   it('lets a settled incoming copy win over a settled existing copy', () => {
-    // Newer metadata always wins: when both are settled, incoming is the
-    // fresh server truth and replaces the existing meta wholesale.
+    // when both are settled, incoming wins as fresh server truth
     const older = makeLink({
       id: 'x',
       meta: settledMeta({
@@ -177,8 +172,7 @@ describe('mergeSettledMetadata', () => {
   });
 
   it('adopts every non-meta field from the incoming copy while preserving settled meta', () => {
-    // Only meta is guarded; read state, url, and timestamps still come from
-    // the authoritative incoming response.
+    // only meta is guarded; url, read state, timestamps come from incoming
     const existing = makeLink({
       id: 'x',
       url: 'https://old.example',
@@ -203,8 +197,7 @@ describe('mergeSettledMetadata', () => {
   });
 
   it('takes ordering and membership from the incoming list', () => {
-    // Incoming wins order and membership: a reordered incoming list reorders
-    // the result, and a link absent from incoming is dropped.
+    // incoming wins order + membership; a link absent from incoming is dropped
     const existing = [
       makeLink({ id: 'a', meta: settledMeta() }),
       makeLink({ id: 'b', meta: settledMeta() }),
@@ -246,9 +239,7 @@ describe('mergeSettledMetadata', () => {
   });
 
   it('resolves every branch correctly in one mixed list', () => {
-    // A realistic page-1 settle: one settled card gets a stale copy (preserve),
-    // one pending card finally settles (adopt), one brand-new pending card
-    // arrives (passthrough), and a previously-listed card is gone (drop).
+    // mixed page-1 settle: preserve, adopt, passthrough, and drop in one list
     const existing = [
       makeLink({ id: 'settled', meta: settledMeta({ title: 'Kept' }) }),
       makeLink({ id: 'pending', meta: null }),

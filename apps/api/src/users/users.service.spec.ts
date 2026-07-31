@@ -12,8 +12,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 jest.mock('../prisma/prisma.service', () => ({
   PrismaService: jest.fn().mockImplementation(() => ({})),
 }));
-// Provide a real class for `instanceof Prisma.PrismaClientKnownRequestError`
-// checks so service code can branch on Prisma error codes (P2002 etc.).
+// real error class so the service's Prisma error-code branches (P2002) work
 jest.mock('../prisma/generated/client', () => {
   class MockPrismaClientKnownRequestError extends Error {
     code: string;
@@ -123,9 +122,7 @@ describe('UsersService', () => {
     });
 
     it('throws ConflictException when Prisma reports a P2002 unique-constraint violation', async () => {
-      // Concurrent registrations race past any preflight existence check, so
-      // the service relies on the database constraint and translates P2002
-      // into a 409 instead of letting Prisma's error escape as a 500.
+      // races beat preflight checks, so the DB constraint maps P2002 to a 409
       const p2002 = new Prisma.PrismaClientKnownRequestError(
         'Unique constraint failed on the fields: (`email`)',
         { code: 'P2002' },
@@ -227,12 +224,7 @@ describe('UsersService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    // Invisibility contract for the OFF-BOOK `branding` theme. `branding` is a
-    // real CSS cascade (web theme/styles/branding.css) the marketing/API-docs
-    // chrome activates via `data-theme='branding'` when logged out, but it must
-    // NEVER be a persistable user theme. Unlike a random string, it is a
-    // plausible leak — a future hand could copy it into VALID_THEMES alongside
-    // the film themes. Assert the allow-list rejects it so that mistake throws.
+    // branding is a real off-book theme (plausible leak); must never persist
     it('rejects the off-book branding theme (not user-selectable)', async () => {
       await expect(
         service.updateMe(USER_ID, { theme: 'branding' }),
@@ -352,9 +344,7 @@ describe('UsersService', () => {
     });
 
     it('rejects a customTheme with an unknown token key', async () => {
-      // Service-layer test proves only the WIRING: the guard runs and blocks
-      // the write. The individual rejection branches (unknown key, oversized,
-      // prototype pollution) are owned by custom-theme.spec.ts.
+      // proves only the wiring; rejection branches live in custom-theme.spec.ts
       await expect(
         service.updateMe(USER_ID, {
           customTheme: { dark: { '--not-a-real-token': '#000000' } },
@@ -586,10 +576,7 @@ describe('UsersService', () => {
 
       await service.verifyEmailAndInvalidateStalePassword(USER_ID);
 
-      // All three writes must be handed to $transaction together – splitting
-      // the tokenVersion bump from the session revocation reopens a race
-      // where an in-flight refresh() reads the new version before the old
-      // refresh token is deleted (see the method's docstring).
+      // all three writes share one $transaction, else refresh() races the revoke
       expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
       expect(prismaMock.user.update).toHaveBeenCalledWith({
         where: { id: USER_ID },

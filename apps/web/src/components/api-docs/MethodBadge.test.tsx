@@ -22,7 +22,7 @@ function mockAuth(user: User | null) {
   } as ReturnType<typeof useAuth>);
 }
 
-/** Minimal logged-in user – only the presence (non-null) matters here. */
+/** Minimal logged-in user - only the presence (non-null) matters here. */
 const SOME_USER = { userId: 'user-1' } as User;
 
 beforeEach(() => {
@@ -52,7 +52,7 @@ describe('MethodBadge', () => {
       mockAuth(null);
       const { container } = render(<MethodBadge method="get" />);
       const badge = container.querySelector('span');
-      // Inline style colors are brand constants, not theme tokens.
+      // inline style colors are brand constants, not theme tokens
       expect(badge).toHaveStyle({ color: '#a7f3d0' });
     });
 
@@ -70,8 +70,7 @@ describe('MethodBadge', () => {
       mockAuth(SOME_USER);
       const { container } = render(<MethodBadge method="get" />);
       const badge = container.querySelector('span');
-      // No inline color – the badge consumes the mount bundle tokens so the
-      // method color is decorative-neutral (B1: method conveyed by the h3).
+      // no inline color: badge uses mount tokens; method color stays neutral (B1)
       expect(badge).not.toHaveAttribute('style');
       expect(badge?.className).toContain('text-[var(--mount-text)]');
       expect(badge?.className).toContain('border-[var(--mount-border)]');

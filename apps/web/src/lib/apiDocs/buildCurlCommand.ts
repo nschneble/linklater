@@ -35,7 +35,6 @@ export function buildCurlCommand({
     lines.push(`  -d '${body}'`);
   }
 
-  // Join with a trailing backslash + newline so the command pastes into a
-  // shell as one multi-line invocation.
+  // join with trailing backslash+newline so it pastes as one shell command
   return lines.join(' \\\n');
 }

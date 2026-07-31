@@ -2,8 +2,7 @@ import { jest } from '@jest/globals';
 import { BadRequestException } from '@nestjs/common';
 import { generateLinkState } from './oauth-link-state';
 
-// Required env vars must be set before GoogleLinkStrategy is imported because
-// the constructor reads them eagerly (same pattern as jwt.strategy.spec.ts).
+// set env before GoogleLinkStrategy import; constructor reads it eagerly
 process.env.GOOGLE_CLIENT_ID = 'test-client-id';
 process.env.GOOGLE_CLIENT_SECRET = 'test-client-secret';
 process.env.GOOGLE_LINK_CALLBACK_URL =
@@ -118,9 +117,7 @@ describe('GoogleLinkStrategy', () => {
 
     it('throws BadRequestException when state is expired', async () => {
       const state = generateLinkState(USER_ID, process.env.JWT_SECRET!);
-      // verifyLinkState is called with FIVE_MINUTES_MS inside the strategy.
-      // We simulate expiry by using a state generated with a past timestamp
-      // by mocking Date.now to be far in the future at validation time.
+      // simulate expiry by pushing Date.now past FIVE_MINUTES_MS at validate time
       const originalNow = Date.now;
       Date.now = () => originalNow() + FIVE_MINUTES_MS + 1000;
 

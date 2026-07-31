@@ -83,11 +83,7 @@ export default function CopyRevealPanel({
   const isControlled = controlledCopied !== undefined;
   const copied = isControlled ? controlledCopied : uncontrolledCopied;
 
-  // 5000ms: long enough for the sibling polite-region announcement to
-  // land + a deliberate glance-back after pasting, short enough that the
-  // icon never feels stuck. The pill is a confirmation dwell, not a
-  // response-latency affordance, so Nielsen's 1.0s "flow uninterrupted"
-  // budget does not apply here.
+  // 5000ms: outlasts the polite announcement and a post-paste glance-back
   useTransientState(
     isControlled ? false : uncontrolledCopied,
     false,

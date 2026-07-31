@@ -170,10 +170,7 @@ describe('AuthForm – pending-notice surface', () => {
 
     renderAuthForm();
 
-    // Mirror picks up the assertive shape when the notice carries
-    // variant='error'. Without this routing the toast (assertive) and the
-    // mirror (polite) would race on the SR announcement queue with
-    // mismatched priorities.
+    // mirror goes assertive on variant='error' to not race the toast on SR
     const mirror = document.querySelector(
       'span.sr-only[role="alert"][aria-live="assertive"][aria-atomic="true"]',
     );
@@ -195,11 +192,7 @@ describe('AuthForm – pending-notice surface', () => {
 
     renderAuthForm();
 
-    // The dismiss button on the toast clears the notice. We assert the
-    // wiring indirectly: clicking the dismiss button invokes onDismiss,
-    // which the announcer hands to the parent. After the exit animation
-    // (150ms) the parent's onDismiss fires – for the unit test, we just
-    // verify the button is reachable so the contract holds.
+    // dismiss wiring verified indirectly: assert the button is reachable
     const dismiss = screen.getByRole('button', { name: 'Dismiss' });
     expect(dismiss).toBeInTheDocument();
   });
@@ -243,7 +236,7 @@ describe('AuthForm – mode routing branches still render under the refactor', (
 
     renderAuthForm();
 
-    // The email + password inputs come from LoginRegisterView.
+    // the email + password inputs come from LoginRegisterView
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
   });
@@ -255,7 +248,7 @@ describe('AuthForm – mode routing branches still render under the refactor', (
 
     renderAuthForm();
 
-    // MfaView's totp challenge surfaces the "Authenticator code" input.
+    // MfaView's totp challenge surfaces the "Authenticator code" input
     expect(screen.getByLabelText(/authenticator code/i)).toBeInTheDocument();
   });
 
@@ -266,7 +259,7 @@ describe('AuthForm – mode routing branches still render under the refactor', (
 
     renderAuthForm();
 
-    // ForgotPasswordView asks for an email but no password.
+    // ForgotPasswordView asks for an email but no password
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.queryByLabelText(/password/i)).not.toBeInTheDocument();
   });

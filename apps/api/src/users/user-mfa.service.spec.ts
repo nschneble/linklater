@@ -66,7 +66,7 @@ describe('UserMfaService', () => {
 
     it('accepts a hyphenless code by normalizing before bcrypt compare', async () => {
       const codeId = 'rc-1';
-      // Stored hash is over the canonical hyphenated form.
+      // stored hash is over the canonical hyphenated form
       const codeHash = await bcrypt.hash(RECOVERY_CODE, 1);
       const hyphenless = RECOVERY_CODE.replace(/-/g, '');
 
@@ -118,7 +118,7 @@ describe('UserMfaService', () => {
       (prismaMock.recoveryCode.findMany as jest.Mock).mockResolvedValue([
         { id: codeId, codeHash },
       ]);
-      // Atomic CAS lost the race – another request already marked it used.
+      // atomic CAS lost the race; another request already marked it used
       (prismaMock.recoveryCode.updateMany as jest.Mock).mockResolvedValue({
         count: 0,
       });

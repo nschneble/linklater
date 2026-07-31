@@ -21,8 +21,7 @@ describe('applySecurityHeaders', () => {
     await app.close();
   });
 
-  // Helmet is Express middleware, so its headers ride on every response —
-  // including this 404. No route needed to prove the wiring.
+  // Helmet middleware sets headers on every response, this 404 included
   it('sets security headers on every response', async () => {
     const response = await request(app.getHttpServer()).get('/any-path');
 
@@ -38,13 +37,7 @@ describe('applySecurityHeaders', () => {
     expect(response.headers['x-powered-by']).toBeUndefined();
   });
 
-  // Deliberate: CORP stays at helmet's `same-origin` default. CORP only gates
-  // no-cors embedding (<img>, <script src>); every real API consumer — the
-  // bookmarklet's fetch, the dev frontend, extensions — uses cors-mode
-  // requests governed by the CORS policy in main.ts, which CORP never
-  // touches. Loosening this to `cross-origin` would only permit third-party
-  // pages to hotlink API responses. Do not "fix" without a consumer that
-  // genuinely embeds API resources no-cors.
+  // CORP stays same-origin; cross-origin would only let third parties hotlink
   it('keeps Cross-Origin-Resource-Policy at same-origin', async () => {
     const response = await request(app.getHttpServer()).get('/any-path');
 

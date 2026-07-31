@@ -29,7 +29,7 @@ vi.mock('../../lib/hooks/usePendingNotice', () => ({
   usePendingNotice: vi.fn(),
 }));
 
-// The two heavy DOM-effect hooks are no-ops for these tests.
+// the two heavy DOM-effect hooks are no-ops for these tests
 vi.mock('../../lib/hooks/useFocusTrap', () => ({
   useFocusTrap: vi.fn(),
 }));
@@ -127,12 +127,10 @@ describe('LinksView – add-link form placement', () => {
 
     const dialog = screen.getByRole('dialog', { name: 'Add link' });
 
-    // Mobile: pinned near the top of the viewport so the iOS software
-    // keyboard (which opens from the bottom) never covers the form and iOS
-    // does not scroll it into the lower-middle of the screen.
+    // mobile: top-anchored so the iOS software keyboard never covers it
     expect(dialog.className).toContain('fixed');
     expect(dialog.className).toContain('top-16');
-    // Desktop: back to inline flow directly below the toolbar.
+    // desktop: back to inline flow directly below the toolbar
     expect(dialog.className).toContain('sm:relative');
     expect(dialog.className).toContain('sm:top-auto');
   });
@@ -146,8 +144,7 @@ describe('LinksView – add-link form dismissal', () => {
 
     renderLinksView();
 
-    // The dialog is named via aria-labelledby pointing at the visible <h2>,
-    // so the accessible name resolves from on-screen text.
+    // aria-labelledby points at the visible <h2> so the name is on-screen
     const dialog = screen.getByRole('dialog', { name: 'Add link' });
     const heading = screen.getByRole('heading', { name: 'Add link' });
     expect(heading.tagName).toBe('H2');
@@ -174,8 +171,7 @@ describe('LinksView – add-link form dismissal', () => {
 
     const { baseElement } = renderLinksView();
 
-    // The backdrop is a mouse-only affordance: aria-hidden and out of the tab
-    // order, so it no longer duplicates the Close control for AT users.
+    // backdrop is mouse-only: aria-hidden and out of the tab order for AT
     const scrim = baseElement.querySelector('.scrim');
     expect(scrim).toHaveAttribute('aria-hidden', 'true');
     expect(scrim).toHaveAttribute('tabindex', '-1');
@@ -194,12 +190,7 @@ describe('LinksView – in-session toast announcement (Fix #7)', () => {
     renderLinksView();
 
     const region = screen.getByTestId('toast-announcement');
-    // The announcement now lands through the shared clear-then-set driver on
-    // the next tick (a 0ms timer) so a repeat message still re-fires the polite
-    // region; await the mirror rather than asserting a synchronous update. The
-    // generic role/aria-live/aria-atomic region contract is proven once in
-    // ToastAnnouncer.test.tsx; this asserts only the LinksView-specific wiring
-    // that `useLinksView().toastMessage` flows into the mirror text.
+    // clear-then-set driver fires next tick; await the mirror, not a sync read
     await waitFor(() => expect(region.textContent).toBe('Link saved!'));
   });
 
@@ -223,30 +214,28 @@ describe('LinksView – background inert while the add-link dialog is open (Fix 
 
     const { container } = renderLinksView();
 
-    // `inert` implies `aria-hidden`, so the inerted background is invisible to
-    // role queries. Locate these host elements structurally instead.
+    // `inert` implies `aria-hidden`, so find these hosts structurally
 
-    // Heading row (holds the "Your links" h1 + shortcuts toggle).
+    // heading row (holds the "Your links" h1 + shortcuts toggle)
     const heading = container.querySelector('h1');
     expect(heading?.parentElement).toHaveAttribute('inert');
 
-    // Description paragraph.
+    // description paragraph
     const description = screen
       .getByText('Add, search, or stumble upon something random.')
       .closest('p');
     expect(description).toHaveAttribute('inert');
 
-    // Both LinksToolbar rows: the tab bar row and the search-input row each
-    // sit under an inert ancestor.
+    // both LinksToolbar rows sit under an inert ancestor
     const tablist = container.querySelector('[role="tablist"]');
     expect(tablist?.closest('[inert]')).not.toBeNull();
     const searchInput = container.querySelector('input[type="search"]');
     expect(searchInput?.closest('[inert]')).not.toBeNull();
 
-    // The error Alert's rendered <p>.
+    // the error Alert's rendered <p>
     expect(container.querySelector('[role="alert"]')).toHaveAttribute('inert');
 
-    // The links list tabpanel root.
+    // the links list tabpanel root
     expect(container.querySelector('#links-list')).toHaveAttribute('inert');
   });
 
@@ -257,9 +246,7 @@ describe('LinksView – background inert while the add-link dialog is open (Fix 
 
     renderLinksView();
 
-    // The dialog itself must never be inert – that was the exact regression the
-    // #root-inerting mechanism would have caused when ported to this
-    // non-portaled dialog.
+    // the dialog itself must never be inert (the #root-inerting regression)
     const dialog = screen.getByRole('dialog', { name: 'Add link' });
     expect(dialog).not.toHaveAttribute('inert');
     expect(dialog.closest('[inert]')).toBeNull();
@@ -269,12 +256,7 @@ describe('LinksView – background inert while the add-link dialog is open (Fix 
   });
 
   it('never inerts the toast or the cross-cutting live regions, even alongside an open dialog', () => {
-    // `toastMessage` and `showLinkForm` CAN co-occur in production (saving a
-    // link shows the toast and closes the form; re-opening the form within the
-    // toast's 5s window flips `showLinkForm` back on without clearing the
-    // toast). Force both here to prove the toast and live regions stay in the
-    // accessibility tree regardless: `inert` implies `aria-hidden`, which would
-    // silence their `aria-live` updates (see the guarding comment in LinksView).
+    // `toastMessage` + `showLinkForm` co-occur; inert would silence aria-live
     vi.mocked(useLinksView).mockReturnValue(
       makeViewResult({ showLinkForm: true, toastMessage: 'Link saved!' }),
     );
@@ -285,7 +267,7 @@ describe('LinksView – background inert while the add-link dialog is open (Fix 
     expect(toastRegion).not.toHaveAttribute('inert');
     expect(toastRegion.closest('[inert]')).toBeNull();
 
-    // The visual Toast card is not behind an inert ancestor either.
+    // the visual Toast card is not behind an inert ancestor either
     const toastCards = screen.getAllByText('Link saved!', { selector: 'div' });
     for (const card of toastCards) {
       expect(card.closest('[inert]')).toBeNull();
@@ -322,9 +304,7 @@ describe('LinksView – cross-route pending notice surface', () => {
 
     renderLinksView();
 
-    // The toast paints inside a role="status" element (success variant).
-    // Multiple role="status" elements exist (newLinksAnnouncement,
-    // toast, and the sr-only mirror), so locate by message text instead.
+    // multiple role="status" exist, so locate the toast by message text
     expect(
       screen.getByText('Your email has been verified.', { selector: 'div' }),
     ).toBeInTheDocument();
@@ -339,9 +319,7 @@ describe('LinksView – cross-route pending notice surface', () => {
 
     renderLinksView();
 
-    // The toast element does not exist when notice is null. The sr-only
-    // mirror DOES stay mounted (with empty text) so the empty → populated
-    // transition fires reliably on future updates.
+    // mirror stays mounted empty so a later empty→populated change announces
     expect(
       screen.queryByText(/email has been verified/i),
     ).not.toBeInTheDocument();
@@ -354,18 +332,14 @@ describe('LinksView – cross-route pending notice surface', () => {
       </MemoryRouter>,
     );
 
-    // First render: mirror exists but empty (notice = null). Scope past the
-    // dedicated in-session toast region (data-testid="toast-announcement"),
-    // which shares the same sr-only polite/atomic shape.
+    // scope past the toast region (same sr-only shape) to the pending mirror
     const liveRegions = document.querySelectorAll(
       'span.sr-only[aria-live="polite"][aria-atomic="true"]:not([data-testid])',
     );
     expect(liveRegions.length).toBe(1);
     expect(liveRegions[0]?.textContent).toBe('');
 
-    // Update the mock to return a notice and rerender. The mirror text
-    // should now contain the notice – the empty → populated transition
-    // is what triggers SR announcement on NVDA/JAWS.
+    // the empty→populated transition is what triggers the SR announcement
     vi.mocked(usePendingNotice).mockReturnValue({
       notice: 'Your account has been deleted.',
       variant: 'success',
@@ -386,20 +360,14 @@ describe('LinksView – cross-route pending notice surface', () => {
   });
 
   it('does not move focus to <main> on pending-notice arrival (B2)', () => {
-    // The fix removed the focus-shift effect entirely; the
-    // <main> landmark gets a stable aria-label in AppShell instead, and
-    // the toast IS the announcement. This test pins that contract – if
-    // a future contributor reintroduces a focus shift here, it'll fail.
+    // no focus shift on notice arrival; the toast IS the announcement
     vi.mocked(usePendingNotice).mockReturnValue({
       notice: 'Your email has been verified.',
       variant: 'success',
       dismiss: vi.fn(),
     });
 
-    // Create a <main> element and spy on its focus method to confirm
-    // LinksView does NOT call it during render. Even though LinksView
-    // no longer accepts a mainReference prop, this guard ensures any
-    // future regression that wires one up gets caught.
+    // spy on <main>.focus to prove LinksView never moves focus there
     const main = document.createElement('main');
     const focusSpy = vi.spyOn(main, 'focus');
     document.body.appendChild(main);

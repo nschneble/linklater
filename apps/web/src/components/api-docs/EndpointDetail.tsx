@@ -74,8 +74,7 @@ export default function EndpointDetail({
   const headingId = endpointHeadingId(endpoint.method, endpoint.path);
   const accessibleMethod = endpoint.method.toUpperCase();
 
-  // Full request URL for the header + cURL example. An empty serverOrigin
-  // means same-origin (behind a proxy), so fall back to the current origin.
+  // empty serverOrigin means same-origin (proxy), so use current origin
   const baseUrl = serverOrigin === '' ? window.location.origin : serverOrigin;
   const fullUrl = `${baseUrl}${endpoint.path}`;
   const exampleBody = endpoint.requestBody
@@ -86,11 +85,7 @@ export default function EndpointDetail({
       )
     : null;
 
-  // Parameters render as location-specific tables whose <caption> conveys the
-  // location, so the per-row "In" column is gone. Partition by location and
-  // render a table only for a non-empty group – query first, then path – so a
-  // captioned table never ships an empty row set. Depends ONLY on the
-  // endpoint's parameters, never auth (SC 3.2.3).
+  // one captioned table per non-empty location group (query, then path)
   const queryParameters = endpoint.parameters.filter(
     (parameter) => parameter.location === 'query',
   );
@@ -114,12 +109,7 @@ export default function EndpointDetail({
     },
   };
 
-  // Request is the always-present anchor – it hosts the universal cURL example,
-  // so it is never empty and a param-less/body-less/response-less endpoint
-  // still yields a non-empty tablist with reachable content. Response is
-  // suppressed (tab AND panel) only when the endpoint documents no responses.
-  // `showResponse` references only the response SHAPE, never auth, so the tab
-  // set can never shift with sign-in state (SC 3.2.3).
+  // response is suppressed only when the endpoint documents no responses
   const showResponse = endpoint.responses.length > 0;
 
   const sections: SectionKey[] = ['request'];
@@ -127,13 +117,7 @@ export default function EndpointDetail({
 
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  // Defensive clamp for a stale index. No path reaches it today: an endpoint
-  // swap remounts this component via its `key`, resetting `selectedIndex` to 0,
-  // and the section set is fixed for a given endpoint. It guards a FUTURE
-  // mutable-spec shape — a SAME-key rerender that dropped the Response section
-  // (responses removed) while `selectedIndex` still pointed at it would
-  // otherwise hide every panel. The clamp falls back to the last surviving
-  // section (Request) instead. Cheap dead-defensive insurance; kept on purpose.
+  // defensive clamp so a stale index falls back to the last section
   const activeIndex = Math.min(selectedIndex, sections.length - 1);
 
   const requestActive = sections.indexOf('request') === activeIndex;
@@ -153,9 +137,8 @@ export default function EndpointDetail({
             tabIndex={-1}
           >
             {/*
-             * sr-only span carries the full "GET /links" accessible name.
-             * The visible path is aria-hidden to avoid announcing the path
-             * twice.
+             * sr-only span carries the full accessible name; the visible
+             * path is aria-hidden to avoid announcing it twice
              */}
             <span className="sr-only">
               {accessibleMethod} {endpoint.path}
@@ -192,15 +175,9 @@ export default function EndpointDetail({
       />
 
       {/*
-       * Panels are SIBLINGS of the tablist (never descendants): nesting one
-       * inside the bar would let the top-level `useTabNavigation` capture the
-       * inner Response status tabs. Each `SectionPanel` drives its own
-       * `tabIndex`/focus ring off `hasFocusableContent`. The Request panel is
-       * UNCONDITIONALLY focusable-content-owning: `CurlExample` always renders a
-       * native Copy button (both auth states, every endpoint), so the panel
-       * drops its own tab stop rather than tying the predicate to the tables or
-       * example body (which would go stale on a params-only endpoint). The
-       * Response panel owns the Response sub-tabs.
+       * panels are siblings of the tablist, never descendants: nesting one
+       * inside the bar would let the top-level useTabNavigation capture
+       * the inner Response status tabs
        */}
       <SectionPanel
         id={sectionMeta.request.panelId}
@@ -246,9 +223,8 @@ export default function EndpointDetail({
         )}
 
         {/*
-         * DOM-last so keyboard tab order runs read-only tables → example-body
-         * CodeBlock → cURL Copy button → cURL <pre>. The `-request-curl` label
-         * id stays disjoint from `-request-example` and the tab/panel/resp ids.
+         * DOM-last so tab order runs the read-only tables, then the
+         * example CodeBlock, then the cURL Copy button and <pre>
          */}
         <CurlExample
           method={endpoint.method}

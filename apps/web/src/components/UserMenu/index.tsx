@@ -67,9 +67,7 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
     resetPreview,
   } = useThemePreview(customTheme, mode);
 
-  // When the base theme actually commits (ThemeContext useLayoutEffect has
-  // already written the new data-theme), cancel any in-flight reset rAF so a
-  // stale closure value cannot overwrite the freshly selected theme.
+  // cancel the in-flight reset rAF on commit so a stale closure can't win
   useLayoutEffect(() => {
     clearResetHandles();
   }, [baseTheme, clearResetHandles]);
@@ -84,13 +82,10 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
       onClose();
       avatarReference.current?.focus();
     },
-    // Escape returns focus to the avatar; Tab must NOT (it would steal focus
-    // back from the browser's native next-element target). SC 2.4.3.
+    // Escape refocuses avatar; Tab must not (fights native tab), SC 2.4.3
     { onTabClose: onClose },
   );
 
-  // Discards an in-flight theme preview, restoring the committed base theme.
-  // No-op when nothing is being previewed.
   const resetPreviewIfActive = () => {
     if (previewTheme !== null) {
       resetPreview(baseTheme);
@@ -105,8 +100,7 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
       ?.focus();
   };
 
-  // Tab must NOT refocus the theme-row trigger (it would fight the browser's
-  // native next-element target). SC 2.4.3.
+  // Tab must not refocus the trigger (fights native tab order), SC 2.4.3
   const closeFlyoutOnTab = () => {
     setShowThemeSubmenu(false);
     resetPreviewIfActive();
@@ -125,14 +119,12 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
       return;
     }
     if (openedByKeyboard.current) {
-      // Keyboard open: focus first item so arrow-key navigation starts
-      // immediately
+      // keyboard open: focus first item so arrow-key nav starts immediately
       const firstItem =
         menuReference.current?.querySelector<HTMLElement>('[role="menuitem"]');
       firstItem?.focus();
     } else {
-      // Mouse open: focus the container so keydown events reach
-      // useMenuNavigation without visually pre-selecting any item
+      // mouse open: focus container so keydowns reach nav, no pre-select
       menuReference.current?.focus();
     }
   }, [isOpen, setShowThemeSubmenu]);
@@ -142,8 +134,7 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
     onClose();
   };
 
-  // Keeps the local avatar ref in sync while honoring whatever ref shape the
-  // parent forwarded (callback or object).
+  // keep the local ref in sync with either forwarded ref shape
   const mergeAvatarReference = (node: HTMLButtonElement | null) => {
     avatarReference.current = node;
     if (typeof forwardedReference === 'function') {

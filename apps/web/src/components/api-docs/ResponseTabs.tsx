@@ -16,29 +16,29 @@ import type { NormalizedEndpoint, NormalizedResponse } from '../../lib/openapi';
  *
  * This is a TRUE tablist (`role="tablist"`/`tab`/`tabpanel`), unlike the
  * sibling `EndpointNav` which stays plain buttons. The deciding factor is the
- * revealed content: a response detail carries no interactive FORM widget — only
+ * revealed content: a response detail carries no interactive FORM widget - only
  * read-only content (a schema table, a static paragraph, and, when a schema is
  * present, a scrollable example CodeBlock whose `<pre>` is focusable-but-read-
  * only). None of these participate in the tablist's roving tabindex (which
  * lives only on the tab buttons), so the WAI-ARIA tabs model cannot collide
  * with an interactive form widget the way a tablist wrapping editable fields
  * would. These are alternate VIEWS of one section, not navigation targets (no
- * URL/hash, not bookmarkable) – textbook tabs.
+ * URL/hash, not bookmarkable) - textbook tabs.
  *
  * Activation is AUTOMATIC (selection follows arrow focus): the panel swap is
  * instantaneous with no network or form state to lose, so there is deliberately
- * NO focus management – the selected tab keeps focus while the shared panel's
+ * NO focus management - the selected tab keeps focus while the shared panel's
  * `aria-labelledby` updates silently. Roving tabindex keeps the whole tablist a
  * single Tab stop (selected tab `tabIndex={0}`, the rest `-1`). The panel is
  * itself the keyboard focus stop (`tabIndex={0}`) ONLY when it holds no
  * focusable descendant; when a schema's example CodeBlock is present that
- * `<pre>` is the focus stop and the panel drops its tab stop – see the
+ * `<pre>` is the focus stop and the panel drops its tab stop - see the
  * `hasFocusableContent` guard below.
  *
  * Selection is color-redundant per SC 1.4.1: the status DIGITS carry the
  * meaning (no 2xx-green/4xx-red coding, following `MethodBadge` precedent), and
- * selected-vs-unselected is signalled FOUR non-color ways – `--orbit-bg` fill,
- * `--orbit-border` ring, `font-semibold`, and `--orbit-text` – all driven off
+ * selected-vs-unselected is signalled FOUR non-color ways - `--orbit-bg` fill,
+ * `--orbit-border` ring, `font-semibold`, and `--orbit-text` - all driven off
  * `aria-selected` via Tailwind variants so the visual and ARIA state can never
  * drift. The orbit accent risks vanishing against the `--mount-bg` card it sits
  * on (accent ≈ card surface in dark themes); the `--orbit-border` vs
@@ -71,34 +71,15 @@ export default function ResponseTabs({ endpoint }: ResponseTabsProps) {
   const root = endpointHeadingId(endpoint.method, endpoint.path);
   const panelId = `${root}-resp-panel`;
 
-  // GUARD: the dynamic panel tabIndex/ring below (driven by hasFocusableContent)
-  // is focus-loss-safe (SC 2.4.3) ONLY because selection is driven EXCLUSIVELY
-  // by tab ACTIVATION — arrow-auto-activate, click, Enter/Space — which always
-  // holds focus ON A TAB, never on the shared panel. So the panel's tabIndex
-  // only ever flips while focus is upstream in the tablist, never on the panel
-  // itself. Do NOT add hover-select, programmatic select, or deep-link
-  // auto-select without an explicit focus move: any such path could drop the
-  // panel's tab stop while focus sits on it, reintroducing the focus-loss case.
+  // panel tabIndex is focus-loss-safe only because select follows tab activation; don't add hover/deep-link select
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  // Arrow/Home/End keyboard navigation comes from the shared hook: it focuses
-  // the destination tab and fires its click, so selection follows focus
-  // through `onClick` below (automatic activation). The selected tab keeps
-  // focus; the re-render flips the roving tabindex onto it.
+  // shared hook drives arrow/Home/End nav: focuses + clicks the target tab
   const tablistReference = useRef<HTMLDivElement>(null);
   useTabNavigation(tablistReference);
 
   const selectedResponse = responses[selectedIndex];
-  // SINGLE SOURCE OF TRUTH for the shared panel's focusability, used THRICE
-  // below (panel tabIndex, panel ring, example CodeBlock render) so the three
-  // can never drift: a present response schema means the example-response
-  // CodeBlock renders its OWN focusable <pre> scroll region, so the panel drops
-  // its tab stop + ring (a ring on a non-focusable element is dead paint, and a
-  // second tab stop would be a duplicate); a schema-less response shows only the
-  // read-only "No response body" paragraph, so the panel itself stays the
-  // keyboard-reachable focus stop (tabIndex={0} + ring). ASSUMPTION: SchemaTable
-  // has NO focusable descendants (true today); if it ever gains sortable or
-  // expandable rows, this predicate must widen to include them.
+  // single source for panel focusability; assumes SchemaTable has no focusable rows, widen if that ever changes
   const hasFocusableContent = selectedResponse.schema !== undefined;
 
   const REASON_PHRASES: Record<string, string> = {
@@ -152,9 +133,7 @@ export default function ResponseTabs({ endpoint }: ResponseTabsProps) {
       <div
         role="tabpanel"
         id={panelId}
-        // aria-labelledby points ONLY at the selected status tab, never at the
-        // CodeBlock's own label: two properly-nested named regions (panel "200"
-        // ▸ group "Example response body"), kept distinct.
+        // labelledby points only at the selected tab, not the CodeBlock label
         aria-labelledby={responseTabId(endpoint, selectedResponse)}
         tabIndex={hasFocusableContent ? undefined : 0}
         className={hasFocusableContent ? undefined : FOCUS_RING}

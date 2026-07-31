@@ -1,16 +1,8 @@
 /*
- * Tests for DyslexicFontToggle.
- *
- * The component delegates the actual font-state flip to ThemeContext
- * (`enableDyslexicFont` / `disableDyslexicFont`, exercised in
- * `useThemeState.test`). Its rendered switch state is owned by the
- * `user-toggles-dyslexic-font` Tuffgal story (mirroring CvdModeToggle, which
- * has no unit test at all), so this file keeps only the behaviors a story
- * can't observe: the exact `PATCH /users/me` payload on toggle (which must
- * carry `dyslexicFont` alone, with no `theme` field riding along, unlike CVD
- * mode) and the optimistic-flip rollback when that persist fails. The context
- * and api are mocked so the test can drive both directions and the error path
- * deterministically.
+ * The switch's rendered state is owned by the `user-toggles-dyslexic-font`
+ * Tuffgal story, so this file keeps only what a story can't observe: the
+ * `PATCH /users/me` payload carries `dyslexicFont` alone (no `theme`, unlike
+ * CVD mode), and the optimistic flip rolls back when the persist fails.
  */
 
 import DyslexicFontToggle from './DyslexicFontToggle';
@@ -79,7 +71,7 @@ describe('DyslexicFontToggle', () => {
     fireEvent.click(screen.getByRole('switch'));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Network down');
-    // Optimistic enable, then a revert back to disabled.
+    // optimistic enable, then a revert back to disabled
     expect(mockTheme.enableDyslexicFont).toHaveBeenCalledTimes(1);
     expect(mockTheme.disableDyslexicFont).toHaveBeenCalledTimes(1);
   });

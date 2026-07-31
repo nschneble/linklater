@@ -35,8 +35,7 @@ describe('useReannounce', () => {
 
     rerender({ trigger: 1, message: 'Your theme saved.' });
 
-    // Cleared immediately on the trigger change; the message only lands once
-    // the delay elapses.
+    // cleared immediately on the trigger change; the message lands only after the delay
     expect(result.current).toBe('');
     act(() => {
       vi.advanceTimersByTime(50);
@@ -56,8 +55,7 @@ describe('useReannounce', () => {
     });
     expect(result.current).toBe('Your theme saved.');
 
-    // A second announcement with the SAME message bumps the trigger: the region
-    // must clear to '' first so the re-set is a genuine text-node change.
+    // same message, bumped trigger: clear to '' first so the re-set is a real text-node change
     rerender({ trigger: 2, message: 'Your theme saved.' });
     expect(result.current).toBe('');
 
@@ -73,22 +71,17 @@ describe('useReannounce', () => {
       { initialProps: { trigger: 0, message: 'Your theme saved.' } },
     );
 
-    // Bump the trigger with message A, which fires the effect (clear + schedule
-    // the 50ms timer) while message A is current.
+    // bump the trigger with message A: fires the effect (clear + schedule the 50ms timer)
     rerender({ trigger: 1, message: 'Your theme saved.' });
 
-    // Now change the message to B while the trigger STAYS FIXED, so the effect
-    // does NOT re-run (its only dep is trigger). The pending timer is still the
-    // one scheduled under message A; only the ref has moved on. This isolates a
-    // ref READ from a closure CAPTURE: a closure-captured message announces A.
+    // message B, trigger fixed (effect won't re-run): isolates a ref READ vs a closure CAPTURE
     rerender({ trigger: 1, message: 'Reverted to previous colors.' });
 
     act(() => {
       vi.advanceTimersByTime(50);
     });
 
-    // The ref read wins: the timer announces the LATEST message (B), proving the
-    // effect didn't capture message A at scheduling time.
+    // ref read wins: the timer announces the latest message (B), not the captured A
     expect(result.current).toBe('Reverted to previous colors.');
   });
 

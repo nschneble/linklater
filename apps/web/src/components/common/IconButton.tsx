@@ -74,9 +74,7 @@ const variantClassesByHost: Record<Surface, Record<Variant, string>> = {
   base: {
     default: `${SMALL_PADDING} hover:bg-[var(--mount-bg)] disabled:bg-inherit aria-disabled:bg-inherit ring-1 ring-[var(--base-border)] text-[var(--base-text)] ${FOCUS_RING} disabled:active:scale-100 aria-disabled:active:scale-100`,
     danger: `${SMALL_PADDING} hover:bg-[var(--alert-bg)] ring-1 ring-[var(--alert-border)] text-[var(--alert-text)] ${FOCUS_RING_DANGER}`,
-    // danger-filled paints --alert-highlight as its fill, so the focus
-    // ring switches to --alert-highlight-fg – a same-color ring would
-    // paint 1:1 invisible. Recovery A, Toast precedent.
+    // danger-filled fills highlight, so ring uses highlight-fg (else invisible)
     'danger-filled': `${SMALL_PADDING} bg-[var(--alert-highlight)] hover:bg-[var(--alert-highlight-hover)] ring-1 ring-[var(--alert-highlight)] hover:ring-[var(--alert-highlight-hover)] text-[var(--alert-highlight-fg)] ${FOCUS_RING_DANGER_FILLED}`,
     ghost: `${SMALL_PADDING} ring-1 ring-[var(--base-border)] text-[var(--base-alt-text)] ${FOCUS_RING}`,
     elevated: `pl-3.5 pr-4 py-2 bg-[var(--mount-bg)] disabled:bg-[var(--mount-bg)] aria-disabled:bg-[var(--mount-bg)] hover:bg-[var(--orbit-bg)] border-shadow hover:border-shadow text-[var(--mount-text)] font-semibold ${FOCUS_RING} disabled:active:scale-100 aria-disabled:active:scale-100`,
@@ -89,18 +87,12 @@ const variantClassesByHost: Record<Surface, Record<Variant, string>> = {
     elevated: `pl-3.5 pr-4 py-2 bg-[var(--orbit-bg)] disabled:bg-[var(--orbit-bg)] aria-disabled:bg-[var(--orbit-bg)] hover:bg-[var(--mount-bg)] border-shadow hover:border-shadow text-[var(--orbit-text)] font-semibold ${FOCUS_RING} disabled:active:scale-100 aria-disabled:active:scale-100`,
   },
   orbit: {
-    // Default/ghost on orbit host: no hover-bg slot exists (no `over-orbit`
-    // tier in the bundle system). No consumer exercises default/ghost hover
-    // on orbit today – ApiTokenRow uses only `danger` + `ghost`, and ghost
-    // carries no hover-bg in any host. If a future consumer needs default
-    // hover or elevated on orbit, STOP and add the slot per
-    // [[feedback-bundle-slot-add-reverify]] – do not silently fall back.
+    // no over-orbit hover slot; add one before using it here, don't fall back
     default: `${SMALL_PADDING} disabled:bg-inherit aria-disabled:bg-inherit ring-1 ring-[var(--orbit-border)] text-[var(--orbit-text)] ${FOCUS_RING} disabled:active:scale-100 aria-disabled:active:scale-100`,
     danger: `${SMALL_PADDING} hover:bg-[var(--alert-bg)] ring-1 ring-[var(--alert-border)] text-[var(--alert-text)] ${FOCUS_RING_DANGER}`,
     'danger-filled': `${SMALL_PADDING} bg-[var(--alert-highlight)] hover:bg-[var(--alert-highlight-hover)] ring-1 ring-[var(--alert-highlight)] hover:ring-[var(--alert-highlight-hover)] text-[var(--alert-highlight-fg)] ${FOCUS_RING_DANGER_FILLED}`,
     ghost: `${SMALL_PADDING} ring-1 ring-[var(--orbit-border)] text-[var(--orbit-alt-text)] ${FOCUS_RING}`,
-    // `elevated` on orbit host has no over-orbit slot. Marked unsupported;
-    // no consumer reaches this combination.
+    // elevated on orbit has no over-orbit slot; unsupported and unused
     elevated: `pl-3.5 pr-4 py-2 bg-[var(--orbit-bg)] disabled:bg-[var(--orbit-bg)] aria-disabled:bg-[var(--orbit-bg)] border-shadow text-[var(--orbit-text)] font-semibold ${FOCUS_RING} disabled:active:scale-100 aria-disabled:active:scale-100`,
   },
 };
@@ -118,8 +110,7 @@ export default function IconButton({
     ? 'opacity-0 scale-95 pointer-events-none'
     : 'opacity-100 scale-100';
 
-  // Skip DISABLED when hidden: `disabled:opacity-60` has higher CSS specificity
-  // than `opacity-0` and would render hidden buttons at 60% opacity instead of invisible.
+  // skip disabled when hidden (disabled:opacity-60 outranks opacity-0)
   const disabledClasses = hidden ? '' : DISABLED;
 
   return (
@@ -127,11 +118,7 @@ export default function IconButton({
       className={`inline-flex items-center justify-center gap-1.5 text-xs rounded-full cursor-pointer ${disabledClasses} active:scale-[0.96] transition duration-200 ${variantClassesByHost[surface][variant]} ${visibilityClasses} ${className}`}
       type="button"
       data-surface={surface}
-      // GOTCHA: `disabled` + `aria-hidden` together give complete AT isolation:
-      // `disabled` removes the button from the tab order and interactive AT tree;
-      // `aria-hidden` seals browse-mode traversal (e.g. NVDA arrow keys) so screen
-      // readers don't announce the invisible button's text. `aria-hidden` is safe
-      // here because `disabled` already makes the element non-focusable.
+      // disabled + aria-hidden hide from AT; disabled already blocks focus
       disabled={hidden || disabled}
       aria-hidden={hidden || undefined}
       tabIndex={hidden ? -1 : undefined}

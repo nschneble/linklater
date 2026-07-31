@@ -42,9 +42,7 @@ describe('SuggestionsController', () => {
     );
   });
 
-  // `count` coercion, defaulting, and range validation now live in
-  // SuggestionsQueryDto (see suggestions-query.dto.spec.ts). The controller
-  // receives an already-validated DTO, so these tests only prove delegation.
+  // validation lives in SuggestionsQueryDto; these only prove delegation
   const makeQuery = (count = DEFAULT_COUNT) => ({ count });
 
   it('forwards the default count through to the service', async () => {

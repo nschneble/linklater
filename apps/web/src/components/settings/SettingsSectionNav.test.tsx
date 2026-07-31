@@ -1,5 +1,5 @@
 /*
- * Tests for SettingsSectionNav – the mobile-only horizontal chip nav for
+ * Tests for SettingsSectionNav: the mobile-only horizontal chip nav for
  * Settings sections.
  *
  * The active-state expression is the load-bearing piece: `aria-current="page"`

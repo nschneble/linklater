@@ -30,18 +30,18 @@ interface UseLinksViewOptions {
 
 /**
  * Controller hook for `LinksView`. Composes the focused sub-hooks that own
- * each slice of state — URL-derived filter, search debounce
+ * each slice of state: the URL-derived filter, search debounce
  * (`useSearchDebounce`), keyboard selection (`useLinkSelection`), and the
- * aggregated error (`useAggregatedError`) — wires up keyboard shortcuts, and
+ * aggregated error (`useAggregatedError`). Wires up keyboard shortcuts and
  * re-exposes a single, stable API. The shortcuts modal flag and the
  * clear-read animation flag stay here because they are small and coupled to
  * this hook's wiring.
  *
  * What stays in the view:
- * - `dialogReference` – attached to a JSX element and consumed directly by
+ * - `dialogReference`: attached to a JSX element and consumed directly by
  *   `useFocusTrap`; threading it through the hook would add complexity with
  *   no benefit.
- * - `useFocusTrap` + `useFocusReturn` – one-liner DOM hooks that sit next to
+ * - `useFocusTrap` + `useFocusReturn`: one-liner DOM hooks that sit next to
  *   their respective refs in the JSX.
  */
 export function useLinksView({
@@ -61,12 +61,9 @@ export function useLinksView({
     if (showShortcuts) onCloseUserMenu?.();
   }, [showShortcuts, onCloseUserMenu]);
 
-  // Clears the in-flight clear-read flag whenever the filter changes (e.g.
-  // switching between the unread and read tabs). Search and selection resets
-  // on filter change are owned by `useSearchDebounce` and `useLinkSelection`;
-  // this flag lives here, so its reset does too. Without it, navigating away
-  // mid clear-read leaves cards stuck with `pointer-events-none` and the
-  // clear control disabled (transient WCAG 2.1.1 operability regression).
+  // reset the clear-read flag on filter change; without it, navigating away
+  // mid clear-read leaves cards stuck `pointer-events-none` and the clear
+  // control disabled (transient WCAG 2.1.1 operability regression)
   useEffect(() => {
     setIsClearingRead(false);
   }, [filter]);
@@ -74,12 +71,10 @@ export function useLinksView({
   const { search, debouncedSearch, setSearch } = useSearchDebounce(filter);
   const linksResult = useLinks(filter, debouncedSearch);
 
-  // Report the save-link dialog's open state up to AppShell so it can `inert`
-  // its own chrome (Header, banner, skip link) outside the dialog's subtree.
-  // The cleanup resets to `false` on unmount: AppShell swaps views via a
-  // ternary rather than keeping LinksView mounted, so without this reset,
-  // navigating away with the dialog open would leave that chrome permanently
-  // inert on the next view.
+  // report the save-link dialog's open state so AppShell can `inert` its own
+  // chrome outside the dialog's subtree. The unmount cleanup resets `false`
+  // because AppShell swaps views via a ternary; without it, navigating away
+  // with the dialog open would leave that chrome permanently inert
   useEffect(() => {
     onLinkFormOpenChange?.(linksResult.showLinkForm);
     return () => onLinkFormOpenChange?.(false);
@@ -98,9 +93,9 @@ export function useLinksView({
   });
 
   useKeyboardShortcuts({
-    // Gated by the device-local preference so a user who disables shortcuts in
-    // Settings gets no single-key handlers (WCAG 2.1.4). Named keys (arrows,
-    // Enter, Escape) stay live regardless; they are exempt from 2.1.4.
+    // gated by the device-local preference so a user who disables shortcuts
+    // gets no single-key handlers (WCAG 2.1.4). Named keys (arrows, Enter,
+    // Escape) stay live regardless, exempt from 2.1.4
     singleKeyShortcutsEnabled: shortcutsEnabled,
     isShortcutsModalOpen: showShortcuts,
     onShowUnread: () => navigate('/unread'),

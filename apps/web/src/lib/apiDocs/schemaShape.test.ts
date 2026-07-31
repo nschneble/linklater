@@ -118,8 +118,7 @@ describe('toSchemaRows', () => {
       },
     };
 
-    // Depth 1 is where an array-of-object item table renders (e.g. paginated
-    // `data[]`); its own object props must still expand, not collapse to a note.
+    // depth 1 is the array-of-object item level; its props must still expand
     const [row] = toSchemaRows(schema, 1);
     expect(row.nested).toMatchObject({
       kind: 'object',
@@ -135,7 +134,7 @@ describe('toSchemaRows', () => {
       },
     };
 
-    // At depth 2, an expandable object resolves to a note rather than a table.
+    // at depth 2 an expandable object resolves to a note rather than a table
     const [row] = toSchemaRows(schema, 2);
     expect(row.nested).toEqual({ kind: 'note' });
   });
@@ -151,17 +150,13 @@ describe('toSchemaRows', () => {
       },
     };
 
-    // At depth 2, an expandable array-of-object also collapses to a note
-    // rather than recursing into a third nested table.
+    // at depth 2 an array-of-object collapses to a note, no third nested table
     const [row] = toSchemaRows(schema, 2);
     expect(row.nested).toEqual({ kind: 'note' });
   });
 
   it('expands a nullable typed-ref property once the resolver flattens it', () => {
-    // The `meta` property arrives from @nestjs/swagger as a nullable typed-ref
-    // (`allOf`-wrapped). Before the resolver flattened `allOf`, its `type:
-    // 'object'` had no `properties`, so it rendered as a bare scalar row with
-    // no nested table. Post-flatten it expands like any other nested object.
+    // `meta` is an allOf-wrapped nullable typed-ref; flattening lets it expand
     const schemas: Record<string, OpenAPIV3.SchemaObject> = {
       Meta: {
         type: 'object',

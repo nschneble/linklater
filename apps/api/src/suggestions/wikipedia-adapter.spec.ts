@@ -45,7 +45,7 @@ describe('WikipediaAdapter', () => {
     adapter = new WikipediaAdapter();
     fetchMock = jest.fn();
     (global as { fetch: unknown }).fetch = fetchMock;
-    // Failure-path tests exercise the warn branch on purpose; keep it quiet.
+    // failure-path tests exercise the warn branch on purpose; keep it quiet
     jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
   });
 

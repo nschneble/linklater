@@ -7,14 +7,14 @@ import { METADATA_WORKER_CONCURRENCY } from './metadata.constants.js';
 /**
  * Fetches and stores Open Graph / Twitter Card metadata for saved links.
  * Runs as a pg-boss queue worker so that metadata fetching is decoupled from
- * the HTTP request that creates the link – the link creation endpoint returns
+ * the HTTP request that creates the link: the link creation endpoint returns
  * immediately, and metadata appears asynchronously.
  *
  * Security: all outgoing fetch requests are guarded by the resolving SSRF
  * defence in `MetadataFetcherService` (`safeFetch`), which resolves each host
  * to its IP(s), validates every address against the private ranges, follows
  * redirects manually with per-hop re-validation, and pins the connection to a
- * validated address – preventing Server-Side Request Forgery (SSRF) attacks
+ * validated address, preventing Server-Side Request Forgery (SSRF) attacks
  * where a malicious URL (directly, via a DNS record, or via a redirect) could
  * cause the server to make requests to internal services.
  */
@@ -58,7 +58,7 @@ export class MetadataService implements OnModuleInit {
    * IDEMPOTENT: safe under pg-boss at-least-once delivery. The `Meta` write
    * is a `upsert` keyed on `linkId`, so a redelivered job overwrites with
    * the same content rather than producing a duplicate row. The searchVector
-   * `$executeRaw UPDATE` is similarly idempotent – running it twice produces
+   * `$executeRaw UPDATE` is similarly idempotent; running it twice produces
    * the same tsvector. Redelivery re-fetches the URL (wasteful but not
    * corrupting); if hot path bandwidth becomes a concern, gate on
    * `meta.fetchedAt` at the start of the handler.
@@ -93,10 +93,9 @@ export class MetadataService implements OnModuleInit {
         },
       });
 
-      // Update the full-text search vector with the newly fetched content so
-      // that searches immediately find the link by title, description, or site name.
-      // unaccent() collapses diacritics so "Montréal" indexes the same as "Montreal";
-      // the search side mirrors this in LinksService.findAllByText (Postel's Law).
+      // update the search vector; unaccent() collapses diacritics so
+      // "Montréal" indexes the same as "Montreal", mirrored on the search
+      // side in LinksService.findAllByText (Postel's Law)
       await this.prisma.$executeRaw`
         UPDATE "Link" SET "searchVector" = to_tsvector('english', unaccent(
           coalesce(${metadata.title}, '') || ' ' ||
@@ -107,8 +106,8 @@ export class MetadataService implements OnModuleInit {
       `;
     } catch (error) {
       this.logger.warn(`Metadata fetch failed for ${url}: ${String(error)}`);
-      // Record that a fetch attempt was made (setting fetchedAt) even on failure.
-      // Without this, the front-end polling hook would never stop polling.
+      // record the attempt (fetchedAt) even on failure, else the front-end
+      // polling hook would never stop polling
       await this.prisma.meta
         .upsert({
           where: { linkId },

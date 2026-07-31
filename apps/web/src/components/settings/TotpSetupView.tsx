@@ -13,7 +13,7 @@ interface TotpSetupViewProps {
   secret: string;
   /** Current 6-digit verification code value (controlled). */
   code: string;
-  /** Ref to the verification code input – used by the parent to focus on mount. */
+  /** Ref to the verification code input - used by the parent to focus on mount. */
   codeInputReference: RefObject<HTMLInputElement | null>;
   /** Disables the form while a verify or cancel request is in flight. */
   loading: boolean;
@@ -49,10 +49,7 @@ export default function TotpSetupView({
 }: TotpSetupViewProps) {
   const formReference = useRef<HTMLFormElement>(null);
 
-  // NOTE: Auto-submit on 6th digit. `requestSubmit()` (not `.submit()`) so
-  // React's synthetic `onSubmit` handler runs and validation fires. The
-  // advisory hint near the label tells users this will happen, per WCAG
-  // 3.2.2 (On Input).
+  // requestSubmit() (not .submit()) on 6th digit so React onSubmit fires
   useEffect(() => {
     if (/^\d{6}$/.test(code)) {
       formReference.current?.requestSubmit();
@@ -73,7 +70,7 @@ export default function TotpSetupView({
        * it, so the manual secret below is the canonical pathway and the
        * surrounding copy already explains both options.
        *
-       * Do NOT add `themed-asset` to this img – the day-for-night filter
+       * Do NOT add `themed-asset` to this img - the day-for-night filter
        * (hue-rotate + invert) breaks QR scannability in camera apps, which
        * read finder-pattern polarity. Hard exclusion per
        * `[[feedback-asset-filter-exclusion]]`.

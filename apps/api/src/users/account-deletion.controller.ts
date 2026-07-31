@@ -57,7 +57,7 @@ export class AccountDeletionController {
   })
   @ApiResponse({ status: 429, description: 'Too many confirmation attempts.' })
   @UseGuards(CustomThrottlerGuard)
-  // 15-min window: credential brute-force slowdown on the deletion confirm step
+  // 15-min window: brute-force slowdown on the deletion confirm step
   @Throttle({ default: { ttl: 900000, limit: 5 } })
   @ThrottleMessage('Too many confirmation attempts')
   @Post('confirm')

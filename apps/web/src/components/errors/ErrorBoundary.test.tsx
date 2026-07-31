@@ -24,8 +24,7 @@ function Child({ crash }: { crash: boolean }) {
 // ─── Setup ────────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
-  // getDerivedStateFromError + componentDidCatch log to console.error; keep
-  // the expected-error noise out of the test output.
+  // silence expected console.error noise from the error lifecycle hooks
   vi.spyOn(console, 'error').mockImplementation(() => undefined);
 });
 

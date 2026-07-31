@@ -43,8 +43,7 @@ describe('useSearchDebounce', () => {
     act(() => vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS));
     expect(result.current.debouncedSearch).toBe('duck');
 
-    // Emptying the search takes the fast path: no timer, cleared on the
-    // next render without advancing the clock.
+    // emptying search takes the fast path: cleared next render, no timer
     act(() => result.current.setSearch(''));
     expect(result.current.debouncedSearch).toBe('');
   });

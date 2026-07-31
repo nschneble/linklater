@@ -24,8 +24,7 @@ import type { User } from '../../auth/AuthContext/types';
 
 const fetchOpenApiMock = vi.fn<() => Promise<NormalizedApi>>();
 
-// Stub the spec fetch so the endpoint list renders deterministically. The real
-// `parseOpenApi`/`resolveOpenApiUrl` stay intact (only `fetchOpenApi` swapped).
+// stub the spec fetch; the real parseOpenApi/resolveOpenApiUrl stay intact
 vi.mock('../../lib/openapi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../lib/openapi')>();
   return {
@@ -34,8 +33,7 @@ vi.mock('../../lib/openapi', async (importOriginal) => {
   };
 });
 
-// Auth drives the visual branch: logged out → brand chrome, logged
-// in → the active theme. Mock it so tests can pick either branch.
+// auth drives the visual branch: logged out → brand, logged in → theme
 vi.mock('../../auth/AuthContext', () => ({
   useAuth: vi.fn(),
 }));
@@ -122,16 +120,13 @@ const linksApi: NormalizedApi = {
 };
 
 beforeEach(() => {
-  // Each test starts from a known title so the SC 2.4.2 assertion is honest.
+  // start from a known title so the SC 2.4.2 assertion is honest
   document.title = 'unset';
   window.sessionStorage.clear();
-  // The header a11y contract is auth-agnostic; default to the brand (logged-out)
-  // branch. The dedicated "visual branch" describe overrides per case.
+  // header a11y contract is auth-agnostic; default to the logged-out branch
   mockAuth(null);
   fetchOpenApiMock.mockReset();
-  // Default to a never-settling fetch so the structural chrome tests assert
-  // against the loading state and never trigger a post-test state update (act
-  // warning). The one test that needs the rendered list opts into `linksApi`.
+  // never-settling fetch keeps tests in the loading state (no act warning)
   fetchOpenApiMock.mockReturnValue(new Promise(() => {}));
 });
 
@@ -164,15 +159,14 @@ describe('ApiDocsView a11y contract', () => {
     const nav = screen.getByRole('navigation', { name: 'API docs' });
     const h1 = screen.getByRole('heading', { level: 1, name: 'Linklater API' });
 
-    // Cheap structural check: the header element contains the nav, and the
-    // nav appears before the h1's parent within the header.
+    // structural check: header contains the nav, before the h1
     const header = container.querySelector('header');
     expect(header).toBeTruthy();
     expect(header).toContainElement(nav);
     expect(header).toContainElement(h1);
 
     const order = nav.compareDocumentPosition(h1);
-    // Node.DOCUMENT_POSITION_FOLLOWING = 4 means h1 comes after nav.
+    // Node.DOCUMENT_POSITION_FOLLOWING = 4 means h1 comes after nav
     expect(order & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
@@ -201,12 +195,9 @@ describe('ApiDocsView a11y contract', () => {
     });
     const main = screen.getByRole('main', { name: 'API documentation' });
 
-    // The skip link targets the main landmark by fragment id.
+    // the skip link targets the main landmark by fragment id
     expect(skipLink).toHaveAttribute('href', `#${main.id}`);
-    // tabIndex=-1 turns the non-interactive landmark into a valid focus
-    // target: without it, activating the skip link scrolls but strands
-    // keyboard focus. A bare <main> cannot hold programmatic focus in jsdom,
-    // so this focus round-trip is a genuine oracle for the fix.
+    // tabindex=-1 makes <main> focusable; without it the skip link strands focus
     expect(main).toHaveAttribute('tabindex', '-1');
     main.focus();
     expect(main).toHaveFocus();
@@ -251,8 +242,7 @@ describe('ApiDocsView a11y contract', () => {
   it('has no positive tabindex anywhere in the rendered tree', () => {
     const { container } = renderApiDocs();
 
-    // Any tabindex other than "0" or "-1" is a positive-tabindex anti-pattern
-    // (SC 2.4.3 – Focus Order).
+    // any tabindex other than "0"/"-1" is an anti-pattern (SC 2.4.3 Focus Order)
     const positiveTabindex = container.querySelector(
       '[tabindex]:not([tabindex="0"]):not([tabindex="-1"])',
     );
@@ -292,12 +282,7 @@ describe('ApiDocsView a11y contract', () => {
   });
 });
 
-/*
- * The dual visual branch, verified via class-string + inline-style
- * assertions on the page wrapper (no dev server, per
- * [[feedback-token-plumbing-verify]]). The wrapper is the first <div> the
- * component renders; we read it from the rendered container.
- */
+// checks the dual visual branch via class-string + inline-style on the wrapper
 describe('ApiDocsView visual branch', () => {
   /** The page wrapper is the first element rendered inside the router. */
   function wrapper(container: HTMLElement): HTMLElement {
@@ -321,9 +306,7 @@ describe('ApiDocsView visual branch', () => {
       mockAuth(null);
       const { container } = renderApiDocs();
       const node = wrapper(container);
-      // The wrapper shadows <html data-theme> for its subtree so the
-      // token-driven children resolve to the brand palette via the
-      // branding.css cascade (no inline token pins).
+      // wrapper shadows <html data-theme>, so children take the branding.css cascade
       expect(node.getAttribute('data-theme')).toBe('branding');
       expect(node.style.getPropertyValue('--base-bg')).toBe('');
       expect(node.style.getPropertyValue('--mount-border')).toBe('');
@@ -347,8 +330,7 @@ describe('ApiDocsView visual branch', () => {
       const { container } = renderApiDocs();
       const node = wrapper(container);
       expect(node.className).not.toContain('bg-hit-man');
-      // No data-theme override – the <html> active-theme cascade supplies
-      // every slot.
+      // no data-theme override; the <html> active-theme cascade supplies every slot
       expect(node.getAttribute('data-theme')).toBeNull();
       expect(node.style.getPropertyValue('--base-bg')).toBe('');
     });

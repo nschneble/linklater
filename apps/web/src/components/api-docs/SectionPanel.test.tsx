@@ -16,8 +16,7 @@ describe('SectionPanel', () => {
       </SectionPanel>,
     );
 
-    // Exactly one root node – no wrapping container that would break the
-    // sibling-of-tablist relationship the top-level tab nav depends on.
+    // exactly one root node; a wrapper breaks the sibling-of-tablist nav
     expect(container.childNodes).toHaveLength(1);
 
     const panel = screen.getByRole('tabpanel');
@@ -41,7 +40,7 @@ describe('SectionPanel', () => {
         <span>content</span>
       </SectionPanel>,
     );
-    // Real HTML boolean attribute, and the children remain mounted underneath.
+    // real HTML boolean attribute; children stay mounted underneath
     expect(panel).toHaveAttribute('hidden');
     expect(panel).toHaveTextContent('content');
   });

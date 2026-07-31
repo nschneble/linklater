@@ -32,7 +32,7 @@ describe('useSkeletonPresence', () => {
     );
 
     rerender({ pending: false });
-    // Still mounted so the lift-out transition has time to play.
+    // still mounted so the lift-out transition has time to play
     expect(result.current).toBe(true);
 
     act(() => {
@@ -55,8 +55,7 @@ describe('useSkeletonPresence', () => {
     rerender({ pending: true });
     expect(result.current).toBe(true);
 
-    // The unmount scheduled by the settle must have been cleared, so advancing
-    // past its deadline leaves the re-asserted skeleton mounted.
+    // the scheduled unmount was cleared, so it stays mounted past deadline
     act(() => {
       vi.advanceTimersByTime(EXIT_MS);
     });

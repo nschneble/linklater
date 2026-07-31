@@ -57,9 +57,7 @@ describe('assertValidCustomTheme', () => {
   });
 
   it('rejects an oversized payload before inspecting keys', () => {
-    // Oversized AND carrying an invalid token key: the size guard must run
-    // first, so the thrown message is about size, not the unknown key. This
-    // proves ordering, not merely that an oversized payload is rejected.
+    // oversized AND an invalid key: size guard must run before the key check
     const giant = '#' + 'a'.repeat(MAX_CUSTOM_THEME_BYTES);
     expect(() =>
       assertValidCustomTheme({ dark: { '--not-a-real-token': giant } }),
@@ -67,9 +65,7 @@ describe('assertValidCustomTheme', () => {
   });
 
   it('accepts a payload of exactly MAX_CUSTOM_THEME_BYTES and rejects one byte over', () => {
-    // The size check is a strict `>`, so the limit itself must be accepted.
-    // Sizing the value from the measured overhead pins both sides of the
-    // boundary: a flip to `>=` would reject the at-limit payload and fail here.
+    // size check is strict `>`; `>=` would wrongly reject the at-limit payload
     const overheadBytes = Buffer.byteLength(
       JSON.stringify({ dark: { '--base-bg': '' } }),
       'utf8',
@@ -92,9 +88,7 @@ describe('assertValidCustomTheme', () => {
   });
 
   it('rejects __proto__ as a top-level mode key', () => {
-    // JSON.parse creates a real own `__proto__` property (unlike an object
-    // literal, which would set the prototype instead), so this exercises the
-    // guard the way a crafted request body actually arrives.
+    // JSON.parse makes a real own `__proto__`, unlike an object literal
     const payload = JSON.parse('{"__proto__":{"--base-bg":"#000000"}}');
     expect(() => assertValidCustomTheme(payload)).toThrow(BadRequestException);
   });
@@ -114,8 +108,7 @@ describe('assertValidCustomTheme', () => {
   });
 
   it('exposes the full 53-token vocabulary mirrored from the web editor', () => {
-    // 7 bundles x 7 slots = 49, plus base subtle-text, base/mount input-bg,
-    // and the universal focus ring.
+    // 49 (7 bundles x 7 slots) + subtle-text, base/mount input-bg, focus ring
     expect(CUSTOM_THEME_TOKEN_KEYS.size).toBe(53);
     expect(CUSTOM_THEME_TOKEN_KEYS.has('--success-highlight-fg')).toBe(true);
     expect(CUSTOM_THEME_TOKEN_KEYS.has('--base-subtle-text')).toBe(true);

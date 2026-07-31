@@ -3,7 +3,7 @@
 //   1. Every fa-* token that resolves to a real FA icon gets listed.
 //   2. Every existing manifest entry not seen in source gets dropped.
 //   3. Unknown fa-* tokens (no matching icon in either catalog) abort the
-//      sync. These are almost always typos or grep artifacts – silently
+//      sync. These are almost always typos or grep artifacts - silently
 //      dropping them would mask real bugs.
 //
 // Family routing for icons that appear in only one catalog is unambiguous.
@@ -173,9 +173,7 @@ async function main() {
     regularNames,
   });
 
-  // Route through prettier so the on-disk file matches the formatter's output
-  // even when prettier chooses single-line for short arrays. Without this, the
-  // first format pass after a sync would re-diff the file.
+  // route through prettier so the file matches formatter output, no re-diff
   const [serialized, currentBytes] = await Promise.all([
     formatJson(manifest),
     readFile(paths.manifestPath, 'utf8'),
@@ -200,7 +198,7 @@ async function main() {
   console.log(lines.join('\n'));
 }
 
-// Run as CLI when executed directly, skip when imported by tests.
+// run as CLI when executed directly, skip when imported by tests
 const invokedAsScript =
   import.meta.url === `file://${process.argv[1]}` ||
   process.argv[1]?.endsWith('sync-fa-manifest.mjs');

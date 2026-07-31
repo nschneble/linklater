@@ -145,8 +145,7 @@ describe('OAuthAccountService', () => {
         userOAuthServiceMock.createOAuthUserAndLink,
       ).not.toHaveBeenCalled();
       expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
-      // Already-verified account: a legitimately-set password must survive
-      // linking a second provider – no invalidation.
+      // already-verified account: password survives linking a second provider
       expect(
         usersServiceMock.verifyEmailAndInvalidateStalePassword,
       ).not.toHaveBeenCalled();

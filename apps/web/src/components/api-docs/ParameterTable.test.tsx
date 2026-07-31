@@ -3,8 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { NormalizedParameter } from '../../lib/openapi';
 
-// A single-location list (all query). The caller partitions by location and
-// picks the caption; ParameterTable no longer carries a per-row "In" column.
+// single-location list (all query); the caller partitions by location and picks the caption
 const parameters: NormalizedParameter[] = [
   {
     name: 'id',
@@ -37,8 +36,7 @@ describe('ParameterTable', () => {
       <ParameterTable caption="Query Parameters" parameters={parameters} />,
     );
 
-    // The spruced table dropped the column-header row: each parameter is a
-    // single scope=row header carrying its name, type and description.
+    // no column-header row; each parameter is a single scope=row header (name, type, description)
     expect(screen.queryAllByRole('columnheader')).toHaveLength(0);
 
     const rowHeaders = screen.getAllByRole('rowheader');
@@ -47,7 +45,7 @@ describe('ParameterTable', () => {
       expect(header).toHaveAttribute('scope', 'row'),
     );
 
-    // The name header inlines the type from describeType().
+    // the name header inlines the type from describeType()
     const idHeader = screen.getByRole('rowheader', { name: /^id:/ });
     expect(idHeader).toHaveTextContent('string');
   });
@@ -56,7 +54,7 @@ describe('ParameterTable', () => {
     render(
       <ParameterTable caption="Query Parameters" parameters={parameters} />,
     );
-    // The "query"/"path" location strings are no longer painted as cells.
+    // the "query"/"path" location strings are not painted as cells
     expect(screen.queryByText('query')).not.toBeInTheDocument();
     expect(screen.queryByText('path')).not.toBeInTheDocument();
   });
@@ -66,8 +64,7 @@ describe('ParameterTable', () => {
       <ParameterTable caption="Query Parameters" parameters={parameters} />,
     );
 
-    // Required-ness now rides on the parameter name: required is bare, optional
-    // gains a trailing "?" (parity with the schema tables).
+    // required is bare, optional gets a trailing "?" (parity with the schema tables)
     expect(screen.getByRole('rowheader', { name: /^id:/ })).toBeInTheDocument();
     expect(
       screen.queryByRole('rowheader', { name: /^id\?/ }),

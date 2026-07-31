@@ -82,23 +82,20 @@ describe('useLinksView', () => {
       wrapper: wrapperAt('/read'),
     });
 
-    // Start a clear-read: the stubbed delete stays pending, so the flag is
-    // latched on until something resets it.
+    // start a clear-read: the stubbed delete stays pending, latching the flag
     act(() => {
       void result.current.handleClearRead();
     });
     expect(result.current.isClearingRead).toBe(true);
 
-    // Navigate /read -> /unread mid-flight. The filter changes, which must
-    // reset the flag even though the delete promise has not settled.
+    // navigate /read -> /unread mid-flight: filter change must reset the flag
     act(() => {
       result.current.onNavigateUnread();
     });
     expect(result.current.filter).toBe('unread');
     expect(result.current.isClearingRead).toBe(false);
 
-    // Settle the pending delete so the `finally` state update flushes inside
-    // act() and no unhandled promise leaks past the test.
+    // settle the pending delete so `finally` flushes in act(), no promise leak
     await act(async () => {
       resolveDeleteAllRead?.();
     });
@@ -117,11 +114,11 @@ describe('useLinksView save-link dialog reporting (onLinkFormOpenChange)', () =>
       { wrapper: wrapperAt('/unread') },
     );
 
-    // Mounted with the dialog closed → reports false.
+    // mounted with the dialog closed → reports false
     expect(onLinkFormOpenChange).toHaveBeenCalledWith(false);
 
     onLinkFormOpenChange.mockClear();
-    // Open the dialog and re-render: the effect dep flips false → true.
+    // open the dialog and re-render: the effect dep flips false → true
     linksStub.showLinkForm = true;
     act(() => rerender());
 
@@ -129,10 +126,7 @@ describe('useLinksView save-link dialog reporting (onLinkFormOpenChange)', () =>
   });
 
   it('resets to false on unmount so navigating away never leaves chrome inert', () => {
-    // AppShell swaps LinksView out via a ternary (it is not kept mounted), so
-    // navigating away with the dialog open unmounts this hook. Without the
-    // cleanup, isSaveLinkDialogOpen would stay stuck true and permanently
-    // inert the Header/banner on the next view.
+    // AppShell unmounts this hook on nav; without cleanup the flag sticks true
     linksStub.showLinkForm = true;
     const onLinkFormOpenChange = vi.fn();
     const { unmount } = renderHook(

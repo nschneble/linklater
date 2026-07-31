@@ -89,13 +89,13 @@ describe('MagicLinkService', () => {
         expect.any(Date),
       );
 
-      // The email must carry the raw 64-char hex token, NOT the hash.
+      // the email must carry the raw 64-char hex token, NOT the hash
       const sendCall = (emailQueueServiceMock.enqueueMagicLink as jest.Mock)
         .mock.calls[0];
       const emailedToken = sendCall[1] as string;
       expect(emailedToken).toMatch(/^[0-9a-f]{64}$/);
       expect(emailedToken).not.toBe(storedHash);
-      // Hashing the emailed token must reproduce the stored value.
+      // hashing the emailed token must reproduce the stored value
       expect(sha256Hex(emailedToken)).toBe(storedHash);
       expect(sendCall[0]).toBe(USER_EMAIL);
       expect(sendCall[2]).toBe('scanner-darkly');

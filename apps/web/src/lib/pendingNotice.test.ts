@@ -110,8 +110,7 @@ describe('setPendingNotice / consumePendingNotice', () => {
     expect(hasPendingNotice()).toBe(false);
   });
 
-  // Magic-link cross-account / same-account / password-reset entries –
-  // queued after the verifyMagicLink and resetPassword flows finish.
+  // magic-link cross/same-account + password-reset entries, queued after verify/reset
 
   it('round-trips account-switched as a warning-variant entry (magic link consumed for a different account)', () => {
     setPendingNotice('account-switched');
@@ -230,16 +229,9 @@ describe('hasPendingNotice', () => {
   });
 });
 
-// Drift guard. Every key in the PendingNotice union MUST round-trip
-// through the catalog with a non-empty message and a valid variant. Without
-// this, a future contributor adding a new key but forgetting to register it
-// in the catalog would ship a silently-dropped notice (consumePendingNotice
-// returns null for unknown keys per the forward-compat guard above).
+// drift guard: every PendingNotice key must round-trip the catalog or ship silently dropped
 describe('catalog drift guard', () => {
-  // Enumerated explicitly because TypeScript erases the union at runtime –
-  // the only way to assert every member is covered is to write them out and
-  // let the compiler trip if PendingNotice gains a new member without this
-  // list being updated.
+  // TypeScript erases the union at runtime, so enumerate; a new member trips the compiler
   const ALL_KEYS: readonly PendingNotice[] = [
     'account-deleted',
     'account-switched',

@@ -15,8 +15,7 @@ const endpoints: NormalizedEndpoint[] = [
 ];
 
 beforeEach(() => {
-  // jsdom does not implement scrollIntoView; stub it so the active-chip effect
-  // can run.
+  // jsdom lacks scrollIntoView; stub it so the active-chip effect can run
   Element.prototype.scrollIntoView = vi.fn();
 });
 

@@ -29,8 +29,7 @@ export default function MethodBadge({ method }: MethodBadgeProps) {
   const { user } = useAuth();
   const label = method.toUpperCase();
 
-  // Themed (logged-in): neutral mount text/border bundle pair, no per-method
-  // color. The token classes resolve to the active theme's mount slots.
+  // themed (logged-in): neutral mount pair, no per-method color
   if (user !== null) {
     return (
       <span
@@ -42,7 +41,7 @@ export default function MethodBadge({ method }: MethodBadgeProps) {
     );
   }
 
-  // Brand (logged-out): per-method palette painted as literals.
+  // brand (logged-out): per-method palette painted as literals.
   const palette = resolveMethodPalette(method);
   return (
     <span

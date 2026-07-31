@@ -7,10 +7,7 @@ import {
   useFocusFirstButton,
 } from './useFocusFirstButton';
 
-// The destructive button renders FIRST in DOM order; the safe button renders
-// second and carries the marker. This mirrors the real ActionGuard consumers
-// (`[Yes/destructive, Cancel/safe]`) so the test proves focus follows the
-// marker, not DOM order.
+// safe button (Cancel) carries the marker; focus follows it, not DOM order
 function Harness({ isActive }: { isActive: boolean }) {
   const reference = useRef<HTMLDivElement>(null);
   useFocusFirstButton(reference, isActive);
@@ -35,7 +32,7 @@ describe('useFocusFirstButton', () => {
     const { getByText } = render(<Harness isActive={true} />);
     await waitForAnimationFrame();
     expect(document.activeElement).toBe(getByText('Cancel'));
-    // The first (destructive) button must NOT receive focus.
+    // the first (destructive) button must NOT receive focus
     expect(document.activeElement).not.toBe(getByText('Yes, delete'));
   });
 

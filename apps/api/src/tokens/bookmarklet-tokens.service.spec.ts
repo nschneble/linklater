@@ -116,8 +116,7 @@ describe('BookmarkletTokensService', () => {
       expect(callArgs.data.name).toBe('Bookmarklet');
       expect(callArgs.data.kind).toBe('BOOKMARKLET');
       expect(callArgs.data.userId).toBe(USER_ID);
-      // mintRawToken runs for real (it is a pure module function, not
-      // injected) – assert shape, not the literal RAW_TOKEN constant.
+      // mintRawToken runs for real, so assert shape not RAW_TOKEN
       expect(callArgs.data.secretValue).toMatch(/^ltk_[A-Za-z0-9_-]+$/);
       expect(result.rawToken).toBe(callArgs.data.secretValue);
     });
@@ -181,8 +180,7 @@ describe('BookmarkletTokensService', () => {
 
       expect(result.id).toBe('bm-regen');
       expect(result.rawToken).toBe(RAW_TOKEN);
-      // The user must never see a 500 just because of a row-level data
-      // glitch – recovery is transparent.
+      // row-level data glitch must not become a 500; recovery transparent
       expect(transactionMock).toHaveBeenCalled();
     });
   });

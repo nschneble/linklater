@@ -13,18 +13,18 @@ interface ComponentShowcaseProps {
   /**
    * The bundle the editor is currently editing. The showcase mirrors the SAME
    * `activeBundle` the tablist drives, so it always previews the component that
-   * bundle paints — never an everything-at-once montage (PRD point 4).
+   * bundle paints - never an everything-at-once montage (PRD point 4).
    */
   activeBundle: Bundle;
   /**
-   * The editor's local color mode. Part of the re-stagger key only — a mode flip
+   * The editor's local color mode. Part of the re-stagger key only - a mode flip
    * repaints the preview, so the mock replays its enter animation (PRD point 10).
    */
   editorMode: Mode;
   /**
    * A monotonically increasing counter the parent bumps on each Randomize. It
    * joins `editorMode` in the mock's remount key so a fresh random palette
-   * re-staggers the showcase in — the editor's "Stumble for colors" landing with
+   * re-staggers the showcase in - the editor's "Stumble for colors" landing with
    * a flourish (PRD point 12).
    */
   randomizeNonce: number;
@@ -40,7 +40,7 @@ interface ComponentShowcaseProps {
  * A short, honest sentence per bundle, describing where in the real app that
  * bundle's colors are used. This copy is REAL app UI (it lives OUTSIDE the
  * aria-hidden mock subtree, in the accessibility tree) so it must read as the
- * app's own voice — concise, truthful, no marketing.
+ * app's own voice - concise, truthful, no marketing.
  */
 export const BUNDLE_EXPLANATIONS: Record<Bundle, string> = {
   base: 'Page defaults. Covers elements like the page title, search input, and navigation buttons.',
@@ -55,7 +55,7 @@ export const BUNDLE_EXPLANATIONS: Record<Bundle, string> = {
 
 /**
  * The preview's macOS-style window chrome: the frame border, title bar, address
- * pill, and the three traffic lights. Deliberately theme-independent — it frames
+ * pill, and the three traffic lights. Deliberately theme-independent - it frames
  * the themed content like a real app window, so it stays constant across every
  * bundle and mode and is never painted from the custom palette.
  */
@@ -69,11 +69,11 @@ const PREVIEW_CHROME = {
 } as const;
 
 /**
- * The decorative mock for the active bundle — the real component that bundle
+ * The decorative mock for the active bundle - the real component that bundle
  * paints, drawn at app scale: base shows the page frame + toolbar; mount shows
  * a link card; orbit shows the header with its account menu; and each status
  * bundle shows its matching notice. Each mirrors its real counterpart's
- * structure (real border widths, real accent placement) but is 100% static —
+ * structure (real border widths, real accent placement) but is 100% static -
  * zero focusable descendants, no handlers, no interactive roles (the parent
  * wraps it in a single aria-hidden container).
  */
@@ -104,9 +104,7 @@ const STATUS_ICONS: Record<Bundle, string> = {
   success: 'fa-solid fa-circle-check',
 };
 
-// Asemic Old Turkic stand-ins for each status notice's banner + toast lines.
-// They feed MockNotice's props; MockNotice renders them verbatim (no string
-// edit there).
+// asemic Old Turkic stand-ins for each notice's banner + toast lines
 const STATUS_COPY: Record<Bundle, { banner: string; toast: string }> =
   MOCK_STATUS_GLYPHS;
 
@@ -119,7 +117,7 @@ const STATUS_COPY: Record<Bundle, { banner: string; toast: string }> =
  * The mock is a PICTURE of the app, not the app: 100% static (no state, no
  * handlers) with zero focusable descendants, wrapped in a single `aria-hidden`
  * container and skipped by the Tab order and the screen-reader cursor. ONLY that
- * container carries the custom palette (`contentThemeStyle`) — so the user
+ * container carries the custom palette (`contentThemeStyle`) - so the user
  * previews their colors (including bad contrast, which is the point) while the
  * explanation and heading render in the always-readable app theme.
  *
@@ -129,7 +127,7 @@ const STATUS_COPY: Record<Bundle, { banner: string; toast: string }> =
  *
  * The mock's visible copy is asemic Old Turkic, rendered in a self-hosted
  * webfont scoped to the `.app-mock-asemic` container alone (see index.css +
- * mockGlyphs), and the container carries `cursor-not-allowed` — together they
+ * mockGlyphs), and the container carries `cursor-not-allowed` - together they
  * read the preview as decoration that is not meant to be interacted with.
  */
 export default function ComponentShowcase({
@@ -140,13 +138,7 @@ export default function ComponentShowcase({
 }: ComponentShowcaseProps) {
   const headingId = useId();
 
-  // The mock's REMOUNT key (§2). A mode flip or a Randomize bumps it to tear
-  // down + rebuild the inner mock, replaying `animate-card-enter` on every piece
-  // (PRD points 10 + 12). A bundle swap is DELIBERATELY absent: it reconciles the
-  // nodes in place so `data-muted` flips on stable DOM and the sub-mocks crossfade
-  // grayscale→color instead of hard-cutting. It is keyed on the INNER aria-hidden
-  // mock ALONE: the section, its sr-only heading, and the explanation stay
-  // mounted, so nothing re-announces and no focus can move.
+  // remount key omits bundle so a bundle swap crossfades in place
   const mockKey = `${editorMode}-${randomizeNonce}`;
 
   return (

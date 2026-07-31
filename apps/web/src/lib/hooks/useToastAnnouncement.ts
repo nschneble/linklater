@@ -42,11 +42,7 @@ export function useToastAnnouncement(
 
   const announcement = useReannounce(trigger, pendingMessage, 0);
 
-  // Stable identity is load-bearing: `useTransientState` lists its `setter` in
-  // the effect deps, so a fresh inline arrow every render would reschedule the
-  // `ms` auto-clear timer on each host re-render (LinksView/SettingsView
-  // re-render often), holding stale toast text in the region well past the
-  // window. Both setters are stable, so an empty dependency array is correct.
+  // stable setter is load-bearing: inline arrow reschedules the timer
   const clearAnnouncement = useCallback(() => {
     setPendingMessage('');
     setTrigger((current) => current + 1);

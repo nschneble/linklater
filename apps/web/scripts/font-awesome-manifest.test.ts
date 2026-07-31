@@ -138,10 +138,7 @@ describe('font-awesome-manifest.json sync', () => {
     ).toEqual({ missing: [], unused: [] });
   });
 
-  // Catch silent-empty regressions (subset-font failure or wrong source path
-  // writes a header-only ~700-900 byte file) and manifest-bloat regressions
-  // (someone adds half the catalog). Ceilings give 3-4x headroom over current
-  // sizes so adding a single icon doesn't trip the test.
+  // guards silent-empty + bloat regressions; ceilings give ~3-4x headroom
   it('subsetted woff2 files are within expected size range', () => {
     const solidPath = resolve(
       paths.webRoot,

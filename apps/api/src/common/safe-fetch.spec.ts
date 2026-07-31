@@ -51,8 +51,7 @@ describe('assertPublicHost', () => {
   });
 
   it('DNS bypass: blocks a public hostname that resolves to a private IP', async () => {
-    // The load-bearing case: hostname is a public string, but its A record
-    // points at the AWS metadata endpoint.
+    // public hostname, but its A record points at the AWS metadata endpoint
     const resolver = jest
       .fn<(hostname: string) => Promise<string[]>>()
       .mockResolvedValue(['169.254.169.254']);
@@ -185,8 +184,7 @@ describe('createValidatingLookup', () => {
   });
 
   it('hands the callback an error when no address survives the family filter (results.length === 0)', async () => {
-    // family:6 requested but the host only has a public IPv4 record – the
-    // documented empty-result behaviour rather than a wrong-family connect.
+    // family:6 requested, host has only IPv4 - documented empty result
     const resolver = jest
       .fn<(hostname: string) => Promise<string[]>>()
       .mockResolvedValue(['93.184.216.34']);
@@ -240,7 +238,7 @@ describe('safeFetch', () => {
         fetchImpl: fetchImpl as never,
       }),
     ).rejects.toBeInstanceOf(PrivateHostError);
-    // Only the first hop was fetched; the private hop was blocked before connect.
+    // only the first hop fetched; the private hop blocked before connect
     expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 
@@ -288,7 +286,7 @@ describe('safeFetch', () => {
   });
 
   it('rejects after exceeding the redirect limit', async () => {
-    // Always redirects to another public host – should bail once the cap is hit.
+    // always redirects to another public host; bails once the cap is hit
     const fetchImpl = jest
       .fn<() => Promise<unknown>>()
       .mockResolvedValue(makeResponse(302, 'https://example.com/next'));
@@ -303,20 +301,10 @@ describe('safeFetch', () => {
 
 describe('defaultFetchImpl', () => {
   it('dispatches through an undici Agent without a cross-version handler failure', async () => {
-    // Regression guard for the metadata-fetch outage. safeFetch pins the TCP
-    // connect through an undici `Agent` dispatcher (`safeAgent`), so its default
-    // fetch MUST come from the same `undici` instance as that Agent. A
-    // dispatcher built by one `undici` major is rejected by a `fetch` from
-    // another with `InvalidArgumentError: invalid onRequestStart method`, which
-    // fails every request. Node's built-in global `fetch` is a separately
-    // versioned `undici` bundled in the runtime, so dispatching `safeAgent`
-    // through it broke all metadata fetches once `undici` was bumped to a major
-    // the deploy runtime did not ship.
-    //
-    // The connector below fails fast with a marker instead of opening a socket,
-    // so no network is touched. Reaching the connector proves the fetch/Agent
-    // pair is compatible; a handler-validation failure rejects before the
-    // connector ever runs.
+    // regression guard: safeFetch's default fetch must come from the SAME
+    // `undici` as `safeAgent`, else a cross-major dispatcher mismatch
+    // (`InvalidArgumentError`) breaks every fetch. The marker connector fails
+    // fast, so reaching it proves the fetch/Agent pair is compatible.
     const agent = new Agent({
       connect(_options, callback) {
         callback(new Error('connector-reached'), null);
@@ -343,15 +331,9 @@ describe('defaultFetchImpl', () => {
   });
 
   it("is undici's own exported fetch, not Node's global fetch", () => {
-    // Version-INDEPENDENT guard. The connector-reachability test above only
-    // bites when the runtime's built-in `undici` and this package's pinned
-    // `undici` differ in major (the outage's actual precondition); on a Node
-    // whose built-in `undici` matches the pinned one, it passes even if the
-    // default fetch were reverted to the global. This reference check fails
-    // deterministically the moment `defaultFetchImpl` is sourced from anything
-    // other than the pinned `undici`'s own `fetch`, on every Node/undici combo.
-    // The `as unknown as FetchImpl` cast in safe-fetch.ts is type-only, so the
-    // runtime reference is undici's `fetch` unchanged.
+    // version-independent guard: the connector test above only bites when the
+    // runtime and pinned `undici` differ in major, so this identity check pins
+    // `defaultFetchImpl` to the pinned `undici`'s own `fetch` on every combo.
     expect(defaultFetchImpl).toBe(undiciFetch);
   });
 });

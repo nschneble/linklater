@@ -75,8 +75,7 @@ export function useCustomThemeEngagement({
         onSuccess?.();
       } catch {
         setCustomThemeEnabled(previousEnabled);
-        // An empty map reads as "not configured", so a never-seeded user lands
-        // back where they started.
+        // empty map = "not configured", so a never-seeded user reverts
         setCustomTheme(previousCustomTheme ?? { dark: {}, light: {} });
         onErrorReference.current();
       } finally {

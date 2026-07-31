@@ -71,9 +71,7 @@ describe('FOCUS_RING', () => {
   });
 
   it('carries the Windows HCM outline fallback (forced-colors)', () => {
-    // Forced Colors Mode strips background colors including the ring; the
-    // system-color outline is the second-channel focus indicator for HCM
-    // keyboard users per SC 2.4.7.
+    // forced-colors strips the ring; outline is the HCM focus channel (2.4.7)
     expect(FOCUS_RING).toContain('forced-colors:focus-visible:outline-2');
     expect(FOCUS_RING).toContain(
       'forced-colors:focus-visible:outline-[ButtonText]',
@@ -116,10 +114,6 @@ describe('FOCUS_RING_DANGER_FILLED', () => {
   });
 
   it('uses --alert-highlight-fg (NOT --alert-highlight) for the ring color', () => {
-    // Recovery A (Toast precedent): danger-filled buttons paint
-    // --alert-highlight as their fill. A --alert-highlight ring would render
-    // 1:1 invisible against that fill, breaking SC 2.4.7. --alert-highlight-fg
-    // inherits 4.5:1 vs --alert-highlight from the bundle contract.
     expect(FOCUS_RING_DANGER_FILLED).toContain(
       'focus-visible:ring-[var(--alert-highlight-fg)]',
     );

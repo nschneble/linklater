@@ -16,7 +16,7 @@ const DISPLAY_PREFIX_LENGTH = 12;
 /**
  * Mints a fresh raw PAT plus its SHA-256 hash and display prefix.
  *
- * Pure function – does not touch the database, depend on Nest DI, or read
+ * Pure function; does not touch the database, depend on Nest DI, or read
  * any state. Shared between `TokensService.create` (user-facing PATs) and
  * `BookmarkletTokensService` (the single bookmarklet token per user).
  *

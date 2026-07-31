@@ -83,7 +83,7 @@ describe('MfaView auto-submit gating', () => {
         onSubmit={onSubmit}
       />,
     );
-    // Give effects a chance to fire; assert nothing was scheduled.
+    // give effects a chance to fire; assert nothing was scheduled
     await Promise.resolve();
     expect(onSubmit).not.toHaveBeenCalled();
   });

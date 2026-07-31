@@ -55,15 +55,11 @@ describe('LinksList initial load', () => {
       <LinksList {...baseProps} loadingLinks={true} hasSettledOnce={false} />,
     );
 
-    // No visible placeholder flashes; the load is announced to screen readers
-    // only, via a visually hidden role="status" live region (WCAG 4.1.3). A
-    // live region announces its text content on change, so we assert the
-    // content rather than an accessible name (`status` takes no name from
-    // content).
+    // role="status" takes no name from content, so assert its text
     const status = screen.getByRole('status');
     expect(status.className).toContain('sr-only');
     expect(status.textContent).toMatch(/loading links/i);
-    // The empty-state message must not appear mid-load.
+    // the empty-state message must not appear mid-load
     expect(screen.queryByText(/no unread links/i)).toBeNull();
   });
 
@@ -89,9 +85,7 @@ describe('LinksList re-fetch (post first settle)', () => {
       />,
     );
 
-    // The stale list stays mounted instead of clearing; the loading affordance
-    // is AT-only via aria-busy on the tabpanel, so no role="status" cue renders
-    // over populated content.
+    // stale list stays mounted; loading is AT-only via aria-busy, no status cue
     expect(screen.queryByRole('status')).toBeNull();
   });
 
@@ -110,13 +104,7 @@ describe('LinksList re-fetch (post first settle)', () => {
   });
 
   it('renders the visually hidden loading cue (not the empty message) on a post-settle page-1 refetch over a blanked list', () => {
-    // The flash bug: hasSettledOnce is already true, the page-1 refetch has
-    // blanked links to [] and set loadingLinks true. There must be NO render
-    // where links.length === 0 && loadingLinks === true resolves to the
-    // empty-text branch; it must resolve to the visually hidden loading status.
-    // (The empty list is reached the same way whether or not a search term is
-    // active, so a single case covers both the blanked-list and no-matches
-    // windows.)
+    // flash bug: a blanked list mid-load must show loading, not the empty branch
     renderWithProviders(
       <LinksList
         {...baseProps}
@@ -142,7 +130,7 @@ describe('LinksList loading-status lifecycle (WCAG 4.1.3)', () => {
     );
     expect(screen.getByRole('status').textContent).toMatch(/loading links/i);
 
-    // Content settles: the cue is gone and cards render.
+    // content settles: the cue is gone and cards render
     rerender(
       <ThemeProvider>
         <LinksList
@@ -155,7 +143,7 @@ describe('LinksList loading-status lifecycle (WCAG 4.1.3)', () => {
     );
     expect(screen.queryByRole('status')).toBeNull();
 
-    // Empty state settles: the cue is gone and the empty message renders.
+    // empty state settles: the cue is gone and the empty message renders
     rerender(
       <ThemeProvider>
         <LinksList
@@ -184,12 +172,11 @@ describe('LinksList "Load more" focus preservation (WCAG 2.4.3)', () => {
       <LinksList {...loadMoreProps} loadingLinks={false} />,
     );
 
-    // Idle: the button offers the remaining count and is not busy.
+    // idle: the button offers the remaining count and is not busy
     const idleButton = screen.getByRole('button', { name: /load more/i });
     expect(idleButton.getAttribute('aria-busy')).toBe('false');
 
-    // Fetch starts: the button stays mounted, now busy/disabled with a loading
-    // label, so keyboard focus is never dropped to <body>.
+    // fetch starts: button stays mounted (busy/disabled) so focus isn't dropped
     rerender(
       <ThemeProvider>
         <LinksList {...loadMoreProps} loadingLinks={true} />
@@ -218,14 +205,7 @@ describe('LinksList "Load more" focus preservation (WCAG 2.4.3)', () => {
 
 describe('LinksList mobile-reflow guard (WCAG 1.4.10)', () => {
   it('gives each grid item `min-w-0` so a long unbreakable title cannot inflate the track', () => {
-    // The grid item's default `min-width: auto` lets an unbreakable title/URL
-    // grow the `grid grid-cols-1` track past the viewport, producing horizontal
-    // scroll on mobile. `min-w-0` on the map wrapper resets that minimum to 0
-    // WITHOUT clipping (the card stays `overflow-visible`, so the favicon still
-    // straddles the left border). Dropping `min-w-0` reintroduces the overflow,
-    // so this fails if the guard is removed. jsdom has no layout engine, so the
-    // live 320px scrollWidth check lives in the PR notes; this is the structural
-    // oracle for the guard's presence.
+    // grid `min-width: auto` overflows on mobile; `min-w-0` resets it without clipping
     renderWithProviders(
       <LinksList
         {...baseProps}
@@ -254,13 +234,13 @@ describe('LinksList list semantics (WCAG 1.3.1)', () => {
     const tabpanel = document.getElementById(LINKS_LIST_ID);
     const list = tabpanel?.querySelector('[role="list"]');
     expect(list).not.toBeNull();
-    // The grid classes live on the list itself, not the tabpanel container.
+    // the grid classes live on the list itself, not the tabpanel container
     expect(list?.className).toContain('grid');
     expect(list?.className).toContain('grid-cols-1');
 
     const listItems = list?.querySelectorAll('[role="listitem"]');
     expect(listItems?.length).toBe(2);
-    // The tabpanel keeps its own busy/labelling contract.
+    // the tabpanel keeps its own busy/labelling contract
     expect(tabpanel?.getAttribute('role')).toBe('tabpanel');
   });
 
@@ -304,7 +284,7 @@ describe('LinksList settled non-loading states', () => {
   });
 
   it('preserves role="tabpanel" and aria-labelledby across every branch', () => {
-    // Initial load
+    // initial load
     const { rerender } = renderWithProviders(
       <LinksList {...baseProps} loadingLinks={true} hasSettledOnce={false} />,
     );
@@ -312,7 +292,7 @@ describe('LinksList settled non-loading states', () => {
     expect(tabpanel?.getAttribute('role')).toBe('tabpanel');
     expect(tabpanel?.getAttribute('aria-labelledby')).toBe('tab-unread');
 
-    // Empty branch
+    // empty branch
     rerender(
       <ThemeProvider>
         <LinksList
@@ -326,7 +306,7 @@ describe('LinksList settled non-loading states', () => {
     tabpanel = document.getElementById(LINKS_LIST_ID);
     expect(tabpanel?.getAttribute('role')).toBe('tabpanel');
 
-    // Populated branch
+    // populated branch
     rerender(
       <ThemeProvider>
         <LinksList
@@ -340,7 +320,7 @@ describe('LinksList settled non-loading states', () => {
     tabpanel = document.getElementById(LINKS_LIST_ID);
     expect(tabpanel?.getAttribute('role')).toBe('tabpanel');
 
-    // Read filter swaps the aria-labelledby
+    // read filter swaps the aria-labelledby
     rerender(
       <ThemeProvider>
         <LinksList

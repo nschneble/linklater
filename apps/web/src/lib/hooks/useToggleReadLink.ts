@@ -5,7 +5,7 @@ import type { LinksFilter } from './types';
 
 interface UseToggleReadLinkOptions {
   adjustTotal: (delta: number) => void;
-  // needed to decide whether to remove a link after toggling its read state
+  // decides whether to remove a link after toggling its read state
   filter: LinksFilter;
   removeLink: (linkId: string) => void;
   updateLink: (link: Link) => void;

@@ -62,15 +62,10 @@ export default function LinksToolbar({
   onSearch,
   onToggleForm,
 }: LinksToolbarProps) {
-  // Tracks whether the clear button currently holds focus. `useSearchDebounce`
-  // resets `search` to '' on filter change (tab switch / back-forward nav),
-  // independent of the clear button's own click handler. If the button holds
-  // focus when that happens, it unmounts and focus silently falls to <body>;
-  // the layout effect below catches it back onto the input.
+  // clear button unmounts on search reset; track focus to refocus the input
   const clearButtonWasFocusedReference = useRef(false);
 
-  // useLayoutEffect (not useEffect) so the focus recovery commits before paint,
-  // avoiding a visible/audible jump to <body>.
+  // useLayoutEffect (not useEffect) so focus recovery commits before paint
   useLayoutEffect(() => {
     if (search === '' && clearButtonWasFocusedReference.current) {
       clearButtonWasFocusedReference.current = false;
@@ -78,12 +73,7 @@ export default function LinksToolbar({
     }
   }, [search, searchInputReference]);
 
-  // Both toolbar rows are flat children of `<main>` and sit behind the inline
-  // "Save a link" dialog when it is open. Derive `inert` from the
-  // `showLinkForm` prop this component already owns so the toolbar drops out of
-  // the tab order and accessibility tree while the dialog traps focus (WCAG
-  // 2.4.3), matching the "component derives its own inert from state it owns"
-  // pattern in `BottomSheetMainPanel`.
+  // inert while the save-link dialog traps focus, per WCAG 2.4.3
   const inert = showLinkForm ? true : undefined;
 
   return (

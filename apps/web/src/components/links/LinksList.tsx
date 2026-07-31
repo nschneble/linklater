@@ -97,24 +97,14 @@ export default function LinksList({
 }: LinksListProps) {
   const tabPanelLabelId = filter === 'read' ? 'tab-read' : 'tab-unread';
 
-  // The empty-state message may only show once the hook has genuinely settled
-  // with no items and no fetch in flight. While a load is in flight the list
-  // can be blanked to `[]` (the first page-1 fetch) or already be empty from a
-  // prior settle; in those windows the visually hidden loading status is the
-  // AT-correct in-load state, so the empty text never flashes before real
-  // links render.
+  // gated so the empty message never flashes before the first settle
   const showEmptyState = hasSettledOnce && !loadingLinks && links.length === 0;
 
-  // Show the discovery callout only when the unread list is genuinely
-  // empty – never when an active search just happens to return no
-  // matches, and never on the read tab.
+  // callout only on a genuinely empty unread list, not a search miss
   const isUnreadEmpty =
     filter === 'unread' && search === '' && debouncedSearch === '';
 
-  // The "Load more" button stays mounted (and merely `aria-disabled`) through
-  // the fetch it kicks off so keyboard focus is not dropped (WCAG 2.4.3).
-  // Because `aria-disabled` does not block clicks the way a hard `disabled`
-  // would, guard against a second dispatch while a fetch is already in flight.
+  // aria-disabled doesn't block clicks, so guard against a double dispatch
   function handleLoadMore() {
     if (loadingLinks) {
       return;
@@ -147,13 +137,7 @@ export default function LinksList({
       </>
     );
   } else if (links.length === 0) {
-    // Empty list with a fetch in flight (first page-1 load or a re-fetch over
-    // an already-empty list). Nothing is drawn for sighted users because links
-    // load fast enough that a placeholder reads as a distracting flash. A
-    // visually hidden `role="status"` announces the load to screen readers so
-    // it is not silent, since `aria-busy` on the tabpanel is a queryable state,
-    // not a notification (WCAG 4.1.3 Status Messages). See the `showEmptyState`
-    // gate above for why this branch, not the empty message, renders mid-load.
+    // draw nothing to avoid a flash; sr-only announces load (WCAG 4.1.3)
     containerClass = '';
     body = (
       <p role="status" className="sr-only">
@@ -161,27 +145,20 @@ export default function LinksList({
       </p>
     );
   } else {
-    // The tabpanel container itself carries only spacing; the cards form a
-    // semantic list one level down (WCAG 1.3.1). The container stays a
-    // single-column grid so the list and the "Load more" button keep their
-    // uniform `gap-6` rhythm.
+    // cards form a semantic list one level down (WCAG 1.3.1)
     containerClass = 'grid gap-6 mt-6 mb-28';
     body = (
       <>
         {/*
-          A tabpanel cannot double as the list, so the cards live in a child
-          `role="list"`. Each map wrapper is a `role="listitem"`. The "Load
-          more" button below is deliberately outside the list.
+          a tabpanel can't double as the list, so cards live in a child
+          role="list"; the "Load more" button below stays outside it
         */}
         <div role="list" className="grid grid-cols-1 gap-6">
           {links.map((link, index) => (
             <div
               key={link.id}
               role="listitem"
-              // `min-w-0` resets the grid item's default `min-width: auto` to 0
-              // so a long unbreakable title/URL cannot inflate the track past the
-              // viewport (WCAG 1.4.10 Reflow). The card itself stays
-              // `overflow-visible` so its favicon can straddle the left border.
+              // min-w-0 stops unbreakable text overflowing (WCAG 1.4.10)
               className={`min-w-0 ${
                 isClearingRead ? 'animate-card-exit pointer-events-none' : ''
               }`}
@@ -202,19 +179,12 @@ export default function LinksList({
         </div>
 
         {pagination &&
-          // "Less doesn't need more": never offer a Load more button for a
-          // single trailing item – `useLinksData` auto-loads that case so the
-          // remaining link arrives without a click.
+          // > 1: a lone trailing item is auto-loaded, so no "Load more"
           pagination.total - links.length > 1 && (
             <div className="flex justify-center pt-2">
               {/*
-                Keep the button mounted through the fetch it triggers rather
-                than unmounting it on `loadingLinks`. Unmounting mid-fetch drops
-                keyboard focus to `<body>` (WCAG 2.4.3 Focus Order); driving
-                `aria-busy`/`aria-disabled` instead keeps focus on the control
-                while `handleLoadMore` no-ops the extra clicks. Mirrors the
-                `aria-disabled` (not hard `disabled`) pattern in
-                `SuggestionCallout`, chosen there for the same focus reason.
+                keep the button mounted through its fetch; unmounting
+                mid-fetch drops keyboard focus to <body> (WCAG 2.4.3)
               */}
               <IconButton
                 variant="elevated"

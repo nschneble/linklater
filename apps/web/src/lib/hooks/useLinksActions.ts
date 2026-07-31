@@ -40,8 +40,8 @@ export interface UseLinksActionsResult {
 }
 
 /**
- * Composes all user-initiated link mutations — create, read/unread, delete
- * all read, and stumble! — over the `useLinksData` mutation helpers so the
+ * Composes all user-initiated link mutations (create, read/unread, delete
+ * all read, and stumble!) over the `useLinksData` mutation helpers so the
  * list stays in sync without a full refetch after each operation.
  *
  * The individual flows live in focused sub-hooks (`useCreateLink`,

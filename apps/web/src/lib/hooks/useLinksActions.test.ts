@@ -230,9 +230,7 @@ describe('useLinksActions', () => {
     });
 
     it('updates link in place when it stays in the current filter', async () => {
-      // Marking as read on the read tab would never happen in normal use,
-      // but the branch handles: read tab + readAt set → stays in
-      // view. Easier to test: unread tab + mark as unread → stays.
+      // unread tab + mark unread keeps it in view; easier than read case
       const link = makeLink({
         id: 'link-1',
         readAt: new Date().toISOString(),

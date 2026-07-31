@@ -72,12 +72,7 @@ describe('buildBookmarkletCode', () => {
     });
 
     it('resolves a same-origin relative base to an absolute URL', () => {
-      // Production bakes a relative base (`VITE_API_BASE_URL=/api`,
-      // reverse-proxied by Caddy). A relative base works for the web app
-      // (same origin) but the bookmarklet runs on arbitrary third-party
-      // pages, where `fetch('/api/links')` resolves against the HOST page's
-      // origin (e.g. example.com/api/links) and never reaches Linklater. The
-      // base must be baked as an absolute URL pointing at the Linklater origin.
+      // off-site, a relative /api base hits the host origin; bake absolute
       vi.stubEnv('VITE_API_BASE_URL', '/api');
       const source = buildBookmarkletCode(TOKEN);
       expect(source).toContain(
@@ -87,9 +82,7 @@ describe('buildBookmarkletCode', () => {
     });
 
     it('leaves an already-absolute base URL unchanged', () => {
-      // Split-domain deployments configure an absolute base (e.g.
-      // https://api.example.com); it is already origin-qualified and must
-      // pass through untouched.
+      // absolute base (split-domain) is origin-qualified; passes through
       expect(buildBookmarkletCode(TOKEN)).toContain(
         `a=${JSON.stringify(API_URL)}`,
       );

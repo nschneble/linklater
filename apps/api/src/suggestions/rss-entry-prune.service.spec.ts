@@ -72,8 +72,7 @@ describe('RssEntryPruneService', () => {
     (prismaMock.rssEntry.groupBy as jest.Mock).mockResolvedValue([
       { sourceKey: 'aeon' },
     ]);
-    // The read of stale rows skips the newest N (ordered newest-first) so it
-    // only ever returns the older overflow. These three are the overflow.
+    // stale read skips the newest N; these three are the older overflow
     (prismaMock.rssEntry.findMany as jest.Mock).mockResolvedValue([
       { id: 'old-1' },
       { id: 'old-2' },
@@ -92,10 +91,7 @@ describe('RssEntryPruneService', () => {
       skip: number;
       select: { id: boolean };
     };
-    // Ordering newest-first + skipping the newest N is what preserves the
-    // rows an active suggestion cycle reads; only older overflow is selected.
-    // The secondary `id` sort makes the boundary deterministic among rows that
-    // share a `publishedAt`.
+    // newest-first + skip-N keeps active rows; id sort breaks publishedAt ties
     expect(findCall.where.sourceKey).toBe('aeon');
     expect(findCall.orderBy).toEqual([{ publishedAt: 'desc' }, { id: 'desc' }]);
     expect(findCall.skip).toBe(MAX_ENTRIES_PER_SOURCE);

@@ -15,9 +15,7 @@ interface SettingsGroupProps {
   children: ReactNode;
 }
 
-// The `danger` variant routes through the `alert` bundle (see
-// `theme/styles/bundles.css`). Every theme – including Nouvelle Vague's
-// grayscale-by-design palette – defines its own bundle cascade.
+// the danger variant routes through the alert bundle (see bundles.css)
 const VARIANT_CLASSES = {
   default: 'bg-[var(--mount-bg)] border border-[var(--mount-border)]',
   danger: 'bg-[var(--alert-bg)] border border-[var(--alert-border)]',

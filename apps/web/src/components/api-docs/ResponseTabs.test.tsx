@@ -153,9 +153,7 @@ describe('ResponseTabs', () => {
     const activeTabId = `${endpointHeadingId('get', '/links')}-resp-tab-200`;
     expect(panel).toHaveAttribute('id', panelId);
     expect(panel).toHaveAttribute('aria-labelledby', activeTabId);
-    // The default 200 response carries a body schema, so its example CodeBlock
-    // owns the focus stop and the shared panel drops its own tabIndex (the
-    // schema-present/absent tab-stop behaviour is pinned in its own tests below).
+    // 200 schema: CodeBlock owns the focus stop, panel drops tabIndex
     expect(panel).not.toHaveAttribute('tabindex');
     expect(screen.getByRole('tab', { name: '200 OK' })).toHaveAttribute(
       'aria-controls',
@@ -167,9 +165,7 @@ describe('ResponseTabs', () => {
     render(<ResponseTabs endpoint={makeEndpoint()} />);
     const root = endpointHeadingId('get', '/links');
 
-    // A labelled, focusable <pre> group carrying the -response-example id. Its
-    // JSON is DERIVED from buildExampleFromSchema (the "id" property from the
-    // 200 schema appears), never hardcoded.
+    // JSON derived from buildExampleFromSchema, not hardcoded
     const example = screen.getByRole('group', {
       name: 'Example response body',
     });
@@ -179,7 +175,7 @@ describe('ResponseTabs', () => {
     );
     expect(example).toHaveTextContent('"id"');
 
-    // Reading order: the response-body table precedes the example block.
+    // reading order: the response-body table precedes the example block
     const panel = screen.getByRole('tabpanel');
     const table = within(panel).getByRole('table', {
       name: /response body/i,
@@ -188,8 +184,7 @@ describe('ResponseTabs', () => {
       table.compareDocumentPosition(example) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
 
-    // With the CodeBlock supplying the focus stop, the shared panel drops its
-    // own tabIndex + ring so there is no dead ring or duplicate tab stop.
+    // CodeBlock owns the focus stop, so the panel drops tabIndex + ring
     expect(panel).not.toHaveAttribute('tabindex');
     expect(panel.className).not.toContain(FOCUS_RING);
   });
@@ -199,9 +194,7 @@ describe('ResponseTabs', () => {
     render(<ResponseTabs endpoint={makeEndpoint()} />);
     const tablist = screen.getByRole('tablist', { name: 'Responses' });
 
-    // Forward: select the body-less 401 ⇒ no example block, and the read-only
-    // "None" fallback makes the panel itself the keyboard-reachable
-    // focus stop (tabIndex=0 + the shared ring).
+    // forward: body-less 401 has no example, so panel is the focus stop
     await user.click(
       within(tablist).getByRole('tab', { name: '401 Unauthorized' }),
     );
@@ -212,10 +205,7 @@ describe('ResponseTabs', () => {
     expect(panel).toHaveAttribute('tabindex', '0');
     expect(panel.className).toContain(FOCUS_RING);
 
-    // Reverse: click BACK to the body-bearing 200, whose example CodeBlock owns
-    // the focus stop. The panel must RE-DROP its own tabIndex + ring — a "sticky
-    // tabindex" regression (gains tabIndex=0 and never clears) would survive the
-    // forward-only assertion above but fails here.
+    // reverse: panel must RE-DROP tabIndex, catching a sticky-tabindex bug
     await user.click(within(tablist).getByRole('tab', { name: '200 OK' }));
     expect(panel).not.toHaveAttribute('tabindex');
     expect(panel.className).not.toContain(FOCUS_RING);

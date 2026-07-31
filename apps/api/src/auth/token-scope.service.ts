@@ -118,8 +118,7 @@ export class TokenScopeService {
     kind: SpecialTokenKind,
     tokenHash: string,
   ): Promise<void> {
-    // Mirror CustomThrottlerGuard: the tuffgal harness hammers these tokens
-    // across many stories, so skip the limit (not the scope checks) in test mode.
+    // tuffgal hammers tokens; skip the limit (not scope) in test mode
     if (isTestingUi()) {
       return;
     }
