@@ -16,6 +16,7 @@
     "start:debug": "nest start --debug --watch",
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main",
+    "typecheck": "tsc --noEmit -p tsconfig.build.json",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\" --max-warnings=0",
     "test": "NODE_OPTIONS=\"--experimental-vm-modules --no-experimental-webstorage --disable-warning=ExperimentalWarning\" jest",

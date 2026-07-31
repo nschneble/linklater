@@ -73,8 +73,7 @@ jobs:
 
       # type checks since SWC strips types without checking them
       - name: Type check (api)
-        working-directory: apps/api
-        run: npm run typecheck
+        run: npm run typecheck --workspace @linklater/api
 
       - name: Build
         run: npm run build
