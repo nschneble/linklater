@@ -367,14 +367,20 @@ describe('LinkCard loading skeleton (metadata still fetching)', () => {
     expect(container.innerHTML).not.toContain('--orbit-bg');
   });
 
-  it('renders the bars as static fills with no shimmer, translate, gradient, or badge pulse', () => {
+  it('pulses each bar via the aria-busy-gated color animation, never a shimmer, gradient, or translate on the bar itself', () => {
     const { container } = renderWithProviders(
       <LinkCard link={makeLink({ meta: null })} onReadToggle={vi.fn()} />,
     );
 
     const bars = container.querySelectorAll(BAR_SELECTOR);
     bars.forEach((bar) => {
-      expect(bar.className).not.toMatch(/animate-|translate|gradient/);
+      // The bar breathes the same --mount-border ↔ --mount-highlight color as
+      // the card border and badge, but ONLY while the card is aria-busy, so a
+      // settled card mid-exit carries no running animation.
+      expect(bar.className).toContain('group-aria-busy:animate-meta-pulse-bg');
+      // No sweeping shimmer/gradient, and no translate on the bar — the lift-out
+      // motion lives on the overlay layer, not the fill.
+      expect(bar.className).not.toMatch(/gradient|translate/);
     });
   });
 
@@ -436,6 +442,69 @@ describe('LinkCard loading skeleton (metadata still fetching)', () => {
     expect(
       screen.getByRole('button', { name: /^Mark unread/ }),
     ).toBeInTheDocument();
+  });
+});
+
+describe('LinkCard skeleton settle cross-fade (lifts out as content rises in)', () => {
+  it('wraps every skeleton in an aria-busy-driven lift-out layer, not an unmount-and-vanish', () => {
+    const { container } = renderWithProviders(
+      <LinkCard
+        link={makeLink({ readAt: null, meta: null })}
+        onReadToggle={vi.fn()}
+      />,
+    );
+
+    const bars = container.querySelectorAll(BAR_SELECTOR);
+    expect(bars.length).toBeGreaterThan(0);
+    bars.forEach((bar) => {
+      // The lift layer rests faded + lifted (the settled state) and drops into
+      // place while the card is aria-busy, transitioning translate/opacity/filter
+      // — so on settle it fades and lifts away rather than blinking out. No
+      // transition-delay so the reduced-motion clamp collapses it to an instant
+      // swap.
+      const liftLayer = bar.parentElement;
+      expect(liftLayer?.className).toContain(
+        'transition-[opacity,translate,filter]',
+      );
+      expect(liftLayer?.className).toContain('opacity-0');
+      expect(liftLayer?.className).toContain('-translate-y-1.5');
+      expect(liftLayer?.className).toContain('group-aria-busy:opacity-100');
+      expect(liftLayer?.className).toContain('group-aria-busy:translate-y-0');
+      expect(liftLayer?.className).not.toMatch(/delay-/);
+    });
+  });
+
+  it('compiles the gated pulse and the lift-out transition to real aria-busy rules', async () => {
+    const css = await compileIndexCss([
+      'group-aria-busy:animate-meta-pulse-bg',
+      'transition-[opacity,translate,filter]',
+      '-translate-y-1.5',
+      'group-aria-busy:translate-y-0',
+      'blur-[2px]',
+      'group-aria-busy:blur-[0px]',
+    ]);
+    const flattened = css.replace(/\s+/g, ' ');
+
+    // The bar fill pulses ONLY when an ancestor `.group` carries aria-busy, so a
+    // settled card mid-exit runs no animation.
+    expect(flattened).toContain(
+      '.group-aria-busy\\:animate-meta-pulse-bg:is(:where(.group)[aria-busy="true"] *) { animation: var(--animate-meta-pulse-bg); }',
+    );
+
+    // The lift layer transitions the individual `translate` property (Tailwind v4
+    // uses `translate:`, not `transform:`), plus opacity and the blur filter.
+    expect(flattened).toContain(
+      'transition-property: opacity,translate,filter;',
+    );
+
+    // In-place while busy, lifted + blurred when settled.
+    expect(flattened).toContain(
+      '.group-aria-busy\\:translate-y-0:is(:where(.group)[aria-busy="true"] *)',
+    );
+    expect(flattened).toContain('.blur-\\[2px\\]');
+    expect(flattened).toContain(
+      '.group-aria-busy\\:blur-\\[0px\\]:is(:where(.group)[aria-busy="true"] *)',
+    );
   });
 });
 
