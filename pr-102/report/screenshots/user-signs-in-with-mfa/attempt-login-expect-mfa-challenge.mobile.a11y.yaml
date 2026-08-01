@@ -1,0 +1,9 @@
+- heading "Multi-factor authentication" [level=1]
+- paragraph: Enter the code from your authenticator app.
+- text: Authenticator code
+- paragraph: We'll verify it automatically after the 6th digit.
+- textbox "Authenticator code":
+  - /placeholder: 000 000
+- button "Verify"
+- button "Use a recovery code"
+- status
