@@ -1,0 +1,7 @@
+{
+  "action": "visit-email-magic-link",
+  "steps": [{ "kind": "navigate", "path": "/api/email/preview/magic-link" }],
+  "expect": {
+    "anyOf": [{ "role": "heading", "text": "Your login link." }]
+  }
+}

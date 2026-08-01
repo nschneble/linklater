@@ -1,0 +1,7 @@
+{
+  "action": "visit-email-verification",
+  "steps": [{ "kind": "navigate", "path": "/api/email/preview/verification" }],
+  "expect": {
+    "anyOf": [{ "role": "heading", "text": "Verify your email." }]
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "story": "Visual tour of every transactional email a Linklater account can receive.",
+  "breakpoints": [{ "name": "desktop", "width": 1280, "height": 1200 }],
+  "actions": [
+    { "action": "visit-email-verification" },
+    { "action": "visit-email-password-reset" },
+    { "action": "visit-email-address-change" },
+    { "action": "visit-email-magic-link" },
+    { "action": "visit-email-account-deletion" },
+    { "action": "visit-email-policy-update" }
+  ]
+}
