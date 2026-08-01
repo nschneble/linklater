@@ -4,7 +4,10 @@
 
 ## [Unreleased]
 
-_Nothing just yet_
+### Added
+
+- Production setup guide for Google Sign-In (`docs/GOOGLE-SSO.md`)
+- Web build accepts a `VITE_GOOGLE_SSO_ENABLED` flag so the Google login button can be enabled in production without a code change
 
 ## [1.4.3] - 2026-07-29
 

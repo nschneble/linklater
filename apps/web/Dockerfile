@@ -26,6 +26,14 @@ WORKDIR /app
 ARG VITE_API_BASE_URL=/api
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
+# Bake the SSO login-button toggle into the build. The login page reads
+# import.meta.env.VITE_GOOGLE_SSO_ENABLED at build time, so there is no runtime
+# switch: the button ships only if this is `true` when the image is built.
+# Defaults off; the deploy workflow supplies it from a repository variable so
+# it flips on without a code change (see docs/GOOGLE-SSO.md).
+ARG VITE_GOOGLE_SSO_ENABLED=false
+ENV VITE_GOOGLE_SSO_ENABLED=${VITE_GOOGLE_SSO_ENABLED}
+
 # Workspace manifests first for install-layer caching.
 COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json

@@ -25,6 +25,12 @@
 #                   TOTP_ENCRYPTION_KEY
 #
 #                   Optional: GOOGLE_*, APPLE_*, EXTENSION_REDIRECT_URIS
+#
+# Optional GitHub Repository variables (Actions → Variables):
+#
+#   VITE_GOOGLE_SSO_ENABLED  Set to `true` to render the Google login button.
+#                            Baked into the web image at build time (see
+#                            docs/GOOGLE-SSO.md); defaults off when unset.
 
 name: Deploy
 
@@ -89,6 +95,7 @@ jobs:
           push: true
           build-args: |
             VITE_API_BASE_URL=/api
+            VITE_GOOGLE_SSO_ENABLED=${{ vars.VITE_GOOGLE_SSO_ENABLED }}
           tags: |
             ${{ env.WEB_IMAGE }}:${{ github.sha }}
             ${{ env.WEB_IMAGE }}:latest
