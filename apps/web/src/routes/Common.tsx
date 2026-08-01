@@ -16,6 +16,8 @@ const PrivacyPolicyPage = lazy(
   () => import('../components/privacy/PrivacyPolicyPage'),
 );
 
+const TermsPage = lazy(() => import('../components/terms/TermsPage'));
+
 function ApiDocsRoute() {
   return (
     <Suspense
@@ -63,10 +65,34 @@ function PrivacyPolicyRoute() {
   );
 }
 
+function TermsRoute() {
+  return (
+    <Suspense
+      fallback={
+        <div
+          data-theme="branding"
+          className="flex items-center justify-center min-h-screen bg-hit-man text-[var(--base-text)] select-none"
+        >
+          <p role="status" aria-live="polite" className="sr-only">
+            Loading terms and conditions…
+          </p>
+          <i
+            className="fa-solid fa-arrows-rotate fa-spin text-4xl opacity-50"
+            aria-hidden="true"
+          />
+        </div>
+      }
+    >
+      <TermsPage />
+    </Suspense>
+  );
+}
+
 export function commonRoutes() {
   return [
     <Route key="api-docs" path="/docs" element={<ApiDocsRoute />} />,
     <Route key="privacy" path="/privacy" element={<PrivacyPolicyRoute />} />,
+    <Route key="terms" path="/terms" element={<TermsRoute />} />,
     <Route key="logout" path="/logout" element={<LogoutPage />} />,
     <Route
       key="confirm-account-deletion"

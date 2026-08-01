@@ -59,6 +59,9 @@ export default function FooterSection() {
           <li>
             <FooterLink href="/privacy" label="Privacy" />
           </li>
+          <li>
+            <FooterLink href="/terms" label="Terms" />
+          </li>
         </ul>
       </nav>
     </footer>
