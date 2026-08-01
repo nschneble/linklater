@@ -71,10 +71,7 @@ jobs:
       - name: Test
         run: npm run test
 
-      # The api build now uses the SWC builder, which strips types without
-      # checking them. Run tsc --noEmit against the build sources so type
-      # errors still fail CI. Scoped to the api: the web workspace has known
-      # pre-existing tsc errors (vite build is its correctness gate).
+      # type checks since SWC strips types without checking them
       - name: Type check (api)
         working-directory: apps/api
         run: npm run typecheck
