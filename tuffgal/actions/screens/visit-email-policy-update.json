@@ -1,0 +1,7 @@
+{
+  "action": "visit-email-policy-update",
+  "steps": [{ "kind": "navigate", "path": "/api/email/preview/policy-update" }],
+  "expect": {
+    "anyOf": [{ "role": "heading", "text": "Our privacy policy is changing." }]
+  }
+}

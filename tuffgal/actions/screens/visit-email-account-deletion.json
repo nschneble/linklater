@@ -1,0 +1,12 @@
+{
+  "action": "visit-email-account-deletion",
+  "steps": [
+    {
+      "kind": "navigate",
+      "path": "/api/email/preview/confirm-account-deletion"
+    }
+  ],
+  "expect": {
+    "anyOf": [{ "role": "heading", "text": "Confirm account deletion." }]
+  }
+}

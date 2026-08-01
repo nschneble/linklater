@@ -1,0 +1,7 @@
+{
+  "action": "visit-email-address-change",
+  "steps": [{ "kind": "navigate", "path": "/api/email/preview/email-change" }],
+  "expect": {
+    "anyOf": [{ "role": "heading", "text": "Confirm your new email." }]
+  }
+}
