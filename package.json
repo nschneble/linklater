@@ -28,6 +28,9 @@
   "workspaces": [
     "apps/*"
   ],
+  "dependencies": {
+    "patch-package": "^8.0.1"
+  },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@swc/cli": "^0.8.1",
@@ -37,7 +40,6 @@
     "concurrently": "^10.0.3",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
-    "patch-package": "^8.0.1",
     "pg": "^8.11.0",
     "prettier": "^3.9.5",
     "squawk-cli": "^2.60.0",
