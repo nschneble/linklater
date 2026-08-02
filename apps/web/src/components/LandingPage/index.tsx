@@ -26,6 +26,14 @@ export default function LandingPage() {
       >
         Skip to main content
       </a>
+      <a
+        href="https://github.com/nschneble/linklater"
+        className="github-fork-ribbon select-none"
+        data-ribbon="Fork me on GitHub"
+        title="Fork me on GitHub"
+      >
+        Fork me on GitHub
+      </a>
       <main id="main-content">
         <HeroSection />
         <FeaturesSection />
