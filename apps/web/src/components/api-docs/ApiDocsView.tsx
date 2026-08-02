@@ -38,11 +38,6 @@ export default function ApiDocsView() {
       className={`min-h-screen ${isBrand ? 'bg-hit-man [color-scheme:dark]' : ''}`}
       data-theme={isBrand ? 'branding' : undefined}
     >
-      {/*
-       * Skip link mirrors the LandingPage pattern: brand-locked white-on-navy
-       * (clears ~16:1 vs the gradient) rather than user-theme `--focus-ring`,
-       * which is not safe on the fixed brand gradient.
-       */}
       <a
         href="#api-docs"
         className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-white focus:text-[#14103a] focus:text-sm focus:font-semibold focus:outline-none focus:ring-2 focus:ring-white focus:rounded-lg"
@@ -51,23 +46,6 @@ export default function ApiDocsView() {
       </a>
 
       <header className="max-w-6xl mx-auto px-6 sm:px-8 pt-12 sm:pt-16 pb-8 sm:pb-10 space-y-6 select-none">
-        {/*
-         * Page navigation. ONE <nav> landmark so AT users land on a single
-         * "API docs" region rather than scattered unlabeled landmarks. Sits
-         * above the h1 in DOM order so a Tab from the skip link visits the
-         * back-affordance before page identity (SC 2.4.3). Plain text (not
-         * button-styled) keeps the h1 as focal point.
-         *
-         * The "← Linklater" back link is ALWAYS present. The "Manage tokens →"
-         * link is logged-IN only (the docs are a public page; an anonymous
-         * visitor has no tokens to manage), so logged-out the nav holds a
-         * single link – `justify-between` leaves it at flex-start (upper-left).
-         * "Manage tokens" returns to /settings via router state (NOT a
-         * #fragment), because SettingsView reads `scrollTo` from
-         * `location.state` to activate + scroll its sections; a plain hash
-         * would scroll the browser but never wake the activation machinery.
-         * The state convention matches WelcomeModal's "Go to bookmarks" link.
-         */}
         <nav
           aria-label="API docs"
           className="flex items-center justify-between gap-3 text-sm"

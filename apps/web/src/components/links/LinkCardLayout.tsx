@@ -359,11 +359,6 @@ export default function LinkCardLayout({
           />
 
           <div className="flex flex-col items-start min-w-0 ml-3">
-            {/*
-              Title slot: a fixed text-sm line box so the skeleton bar and the
-              settled title share one geometry and the swap shifts nothing. The
-              settled title rises in (card-enter) as the skeleton lifts out.
-            */}
             <div className="relative w-full h-5">
               {!isPending && (
                 /* w-full pins the title to the min-w-0 column so line-clamp-1 can clip a long word; guards 320px reflow */

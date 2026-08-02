@@ -64,12 +64,6 @@ export default function CopyButton({
       aria-label={label}
       onClick={() => void onCopy?.()}
     >
-      {/*
-       * Both icons share a single grid cell so they stack without layout
-       * shift and can scale/blur independently. `aria-hidden` on the wrapper
-       * keeps AT off the visual stack so the button's name comes from its
-       * visible text (or the `aria-label` override when provided).
-       */}
       <span aria-hidden="true" className="inline-grid place-items-center">
         <span className="col-start-1 row-start-1 opacity-0 blur-xs scale-[0.25] group-data-[copied]:opacity-100 group-data-[copied]:blur-none group-data-[copied]:scale-100 transition-[opacity,filter,scale] duration-300 ease-in-out motion-reduce:transition-none">
           <i className="fa-solid fa-check text-[0.7rem]" />

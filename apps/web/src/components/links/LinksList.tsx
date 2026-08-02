@@ -149,10 +149,6 @@ export default function LinksList({
     containerClass = 'grid gap-6 mt-6 mb-28';
     body = (
       <>
-        {/*
-          a tabpanel can't double as the list, so cards live in a child
-          role="list"; the "Load more" button below stays outside it
-        */}
         <div role="list" className="grid grid-cols-1 gap-6">
           {links.map((link, index) => (
             <div
