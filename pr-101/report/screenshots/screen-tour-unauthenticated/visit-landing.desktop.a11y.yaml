@@ -1,5 +1,7 @@
 - link "Skip to main content":
   - /url: "#main-content"
+- link "Fork me on GitHub Fork me on GitHub":
+  - /url: https://github.com/nschneble/linklater
 - main:
   - region "Linklater":
     - heading "Linklater" [level=1]
@@ -21,15 +23,16 @@
   - navigation "Footer":
     - list:
       - listitem:
-        - link "GitHub (opens in new tab)":
-          - /url: https://github.com/nschneble/linklater
-          - text: GitHub
-      - listitem:
-        - link "Contact":
-          - /url: mailto:linklater@fancyenchiladas.net
+        - link "Terms":
+          - /url: /terms
       - listitem:
         - link "Privacy":
           - /url: /privacy
       - listitem:
-        - link "Terms":
-          - /url: /terms
+        - link "Contact":
+          - /url: mailto:linklater@fancyenchiladas.net
+  - paragraph:
+    - text: © 2026
+    - link "Nick Schneble (opens in new tab)":
+      - /url: https://nickschneble.xyz/
+      - text: Nick Schneble
