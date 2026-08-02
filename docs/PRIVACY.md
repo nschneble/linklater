@@ -20,16 +20,16 @@ We collect only what we need to operate the Service:
 
 ### Information you provide directly
 
-- **Email address**
-  Used to create and identify your account and to send you transactional email.
-- **Password**
-  Stored only as a salted cryptographic hash. We never store or transmit your plaintext password.
-- **Saved links**
-  The URLs you save to your account, along with metadata our server fetches from those pages so your links are pleasantly presented. Link metadata includes title, description, site name, favicon, and preview image.
-- **Preferences**
-  Display settings such as theme, light/dark mode, custom theme colors, and accessibility options including Color Vision Deficiency (CVD) mode and an OpenDyslexic typeface.
-- **Two-factor authentication data**
-  If you enable two-factor authentication, we store your TOTP secret and hashed recovery codes.
+- **Email address**  
+Used to create and identify your account and to send you transactional email.
+- **Password**  
+Stored only as a salted cryptographic hash. We never store or transmit your plaintext password.
+- **Saved links**  
+The URLs you save to your account, along with metadata our server fetches from those pages so your links are pleasantly presented. Link metadata includes title, description, site name, favicon, and preview image.
+- **Preferences**  
+Display settings such as theme, light/dark mode, custom theme colors, and accessibility options including Color Vision Deficiency (CVD) mode and an OpenDyslexic typeface.
+- **Two-factor authentication data**  
+If you enable two-factor authentication, we store your TOTP secret and hashed recovery codes.
 
 ### Information from third-party sign-in
 
@@ -40,27 +40,27 @@ We collect only what we need to operate the Service:
 
 ### Information collected automatically
 
-- **Cookies and local storage**
-  Used solely to keep you signed in and to remember your preferences. We don't use cookies for advertising or tracking.
-- **Authentication tokens**
-  Session, refresh, and any personal access or bookmarklet tokens you create are stored (hashed where possible) to keep your account secure.
-- **Server logs**
-  Standard technical data generated when you use the Service, retained for security and debugging. This includes your IP address, browser type, and timestamps.
+- **Cookies and local storage**  
+Used solely to keep you signed in and to remember your preferences. We don't use cookies for advertising or tracking.
+- **Authentication tokens**  
+Session, refresh, and any personal access or bookmarklet tokens you create are stored (hashed where possible) to keep your account secure.
+- **Server logs**  
+Standard technical data generated when you use the Service, retained for security and debugging. This includes your IP address, browser type, and timestamps.
 
 We do **not** use tracking analytics, advertising networks, or third-party
 trackers, and we do **not** display ads.
 
 ## 2. How We Use Your Information
 
-| Purpose                                                                                                                             | Data used                                 | GDPR legal basis                                                       |
-| ----------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | ---------------------------------------------------------------------- |
-| Creating and maintaining your account                                                                                               | Email, password hash, Google account info | Performance of a contract<br/>Art. 6(1)(b)                             |
-| Storing and displaying your saved links                                                                                             | Saved links, fetched page metadata        | Performance of a contract<br/>Art. 6(1)(b)                             |
-| Sending transactional email, such as account verification, password resets, magic sign-in links, and account deletion confirmations | Email                                     | Performance of a contract<br/>Art. 6(1)(b)                             |
-| Keeping you signed in and remembering preferences                                                                                   | Cookies, local storage, auth tokens       | Performance of a contract / legitimate interests<br/>Art. 6(1)(b), (f) |
-| Account security, including two-factor authentication                                                                               | TOTP secret, recovery codes, token data   | Performance of a contract / legitimate interests<br/>Art. 6(1)(b), (f) |
-| Security, fraud prevention, and debugging                                                                                           | Server logs, IP address                   | Legitimate interests<br/>Art. 6(1)(f)                                  |
-| Complying with legal obligations                                                                                                    | Any of the above, as required             | Legal obligation<br/>Art. 6(1)(c)                                      |
+| Purpose                                                                                                          | Data used                                     | GDPR legal basis                                                     |
+| ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------- | -------------------------------------------------------------------- |
+| Creating and maintaining your account                                                                            | Email, password hash, Google account info     | Performance of a contract<br/>Art. 6(1)(b)                             |
+| Storing and displaying your saved links                                                                          | Saved links, fetched page metadata            | Performance of a contract<br/>Art. 6(1)(b)                             |
+| Sending transactional email, such as account verification, password resets, magic sign-in links, and account deletion confirmations | Email                                         | Performance of a contract<br/>Art. 6(1)(b)                             |
+| Keeping you signed in and remembering preferences                                                                   | Cookies, local storage, auth tokens | Performance of a contract / legitimate interests<br/>Art. 6(1)(b), (f) |
+| Account security, including two-factor authentication                                                            | TOTP secret, recovery codes, token data       | Performance of a contract / legitimate interests<br/>Art. 6(1)(b), (f) |
+| Security, fraud prevention, and debugging                                                                            | Server logs, IP address                       | Legitimate interests<br/>Art. 6(1)(f)                                  |
+| Complying with legal obligations                                                                                 | Any of the above, as required                 | Legal obligation<br/>Art. 6(1)(c)                                      |
 
 We do not use your information for marketing, profiling, or automated
 decision-making that produces legal or similarly significant effects.
@@ -110,15 +110,15 @@ personal information, no additional action results from such signals.
 
 ## 5. Data Retention
 
-- **Account data**
-  Email, password hash, saved links, preferences, tokens,
+- **Account data**  
+Email, password hash, saved links, preferences, tokens,
   and 2F data are deleted immediately when you delete your account.
-- **Backups**
-  We keep encrypted database backups for disaster recovery,
+- **Backups**  
+We keep encrypted database backups for disaster recovery,
   retained on a rolling schedule of seven daily and four weekly copies. Deleted data
   ages out of all backups within approximately 35 days.
-- **Server logs**
-  We do not log routine page visits. The little our servers
+- **Server logs**  
+We do not log routine page visits. The little our servers
   do log (e.g. startup events and errors) is size-capped, automatically overwritten
   on a rolling basis as new entries arrive, and never archived.
 
