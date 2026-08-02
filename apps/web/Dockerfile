@@ -39,11 +39,13 @@ COPY patches ./patches
 # devDependencies and required to build).
 RUN npm ci
 
-# Copy the web app and compile it to apps/web/dist (Vite's default outDir; not
-# overridden in vite.config.ts). The privacy policy lives outside apps/web and
-# is bundled into the app (PrivacyPolicyPage imports it with ?raw).
+# Copy the web app and compile it to apps/web/dist (Vite's default outDir;
+# not overridden in vite.config.ts). The privacy policy + terms and
+# conditions both live outside apps/web and are bundled into the app
+# (PrivacyPolicyPage and TermsPage import them with ?raw).
 COPY apps/web ./apps/web
 COPY docs/PRIVACY.md ./docs/PRIVACY.md
+COPY docs/TERMS.md ./docs/TERMS.md
 WORKDIR /app/apps/web
 RUN npm run build
 
