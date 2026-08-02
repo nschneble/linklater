@@ -111,9 +111,6 @@ function Reference({ api }: ReferenceProps) {
 
   return (
     <>
-      {/* Bypass the endpoint nav: jump straight to the detail heading. A button
-          (not an anchor) because the URL hash already encodes the selection -
-          a fragment href would overwrite it. */}
       <button
         type="button"
         onClick={handleSkipToDetails}

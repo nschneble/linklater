@@ -45,6 +45,7 @@ const MIGRATED_FILES = [
   'src/components/errors/NotFoundView.tsx',
   'src/components/privacy/PrivacyPolicyPage.tsx',
   'src/components/privacy/policyMarkdownComponents.tsx',
+  'src/components/terms/TermsPage.tsx',
   'src/components/links/KeyboardShortcutsModal.tsx',
   'src/components/links/LinkCard/index.tsx',
   'src/components/links/LinkCardLayout.tsx',

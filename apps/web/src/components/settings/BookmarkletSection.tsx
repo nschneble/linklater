@@ -104,7 +104,7 @@ export default function BookmarkletSection() {
           aria-hidden="true"
           className="fa-solid fa-bookmark text-[var(--orbit-alt-text)] text-[0.7rem]"
         />
-        <span className="[[data-cvd='on']_&]:underline [[data-cvd='on']_&]:underline-offset-2">
+        <span className="[[data-cvd='on']_&]:underline [[data-cvd='on']_&]:underline-offset-3">
           Save to Linklater
         </span>
       </a>

@@ -150,10 +150,6 @@ const MobileBottomSheet = forwardRef<HTMLDivElement, MobileBottomSheetProps>(
 
     return (
       <div className="md:hidden" ref={forwardedReference}>
-        {/* Scrim: always aria-hidden (decorative backdrop); keyboard close is
-          handled by Escape in useMenuNavigation. data-open drives Tailwind.
-          Opacity transition is motion-safe so reduced-motion users get an
-          instant scrim swap to match the instant panel snap. */}
         <div
           className="fixed inset-0 z-40 scrim motion-safe:transition-opacity motion-safe:duration-300 data-[open=false]:opacity-0 data-[open=false]:pointer-events-none"
           aria-hidden="true"

@@ -47,9 +47,8 @@ export default function BottomSheetThemeSubmenu({
           onClick={onBack}
         />
         <p className="font-semibold">Themes</p>
-        {/* Non-interactive width-matching spacer so the heading stays
-            visually centered. Replaces an empty `MenuItem` that sat
-            in the tab order with no accessible name. */}
+
+        {/* keeps the heading visually centered */}
         <div aria-hidden="true" className="flex-0 w-9" />
       </MenuSection>
 

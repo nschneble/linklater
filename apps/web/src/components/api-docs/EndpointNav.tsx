@@ -39,11 +39,6 @@ export default function EndpointNav({
       aria-label="API endpoints"
       className="hidden md:block md:sticky md:top-4 md:self-start"
     >
-      {/*
-       * role="list" is NOT redundant: Tailwind v4's preflight sets
-       * `list-style: none` on every <ul>, which drops list semantics in
-       * Safari + VoiceOver. The lint rule can't see the reset.
-       */}
       {/* eslint-disable-next-line jsx-a11y/no-redundant-roles */}
       <ul role="list" className="space-y-1">
         {endpoints.map((endpoint) => {

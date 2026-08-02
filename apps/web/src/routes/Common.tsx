@@ -10,13 +10,23 @@ import VerifyLoginPage from '../components/auth/VerifyLoginPage';
 import { lazy, Suspense } from 'react';
 import { Route } from 'react-router';
 
-const ApiDocsView = lazy(() => import('../components/api-docs'));
+const ApiDocs = lazy(() => import('../components/api-docs'));
+const Privacy = lazy(() => import('../components/privacy/PrivacyPolicyPage'));
+const Terms = lazy(() => import('../components/terms/TermsPage'));
 
-const PrivacyPolicyPage = lazy(
-  () => import('../components/privacy/PrivacyPolicyPage'),
-);
+function CommonRoute({ label }: { label: string }) {
+  const routeView = () => {
+    switch (label) {
+      case 'API docs':
+        return <ApiDocs />;
+      case 'privacy policy':
+        // CalOPPA requires privacy-policy access without an account
+        return <Privacy />;
+      case 'terms and conditions':
+        return <Terms />;
+    }
+  };
 
-function ApiDocsRoute() {
   return (
     <Suspense
       fallback={
@@ -25,7 +35,7 @@ function ApiDocsRoute() {
           className="flex items-center justify-center min-h-screen bg-hit-man text-[var(--base-text)] select-none"
         >
           <p role="status" aria-live="polite" className="sr-only">
-            Loading API docs…
+            Loading {label}…
           </p>
           <i
             className="fa-solid fa-arrows-rotate fa-spin text-4xl opacity-50"
@@ -34,39 +44,28 @@ function ApiDocsRoute() {
         </div>
       }
     >
-      <ApiDocsView />
-    </Suspense>
-  );
-}
-
-// CalOPPA requires privacy-policy access without an account
-function PrivacyPolicyRoute() {
-  return (
-    <Suspense
-      fallback={
-        <div
-          data-theme="branding"
-          className="flex items-center justify-center min-h-screen bg-hit-man text-[var(--base-text)] select-none"
-        >
-          <p role="status" aria-live="polite" className="sr-only">
-            Loading privacy policy…
-          </p>
-          <i
-            className="fa-solid fa-arrows-rotate fa-spin text-4xl opacity-50"
-            aria-hidden="true"
-          />
-        </div>
-      }
-    >
-      <PrivacyPolicyPage />
+      {routeView()}
     </Suspense>
   );
 }
 
 export function commonRoutes() {
   return [
-    <Route key="api-docs" path="/docs" element={<ApiDocsRoute />} />,
-    <Route key="privacy" path="/privacy" element={<PrivacyPolicyRoute />} />,
+    <Route
+      key="api-docs"
+      path="/docs"
+      element={<CommonRoute label="API docs" />}
+    />,
+    <Route
+      key="privacy"
+      path="/privacy"
+      element={<CommonRoute label="privacy policy" />}
+    />,
+    <Route
+      key="terms"
+      path="/terms"
+      element={<CommonRoute label="terms and conditions" />}
+    />,
     <Route key="logout" path="/logout" element={<LogoutPage />} />,
     <Route
       key="confirm-account-deletion"

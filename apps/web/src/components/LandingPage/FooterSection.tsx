@@ -7,7 +7,7 @@ interface FooterLinkProps {
 }
 
 const footerLinkClassName =
-  'text-[var(--base-subtle-text)] hover:text-[var(--base-text)] text-xs transition duration-200';
+  'text-[var(--base-subtle-text)] hover:text-[var(--base-text)] text-xs hover:underline underline-offset-3 transition duration-200';
 
 function FooterLink({ href, label, newTab = false }: FooterLinkProps) {
   if (href.startsWith('/')) {
@@ -40,15 +40,14 @@ function FooterLink({ href, label, newTab = false }: FooterLinkProps) {
  */
 export default function FooterSection() {
   return (
-    <footer className="flex items-center justify-center gap-6 px-6 py-8 select-none">
+    <footer className="flex flex-col items-center justify-center gap-4 px-6 py-8 select-none">
       <nav aria-label="Footer">
         <ul className="flex items-center gap-6 list-none">
           <li>
-            <FooterLink
-              href="https://github.com/nschneble/linklater"
-              label="GitHub"
-              newTab
-            />
+            <FooterLink href="/terms" label="Terms" />
+          </li>
+          <li>
+            <FooterLink href="/privacy" label="Privacy" />
           </li>
           <li>
             <FooterLink
@@ -56,11 +55,16 @@ export default function FooterSection() {
               label="Contact"
             />
           </li>
-          <li>
-            <FooterLink href="/privacy" label="Privacy" />
-          </li>
         </ul>
       </nav>
+      <p className="text-[var(--base-subtle-text)] text-xs">
+        © 2026{' '}
+        <FooterLink
+          href="https://nickschneble.xyz/"
+          label="Nick Schneble"
+          newTab
+        />
+      </p>
     </footer>
   );
 }
