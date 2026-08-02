@@ -4,10 +4,12 @@
 # and both app package.json files live there), so every COPY path below is
 # relative to the repo root, not to apps/api.
 #
-# Two stages:
-#   1. builder  — installs all workspace deps, generates the Prisma client, and
-#                 compiles the API to apps/api/dist.
-#   2. runtime  — a slim image that runs `node dist/main`.
+# Three stages:
+#   1. builder  — installs all workspace deps, generates the Prisma client,
+#                 type-checks, and compiles the API to apps/api/dist.
+#   2. proddeps — a clean production-only dependency tree, so the SWC build
+#                 toolchain never reaches the runtime image.
+#   3. runtime  — a slim image that runs `node dist/main`.
 #
 # Node 22 matches the root package.json `engines` pin (`node: >=22`).
 #
@@ -56,12 +58,51 @@ COPY apps/api ./apps/api
 WORKDIR /app/apps/api
 RUN DATABASE_URL="postgresql://build:build@build:5432/build" npx prisma generate
 
-# Compile the API to apps/api/dist (nest-cli sourceRoot=src, tsconfig
-# outDir=./dist → entry is dist/main.js).
-RUN npm run build
+# Type-check, then compile the API to apps/api/dist. The SWC builder strips
+# types without checking them, so `npm run typecheck` (tsc --noEmit) runs first
+# to keep a type-broken image unbuildable; the tag-triggered deploy path builds
+# this image directly and does not otherwise run CI's typecheck step. (nest-cli
+# sourceRoot=src, tsconfig outDir=./dist → entry is dist/main.js.)
+RUN npm run typecheck && npm run build
 
 # ---------------------------------------------------------------------------
-# Stage 2: runtime
+# Stage 2: proddeps
+# ---------------------------------------------------------------------------
+# A production-only dependency tree for the runtime image. `npm ci --omit=dev`
+# drops the build toolchain the builder needed but the runtime never runs — the
+# SWC builder (@swc/cli and its ~143-package binary-downloader stack, plus
+# @swc/core), the Nest CLI, TypeScript, and jest — which would otherwise ship to
+# prod for zero runtime benefit if node_modules were copied whole from builder.
+#
+# Scripts run (NOT --ignore-scripts) on purpose: @prisma/engines' postinstall
+# places the native schema engine that `prisma migrate deploy` needs, and the
+# root patch-package postinstall applies patches/. Same manifests + patches as
+# the builder, so the install is lockfile-identical minus the dev dependencies.
+FROM node:22-slim AS proddeps
+
+WORKDIR /app
+
+# OpenSSL before the install so @prisma/engines' postinstall detects the same
+# libssl the runtime carries (openssl 3.x) and downloads the MATCHING native
+# schema engine. Without it Prisma cannot detect libssl and falls back to the
+# openssl-1.1.x engine variant; then at `prisma migrate deploy` time — where the
+# runtime image does have openssl 3.x — Prisma would try to fetch the correct
+# variant over the network into a root-owned node_modules, which fails under the
+# unprivileged `node` user. Baking the right variant keeps migrate deploy
+# self-contained: no deploy-time engine download, no network dependency.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends openssl \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY package.json package-lock.json ./
+COPY apps/api/package.json apps/api/package.json
+COPY apps/web/package.json apps/web/package.json
+COPY patches ./patches
+
+RUN npm ci --omit=dev
+
+# ---------------------------------------------------------------------------
+# Stage 3: runtime
 # ---------------------------------------------------------------------------
 FROM node:22-slim AS runtime
 
@@ -75,13 +116,15 @@ RUN apt-get update \
 
 WORKDIR /app
 
-# The compiled app, the installed dependencies (which include the Prisma client
-# runtime, @prisma/adapter-pg, pg, and — for the deploy-time migrate step — the
-# Prisma CLI and schema engine), the workspace manifests, and the Prisma schema
-# plus migrations. node_modules is copied whole rather than reinstalled with
-# --omit=dev so the Prisma CLI (a devDependency) stays available for
-# `prisma migrate deploy`; see docs/DEPLOYMENT.md's update-deploy flow.
-COPY --from=builder /app/node_modules ./node_modules
+# The production dependency tree (from the proddeps stage), the compiled app,
+# the workspace manifests, and the Prisma schema plus migrations. node_modules
+# comes from proddeps (npm ci --omit=dev), not the builder, so the SWC build
+# toolchain never ships to prod. prisma is a runtime dependency, not a
+# devDependency: the deploy workflow runs `prisma migrate deploy` against this
+# image, so the Prisma CLI and its native schema engine (@prisma/engines) must
+# live in the production tree. The Prisma client runtime, @prisma/adapter-pg,
+# and pg were already prod deps. See docs/DEPLOYMENT.md's update-deploy flow.
+COPY --from=proddeps /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/package-lock.json ./package-lock.json
 COPY --from=builder /app/apps/api/package.json ./apps/api/package.json
