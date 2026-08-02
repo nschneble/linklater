@@ -7,8 +7,8 @@
 # Three stages:
 #   1. builder  — installs all workspace deps, generates the Prisma client,
 #                 type-checks, and compiles the API to apps/api/dist.
-#   2. proddeps — a clean production-only dependency tree (npm ci --omit=dev),
-#                 so the SWC build toolchain never reaches the runtime image.
+#   2. proddeps — a clean production-only dependency tree, so the SWC build
+#                 toolchain never reaches the runtime image.
 #   3. runtime  — a slim image that runs `node dist/main`.
 #
 # Node 22 matches the root package.json `engines` pin (`node: >=22`).
