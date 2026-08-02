@@ -23,7 +23,7 @@ export default function ParameterTable({
           <tr key={parameter.name}>
             <th
               scope="row"
-              className="px-3 py-2.5 text-[var(--mount-text)] text-sm text-nowrap font-mono font-normal"
+              className="px-3 py-2.5 text-[var(--mount-text)] text-sm text-wrap font-mono font-normal"
             >
               {parameter.name}
               {parameter.required ? '' : '?'}:{' '}
