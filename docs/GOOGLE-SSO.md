@@ -121,7 +121,7 @@ The deploy workflow passes it through as a Docker build argument sourced from a
 repository variable, so you flip it on without touching code:
 
 1. Set the repository **variable** (not a secret — it is not sensitive)
-   `VITE_GOOGLE_SSO_ENABLED` to `true` (Settings → Secrets and variables →
+   `ENABLE_GOOGLE_SSO` to `true` (Settings → Secrets and variables →
    Actions → Variables).
 2. Cut a release (push a `vX.Y.Z` tag). CI rebuilds the web image with the
    button enabled and rolls it out. Setting the variable alone does nothing
@@ -146,13 +146,13 @@ hidden), so this is safe to leave off until you have finished steps 1 and 2.
 
 ## Troubleshooting
 
-| Symptom                                            | Cause                                                                 | Fix                                                                                              |
-| -------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| No "Continue with Google" button on the login page | `VITE_GOOGLE_SSO_ENABLED` was not `true` when the web image was built | Set the repo variable, then rebuild (cut a new tag). See step 3.                                 |
-| Button appears, but `/auth/google` returns a `500` | The API strategy is not registered (a `GOOGLE_*` var is missing)      | Recheck all four API variables in `PRODUCTION_ENV`. See step 2.                                  |
-| Google shows `Error 400: redirect_uri_mismatch`    | The registered redirect URI does not exactly match the callback var   | Make the Google Console URI and the callback var byte-identical (no trailing slash). See step 1. |
-| Sign-in succeeds but the app never loads afterward | `APP_URL` is unset or points at `localhost`                           | Set `APP_URL` to the public origin. See step 2.                                                  |
-| Only allow-listed accounts can sign in             | The consent screen is still in **Testing**                            | Publish the consent screen to **In production**. See step 1.                                     |
+| Symptom                                            | Cause                                                               | Fix                                                                                              |
+| -------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| No "Continue with Google" button on the login page | `ENABLE_GOOGLE_SSO` was not `true` when the web image was built     | Set the repo variable, then rebuild (cut a new tag). See step 3.                                 |
+| Button appears, but `/auth/google` returns a `500` | The API strategy is not registered (a `GOOGLE_*` var is missing)    | Recheck all four API variables in `PRODUCTION_ENV`. See step 2.                                  |
+| Google shows `Error 400: redirect_uri_mismatch`    | The registered redirect URI does not exactly match the callback var | Make the Google Console URI and the callback var byte-identical (no trailing slash). See step 1. |
+| Sign-in succeeds but the app never loads afterward | `APP_URL` is unset or points at `localhost`                         | Set `APP_URL` to the public origin. See step 2.                                                  |
+| Only allow-listed accounts can sign in             | The consent screen is still in **Testing**                          | Publish the consent screen to **In production**. See step 1.                                     |
 
 ## Dev and prod on one client
 
