@@ -58,7 +58,7 @@ export function makePolicyMarkdownComponents({
     ),
     p: (properties) => (
       <p
-        className="my-4 text-[var(--base-text)] text-base leading-relaxed"
+        className="my-4 text-[var(--base-text)] text-base text-pretty leading-relaxed"
         {...withoutNode(properties)}
       />
     ),
@@ -70,7 +70,7 @@ export function makePolicyMarkdownComponents({
     ),
     li: (properties) => (
       <li
-        className="text-[var(--base-text)] text-base leading-relaxed"
+        className="text-[var(--base-text)] text-base text-pretty leading-relaxed"
         {...withoutNode(properties)}
       />
     ),
@@ -82,7 +82,7 @@ export function makePolicyMarkdownComponents({
     ),
     a: ({ children, ...properties }) => (
       <a
-        className="text-[var(--base-text)] underline underline-offset-2 decoration-1 hover:decoration-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] rounded-xs"
+        className="text-[var(--base-text)] underline underline-offset-3 decoration-1 hover:decoration-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] rounded-xs"
         {...withoutNode(properties)}
       >
         {children}

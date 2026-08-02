@@ -7,7 +7,7 @@ interface FooterLinkProps {
 }
 
 const footerLinkClassName =
-  'text-[var(--base-subtle-text)] hover:text-[var(--base-text)] text-xs transition duration-200';
+  'text-[var(--base-subtle-text)] hover:text-[var(--base-text)] text-xs hover:underline underline-offset-3 transition duration-200';
 
 function FooterLink({ href, label, newTab = false }: FooterLinkProps) {
   if (href.startsWith('/')) {

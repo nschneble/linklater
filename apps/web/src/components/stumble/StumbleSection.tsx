@@ -37,7 +37,7 @@ export default function StumbleSection() {
           className="fa-brands fa-stumbleupon text-[var(--orbit-alt-text)] text-[0.7rem]"
           aria-hidden="true"
         />
-        <span className="[[data-cvd='on']_&]:underline [[data-cvd='on']_&]:underline-offset-2">
+        <span className="[[data-cvd='on']_&]:underline [[data-cvd='on']_&]:underline-offset-3">
           Stumble!
         </span>
       </a>
