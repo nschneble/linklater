@@ -1,7 +1,9 @@
 import termsMarkdown from '../../../../../docs/TERMS.md?raw';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Link } from 'react-router';
 import { makePolicyMarkdownComponents } from '../privacy/policyMarkdownComponents';
+import { rehypeBreakTags } from '../privacy/rehypeBreakTags';
 import { useAuth } from '../../auth/AuthContext';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 
@@ -64,22 +66,11 @@ export default function TermsPage() {
         tabIndex={-1}
         aria-labelledby="terms-heading"
       >
-        <div
-          role="note"
-          className="flex items-start gap-3 my-6 px-4 py-3 border border-[var(--base-border)] rounded-lg"
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeBreakTags]}
+          components={termsMarkdownComponents}
         >
-          <i
-            className="fa-solid fa-triangle-exclamation mt-0.5 text-[var(--base-text)]"
-            aria-hidden="true"
-          />
-          <p className="text-[var(--base-text)] text-sm leading-relaxed">
-            <strong className="font-semibold">Draft template.</strong> This
-            terms and conditions page is an unreviewed template. Replace every
-            bracketed placeholder with real details and have the text reviewed
-            by a qualified lawyer before publishing.
-          </p>
-        </div>
-        <ReactMarkdown components={termsMarkdownComponents}>
           {termsMarkdown}
         </ReactMarkdown>
       </main>

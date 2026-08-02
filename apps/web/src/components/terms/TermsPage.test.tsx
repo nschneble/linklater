@@ -75,14 +75,6 @@ describe('TermsPage', () => {
     expect(sectionTitles).toContain('13. Contact');
   });
 
-  it('shows a prominent draft-template banner warning against publishing as-is', () => {
-    renderPage(null);
-
-    const banner = screen.getByRole('note');
-    expect(banner).toHaveTextContent('Draft template.');
-    expect(banner).toHaveTextContent('reviewed by a qualified lawyer');
-  });
-
   it('keeps every in-content link same-tab (no target="_blank")', () => {
     renderPage(null);
 
@@ -90,14 +82,6 @@ describe('TermsPage', () => {
     for (const link of within(main).queryAllByRole('link')) {
       expect(link).not.toHaveAttribute('target', '_blank');
     }
-  });
-
-  it('renders bracketed placeholders as literal text, not markdown links', () => {
-    renderPage(null);
-
-    const main = screen.getByRole('main');
-    expect(main).toHaveTextContent('[ENTITY]');
-    expect(main).toHaveTextContent('[EFFECTIVE_DATE]');
   });
 
   it('pins the branding theme when logged out and inherits the user theme when logged in', () => {
