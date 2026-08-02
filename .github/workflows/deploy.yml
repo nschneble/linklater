@@ -6,25 +6,36 @@
 #      and then brings up the Docker container
 #   4. Polls the `/api/health` endpoint until it returns 200
 #
-# Required GitHub Repository secrets
-#  (Settings → Security and quality → Secrets and variables → Actions)
+# GitHub repository secrets + variables
+# (Settings → Security and quality → Secrets and variables → Actions)
 #
-# Required GitHub Repository secrets:
+# Required GitHub repository secrets:
 #
-#   SSH_HOST        VPS hostname or IP address
-#   SSH_PORT        SSH port (optional, defaults to 22)
-#   SSH_USER        SSH user on the VPS (must be in `docker` group)
-#   SSH_KEY         Private SSH key matching the public key on the VPS
-#   DEPLOY_PATH     Absolute path on the VPS
-#   PRODUCTION_ENV  Full list of environment variables as key-value pairs
+#   SSH_HOST           VPS hostname or IP address
+#   SSH_PORT           SSH port (optional, defaults to 22)
+#   SSH_USER           SSH user on the VPS (must be in `docker` group)
+#   SSH_KEY            Private SSH key matching the public key on the VPS
+#   DEPLOY_PATH        Absolute path on the VPS
+#   PRODUCTION_ENV     Full list of env variables as key-value pairs
 #
-#                   APP_URL, BACKUP_ENCRYPTION_PASSPHRASE, CORS_ORIGIN,
-#                   DATABASE_URL, DOMAIN, JWT_SECRET, POSTGRES_DB,
-#                   POSTGRES_PASSWORD, POSTGRES_USER, SMTP_FROM, SMTP_HOST,
-#                   SMTP_PASS, SMTP_PORT, SMTP_SECURE, SMTP_USER,
-#                   TOTP_ENCRYPTION_KEY
+#                      Required:
+#                      APP_URL, BACKUP_ENCRYPTION_PASSPHRASE, CORS_ORIGIN,
+#                      DATABASE_URL, DOMAIN, JWT_SECRET, POSTGRES_DB,
+#                      POSTGRES_PASSWORD, POSTGRES_USER, SMTP_FROM,
+#                      SMTP_HOST, SMTP_PASS, SMTP_PORT, SMTP_SECURE,
+#                      SMTP_USER, TOTP_ENCRYPTION_KEY
 #
-#                   Optional: GOOGLE_*, APPLE_*, EXTENSION_REDIRECT_URIS
+#                      Optional:
+#                      APPLE_CALLBACK_URL, APPLE_CLIENT_ID, APPLE_KEY_ID,
+#                      APPLE_PRIVATE_KEY, APPLE_TEAM_ID,
+#                      EXTENSION_REDIRECT_URIS, GOOGLE_CALLBACK_URL,
+#                      GOOGLE_LINK_CALLBACK_URL, GOOGLE_CLIENT_ID,
+#                      GOOGLE_CLIENT_SECRET
+#
+# Optional GitHub repository variables:
+#
+#   ENABLE_APPLE_SSO   Allow users to log in with Apple accounts
+#   ENABLE_GOOGLE_SSO  Allow users to log in with Google accounts
 
 name: Deploy
 
@@ -89,6 +100,8 @@ jobs:
           push: true
           build-args: |
             VITE_API_BASE_URL=/api
+            VITE_APPLE_SSO_ENABLED=${{ vars.ENABLE_APPLE_SSO }}
+            VITE_GOOGLE_SSO_ENABLED=${{ vars.ENABLE_GOOGLE_SSO }}
           tags: |
             ${{ env.WEB_IMAGE }}:${{ github.sha }}
             ${{ env.WEB_IMAGE }}:latest

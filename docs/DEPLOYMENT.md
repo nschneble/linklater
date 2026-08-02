@@ -339,7 +339,9 @@ automation should not (and in some cases cannot) perform.
   SSO provider (Google, Apple) against the real domain, and set the corresponding
   `GOOGLE_*` / `APPLE_*` credentials. Providers are only enabled when their full
   credential set is present, so an un-reconfigured provider is simply off rather
-  than broken.
+  than broken. [GOOGLE-SSO.md](./GOOGLE-SSO.md) is the step-by-step for
+  Google, including the Cloud Console client, both redirect URIs, the API
+  variables, and the build-time flag that renders the login button.
 
 ## First deploy
 

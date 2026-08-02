@@ -6,7 +6,12 @@
 
 _Nothing just yet_
 
-## [1.4.3] - 2026-07-29
+## [1.5.0] - 2026-08-02
+
+### Added
+
+- Enable Google SSO in production
+- Terms and conditions
 
 ### Changed
 
@@ -199,8 +204,8 @@ This is a development version bump. Most of the changes are related to refactori
 - Toggle themes based on Richard Linklater's filmography
 - Toggle light and dark mode
 
-[Unreleased]: https://github.com/nschneble/linklater/compare/v1.4.3...HEAD
-[1.4.3]: https://github.com/nschneble/linklater/compare/v1.4.2...v1.4.3
+[Unreleased]: https://github.com/nschneble/linklater/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/nschneble/linklater/compare/v1.4.2...v1.5.0
 [1.4.2]: https://github.com/nschneble/linklater/compare/v1.4.1...v1.4.2
 [1.4.1]: https://github.com/nschneble/linklater/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/nschneble/linklater/compare/v1.3.0...v1.4.0

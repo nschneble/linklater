@@ -26,6 +26,18 @@ WORKDIR /app
 ARG VITE_API_BASE_URL=/api
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
+# Bake the Apple SSO login toggle into the build. The login page reads
+# import.meta.env.VITE_APPLE_SSO_ENABLED at build time, so there's no
+# runtime switch.
+ARG VITE_APPLE_SSO_ENABLED
+ENV VITE_APPLE_SSO_ENABLED=${VITE_APPLE_SSO_ENABLED:-false}
+
+# Bake the Google SSO login toggle into the build. The login page reads
+# import.meta.env.VITE_GOOGLE_SSO_ENABLED at build time, so there's no
+# runtime switch.
+ARG VITE_GOOGLE_SSO_ENABLED
+ENV VITE_GOOGLE_SSO_ENABLED=${VITE_GOOGLE_SSO_ENABLED:-false}
+
 # Workspace manifests first for install-layer caching.
 COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
