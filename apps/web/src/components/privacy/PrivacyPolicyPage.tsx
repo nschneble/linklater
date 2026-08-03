@@ -3,7 +3,6 @@ import { makePolicyMarkdownComponents } from '../legal/policyMarkdownComponents'
 import PolicyDocumentPage from '../legal/PolicyDocumentPage';
 
 const privacyMarkdownComponents = makePolicyMarkdownComponents({
-  headingId: 'privacy-policy-heading',
   tableLabel: 'How we use your information',
   tableCaption: 'Processing purposes, data used, and GDPR legal basis',
 });
@@ -20,7 +19,6 @@ export default function PrivacyPolicyPage() {
       headingId="privacy-policy-heading"
       markdown={privacyPolicyMarkdown}
       markdownComponents={privacyMarkdownComponents}
-      navLabel="Privacy policy"
       skipLinkText="Skip to privacy policy"
     />
   );

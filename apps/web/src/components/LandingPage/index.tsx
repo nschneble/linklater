@@ -9,7 +9,7 @@ import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
  * Composed of three full-width sections stacked vertically:
  * 1. `HeroSection` – headline, tagline, and call-to-action buttons
  * 2. `FeaturesSection` – grid of feature tiles (Save, Stumble!, Share)
- * 3. `FooterSection` – links to Terms, Privacy, and Contact
+ * 3. `FooterSection` – links to Terms, Privacy, Contact, and the author's site
  *
  * Carries `data-theme='branding'` so the off-book `branding` cascade
  * drives every bundle token, and keeps the `hit-man` Tailwind background
