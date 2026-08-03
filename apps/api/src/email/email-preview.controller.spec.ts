@@ -1,27 +1,30 @@
 import { jest } from '@jest/globals';
 import { NotFoundException } from '@nestjs/common';
 
-import { emailPreviews } from './email-preview.catalog.js';
 import { EmailPreviewController } from './email-preview.controller.js';
+import { EmailPreviewService } from './email-preview.service.js';
 
-// The heading each template renders; pins every slug to the correct template
-// so a mis-wired preview (e.g. magic-link showing the verification body) fails.
-const HEADINGS: Record<string, string> = {
-  verification: 'Verify your email.',
-  'password-reset': 'Reset your password.',
-  'email-change': 'Confirm your new email.',
-  'magic-link': 'Your login link.',
-  'confirm-account-deletion': 'Confirm account deletion.',
-  'policy-update': 'Our privacy policy is changing.',
-};
+const INDEX_HTML = '<index-html>';
+const PREVIEW_HTML = '<preview-html>';
 
 describe('EmailPreviewController', () => {
   let controller: EmailPreviewController;
   const originalTestingUi = process.env.TESTING_UI;
 
+  const emailPreviewServiceMock = {
+    renderIndex: jest.fn(),
+    resolvePreview: jest.fn(),
+  } as unknown as EmailPreviewService;
+
   beforeEach(() => {
     jest.clearAllMocks();
-    controller = new EmailPreviewController();
+    (emailPreviewServiceMock.renderIndex as jest.Mock).mockReturnValue(
+      INDEX_HTML,
+    );
+    (emailPreviewServiceMock.resolvePreview as jest.Mock).mockReturnValue(
+      PREVIEW_HTML,
+    );
+    controller = new EmailPreviewController(emailPreviewServiceMock);
     process.env.TESTING_UI = '1';
   });
 
@@ -33,29 +36,24 @@ describe('EmailPreviewController', () => {
     }
   });
 
-  it('covers exactly the six transactional email templates', () => {
-    const slugs = emailPreviews.map((preview) => preview.slug).sort();
-    expect(slugs).toEqual(Object.keys(HEADINGS).sort());
+  it('delegates the index page to the service', () => {
+    expect(controller.index()).toBe(INDEX_HTML);
+    expect(emailPreviewServiceMock.renderIndex).toHaveBeenCalledTimes(1);
   });
 
-  it('renders each template as a full HTML document with its own heading', () => {
-    for (const preview of emailPreviews) {
-      const html = controller.preview(preview.slug);
-      expect(html).toBe(preview.html);
-      expect(html).toContain('<!doctype html>');
-      expect(html).toContain(HEADINGS[preview.slug]);
-    }
+  it('delegates a template preview to the service by slug', () => {
+    expect(controller.preview('magic-link')).toBe(PREVIEW_HTML);
+    expect(emailPreviewServiceMock.resolvePreview).toHaveBeenCalledWith(
+      'magic-link',
+    );
   });
 
-  it('lists every preview on the index page', () => {
-    const html = controller.index();
-    for (const preview of emailPreviews) {
-      expect(html).toContain(`/api/email/preview/${preview.slug}`);
-      expect(html).toContain(preview.title);
-    }
-  });
-
-  it('throws NotFoundException for an unknown template', () => {
+  it('propagates a service NotFoundException for an unknown template', () => {
+    (emailPreviewServiceMock.resolvePreview as jest.Mock).mockImplementation(
+      () => {
+        throw new NotFoundException('Unknown email preview: does-not-exist');
+      },
+    );
     expect(() => controller.preview('does-not-exist')).toThrow(
       NotFoundException,
     );
@@ -65,5 +63,7 @@ describe('EmailPreviewController', () => {
     delete process.env.TESTING_UI;
     expect(() => controller.index()).toThrow(NotFoundException);
     expect(() => controller.preview('magic-link')).toThrow(NotFoundException);
+    expect(emailPreviewServiceMock.renderIndex).not.toHaveBeenCalled();
+    expect(emailPreviewServiceMock.resolvePreview).not.toHaveBeenCalled();
   });
 });
