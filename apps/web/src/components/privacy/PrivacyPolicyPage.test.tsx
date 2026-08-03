@@ -37,7 +37,7 @@ beforeEach(() => {
 });
 
 describe('PrivacyPolicyPage', () => {
-  it('renders exactly one h1, with the markdown title demoted to the sr-only main label', () => {
+  it('renders exactly one h1 and names <main> from that chrome heading', () => {
     renderPage(null);
 
     const headings = screen.getAllByRole('heading', { level: 1 });
@@ -45,7 +45,7 @@ describe('PrivacyPolicyPage', () => {
     expect(headings[0]).toHaveTextContent('Privacy policy');
 
     const main = screen.getByRole('main');
-    expect(main).toHaveAccessibleName('Privacy Policy');
+    expect(main).toHaveAccessibleName('Privacy policy');
   });
 
   it('pairs the skip link with a focusable main landmark', () => {

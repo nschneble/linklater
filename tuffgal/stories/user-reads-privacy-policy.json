@@ -1,0 +1,4 @@
+{
+  "story": "A visitor reads the privacy policy without needing an account.",
+  "actions": [{ "action": "visit-privacy" }]
+}

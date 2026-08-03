@@ -32,8 +32,8 @@ function FooterLink({ href, label, newTab = false }: FooterLinkProps) {
 }
 
 /**
- * Footer for the public landing page. Renders links to the GitHub repo,
- * contact email, and the privacy policy.
+ * Footer for the public landing page. Renders links to the terms and
+ * privacy pages, a contact email, and the author's website.
  *
  * CalOPPA requires that a privacy policy be conspicuously posted on the
  * homepage of a website or online service.

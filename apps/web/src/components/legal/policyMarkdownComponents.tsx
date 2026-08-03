@@ -1,8 +1,7 @@
 import type { Components } from 'react-markdown';
 
+/** Optional table-region labels for `makePolicyMarkdownComponents`. */
 interface MakePolicyMarkdownComponentsOptions {
-  /** id given to the demoted markdown title so `<main>` can label off it. */
-  headingId: string;
   /** accessible name for the scrollable table region (omit if no table). */
   tableLabel?: string;
   /** sr-only caption describing the table (omit if no table). */
@@ -24,22 +23,17 @@ function withoutNode<Properties extends { node?: unknown }>(
 
 /**
  * Builds the tag → element mapping shared by the legal-document pages
- * (privacy policy, terms and conditions). The leading `#` title is demoted
- * to an sr-only <h2> so each page keeps exactly one visible <h1> in its
- * chrome; `headingId` pairs that heading with its `<main aria-labelledby>`.
- * Table mappings are added only when a page actually ships a data table.
+ * (privacy policy, terms and conditions). The leading `#` markdown
+ * title is dropped so each page keeps exactly one visible <h1> in its
+ * chrome, which `<main aria-labelledby>` names off directly. Table
+ * mappings are added only when a page actually ships a data table.
  */
 export function makePolicyMarkdownComponents({
-  headingId,
   tableLabel,
   tableCaption,
-}: MakePolicyMarkdownComponentsOptions): Components {
+}: MakePolicyMarkdownComponentsOptions = {}): Components {
   const components: Components = {
-    h1: ({ children, ...properties }) => (
-      <h2 className="sr-only" id={headingId} {...withoutNode(properties)}>
-        {children}
-      </h2>
-    ),
+    h1: () => null,
     h2: ({ children, ...properties }) => (
       <h2
         className="mt-10 mb-4 text-[var(--base-text)] text-2xl font-semibold tracking-tight"

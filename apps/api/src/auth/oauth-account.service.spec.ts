@@ -12,7 +12,7 @@ jest.mock('../prisma/generated/client', () => ({
   Prisma: { PrismaClientKnownRequestError: MockPrismaClientKnownRequestError },
 }));
 
-import { ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Prisma } from '../prisma/generated/client';
 
@@ -40,6 +40,7 @@ describe('OAuthAccountService', () => {
   const usersServiceMock = {
     findByEmail: jest.fn(),
     findById: jest.fn(),
+    getCredentialState: jest.fn(),
     markEmailVerified: jest.fn(),
     verifyEmailAndInvalidateStalePassword: jest.fn(),
   } as unknown as UsersService;
@@ -305,7 +306,11 @@ describe('OAuthAccountService', () => {
   });
 
   describe('unlinkOAuthProvider', () => {
-    it('delegates to unlinkOAuthAccount with userId and provider', async () => {
+    it('unlinks when the account still has a password to fall back on', async () => {
+      (usersServiceMock.getCredentialState as jest.Mock).mockResolvedValue({
+        hasPassword: true,
+        oauthProviders: [OAUTH_PROVIDER],
+      });
       (userOAuthServiceMock.unlinkOAuthAccount as jest.Mock).mockResolvedValue(
         undefined,
       );
@@ -316,6 +321,35 @@ describe('OAuthAccountService', () => {
         USER_ID,
         OAUTH_PROVIDER,
       );
+    });
+
+    it('unlinks a passwordless account when another provider stays linked', async () => {
+      (usersServiceMock.getCredentialState as jest.Mock).mockResolvedValue({
+        hasPassword: false,
+        oauthProviders: [OAUTH_PROVIDER, 'apple'],
+      });
+      (userOAuthServiceMock.unlinkOAuthAccount as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await service.unlinkOAuthProvider(USER_ID, OAUTH_PROVIDER);
+
+      expect(userOAuthServiceMock.unlinkOAuthAccount).toHaveBeenCalledWith(
+        USER_ID,
+        OAUTH_PROVIDER,
+      );
+    });
+
+    it('rejects and keeps the account linked when unlinking would strand a passwordless user', async () => {
+      (usersServiceMock.getCredentialState as jest.Mock).mockResolvedValue({
+        hasPassword: false,
+        oauthProviders: [OAUTH_PROVIDER],
+      });
+
+      await expect(
+        service.unlinkOAuthProvider(USER_ID, OAUTH_PROVIDER),
+      ).rejects.toThrow(BadRequestException);
+      expect(userOAuthServiceMock.unlinkOAuthAccount).not.toHaveBeenCalled();
     });
   });
 

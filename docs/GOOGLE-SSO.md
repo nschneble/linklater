@@ -52,9 +52,14 @@ Miss any one and the flow fails in a specific, diagnosable way; the
    - Under **Authorized redirect URIs**, add **both** of these, exactly:
 
      ```txt
-     https://YOUR_DOMAIN/auth/google/callback
-     https://YOUR_DOMAIN/auth/google/link/callback
+     https://YOUR_DOMAIN/api/auth/google/callback
+     https://YOUR_DOMAIN/api/auth/google/link/callback
      ```
+
+     The `/api` prefix matters because the production web build talks to the
+     API under `/api`, which Caddy strips before proxying (`Caddyfile`); the
+     browser-facing callback carries it too, while local dev reaches the API
+     directly at `:3000` and stays unprefixed.
 
      Both are required: the first is the sign-in flow, the second is the
      "link Google to my account" flow in Settings. They are handled by two
@@ -63,7 +68,7 @@ Miss any one and the flow fails in a specific, diagnosable way; the
      so registering only one leaves the other flow broken.
 
      Google matches redirect URIs **exactly** — scheme, host, path, and
-     trailing slash all count. `https://YOUR_DOMAIN/auth/google/callback/`
+     trailing slash all count. `https://YOUR_DOMAIN/api/auth/google/callback/`
      (trailing slash) is a different URI and will be rejected with
      `redirect_uri_mismatch`. Copy the paths above verbatim.
 4. Copy the generated **Client ID** and **Client secret**. The secret is shown
@@ -76,13 +81,13 @@ list the deploy workflow writes to `production.env`; see DEPLOYMENT.md →
 Required human actions). The compose file already forwards them to the API
 container (`docker-compose.prod.yml`), so no other change is needed.
 
-| Variable                   | Value                                           | Notes                                                |
-| -------------------------- | ----------------------------------------------- | ---------------------------------------------------- |
-| `GOOGLE_CLIENT_ID`         | the client ID from step 1                       | Required for both sign-in and linking.               |
-| `GOOGLE_CLIENT_SECRET`     | the client secret from step 1                   | Required for both sign-in and linking.               |
-| `GOOGLE_CALLBACK_URL`      | `https://YOUR_DOMAIN/auth/google/callback`      | Enables the sign-in strategy.                        |
-| `GOOGLE_LINK_CALLBACK_URL` | `https://YOUR_DOMAIN/auth/google/link/callback` | Enables the account-linking strategy.                |
-| `APP_URL`                  | `https://YOUR_DOMAIN`                           | Already required; the redirect origin after sign-in. |
+| Variable                   | Value                                               | Notes                                                |
+| -------------------------- | --------------------------------------------------- | ---------------------------------------------------- |
+| `GOOGLE_CLIENT_ID`         | the client ID from step 1                           | Required for both sign-in and linking.               |
+| `GOOGLE_CLIENT_SECRET`     | the client secret from step 1                       | Required for both sign-in and linking.               |
+| `GOOGLE_CALLBACK_URL`      | `https://YOUR_DOMAIN/api/auth/google/callback`      | Enables the sign-in strategy.                        |
+| `GOOGLE_LINK_CALLBACK_URL` | `https://YOUR_DOMAIN/api/auth/google/link/callback` | Enables the account-linking strategy.                |
+| `APP_URL`                  | `https://YOUR_DOMAIN`                               | Already required; the redirect origin after sign-in. |
 
 Three behaviours worth knowing before you deploy:
 
@@ -146,13 +151,13 @@ hidden), so this is safe to leave off until you have finished steps 1 and 2.
 
 ## Troubleshooting
 
-| Symptom                                            | Cause                                                               | Fix                                                                                              |
-| -------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| No "Continue with Google" button on the login page | `ENABLE_GOOGLE_SSO` was not `true` when the web image was built     | Set the repo variable, then rebuild (cut a new tag). See step 3.                                 |
-| Button appears, but `/auth/google` returns a `500` | The API strategy is not registered (a `GOOGLE_*` var is missing)    | Recheck all four API variables in `PRODUCTION_ENV`. See step 2.                                  |
-| Google shows `Error 400: redirect_uri_mismatch`    | The registered redirect URI does not exactly match the callback var | Make the Google Console URI and the callback var byte-identical (no trailing slash). See step 1. |
-| Sign-in succeeds but the app never loads afterward | `APP_URL` is unset or points at `localhost`                         | Set `APP_URL` to the public origin. See step 2.                                                  |
-| Only allow-listed accounts can sign in             | The consent screen is still in **Testing**                          | Publish the consent screen to **In production**. See step 1.                                     |
+| Symptom                                                | Cause                                                               | Fix                                                                                              |
+| ------------------------------------------------------ | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| No "Continue with Google" button on the login page     | `ENABLE_GOOGLE_SSO` was not `true` when the web image was built     | Set the repo variable, then rebuild (cut a new tag). See step 3.                                 |
+| Button appears, but `/api/auth/google` returns a `500` | The API strategy is not registered (a `GOOGLE_*` var is missing)    | Recheck all four API variables in `PRODUCTION_ENV`. See step 2.                                  |
+| Google shows `Error 400: redirect_uri_mismatch`        | The registered redirect URI does not exactly match the callback var | Make the Google Console URI and the callback var byte-identical (no trailing slash). See step 1. |
+| Sign-in succeeds but the app never loads afterward     | `APP_URL` is unset or points at `localhost`                         | Set `APP_URL` to the public origin. See step 2.                                                  |
+| Only allow-listed accounts can sign in                 | The consent screen is still in **Testing**                          | Publish the consent screen to **In production**. See step 1.                                     |
 
 ## Dev and prod on one client
 

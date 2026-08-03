@@ -1,0 +1,4 @@
+{
+  "story": "A visitor reads the terms and conditions without needing an account.",
+  "actions": [{ "action": "visit-terms" }]
+}

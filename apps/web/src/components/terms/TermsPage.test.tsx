@@ -2,7 +2,7 @@
  * Anti-regression coverage for the a11y contract on the terms and conditions
  * page, mirroring PrivacyPolicyPage.test.tsx: landmarks, single-h1 heading
  * outline, skip-link/main id pairing, the selectable-legal-text guarantee,
- * and the prominent draft-template banner.
+ * and the same-tab in-content links.
  */
 
 import { render, screen, within } from '@testing-library/react';
@@ -37,7 +37,7 @@ beforeEach(() => {
 });
 
 describe('TermsPage', () => {
-  it('renders exactly one h1, with the markdown title demoted to the sr-only main label', () => {
+  it('renders exactly one h1 and names <main> from that chrome heading', () => {
     renderPage(null);
 
     const headings = screen.getAllByRole('heading', { level: 1 });
