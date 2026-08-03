@@ -72,6 +72,7 @@ graph TD
         subgraph CompFailWhale["FailWhalePage/"]
             failWhaleComps["FailWhalePage"]
         end
+        legal["privacy/ · terms/"]
         common["common/"]
     end
 
@@ -104,6 +105,7 @@ graph TD
     classDef compWelcomeStyle fill:#3e5e7e,stroke:#284058,color:#fff
     classDef compErrorsStyle fill:#9e4040,stroke:#702828,color:#fff
     classDef compFailWhaleStyle fill:#9e4040,stroke:#702828,color:#fff
+    classDef compLegalStyle fill:#2a6f6f,stroke:#184545,color:#fff
     classDef compCommonStyle fill:#525252,stroke:#363636,color:#fff
 
     class App,AppShell,main,css,Header rootStyle
@@ -122,6 +124,7 @@ graph TD
     class WelcomeModal compWelcomeStyle
     class errorsComps compErrorsStyle
     class failWhaleComps compFailWhaleStyle
+    class legal compLegalStyle
     class common compCommonStyle
 ```
 
@@ -143,6 +146,7 @@ graph TD
 | Edit the error boundary or 404 page     | `src/components/errors/`                               |
 | Edit the extension OAuth authorize page | `src/components/auth/`                                 |
 | Edit the post-signup welcome modal      | `src/components/welcome/`                              |
+| Edit the privacy or terms pages         | `src/components/privacy/`, `src/components/terms/`     |
 | Edit the Stumble! flow                  | `src/components/stumble/`                              |
 | Find a shared UI primitive              | `src/components/common/`                               |
 | Touch API client behavior               | `src/lib/api/`                                         |
