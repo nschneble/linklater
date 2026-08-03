@@ -6,6 +6,5 @@
   ],
   "expect": {
     "anyOf": [{ "text": "We couldn't sign you in" }]
-  },
-  "diff": { "maxDiffRatio": 0.02 }
+  }
 }

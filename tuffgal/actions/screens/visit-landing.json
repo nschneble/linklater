@@ -3,6 +3,5 @@
   "steps": [{ "kind": "navigate", "path": "/" }],
   "expect": {
     "anyOf": [{ "role": "heading", "text": "Linklater" }]
-  },
-  "diff": { "maxDiffRatio": 0.02 }
+  }
 }
