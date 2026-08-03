@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import AppleStrategyLib from '@nicokaiser/passport-apple';
+import { requireEnv } from '../common/index.js';
 import { OAuthAccountService } from './oauth-account.service.js';
 
 const APPLE_PARAMS = [
@@ -24,8 +25,7 @@ export class AppleStrategy extends PassportStrategy(
 ) {
   constructor(private readonly oauthAccountService: OAuthAccountService) {
     for (const key of APPLE_PARAMS) {
-      if (!process.env[`APPLE_${key}`])
-        throw new Error(`APPLE_${key} must be set`);
+      requireEnv(`APPLE_${key}`);
     }
 
     super({

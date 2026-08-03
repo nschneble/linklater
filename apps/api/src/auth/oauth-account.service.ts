@@ -3,6 +3,7 @@ import {
   ConflictException,
   Injectable,
 } from '@nestjs/common';
+import { requireEnv } from '../common/index.js';
 import { Prisma } from '../prisma/index.js';
 import { UserOAuthService, UsersService } from '../users/index.js';
 import { generateLinkState } from './oauth-link-state.js';
@@ -99,10 +100,10 @@ export class OAuthAccountService {
    *   navigate to, including the signed state parameter.
    */
   buildGoogleLinkUrl(userId: string): { url: string } {
-    const linkState = generateLinkState(userId, process.env.JWT_SECRET!);
+    const linkState = generateLinkState(userId, requireEnv('JWT_SECRET'));
     const parameters = new URLSearchParams({
-      client_id: process.env.GOOGLE_CLIENT_ID!,
-      redirect_uri: process.env.GOOGLE_LINK_CALLBACK_URL!,
+      client_id: requireEnv('GOOGLE_CLIENT_ID'),
+      redirect_uri: requireEnv('GOOGLE_LINK_CALLBACK_URL'),
       response_type: 'code',
       scope: 'email profile',
       state: linkState,
