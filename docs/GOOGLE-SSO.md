@@ -104,7 +104,7 @@ Three behaviours worth knowing before you deploy:
   have to equal the URIs you registered in step 1 exactly.
 - **`APP_URL` is where the browser lands after sign-in.** The callback handler
   redirects to `${APP_URL}/oauth/callback#...` with the session tokens in the
-  URL fragment (`apps/api/src/auth/oauth.controller.ts`). Point it at the
+  URL fragment (`apps/api/src/auth/oauth-sign-in.controller.ts`). Point it at the
   public origin; a stale `localhost` value sends users nowhere.
 
 You do not need to touch cookie or CSRF settings. The OAuth anti-CSRF state

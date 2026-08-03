@@ -6,7 +6,6 @@ import {
   HttpCode,
   Logger,
   Param,
-  Post,
   Req,
   Res,
   UseGuards,
@@ -18,78 +17,21 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { AuthService } from './auth.service.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
-import { OAuthAccountService } from './oauth-account.service.js';
-import {
-  createOAuthCallbackGuard,
-  createOAuthInitiateGuard,
-} from './oauth-csrf.guard.js';
+import { OAuthLinkService } from './oauth-link.service.js';
 import type { Response } from 'express';
 import type { AuthRequest } from './auth-request.type.js';
 
 /**
- * OAuth sign-in (Google, Apple) and account-linking flows. Kept on the
- * shared `auth` route prefix so callbacks remain stable.
+ * OAuth account-linking flows. Shares the `auth` route prefix with the other
+ * auth controllers so linking callback URLs remain stable.
  */
 @ApiTags('auth')
 @Controller('auth')
-export class OAuthController {
-  private readonly logger = new Logger(OAuthController.name);
+export class OAuthLinkController {
+  private readonly logger = new Logger(OAuthLinkController.name);
 
-  constructor(
-    private readonly authService: AuthService,
-    private readonly oauthAccountService: OAuthAccountService,
-  ) {}
-
-  @ApiOperation({ summary: 'Initiate Google OAuth sign-in' })
-  @UseGuards(createOAuthInitiateGuard('google'))
-  @Get('google')
-  async googleAuth() {
-    // Passport redirects to Google - no body needed
-  }
-
-  @ApiOperation({ summary: 'Google OAuth callback' })
-  @UseGuards(createOAuthCallbackGuard('google'))
-  @Get('google/callback')
-  async googleCallback(@Req() request: AuthRequest, @Res() response: Response) {
-    await this.completeOAuthLogin(request, response);
-  }
-
-  @ApiOperation({ summary: 'Initiate Apple Sign In' })
-  @UseGuards(createOAuthInitiateGuard('apple'))
-  @Get('apple')
-  async appleAuth() {
-    // Passport redirects to Apple - no body needed
-  }
-
-  @ApiOperation({ summary: 'Apple Sign In callback' })
-  @UseGuards(createOAuthCallbackGuard('apple'))
-  @Post('apple/callback')
-  async appleCallback(@Req() request: AuthRequest, @Res() response: Response) {
-    await this.completeOAuthLogin(request, response);
-  }
-
-  /**
-   * Shared OAuth post-login handler. Issues a session for the authenticated
-   * user and redirects the browser to the SPA's `/oauth/callback` route with
-   * the tokens in the URL fragment (fragments are never sent to servers or
-   * logged in Referer headers). When MFA is enabled, redirects to `/login`
-   * with an error code instead, since OAuth callbacks can't show an OTP form.
-   */
-  private async completeOAuthLogin(
-    request: AuthRequest,
-    response: Response,
-  ): Promise<void> {
-    const result = await this.authService.login(request.user.userId);
-    if (!('accessToken' in result)) {
-      response.redirect(`${process.env.APP_URL}/login?error=mfa_required`);
-      return;
-    }
-    response.redirect(
-      `${process.env.APP_URL}/oauth/callback#token=${result.accessToken}&refresh=${result.refreshToken}`,
-    );
-  }
+  constructor(private readonly oauthLinkService: OAuthLinkService) {}
 
   @ApiOperation({ summary: 'Initiate Google OAuth account linking' })
   @ApiBearerAuth()
@@ -104,7 +46,7 @@ export class OAuthController {
   googleLink(@Req() request: AuthRequest): { url: string } {
     // JSON not redirect: the SPA fetches this to attach the bearer JWT
     // (a top-level navigation can't send an Authorization header)
-    return this.oauthAccountService.buildGoogleLinkUrl(request.user.userId);
+    return this.oauthLinkService.buildGoogleLinkUrl(request.user.userId);
   }
 
   @ApiOperation({ summary: 'Google OAuth account linking callback' })
@@ -122,7 +64,7 @@ export class OAuthController {
     @Res() response: Response,
   ) {
     try {
-      await this.oauthAccountService.linkOAuthAccountToUser(
+      await this.oauthLinkService.linkOAuthAccountToUser(
         request.user.userId,
         'google',
         request.user.providerId,
@@ -161,7 +103,7 @@ export class OAuthController {
     @Req() request: AuthRequest,
     @Param('provider') provider: string,
   ) {
-    await this.oauthAccountService.unlinkOAuthProvider(
+    await this.oauthLinkService.unlinkOAuthProvider(
       request.user.userId,
       provider,
     );

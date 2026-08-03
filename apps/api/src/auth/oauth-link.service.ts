@@ -9,87 +9,12 @@ import { UserOAuthService, UsersService } from '../users/index.js';
 import { generateLinkState } from './oauth-link-state.js';
 
 @Injectable()
-export class OAuthAccountService {
+export class OAuthLinkService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly usersService: UsersService,
     private readonly userOAuthService: UserOAuthService,
   ) {}
-
-  async findOrCreateOAuthUser(
-    provider: string,
-    providerId: string,
-    email: string,
-  ): Promise<{ userId: string; email: string }> {
-    const account = await this.userOAuthService.findOAuthAccount(
-      provider,
-      providerId,
-    );
-    if (account) {
-      // mirror provider email; identity keys on (provider, providerId), not email
-      if (account.providerEmail !== email) {
-        await this.userOAuthService.updateOAuthProviderEmail(
-          account.userId,
-          provider,
-          providerId,
-          email,
-        );
-      }
-      return { userId: account.userId, email: account.user.email };
-    }
-
-    const existingUser = await this.usersService.findByEmail(email);
-    if (existingUser) {
-      await this.userOAuthService.linkOAuthAccount(
-        existingUser.id,
-        provider,
-        providerId,
-        email,
-      );
-      // matched by this email, so auto-verify is safe; invalidate any stale
-      // password to close the account-pre-hijack window
-      if (!existingUser.emailVerifiedAt) {
-        await this.usersService.verifyEmailAndInvalidateStalePassword(
-          existingUser.id,
-        );
-      }
-      return { userId: existingUser.id, email: existingUser.email };
-    }
-
-    try {
-      const newUser = await this.userOAuthService.createOAuthUserAndLink(
-        email,
-        provider,
-        providerId,
-        email,
-      );
-      return { userId: newUser.id, email };
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
-        const raceAccount = await this.userOAuthService.findOAuthAccount(
-          provider,
-          providerId,
-        );
-        if (raceAccount) {
-          return { userId: raceAccount.userId, email: raceAccount.user.email };
-        }
-        const raceUser = await this.usersService.findByEmail(email);
-        if (raceUser) {
-          // same pre-hijack closure as above, reached via the registration race
-          if (!raceUser.emailVerifiedAt) {
-            await this.usersService.verifyEmailAndInvalidateStalePassword(
-              raceUser.id,
-            );
-          }
-          return { userId: raceUser.id, email: raceUser.email };
-        }
-      }
-      throw error;
-    }
-  }
 
   /**
    * Builds the Google OAuth authorization URL for the account-linking flow.

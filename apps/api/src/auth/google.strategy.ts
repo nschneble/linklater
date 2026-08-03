@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, type Profile } from 'passport-google-oauth20';
 import { requireEnv } from '../common/index.js';
-import { OAuthAccountService } from './oauth-account.service.js';
+import { OAuthSignInService } from './oauth-sign-in.service.js';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
-  constructor(private readonly oauthAccountService: OAuthAccountService) {
+  constructor(private readonly oauthSignInService: OAuthSignInService) {
     super({
       clientID: requireEnv('GOOGLE_CLIENT_ID'),
       clientSecret: requireEnv('GOOGLE_CLIENT_SECRET'),
@@ -24,7 +24,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   ) {
     const email = profile.emails?.[0]?.value;
     if (!email) throw new Error('No email returned from Google');
-    return this.oauthAccountService.findOrCreateOAuthUser(
+    return this.oauthSignInService.findOrCreateOAuthUser(
       'google',
       profile.id,
       email,

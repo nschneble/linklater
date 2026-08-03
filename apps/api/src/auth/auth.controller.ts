@@ -34,9 +34,10 @@ import type { AuthRequest } from './auth-request.type.js';
  * Core authentication endpoints: register, login, profile, password
  * recovery, email verification, refresh, and session revocation.
  *
- * Related flows live in `OAuthController`, `MagicLinkController`,
- * `MultiFactorController`, and `ExtensionAuthController`. All controllers
- * share the `auth` route prefix so external URLs are unchanged.
+ * Related flows live in `OAuthSignInController`, `OAuthLinkController`,
+ * `MagicLinkController`, `MultiFactorController`, and
+ * `ExtensionAuthController`. All controllers share the `auth` route prefix so
+ * external URLs are unchanged.
  *
  * Rate-limited per route to reduce brute-force and abuse risk. Endpoints
  * that operate on email addresses return 200 regardless of whether the

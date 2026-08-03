@@ -12,8 +12,10 @@ import { ExtensionAuthController } from './extension-auth.controller.js';
 import { ExtensionAuthService } from './extension-auth.service.js';
 import { MagicLinkController } from './magic-link.controller.js';
 import { MagicLinkService } from './magic-link.service.js';
-import { OAuthAccountService } from './oauth-account.service.js';
-import { OAuthController } from './oauth.controller.js';
+import { OAuthLinkController } from './oauth-link.controller.js';
+import { OAuthLinkService } from './oauth-link.service.js';
+import { OAuthSignInController } from './oauth-sign-in.controller.js';
+import { OAuthSignInService } from './oauth-sign-in.service.js';
 import { RefreshTokenService } from './refresh-token.service.js';
 import { GoogleLinkStrategy } from './google-link.strategy.js';
 import { GoogleStrategy } from './google.strategy.js';
@@ -71,7 +73,8 @@ const oauthProviders: Provider[] = [
     EmailVerificationService,
     ExtensionAuthService,
     MagicLinkService,
-    OAuthAccountService,
+    OAuthLinkService,
+    OAuthSignInService,
     RefreshTokenService,
     JwtStrategy,
     LocalStrategy,
@@ -84,7 +87,8 @@ const oauthProviders: Provider[] = [
     AuthController,
     ExtensionAuthController,
     MagicLinkController,
-    OAuthController,
+    OAuthLinkController,
+    OAuthSignInController,
     MultiFactorController,
   ],
   exports: [AnyAuthGuard, ApiKeyStrategy, AuthService, TokenScopeService],
