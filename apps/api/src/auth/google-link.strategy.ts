@@ -58,7 +58,7 @@ export class GoogleLinkStrategy extends PassportStrategy(
     const state = request.query?.state ?? '';
     const userId = verifyLinkState(
       state,
-      process.env.JWT_SECRET!,
+      requireEnv('JWT_SECRET'),
       FIVE_MINUTES_MS,
     );
     if (!userId) {

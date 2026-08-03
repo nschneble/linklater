@@ -9,7 +9,10 @@ class MockPrismaClientKnownRequestError extends Error {
 }
 
 jest.mock('../prisma/generated/client', () => ({
-  Prisma: { PrismaClientKnownRequestError: MockPrismaClientKnownRequestError },
+  Prisma: {
+    PrismaClientKnownRequestError: MockPrismaClientKnownRequestError,
+    TransactionIsolationLevel: { ReadCommitted: 'ReadCommitted' },
+  },
 }));
 
 import { BadRequestException, ConflictException } from '@nestjs/common';
@@ -55,12 +58,12 @@ describe('OAuthAccountService', () => {
     updateOAuthProviderEmail: jest.fn(),
   } as unknown as UserOAuthService;
 
-  // Serializes interactive transactions the way a `SELECT ... FOR UPDATE` row
-  // lock would: a second `$transaction` blocks until the first fully settles,
-  // so overlapping unlinks run one at a time. Each call receives its own
-  // transaction-client sentinel, letting tests assert every step shares it.
-  let transactionChain: Promise<unknown>;
-  let nextTransactionId: number;
+  // each interactive transaction gets its own transaction-client sentinel and
+  // frees every row lock it holds when it settles, mirroring how Postgres
+  // holds a FOR UPDATE lock until the transaction commits or rolls back. The
+  // concurrent-unlink test drives serialization from the lock itself, so it
+  // fails if the production lock is removed rather than passing on the mock.
+  let heldLockReleases: Map<object, () => void>;
   const prismaMock = {
     $transaction: jest.fn(),
   } as unknown as PrismaService;
@@ -78,18 +81,17 @@ describe('OAuthAccountService', () => {
     service = module.get<OAuthAccountService>(OAuthAccountService);
     jest.clearAllMocks();
 
-    transactionChain = Promise.resolve();
-    nextTransactionId = 0;
+    heldLockReleases = new Map();
     (prismaMock.$transaction as jest.Mock).mockImplementation(
-      (callback: (transaction: unknown) => Promise<unknown>) => {
-        const transaction = { transactionId: (nextTransactionId += 1) };
-        const settled = transactionChain.then(() => callback(transaction));
-        // keep the next transaction waiting even if this one rejects
-        transactionChain = settled.then(
-          () => undefined,
-          () => undefined,
-        );
-        return settled;
+      async (callback: (transaction: object) => Promise<unknown>) => {
+        const transaction = {};
+        try {
+          return await callback(transaction);
+        } finally {
+          // release the row lock this transaction acquired, if any
+          heldLockReleases.get(transaction)?.();
+          heldLockReleases.delete(transaction);
+        }
       },
     );
   });
@@ -394,6 +396,14 @@ describe('OAuthAccountService', () => {
       await service.unlinkOAuthProvider(USER_ID, OAUTH_PROVIDER);
 
       expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
+      // pinned to READ COMMITTED so a global default change cannot regress the
+      // guard's post-lock re-read of the committed delete
+      expect(prismaMock.$transaction).toHaveBeenCalledWith(
+        expect.any(Function),
+        {
+          isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
+        },
+      );
       const transaction = (usersServiceMock.lockUserRow as jest.Mock).mock
         .calls[0][1];
       // the lock must run before the guard reads state, and every step must
@@ -419,8 +429,7 @@ describe('OAuthAccountService', () => {
     });
 
     it('closes the concurrent-unlink race: two unlinks of different providers cannot strand a passwordless account', async () => {
-      // shared state stands in for the two OAuth rows; the serializing
-      // $transaction mock models the FOR UPDATE lock that orders the unlinks
+      // shared state stands in for the two OAuth rows the unlinks race over
       let linkedProviders = [OAUTH_PROVIDER, 'apple'];
       (usersServiceMock.getCredentialState as jest.Mock).mockImplementation(
         async () => ({
@@ -433,6 +442,24 @@ describe('OAuthAccountService', () => {
           linkedProviders = linkedProviders.filter(
             (linked) => linked !== provider,
           );
+        },
+      );
+
+      // the lock, not the mock, is what serializes: lockUserRow grants the row
+      // to one transaction at a time and only frees it when that transaction
+      // settles (via heldLockReleases). Delete lockUserRow from production and
+      // both reads see the stale two-provider set, both pass, both delete, and
+      // this test fails, which is the point.
+      let rowLock = Promise.resolve();
+      (usersServiceMock.lockUserRow as jest.Mock).mockImplementation(
+        async (_userId: string, client: object) => {
+          const heldByPrior = rowLock;
+          let release!: () => void;
+          rowLock = new Promise<void>((resolve) => {
+            release = resolve;
+          });
+          heldLockReleases.set(client, release);
+          await heldByPrior;
         },
       );
 

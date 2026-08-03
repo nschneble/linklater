@@ -239,6 +239,8 @@ export class UsersService {
    * never needs a second round-trip.
    *
    * @param id - The UUID of the user.
+   * @param client - Transaction client to read through; defaults to the shared
+   *   Prisma client for standalone, non-transactional callers.
    * @returns `hasPassword` and the list of linked OAuth provider names.
    * @throws {NotFoundException} When no user exists with the given ID.
    */

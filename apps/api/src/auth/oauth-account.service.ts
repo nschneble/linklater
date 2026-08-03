@@ -127,26 +127,33 @@ export class OAuthAccountService {
    * guard, and together strand the account. Serialized, the second unlink
    * observes the first's committed delete and is correctly refused.
    *
+   * Because the guard reads after the lock releases, its correctness depends
+   * on READ COMMITTED visibility; the transaction pins that isolation level
+   * explicitly so a change to the global default cannot silently regress it.
+   *
    * @throws {BadRequestException} When the account has no password and this is
    *   its only remaining linked provider.
    */
   async unlinkOAuthProvider(userId: string, provider: string): Promise<void> {
-    await this.prisma.$transaction(async (transaction) => {
-      await this.usersService.lockUserRow(userId, transaction);
-      const { hasPassword, oauthProviders } =
-        await this.usersService.getCredentialState(userId, transaction);
-      const remainingProviders = oauthProviders.filter(
-        (linked) => linked !== provider,
-      );
-      if (!hasPassword && remainingProviders.length === 0) {
-        throw new BadRequestException('No password set – cannot disconnect.');
-      }
-      await this.userOAuthService.unlinkOAuthAccount(
-        userId,
-        provider,
-        transaction,
-      );
-    });
+    await this.prisma.$transaction(
+      async (transaction) => {
+        await this.usersService.lockUserRow(userId, transaction);
+        const { hasPassword, oauthProviders } =
+          await this.usersService.getCredentialState(userId, transaction);
+        const remainingProviders = oauthProviders.filter(
+          (linked) => linked !== provider,
+        );
+        if (!hasPassword && remainingProviders.length === 0) {
+          throw new BadRequestException('No password set – cannot disconnect.');
+        }
+        await this.userOAuthService.unlinkOAuthAccount(
+          userId,
+          provider,
+          transaction,
+        );
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted },
+    );
   }
 
   async linkOAuthAccountToUser(
