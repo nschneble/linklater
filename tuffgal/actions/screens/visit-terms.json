@@ -1,0 +1,8 @@
+{
+  "action": "visit-terms",
+  "steps": [{ "kind": "navigate", "path": "/terms" }],
+  "expect": {
+    "anyOf": [{ "role": "heading", "text": "Terms and conditions" }]
+  },
+  "diff": { "maxDiffRatio": 0.02 }
+}
