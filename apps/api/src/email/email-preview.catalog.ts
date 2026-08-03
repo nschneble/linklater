@@ -6,7 +6,7 @@ import * as PasswordResetTemplate from './templates/password-reset.template.js';
 import * as PolicyUpdateTemplate from './templates/policy-update.template.js';
 import * as VerificationTemplate from './templates/verification.template.js';
 
-// Deterministic sample inputs so every preview renders byte-identically on
+// deterministic sample inputs so every preview renders byte-identically on
 // every run. Real sends use a live token and the recipient's saved theme;
 // pinning both here means a screenshot changes only when template markup does.
 // A full-length 64-char hex token keeps the "copy this link" line wrapping
@@ -23,9 +23,9 @@ export interface EmailPreview {
   html: string;
 }
 
-// One entry per transactional email the API sends. The slug mirrors the
+// one entry per transactional email the API sends. The slug mirrors the
 // template filename and each sample link path mirrors email.service.ts.
-// Adding a template here (plus a matching Tuffgal action + story step) keeps
+// adding a template here (plus a matching Tuffgal action + story step) keeps
 // the visual-regression coverage complete.
 export const emailPreviews: readonly EmailPreview[] = [
   {

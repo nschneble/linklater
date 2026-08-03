@@ -90,7 +90,7 @@ export default tseslint.config(
       'local/type-imports-after-value': 'error',
       'vitest/no-focused-tests': 'error',
       // valid-expect enforces Jest's 1-arg; the manifest test uses 2-arg
-      // See https://vitest.dev/api/expect.html
+      // see https://vitest.dev/api/expect.html
       'vitest/valid-expect': 'off',
     },
   },

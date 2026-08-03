@@ -66,7 +66,7 @@ export default function StumblePage() {
     handleStumble();
   }, [handleStumble]);
 
-  // Move keyboard focus onto the retry button when the error state appears
+  // move keyboard focus onto the retry button when the error state appears
   // so a keyboard-only user can recover without hunting for it.
   useEffect(() => {
     if (state === 'error') {

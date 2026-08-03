@@ -1,9 +1,9 @@
-// Subset the vendored Font Awesome webfonts to only the glyphs this app
+// subset the vendored Font Awesome webfonts to only the glyphs this app
 // actually uses. Inputs are the unsubsetted woff2 files preserved under
 // scripts/font-awesome-source/webfonts/. Outputs overwrite the woff2 files
 // served by Vite under public/assets/fontawesome/webfonts/.
 //
-// The manifest itself is rewritten from the source scan by sync-fa-manifest.mjs,
+// the manifest itself is rewritten from the source scan by sync-fa-manifest.mjs,
 // which is chained ahead of this script via `npm run subset-fa`. To add a new
 // icon, just use its class in source - the next subset-fa picks it up.
 //

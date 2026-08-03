@@ -1,4 +1,4 @@
-// Rewrites font-awesome-manifest.json from a source scan. Three rules:
+// rewrites font-awesome-manifest.json from a source scan. Three rules:
 //
 //   1. Every fa-* token that resolves to a real FA icon gets listed.
 //   2. Every existing manifest entry not seen in source gets dropped.
@@ -6,12 +6,12 @@
 //      sync. These are almost always typos or grep artifacts - silently
 //      dropping them would mask real bugs.
 //
-// Family routing for icons that appear in only one catalog is unambiguous.
+// family routing for icons that appear in only one catalog is unambiguous.
 // `fa-apple` appears in both solid (the fruit) and brands (the company), so
 // the script preserves the family the manifest currently assigns. New
 // ambiguous icons abort with a message asking the human to seed the family.
 //
-// Idempotent: if the produced manifest matches the on-disk one byte-for-byte,
+// idempotent: if the produced manifest matches the on-disk one byte-for-byte,
 // the file is left untouched and the exit message says "no changes". Lets
 // `subset-fa` chain it without dirtying the working tree on every build.
 

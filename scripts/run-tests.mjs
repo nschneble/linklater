@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// Routes `npm run test [path...]` to the correct workspace test runner.
+// routes `npm run test [path...]` to the correct workspace test runner.
 //
 // - No path: Runs the api and web test suites back-to-back
 // - Paths under `apps/web/`: Runs Vitest against files in web workspace
@@ -10,7 +10,7 @@
 // Jest in apps/api uses `rootDir: "src"` so we translate the repo-relative
 // path into an api/src-relative path before handing it to Jest.
 //
-// The `eslint-rules/` directory lives at the repo root, outside of both
+// the `eslint-rules/` directory lives at the repo root, outside of both
 // workspaces, so its specs run on Node's built-in test runner as an extra
 // step during a full (no-path) run.
 
