@@ -1,6 +1,6 @@
 import { jest } from '@jest/globals';
 
-import { ConflictException, Logger } from '@nestjs/common';
+import { BadRequestException, ConflictException, Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthGuard } from '@nestjs/passport';
 import type { Response } from 'express';
@@ -228,6 +228,44 @@ describe('OAuthController', () => {
         USER_ID,
       );
       expect(result).toEqual({ url: expectedUrl });
+    });
+  });
+
+  // ──────────────────────────────────────────────
+  // unlinkProvider - disconnect an OAuth provider
+  // ──────────────────────────────────────────────
+
+  describe('unlinkProvider', () => {
+    it('is gated by JwtAuthGuard', () => {
+      const guards: unknown[] = Reflect.getMetadata(
+        '__guards__',
+        OAuthController.prototype.unlinkProvider,
+      );
+      expect(guards).toContain(JwtAuthGuard);
+    });
+
+    it('delegates to OAuthAccountService.unlinkOAuthProvider and reports success', async () => {
+      (
+        oauthAccountServiceMock.unlinkOAuthProvider as jest.Mock
+      ).mockResolvedValue(undefined);
+
+      const result = await controller.unlinkProvider(makeRequest(), 'google');
+
+      expect(oauthAccountServiceMock.unlinkOAuthProvider).toHaveBeenCalledWith(
+        USER_ID,
+        'google',
+      );
+      expect(result).toEqual({ success: true });
+    });
+
+    it('surfaces a BadRequestException from the service as a 400', async () => {
+      (
+        oauthAccountServiceMock.unlinkOAuthProvider as jest.Mock
+      ).mockRejectedValue(new BadRequestException('cannot disconnect'));
+
+      await expect(
+        controller.unlinkProvider(makeRequest(), 'google'),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 });

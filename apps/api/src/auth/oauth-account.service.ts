@@ -1,4 +1,8 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+} from '@nestjs/common';
 import { Prisma } from '../prisma/index.js';
 import { UserOAuthService, UsersService } from '../users/index.js';
 import { generateLinkState } from './oauth-link-state.js';
@@ -108,7 +112,24 @@ export class OAuthAccountService {
     };
   }
 
+  /**
+   * Disconnects an OAuth provider from the user's account. Refuses when doing
+   * so would strand a passwordless account with no remaining login path: a
+   * user with no password whose last linked provider is the one being removed
+   * would otherwise lock themselves out.
+   *
+   * @throws {BadRequestException} When the account has no password and this is
+   *   its only remaining linked provider.
+   */
   async unlinkOAuthProvider(userId: string, provider: string): Promise<void> {
+    const { hasPassword, oauthProviders } =
+      await this.usersService.getCredentialState(userId);
+    const remainingProviders = oauthProviders.filter(
+      (linked) => linked !== provider,
+    );
+    if (!hasPassword && remainingProviders.length === 0) {
+      throw new BadRequestException('No password set – cannot disconnect.');
+    }
     await this.userOAuthService.unlinkOAuthAccount(userId, provider);
   }
 

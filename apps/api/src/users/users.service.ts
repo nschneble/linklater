@@ -233,6 +233,33 @@ export class UsersService {
   }
 
   /**
+   * Reports the account's login-credential state: whether it has a password
+   * and which OAuth providers it still has linked. Resolves both from a single
+   * primary-key lookup with a nested account select so the OAuth unlink guard
+   * never needs a second round-trip.
+   *
+   * @param id - The UUID of the user.
+   * @returns `hasPassword` and the list of linked OAuth provider names.
+   * @throws {NotFoundException} When no user exists with the given ID.
+   */
+  async getCredentialState(
+    id: string,
+  ): Promise<{ hasPassword: boolean; oauthProviders: string[] }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        passwordHash: true,
+        oauthAccounts: { select: { provider: true } },
+      },
+    });
+    if (!user) throw new NotFoundException('User not found');
+    return {
+      hasPassword: user.passwordHash !== null,
+      oauthProviders: user.oauthAccounts.map((account) => account.provider),
+    };
+  }
+
+  /**
    * Permanently deletes a user account and all associated records (links,
    * metadata) via database cascades.
    *

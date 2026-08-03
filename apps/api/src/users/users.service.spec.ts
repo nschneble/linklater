@@ -637,6 +637,51 @@ describe('UsersService', () => {
     });
   });
 
+  describe('getCredentialState', () => {
+    it('reports hasPassword true and maps the linked providers in one query', async () => {
+      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue({
+        passwordHash: KNOWN_PASSWORD_HASH,
+        oauthAccounts: [{ provider: 'google' }, { provider: 'apple' }],
+      });
+
+      const result = await service.getCredentialState(USER_ID);
+
+      expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+        where: { id: USER_ID },
+        select: {
+          passwordHash: true,
+          oauthAccounts: { select: { provider: true } },
+        },
+      });
+      expect(result).toEqual({
+        hasPassword: true,
+        oauthProviders: ['google', 'apple'],
+      });
+    });
+
+    it('reports hasPassword false for a passwordless OAuth-only account', async () => {
+      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue({
+        passwordHash: null,
+        oauthAccounts: [{ provider: 'google' }],
+      });
+
+      const result = await service.getCredentialState(USER_ID);
+
+      expect(result).toEqual({
+        hasPassword: false,
+        oauthProviders: ['google'],
+      });
+    });
+
+    it('throws NotFoundException when the user does not exist', async () => {
+      (prismaMock.user.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.getCredentialState(MISSING_USER_ID)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
   describe('createWithoutPassword', () => {
     it('creates a user with passwordHash null and returns user without passwordHash when email is new', async () => {
       (prismaMock.user.create as jest.Mock).mockResolvedValue(
