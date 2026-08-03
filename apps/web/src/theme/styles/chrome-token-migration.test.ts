@@ -86,6 +86,7 @@ const MIGRATED_FILES = [
   'src/components/auth/ResetPasswordPage.tsx',
   'src/components/auth/VerifyLoginPage.tsx',
   'src/components/verify/TokenVerificationPage.tsx',
+  'src/routes/Common.tsx',
   'src/routes/Unauthenticated.tsx',
   'src/components/settings/ApiTokensList/ApiTokenRow.tsx',
   'src/components/settings/ApiTokensList/index.tsx',

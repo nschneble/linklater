@@ -201,7 +201,7 @@ body {
 }
 
 /* Brand page surface – theme-independent navy radial on the marketing
-   landing page + logged-out API docs + Common fallback wrappers. */
+   landing page + logged-out API docs + logged-out legal pages. */
 @utility bg-hit-man {
   background: radial-gradient(ellipse at 50% 0%, #14103a 0%, #0a0812 70%);
 }

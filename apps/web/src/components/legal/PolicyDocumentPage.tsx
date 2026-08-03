@@ -6,7 +6,9 @@ import { Link } from 'react-router';
 import remarkGfm from 'remark-gfm';
 import type { Components } from 'react-markdown';
 
-/** Per-document copy and markdown mapping for the shared legal-page shell. */
+/**
+ * Per-document copy and markdown mapping for the shared legal-page shell.
+ */
 interface PolicyDocumentPageProps {
   documentTitle: string;
   heading: string;
@@ -21,15 +23,16 @@ interface PolicyDocumentPageProps {
 }
 
 /**
- * Shared shell for the standalone legal documents (privacy policy, terms and
- * conditions). Owns the brand-or-theme chrome, skip link, back-to-home link,
- * gradient page title, and the <main> markdown surface; each page supplies
- * only its per-document copy and markdown mapping.
+ * Shared shell for the standalone legal documents (privacy policy,
+ * terms and conditions). Owns the brand-or-theme chrome, skip link,
+ * back-to-home link, gradient page title, and the <main> markdown surface;
+ * each page supplies only its per-document copy and markdown mapping.
  *
  * Logged out, the wrapper activates the off-book `branding` theme via
  * `data-theme='branding'` and lets the matching `data-[theme='branding']:`
- * variants pin the navy `bg-hit-man` surface and the gradient title; logged
- * in, the attribute is absent so the page inherits the user's active theme.
+ * variants pin the navy `bg-hit-man` surface and the gradient title;
+ * logged in, the attribute is absent so the page inherits the user's
+ * active theme.
  */
 export default function PolicyDocumentPage({
   documentTitle,

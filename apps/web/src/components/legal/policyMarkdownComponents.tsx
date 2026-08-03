@@ -1,5 +1,6 @@
 import type { Components } from 'react-markdown';
 
+/** Optional table-region labels for `makePolicyMarkdownComponents`. */
 interface MakePolicyMarkdownComponentsOptions {
   /** accessible name for the scrollable table region (omit if no table). */
   tableLabel?: string;
@@ -22,10 +23,10 @@ function withoutNode<Properties extends { node?: unknown }>(
 
 /**
  * Builds the tag → element mapping shared by the legal-document pages
- * (privacy policy, terms and conditions). The leading `#` markdown title is
- * dropped so each page keeps exactly one visible <h1> in its chrome, which
- * `<main aria-labelledby>` names off directly. Table mappings are added only
- * when a page actually ships a data table.
+ * (privacy policy, terms and conditions). The leading `#` markdown
+ * title is dropped so each page keeps exactly one visible <h1> in its
+ * chrome, which `<main aria-labelledby>` names off directly. Table
+ * mappings are added only when a page actually ships a data table.
  */
 export function makePolicyMarkdownComponents({
   tableLabel,
