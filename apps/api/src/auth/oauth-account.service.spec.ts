@@ -17,6 +17,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Prisma } from '../prisma/generated/client';
 
 import { OAuthAccountService } from './oauth-account.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { UserOAuthService } from '../users/user-oauth.service';
 import { UsersService } from '../users/users.service';
 
@@ -41,6 +42,7 @@ describe('OAuthAccountService', () => {
     findByEmail: jest.fn(),
     findById: jest.fn(),
     getCredentialState: jest.fn(),
+    lockUserRow: jest.fn(),
     markEmailVerified: jest.fn(),
     verifyEmailAndInvalidateStalePassword: jest.fn(),
   } as unknown as UsersService;
@@ -53,10 +55,21 @@ describe('OAuthAccountService', () => {
     updateOAuthProviderEmail: jest.fn(),
   } as unknown as UserOAuthService;
 
+  // Serializes interactive transactions the way a `SELECT ... FOR UPDATE` row
+  // lock would: a second `$transaction` blocks until the first fully settles,
+  // so overlapping unlinks run one at a time. Each call receives its own
+  // transaction-client sentinel, letting tests assert every step shares it.
+  let transactionChain: Promise<unknown>;
+  let nextTransactionId: number;
+  const prismaMock = {
+    $transaction: jest.fn(),
+  } as unknown as PrismaService;
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         OAuthAccountService,
+        { provide: PrismaService, useValue: prismaMock },
         { provide: UsersService, useValue: usersServiceMock },
         { provide: UserOAuthService, useValue: userOAuthServiceMock },
       ],
@@ -64,6 +77,21 @@ describe('OAuthAccountService', () => {
 
     service = module.get<OAuthAccountService>(OAuthAccountService);
     jest.clearAllMocks();
+
+    transactionChain = Promise.resolve();
+    nextTransactionId = 0;
+    (prismaMock.$transaction as jest.Mock).mockImplementation(
+      (callback: (transaction: unknown) => Promise<unknown>) => {
+        const transaction = { transactionId: (nextTransactionId += 1) };
+        const settled = transactionChain.then(() => callback(transaction));
+        // keep the next transaction waiting even if this one rejects
+        transactionChain = settled.then(
+          () => undefined,
+          () => undefined,
+        );
+        return settled;
+      },
+    );
   });
 
   it('should be defined', () => {
@@ -320,6 +348,7 @@ describe('OAuthAccountService', () => {
       expect(userOAuthServiceMock.unlinkOAuthAccount).toHaveBeenCalledWith(
         USER_ID,
         OAUTH_PROVIDER,
+        expect.anything(),
       );
     });
 
@@ -337,6 +366,7 @@ describe('OAuthAccountService', () => {
       expect(userOAuthServiceMock.unlinkOAuthAccount).toHaveBeenCalledWith(
         USER_ID,
         OAUTH_PROVIDER,
+        expect.anything(),
       );
     });
 
@@ -350,6 +380,76 @@ describe('OAuthAccountService', () => {
         service.unlinkOAuthProvider(USER_ID, OAUTH_PROVIDER),
       ).rejects.toThrow(BadRequestException);
       expect(userOAuthServiceMock.unlinkOAuthAccount).not.toHaveBeenCalled();
+    });
+
+    it('locks the user row, reads, and deletes inside one shared transaction', async () => {
+      (usersServiceMock.getCredentialState as jest.Mock).mockResolvedValue({
+        hasPassword: true,
+        oauthProviders: [OAUTH_PROVIDER],
+      });
+      (userOAuthServiceMock.unlinkOAuthAccount as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await service.unlinkOAuthProvider(USER_ID, OAUTH_PROVIDER);
+
+      expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
+      const transaction = (usersServiceMock.lockUserRow as jest.Mock).mock
+        .calls[0][1];
+      // the lock must run before the guard reads state, and every step must
+      // share the same transaction client, or the guard is not truly atomic
+      expect(usersServiceMock.lockUserRow).toHaveBeenCalledWith(
+        USER_ID,
+        transaction,
+      );
+      expect(usersServiceMock.getCredentialState).toHaveBeenCalledWith(
+        USER_ID,
+        transaction,
+      );
+      expect(userOAuthServiceMock.unlinkOAuthAccount).toHaveBeenCalledWith(
+        USER_ID,
+        OAUTH_PROVIDER,
+        transaction,
+      );
+      const lockOrder = (usersServiceMock.lockUserRow as jest.Mock).mock
+        .invocationCallOrder[0];
+      const readOrder = (usersServiceMock.getCredentialState as jest.Mock).mock
+        .invocationCallOrder[0];
+      expect(lockOrder).toBeLessThan(readOrder);
+    });
+
+    it('closes the concurrent-unlink race: two unlinks of different providers cannot strand a passwordless account', async () => {
+      // shared state stands in for the two OAuth rows; the serializing
+      // $transaction mock models the FOR UPDATE lock that orders the unlinks
+      let linkedProviders = [OAUTH_PROVIDER, 'apple'];
+      (usersServiceMock.getCredentialState as jest.Mock).mockImplementation(
+        async () => ({
+          hasPassword: false,
+          oauthProviders: [...linkedProviders],
+        }),
+      );
+      (userOAuthServiceMock.unlinkOAuthAccount as jest.Mock).mockImplementation(
+        async (_userId: string, provider: string) => {
+          linkedProviders = linkedProviders.filter(
+            (linked) => linked !== provider,
+          );
+        },
+      );
+
+      const [first, second] = await Promise.allSettled([
+        service.unlinkOAuthProvider(USER_ID, OAUTH_PROVIDER),
+        service.unlinkOAuthProvider(USER_ID, 'apple'),
+      ]);
+
+      // exactly one unlink lands; the other is refused before it can strand
+      expect(first.status).toBe('fulfilled');
+      expect(second.status).toBe('rejected');
+      expect((second as PromiseRejectedResult).reason).toBeInstanceOf(
+        BadRequestException,
+      );
+      // a login path survives
+      expect(linkedProviders).toEqual(['apple']);
+      expect(userOAuthServiceMock.unlinkOAuthAccount).toHaveBeenCalledTimes(1);
     });
   });
 

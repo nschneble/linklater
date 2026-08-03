@@ -81,6 +81,7 @@ describe('UsersService', () => {
     extensionAuthCode: {
       deleteMany: jest.fn(),
     },
+    $queryRaw: jest.fn(),
     $transaction: jest
       .fn()
       .mockImplementation(async (operations: Promise<unknown>[]) =>
@@ -679,6 +680,38 @@ describe('UsersService', () => {
       await expect(service.getCredentialState(MISSING_USER_ID)).rejects.toThrow(
         NotFoundException,
       );
+    });
+
+    it('reads through the transaction client when one is supplied', async () => {
+      const transactionMock = {
+        user: { findUnique: jest.fn() },
+      } as unknown as Prisma.TransactionClient;
+      (transactionMock.user.findUnique as jest.Mock).mockResolvedValue({
+        passwordHash: null,
+        oauthAccounts: [{ provider: 'google' }],
+      });
+
+      await service.getCredentialState(USER_ID, transactionMock);
+
+      expect(transactionMock.user.findUnique).toHaveBeenCalled();
+      expect(prismaMock.user.findUnique).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('lockUserRow', () => {
+    it('issues a FOR UPDATE row lock scoped to the user on the given client', async () => {
+      (prismaMock.$queryRaw as jest.Mock).mockResolvedValue([{ id: USER_ID }]);
+
+      await service.lockUserRow(
+        USER_ID,
+        prismaMock as unknown as Prisma.TransactionClient,
+      );
+
+      const [strings, ...values] = (prismaMock.$queryRaw as jest.Mock).mock
+        .calls[0] as [TemplateStringsArray, ...unknown[]];
+      expect(strings.join('')).toMatch(/FOR UPDATE/);
+      expect(strings.join('')).toMatch(/"User"/);
+      expect(values).toContain(USER_ID);
     });
   });
 

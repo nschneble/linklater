@@ -244,8 +244,9 @@ export class UsersService {
    */
   async getCredentialState(
     id: string,
+    client: Prisma.TransactionClient = this.prisma,
   ): Promise<{ hasPassword: boolean; oauthProviders: string[] }> {
-    const user = await this.prisma.user.findUnique({
+    const user = await client.user.findUnique({
       where: { id },
       select: {
         passwordHash: true,
@@ -257,6 +258,28 @@ export class UsersService {
       hasPassword: user.passwordHash !== null,
       oauthProviders: user.oauthAccounts.map((account) => account.provider),
     };
+  }
+
+  /**
+   * Takes a row-level write lock on the user's row for the lifetime of the
+   * surrounding transaction. Two transactions that lock the same row are
+   * serialized: the second blocks until the first commits, so it reads the
+   * first's committed writes before continuing. The OAuth unlink guard uses
+   * this so two concurrent unlinks of different providers cannot both pass the
+   * "a login path must survive" check against a stale provider set and strand
+   * a passwordless account.
+   *
+   * Only meaningful inside an interactive transaction: pass that transaction's
+   * client so the lock is held until the transaction commits or rolls back.
+   *
+   * @param id - The UUID of the user row to lock.
+   * @param client - The active transaction client that holds the lock.
+   */
+  async lockUserRow(
+    id: string,
+    client: Prisma.TransactionClient,
+  ): Promise<void> {
+    await client.$queryRaw`SELECT id FROM "User" WHERE id = ${id} FOR UPDATE`;
   }
 
   /**

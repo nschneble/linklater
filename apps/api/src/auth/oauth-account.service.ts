@@ -4,13 +4,14 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { requireEnv } from '../common/index.js';
-import { Prisma } from '../prisma/index.js';
+import { Prisma, PrismaService } from '../prisma/index.js';
 import { UserOAuthService, UsersService } from '../users/index.js';
 import { generateLinkState } from './oauth-link-state.js';
 
 @Injectable()
 export class OAuthAccountService {
   constructor(
+    private readonly prisma: PrismaService,
     private readonly usersService: UsersService,
     private readonly userOAuthService: UserOAuthService,
   ) {}
@@ -119,19 +120,33 @@ export class OAuthAccountService {
    * user with no password whose last linked provider is the one being removed
    * would otherwise lock themselves out.
    *
+   * The read, guard, and delete run inside one serializing transaction that
+   * locks the user's row first. This closes a time-of-check-to-time-of-use
+   * race where two concurrent unlinks of different providers on a passwordless
+   * two-provider account both see the other provider surviving, both pass the
+   * guard, and together strand the account. Serialized, the second unlink
+   * observes the first's committed delete and is correctly refused.
+   *
    * @throws {BadRequestException} When the account has no password and this is
    *   its only remaining linked provider.
    */
   async unlinkOAuthProvider(userId: string, provider: string): Promise<void> {
-    const { hasPassword, oauthProviders } =
-      await this.usersService.getCredentialState(userId);
-    const remainingProviders = oauthProviders.filter(
-      (linked) => linked !== provider,
-    );
-    if (!hasPassword && remainingProviders.length === 0) {
-      throw new BadRequestException('No password set – cannot disconnect.');
-    }
-    await this.userOAuthService.unlinkOAuthAccount(userId, provider);
+    await this.prisma.$transaction(async (transaction) => {
+      await this.usersService.lockUserRow(userId, transaction);
+      const { hasPassword, oauthProviders } =
+        await this.usersService.getCredentialState(userId, transaction);
+      const remainingProviders = oauthProviders.filter(
+        (linked) => linked !== provider,
+      );
+      if (!hasPassword && remainingProviders.length === 0) {
+        throw new BadRequestException('No password set – cannot disconnect.');
+      }
+      await this.userOAuthService.unlinkOAuthAccount(
+        userId,
+        provider,
+        transaction,
+      );
+    });
   }
 
   async linkOAuthAccountToUser(
