@@ -21,12 +21,12 @@
  * makes the on state win when checked.
  */
 
-import { render, screen } from '@testing-library/react';
-import { readFileSync } from 'node:fs';
-import { createRequire } from 'node:module';
-import { dirname, resolve } from 'node:path';
 import { compile } from 'tailwindcss';
+import { createRequire } from 'node:module';
 import { describe, expect, it, vi } from 'vitest';
+import { dirname, resolve } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { render, screen } from '@testing-library/react';
 import SettingSwitch from './SettingSwitch';
 
 const requireFromHere = createRequire(import.meta.url);

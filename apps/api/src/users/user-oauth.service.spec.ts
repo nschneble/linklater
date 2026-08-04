@@ -4,8 +4,8 @@ jest.mock('../prisma/prisma.service', () => ({
   PrismaService: jest.fn().mockImplementation(() => ({})),
 }));
 
-import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../prisma/prisma.service';
+import { Test, TestingModule } from '@nestjs/testing';
 import { UserOAuthService } from './user-oauth.service';
 import type { Prisma } from '../prisma/generated/client';
 

@@ -1,4 +1,10 @@
 import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import {
   Body,
   Controller,
   Delete,
@@ -9,19 +15,13 @@ import {
   UseGuards,
   forwardRef,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 
 import { AuthService } from '../auth/auth.service.js';
+import { ConfirmAccountDeletionDto } from './dto/confirm-account-deletion.dto.js';
 import { CustomThrottlerGuard } from '../auth/custom-throttler.guard.js';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 import { ThrottleMessage } from '../auth/throttle-message.decorator.js';
-import { ConfirmAccountDeletionDto } from './dto/confirm-account-deletion.dto.js';
 import type { AuthRequest } from '../auth/auth-request.type.js';
 
 /**

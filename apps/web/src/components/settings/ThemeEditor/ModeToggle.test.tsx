@@ -7,9 +7,9 @@
  * (arrows + Home/End move and select, selection follows focus).
  */
 
-import ModeToggle from './ModeToggle';
-import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, within } from '@testing-library/react';
+import ModeToggle from './ModeToggle';
 
 const LABELS = { light: 'Light', dark: 'Dark' } as const;
 

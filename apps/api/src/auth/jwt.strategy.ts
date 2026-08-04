@@ -1,8 +1,8 @@
+import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import { requireEnv } from '../common/index.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { requireEnv } from '../common/index.js';
 
 /**
  * The decoded contents of a Linklater JWT. The `subject` field stores the

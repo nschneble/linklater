@@ -1,9 +1,9 @@
-import { resolveEmailPalette } from './email-palette.js';
 import * as ConfirmAccountDeletionTemplate from './templates/confirm-account-deletion.template.js';
 import * as EmailChangeTemplate from './templates/email-change.template.js';
 import * as MagicLinkTemplate from './templates/magic-link.template.js';
 import * as PasswordResetTemplate from './templates/password-reset.template.js';
 import * as PolicyUpdateTemplate from './templates/policy-update.template.js';
+import { resolveEmailPalette } from './email-palette.js';
 import * as VerificationTemplate from './templates/verification.template.js';
 
 // deterministic sample inputs so every preview renders byte-identically on

@@ -1,4 +1,12 @@
 import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import {
   Body,
   Controller,
   Delete,
@@ -11,22 +19,14 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiParam,
-  ApiQuery,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
 
 import { AllowsBookmarkletToken } from '../auth/token-scope.decorator.js';
-import { ApiUnauthorized } from '../auth/api-unauthorized.decorator.js';
 import { AnyAuthGuard, type AuthRequest } from '../auth/index.js';
+import { ApiUnauthorized } from '../auth/api-unauthorized.decorator.js';
 import { CustomThrottlerGuard } from '../auth/custom-throttler.guard.js';
-import { ThrottleMessage } from '../auth/throttle-message.decorator.js';
 import { LinksQueryService } from './links-query.service.js';
 import { LinksService } from './links.service.js';
+import { ThrottleMessage } from '../auth/throttle-message.decorator.js';
 
 import {
   BulkDeleteResultDto,

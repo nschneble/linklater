@@ -1,4 +1,3 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   applyCustomThemeTokens,
   clearCustomThemeTokens,
@@ -9,6 +8,7 @@ import {
   type CustomTheme,
   type Mode,
 } from '../../theme/ThemeContext';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { MutableRefObject, RefObject } from 'react';
 
 interface UseThemePreviewResult {

@@ -14,9 +14,9 @@
  *   - The Toast paints with the right variant when notice is non-null
  */
 
+import { describe, expect, it, vi } from 'vitest';
 import PendingNoticeAnnouncer from './PendingNoticeAnnouncer';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
 
 describe('PendingNoticeAnnouncer mirror – success variant', () => {
   it('renders the sr-only mirror with role="status" and aria-live="polite" when variant is success', () => {

@@ -4,14 +4,14 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
-import { generateSecret, generateURI, verify } from 'otplib';
-import QRCode from 'qrcode';
 import {
   decrypt,
   encrypt,
   generateRecoveryCodes,
   hashRecoveryCodes,
 } from '../common/index.js';
+import { generateSecret, generateURI, verify } from 'otplib';
+import QRCode from 'qrcode';
 import { UserMfaService } from '../users/index.js';
 import { UsersService } from '../users/users.service.js';
 

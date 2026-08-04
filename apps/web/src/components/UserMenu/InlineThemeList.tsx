@@ -1,14 +1,14 @@
-import { FOCUS_RING } from '../../lib/styles';
-import ThemeRowContent from '../common/ThemeRowContent';
 import {
   customThemeSrSuffix,
   isCustomThemeConfigured,
 } from '../../theme/customTheme';
+import { FOCUS_RING } from '../../lib/styles';
 import {
   pickerThemes,
   useTheme,
   type BaseTheme,
 } from '../../theme/ThemeContext';
+import ThemeRowContent from '../common/ThemeRowContent';
 
 interface InlineThemeListProps {
   baseTheme: BaseTheme;

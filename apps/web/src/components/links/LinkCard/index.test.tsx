@@ -7,14 +7,14 @@
  * `ml-auto` to stay pinned to the right edge. That is the bug this guards.
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
-import { readFileSync } from 'node:fs';
+import { compile } from 'tailwindcss';
 import { createRequire } from 'node:module';
+import { describe, expect, it, vi } from 'vitest';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { compile } from 'tailwindcss';
-import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import LinkCard from './index';
+import { readFileSync } from 'node:fs';
 import { ThemeProvider } from '../../../theme/ThemeContext';
 import type { Link } from '../../../lib/api';
 import type { ReactElement } from 'react';

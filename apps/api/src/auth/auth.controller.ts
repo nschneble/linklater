@@ -1,4 +1,11 @@
 import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { AuthService } from './auth.service.js';
+import {
   Body,
   Controller,
   Delete,
@@ -8,25 +15,18 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
-import { AuthService } from './auth.service.js';
 import { CustomThrottlerGuard } from './custom-throttler.guard.js';
 import { EmailVerificationService } from './email-verification.service.js';
+import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { LocalAuthGuard } from './local-auth.guard.js';
-import { ThrottleMessage } from './throttle-message.decorator.js';
-import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
 import { RefreshTokenDto } from './dto/refresh-token.dto.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { RequestEmailChangeDto } from './dto/request-email-change.dto.js';
 import { ResetPasswordDto } from './dto/reset-password.dto.js';
 import { SetPasswordDto } from './dto/set-password.dto.js';
+import { Throttle } from '@nestjs/throttler';
+import { ThrottleMessage } from './throttle-message.decorator.js';
 import { VerifyEmailDto } from './dto/verify-email.dto.js';
 import type { AuthRequest } from './auth-request.type.js';
 

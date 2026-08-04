@@ -24,10 +24,10 @@
  *     pan the page (the mobile "viewport grows beyond its width" bug)
  */
 
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent, render } from '@testing-library/react';
 import Header from './Header';
 import { ThemeProvider } from '../theme/ThemeContext';
-import { fireEvent, render } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AppView } from '../lib/navigation';
 import type { User } from '../auth/AuthContext';
 

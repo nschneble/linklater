@@ -1,7 +1,7 @@
-import WelcomePanel from './WelcomePanel';
-import { WELCOME_HEADING_ID } from './useApiReferenceSelection';
-import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { WELCOME_HEADING_ID } from './useApiReferenceSelection';
+import WelcomePanel from './WelcomePanel';
 
 describe('WelcomePanel', () => {
   it('renders a focusable overview heading off the tab order', () => {

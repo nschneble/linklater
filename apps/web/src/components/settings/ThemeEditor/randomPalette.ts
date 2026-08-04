@@ -1,10 +1,4 @@
 import {
-  computeContrastRatio,
-  focusRingPairs,
-  pairsForBundle,
-} from './contrastResults';
-import { converter, formatHex, type Oklch } from 'culori';
-import {
   BUNDLES,
   CARD_BUNDLES,
   EDITABLE_VARS,
@@ -12,6 +6,12 @@ import {
   type Bundle,
   type ThemeVariable,
 } from '../../../theme/customThemeTokens';
+import {
+  computeContrastRatio,
+  focusRingPairs,
+  pairsForBundle,
+} from './contrastResults';
+import { converter, formatHex, type Oklch } from 'culori';
 import type { Mode } from '../../../theme/constants';
 
 /**

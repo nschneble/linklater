@@ -8,17 +8,10 @@ import {
 } from 'react';
 
 import {
-  CVD_BASE_THEME,
-  VALID_BASE_THEME_IDS,
-  type BaseTheme,
-  type Mode,
-} from '../constants';
-import {
   applyCustomThemeTokens,
   clearCustomThemeTokens,
   readStoredCustomTheme,
 } from '../customTheme';
-import { getInitialBaseTheme, getInitialMode } from '../initial';
 import {
   CUSTOM_THEME_ENABLED_KEY,
   CUSTOM_THEME_ENABLED_UPDATED_AT_KEY,
@@ -37,6 +30,13 @@ import {
   persistWithTimestamp,
   readLocalStorage,
 } from '../storage';
+import {
+  CVD_BASE_THEME,
+  VALID_BASE_THEME_IDS,
+  type BaseTheme,
+  type Mode,
+} from '../constants';
+import { getInitialBaseTheme, getInitialMode } from '../initial';
 import type { CustomTheme } from '../customTheme';
 import type { ThemeContextValue } from './types';
 

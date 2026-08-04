@@ -1,5 +1,5 @@
-import { validate } from 'class-validator';
 import { CreateLinkDto } from './create-link.dto.js';
+import { validate } from 'class-validator';
 
 const makeDto = (overrides: Partial<CreateLinkDto> = {}) =>
   Object.assign(new CreateLinkDto(), {

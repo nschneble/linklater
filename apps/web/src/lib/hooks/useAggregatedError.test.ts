@@ -1,5 +1,5 @@
-import { renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { renderHook } from '@testing-library/react';
 import { useAggregatedError } from './useAggregatedError';
 
 type Errors = Parameters<typeof useAggregatedError>[0];

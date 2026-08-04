@@ -1,5 +1,5 @@
-import { describe, expect, it } from '@jest/globals';
 import { createHash } from 'node:crypto';
+import { describe, expect, it } from '@jest/globals';
 import { generateHexToken, sha256Hex } from './crypto-tokens.js';
 
 describe('sha256Hex', () => {

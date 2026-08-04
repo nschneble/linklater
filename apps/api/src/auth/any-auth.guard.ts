@@ -1,14 +1,14 @@
+import { AuthGuard } from '@nestjs/passport';
 import {
   ExecutionContext,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import type { Request } from 'express';
 
 import { ApiKeyStrategy } from './api-key.strategy.js';
-import { TokenScopeService } from './token-scope.service.js';
 import { TOKEN_PREFIX } from '../tokens/tokens.service.js';
+import { TokenScopeService } from './token-scope.service.js';
 
 /**
  * Accepts either a standard JWT (web app) or a personal access token (PAT)

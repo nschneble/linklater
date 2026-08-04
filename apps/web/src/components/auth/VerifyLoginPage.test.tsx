@@ -19,10 +19,10 @@
  * is unchanged and still mounts MfaView for OTP entry.
  */
 
-import VerifyLoginPage from './VerifyLoginPage';
 import { act, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { MemoryRouter } from 'react-router';
+import VerifyLoginPage from './VerifyLoginPage';
 
 // ─── Module mocks ─────────────────────────────────────────────────────────────
 

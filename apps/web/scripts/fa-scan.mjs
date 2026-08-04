@@ -8,9 +8,9 @@
 // definition. Drift here used to mean a manifest entry that the test accepted
 // but the subsetter rejected (or vice versa).
 
-import { readFile, readdir, stat } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readFile, readdir, stat } from 'node:fs/promises';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const webRoot = resolve(here, '..');

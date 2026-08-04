@@ -1,7 +1,7 @@
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ExecutionContext, INestApplication } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
+import { Test, TestingModule } from '@nestjs/testing';
 import type { Request, Response } from 'express';
 
 import { AnyAuthGuard } from '../src/auth/any-auth.guard.js';

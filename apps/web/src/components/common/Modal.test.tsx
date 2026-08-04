@@ -7,9 +7,9 @@
  * the consumer test files.
  */
 
-import Modal, { type ModalControl } from './Modal';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import Modal, { type ModalControl } from './Modal';
 
 const HEADING_ID = 'modal-heading';
 const DESCRIPTION_ID = 'modal-description';

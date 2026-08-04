@@ -1,5 +1,5 @@
-import { getLinks, type Link } from '../api';
 import { findNewLinks, formatNewLinksAnnouncement } from './linksData.utils';
+import { getLinks, type Link } from '../api';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useReannounce } from './useReannounce';
 import type { MutableRefObject } from 'react';

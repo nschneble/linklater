@@ -16,10 +16,10 @@ jest.mock('../prisma/prisma.service', () => ({
   PrismaService: jest.fn().mockImplementation(() => ({})),
 }));
 
-import { Test, type TestingModule } from '@nestjs/testing';
 import { ApiDocsTokensService } from './api-docs-tokens.service';
 import { Prisma } from '../prisma/generated/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { Test, type TestingModule } from '@nestjs/testing';
 
 const makeP2002 = () =>
   new (

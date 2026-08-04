@@ -17,9 +17,9 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { buildCurlCommand } from '../../lib/apiDocs/buildCurlCommand';
 import CurlExample from './CurlExample';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const props = {
   method: 'post',

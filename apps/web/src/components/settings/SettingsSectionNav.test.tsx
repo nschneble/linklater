@@ -12,9 +12,9 @@
  *   - the click handler fires with the right hash
  */
 
-import SettingsSectionNav from './SettingsSectionNav';
-import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import SettingsSectionNav from './SettingsSectionNav';
 
 const SECTIONS = [
   { hash: 'account', label: 'Account', icon: 'fa-user' },

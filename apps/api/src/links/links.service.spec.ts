@@ -17,14 +17,14 @@ jest.mock('../prisma/generated/client', () => ({
   Prisma: { PrismaClientKnownRequestError: MockPrismaClientKnownRequestError },
 }));
 
-import { Test, type TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
 import { LinksService } from './links.service';
-import { PrismaService } from '../prisma/prisma.service';
-import { QueueService } from '../queue/queue.service';
-import { QUEUES } from '../queue/queue.constants';
 import { METADATA_SEND_OPTIONS } from '../metadata/metadata.constants';
+import { NotFoundException } from '@nestjs/common';
 import { Prisma } from '../prisma/generated/client';
+import { PrismaService } from '../prisma/prisma.service';
+import { QUEUES } from '../queue/queue.constants';
+import { QueueService } from '../queue/queue.service';
+import { Test, type TestingModule } from '@nestjs/testing';
 
 const JOB_ID = 'job-1';
 const LINK_ID = 'link-1';

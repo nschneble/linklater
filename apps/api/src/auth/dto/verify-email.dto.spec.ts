@@ -1,5 +1,5 @@
-import { VerifyEmailDto } from './verify-email.dto.js';
 import { validate } from 'class-validator';
+import { VerifyEmailDto } from './verify-email.dto.js';
 
 const makeDto = (overrides: Partial<VerifyEmailDto> = {}) =>
   Object.assign(new VerifyEmailDto(), {

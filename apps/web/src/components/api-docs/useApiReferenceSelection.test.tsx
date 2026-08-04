@@ -1,12 +1,12 @@
+import { describe, expect, it } from 'vitest';
 import { endpointHeadingId, endpointSlug } from './endpointId';
+import { MemoryRouter } from 'react-router';
+import { render, screen } from '@testing-library/react';
 import {
   useApiReferenceSelection,
   WELCOME_HEADING_ID,
 } from './useApiReferenceSelection';
-import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router';
-import { describe, expect, it } from 'vitest';
 import type { NormalizedEndpoint } from '../../lib/openapi';
 
 const endpoints: NormalizedEndpoint[] = [

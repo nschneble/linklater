@@ -9,8 +9,6 @@
  * probe are mocked; the rest of the editor renders real.
  */
 
-import ThemeEditor from './index';
-import { MOCK_GLYPHS } from './mockGlyphs';
 import {
   act,
   fireEvent,
@@ -20,8 +18,10 @@ import {
   within,
 } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { updateMe } from '../../../lib/api';
+import { MOCK_GLYPHS } from './mockGlyphs';
 import { readThemeTokens } from './themeProbe';
+import ThemeEditor from './index';
+import { updateMe } from '../../../lib/api';
 
 vi.mock('../../../lib/api', () => ({ updateMe: vi.fn() }));
 vi.mock('./themeProbe', () => ({

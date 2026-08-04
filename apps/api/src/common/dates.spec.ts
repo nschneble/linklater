@@ -1,5 +1,5 @@
-import { jest } from '@jest/globals';
 import { expiresInMs } from './dates.js';
+import { jest } from '@jest/globals';
 
 beforeEach(() => {
   jest.clearAllMocks();

@@ -6,9 +6,9 @@
  * selection state. Each host owns those (SC 4.1.2).
  */
 
-import ThemeRowContent from './ThemeRowContent';
-import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import ThemeRowContent from './ThemeRowContent';
 
 describe('ThemeRowContent', () => {
   it('renders content only: no button, role, or tabindex', () => {

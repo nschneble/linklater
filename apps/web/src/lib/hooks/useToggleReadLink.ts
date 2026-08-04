@@ -1,5 +1,5 @@
-import { readLink, unreadLink, type Link } from '../api';
 import { getErrorMessage } from '../errors';
+import { readLink, unreadLink, type Link } from '../api';
 import { useCallback, useState } from 'react';
 import type { LinksFilter } from './types';
 

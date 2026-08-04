@@ -1,6 +1,6 @@
+import Alert from './Alert';
 import { describe, expect, it } from 'vitest';
 import { render } from '@testing-library/react';
-import Alert from './Alert';
 
 // pins each variant's resolved class strings to catch bundle-token drift
 

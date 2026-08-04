@@ -1,4 +1,3 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   BASE_AND_MOUNT_ONLY_SLOTS,
   BASE_ONLY_SLOTS,
@@ -13,8 +12,9 @@ import {
   type Slot,
   type ThemeVariable,
 } from '../../../theme/customThemeTokens';
-import { resolveCustomThemeTokens } from '../../../theme/customTheme';
 import { readThemeTokens } from './themeProbe';
+import { resolveCustomThemeTokens } from '../../../theme/customTheme';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTheme } from '../../../theme/ThemeContext';
 import type { CSSProperties } from 'react';
 import type { Mode } from '../../../theme/constants';

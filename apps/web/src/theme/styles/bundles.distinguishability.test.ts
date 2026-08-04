@@ -43,7 +43,6 @@
  * for full dichromacy. Severity 1 = worst-case (-opia, not -omaly).
  */
 
-import { describe, expect, it } from 'vitest';
 import {
   BUNDLES_CSS,
   CVD_TYPES,
@@ -58,6 +57,7 @@ import {
   readPageBg,
   resolveFg,
 } from './bundles-color-utils';
+import { describe, expect, it } from 'vitest';
 import type { Bundle, Rgb } from './bundles-color-utils';
 
 const LUMINANCE_GAP_THRESHOLD = 1.4;

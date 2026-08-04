@@ -1,4 +1,3 @@
-import { describe, expect, it } from 'vitest';
 import {
   CVD_BASE_THEME,
   THEMES,
@@ -6,6 +5,7 @@ import {
   pickerThemes,
   type BaseTheme,
 } from './constants';
+import { describe, expect, it } from 'vitest';
 
 describe('CVD_BASE_THEME', () => {
   it('is the apollo-10-1-2 theme', () => {

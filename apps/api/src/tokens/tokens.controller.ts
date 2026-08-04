@@ -1,4 +1,11 @@
 import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import {
   Body,
   Controller,
   Delete,
@@ -9,21 +16,14 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiParam,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 
-import { CustomThrottlerGuard } from '../auth/custom-throttler.guard.js';
-import { JwtAuthGuard, type AuthRequest } from '../auth/index.js';
-import { ThrottleMessage } from '../auth/throttle-message.decorator.js';
 import { ApiDocsTokensService } from './api-docs-tokens.service.js';
 import { BookmarkletTokensService } from './bookmarklet-tokens.service.js';
 import { CreateTokenDto } from './dto/create-token.dto.js';
+import { CustomThrottlerGuard } from '../auth/custom-throttler.guard.js';
+import { JwtAuthGuard, type AuthRequest } from '../auth/index.js';
+import { ThrottleMessage } from '../auth/throttle-message.decorator.js';
 import { TokensService } from './tokens.service.js';
 
 /**

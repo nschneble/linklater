@@ -1,6 +1,6 @@
 import ApiReference from './ApiReference';
-import MethodBadge from './MethodBadge';
 import { Link } from 'react-router';
+import MethodBadge from './MethodBadge';
 import { useAuth } from '../../auth/AuthContext';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 

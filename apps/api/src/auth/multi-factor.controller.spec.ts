@@ -1,14 +1,14 @@
 import { jest } from '@jest/globals';
 
-import { Test, TestingModule } from '@nestjs/testing';
 import { ConflictException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
 
-import { MultiFactorController } from './multi-factor.controller';
 import { AuthService } from './auth.service';
-import { TotpService } from './totp.service';
 import { CustomThrottlerGuard } from './custom-throttler.guard';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { MfaAuthGuard } from './mfa-auth.guard';
+import { MultiFactorController } from './multi-factor.controller';
+import { TotpService } from './totp.service';
 import type { AuthRequest } from './auth-request.type';
 
 const USER_ID = 'user-1';

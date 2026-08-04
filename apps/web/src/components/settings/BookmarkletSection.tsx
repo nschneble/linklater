@@ -1,13 +1,13 @@
-import { getBookmarkletToken, regenerateBookmarkletToken } from '../../lib/api';
-import { getErrorMessage } from '../../lib/errors';
-import { useToast } from '../../lib/hooks/useToast';
-import { FOCUS_RING } from '../../lib/styles';
 import Alert from '../common/Alert';
-import ToastAnnouncer from '../common/ToastAnnouncer';
 import BookmarkletRegenerateButton from './BookmarkletRegenerateButton';
 import { buildBookmarkletCode } from './bookmarkletCode';
+import { FOCUS_RING } from '../../lib/styles';
+import { getBookmarkletToken, regenerateBookmarkletToken } from '../../lib/api';
+import { getErrorMessage } from '../../lib/errors';
+import ToastAnnouncer from '../common/ToastAnnouncer';
 import { useEffect, useRef, useState } from 'react';
 import { useReanchorOnLoad } from './useReanchorOnLoad';
+import { useToast } from '../../lib/hooks/useToast';
 
 /**
  * Settings section that renders the Linklater bookmarklet.

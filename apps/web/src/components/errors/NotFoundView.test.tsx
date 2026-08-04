@@ -6,10 +6,10 @@
  * after a route miss.
  */
 
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
+import { MemoryRouter } from 'react-router';
 import NotFoundView from './NotFoundView';
+import { render, screen } from '@testing-library/react';
 
 function renderNotFound() {
   // start at /not-found so the redirect effect is a no-op (single mount)

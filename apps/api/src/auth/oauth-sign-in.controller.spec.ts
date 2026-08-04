@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals';
 
-import { Test, TestingModule } from '@nestjs/testing';
 import { AuthGuard } from '@nestjs/passport';
+import { Test, TestingModule } from '@nestjs/testing';
 import type { Response } from 'express';
 
 import { AuthService } from './auth.service';

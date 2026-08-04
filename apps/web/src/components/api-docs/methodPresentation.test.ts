@@ -1,10 +1,10 @@
-import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_ICON,
   DEFAULT_PALETTE,
   resolveMethodIcon,
   resolveMethodPalette,
 } from './methodPresentation';
+import { describe, expect, it } from 'vitest';
 
 describe('resolveMethodPalette', () => {
   it('returns the brand palette for a known method, any case', () => {

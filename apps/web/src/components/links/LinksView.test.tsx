@@ -14,10 +14,10 @@
  * pipeline. The hook's internals are tested in `useLinksView.test.ts`.
  */
 
-import LinksView from './LinksView';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import LinksView from './LinksView';
+import { MemoryRouter } from 'react-router';
 
 // ─── Module mocks ─────────────────────────────────────────────────────────────
 

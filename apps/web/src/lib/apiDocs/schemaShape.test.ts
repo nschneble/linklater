@@ -1,6 +1,6 @@
+import { describe, expect, it } from 'vitest';
 import { describeType, toSchemaRows } from './schemaShape';
 import { resolveSchema } from '../openapi/resolveReference';
-import { describe, expect, it } from 'vitest';
 import type { OpenAPIV3 } from 'openapi-types';
 
 describe('describeType', () => {

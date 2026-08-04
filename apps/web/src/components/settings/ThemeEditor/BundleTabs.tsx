@@ -1,5 +1,5 @@
-import { useRef } from 'react';
 import ColorRow from './ColorRow';
+import { useRef } from 'react';
 import {
   VAR_GROUPS,
   type Bundle,

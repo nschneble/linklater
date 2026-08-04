@@ -28,8 +28,8 @@ vi.mock('../../../theme/ThemeContext', () => ({
   useTheme: () => themeState,
 }));
 
-import { updateMe } from '../../../lib/api';
 import { EDITABLE_VARS, type ThemeVariable } from './useThemeOverrides';
+import { updateMe } from '../../../lib/api';
 import { useThemeSave } from './useThemeSave';
 
 function buildColorValues(value: string): Record<ThemeVariable, string> {

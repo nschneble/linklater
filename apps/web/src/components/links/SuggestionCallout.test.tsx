@@ -10,9 +10,9 @@
  *     unmount the populated card and send focus to <body>).
  */
 
-import SuggestionCallout from './SuggestionCallout';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import SuggestionCallout from './SuggestionCallout';
 
 // ─── Module mocks ─────────────────────────────────────────────────────────────
 

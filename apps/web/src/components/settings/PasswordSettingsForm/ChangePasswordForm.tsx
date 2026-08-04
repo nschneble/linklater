@@ -1,6 +1,6 @@
-import { getErrorMessage } from '../../../lib/errors';
 import Alert from '../../common/Alert';
 import FormInput from '../../common/FormInput';
+import { getErrorMessage } from '../../../lib/errors';
 import PrimaryButton from '../../common/PrimaryButton';
 import { updateMe } from '../../../lib/api';
 import { useState } from 'react';

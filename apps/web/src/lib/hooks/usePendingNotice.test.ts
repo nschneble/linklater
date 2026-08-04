@@ -5,8 +5,8 @@ vi.mock('../pendingNotice', () => ({
   consumePendingNotice: vi.fn().mockReturnValue(null),
 }));
 
-import { usePendingNotice } from './usePendingNotice';
 import * as pendingNoticeModule from '../pendingNotice';
+import { usePendingNotice } from './usePendingNotice';
 
 beforeEach(() => {
   vi.clearAllMocks();

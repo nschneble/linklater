@@ -1,6 +1,6 @@
+import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
 import type { NormalizedEndpoint } from '../../lib/openapi';
 
 vi.mock('../../auth/AuthContext', () => ({

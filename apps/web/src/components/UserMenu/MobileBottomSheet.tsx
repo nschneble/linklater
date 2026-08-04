@@ -1,7 +1,7 @@
 import BottomSheetMainPanel from './BottomSheetMainPanel';
 import BottomSheetThemeSubmenu from './BottomSheetThemeSubmenu';
-import { useMenuNavigation } from './useMenuNavigation';
 import { forwardRef, useEffect, useRef, useState } from 'react';
+import { useMenuNavigation } from './useMenuNavigation';
 import type { AppView } from '../../lib/navigation';
 import type { BaseTheme, Mode } from '../../theme/ThemeContext';
 import type { User } from '../../auth/AuthContext';

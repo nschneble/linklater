@@ -1,6 +1,6 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMetadataPollLoop } from './usePendingMetadataPolling.loop';
 import { METADATA_POLL_TIMING } from './usePendingMetadataPolling.loop.timing';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Link } from '../api';
 import type {
   MetadataPollLoop,

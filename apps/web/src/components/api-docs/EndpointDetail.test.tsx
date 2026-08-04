@@ -1,7 +1,7 @@
+import { describe, expect, it, vi } from 'vitest';
+import { MemoryRouter } from 'react-router';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router';
-import { describe, expect, it, vi } from 'vitest';
 import type { NormalizedEndpoint } from '../../lib/openapi';
 
 // MethodBadge reads auth to pick paint; stub so detail needs no provider

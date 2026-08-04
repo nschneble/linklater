@@ -7,8 +7,8 @@ import {
   ConflictException,
   ForbiddenException,
 } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
 import { generate, generateSecret } from 'otplib';
+import { Test, TestingModule } from '@nestjs/testing';
 
 import { TotpService } from './totp.service';
 import { UserMfaService } from '../users/user-mfa.service';

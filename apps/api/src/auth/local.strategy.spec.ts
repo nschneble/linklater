@@ -1,8 +1,8 @@
-import { jest } from '@jest/globals';
-import { UnauthorizedException } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
-import { LocalStrategy } from './local.strategy';
 import { AuthService } from './auth.service';
+import { jest } from '@jest/globals';
+import { LocalStrategy } from './local.strategy';
+import { Test, TestingModule } from '@nestjs/testing';
+import { UnauthorizedException } from '@nestjs/common';
 
 const USER_EMAIL = 'email@addy.com';
 const USER_ID = 'user-1';

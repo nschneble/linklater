@@ -1,6 +1,6 @@
+import { EmailService } from './email.service.js';
 import { jest } from '@jest/globals';
 import { Test, TestingModule } from '@nestjs/testing';
-import { EmailService } from './email.service.js';
 
 const USER_EMAIL = 'user@example.com';
 const VERIFICATION_TOKEN = 'verify-token-abc';

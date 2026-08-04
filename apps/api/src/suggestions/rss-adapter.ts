@@ -1,6 +1,6 @@
 import type { RssFeedService } from './rss-feed.service.js';
-import type { SourceDefinition } from './sources.js';
 import type { SourceAdapter, Suggestion } from './suggestions.types.js';
+import type { SourceDefinition } from './sources.js';
 
 /**
  * Source adapter that serves cached RSS entries. Constructed per-source by

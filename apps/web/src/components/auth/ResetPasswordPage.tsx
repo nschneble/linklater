@@ -1,13 +1,13 @@
-import { resetPassword, verifyOtp } from '../../lib/api';
-import { setPendingNotice } from '../../lib/pendingNotice';
-import { useAuth } from '../../auth/AuthContext';
-import { getErrorMessage } from '../../lib/errors';
-import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
+import { getErrorMessage } from '../../lib/errors';
 import LinkButton from '../common/LinkButton';
 import MfaView from './MfaView';
 import PrimaryButton from '../common/PrimaryButton';
+import { resetPassword, verifyOtp } from '../../lib/api';
+import { setPendingNotice } from '../../lib/pendingNotice';
+import { useAuth } from '../../auth/AuthContext';
+import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 

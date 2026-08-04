@@ -1,13 +1,13 @@
-import { useEffect, useMemo, useRef } from 'react';
-import PrimaryButton from '../common/PrimaryButton';
+import { FOCUS_RING } from '../../lib/styles';
+import { hostnameOf, stripHtml } from '../../lib/strings';
 import {
   isMetadataPending,
   isMetadataSettled,
 } from '../../lib/hooks/linksData.utils';
-import { useSkeletonPresence } from '../../lib/hooks/useSkeletonPresence';
 import { isSafeRedirectUrl } from '../../lib/safe-redirect-url';
-import { hostnameOf, stripHtml } from '../../lib/strings';
-import { FOCUS_RING } from '../../lib/styles';
+import PrimaryButton from '../common/PrimaryButton';
+import { useEffect, useMemo, useRef } from 'react';
+import { useSkeletonPresence } from '../../lib/hooks/useSkeletonPresence';
 import type { Link } from '../../lib/api';
 
 /**

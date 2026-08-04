@@ -7,14 +7,14 @@
  * `bundles.contrast.test.ts` contract (the two sources must agree).
  */
 
-import { describe, expect, it } from 'vitest';
+import { BUNDLES, EDITABLE_VARS, VAR_GROUPS } from './useThemeOverrides';
 import {
   computeContrastRatio,
   focusRingPairs,
   pairsForBundle,
   pairsTouchingToken,
 } from './contrastResults';
-import { BUNDLES, EDITABLE_VARS, VAR_GROUPS } from './useThemeOverrides';
+import { describe, expect, it } from 'vitest';
 import type { ContrastPair, ContrastResults } from './contrastResults';
 
 /** Every contract pair the live checker evaluates: per-bundle plus focus ring. */

@@ -1,10 +1,10 @@
-import { jest } from '@jest/globals';
-import { Reflector } from '@nestjs/core';
-import { ThrottlerException, ThrottlerStorageService } from '@nestjs/throttler';
-import { CustomThrottlerGuard } from './auth/custom-throttler.guard.js';
 import { AuthController } from './auth/auth.controller.js';
+import { CustomThrottlerGuard } from './auth/custom-throttler.guard.js';
+import { jest } from '@jest/globals';
 import { LinksController } from './links/links.controller.js';
+import { Reflector } from '@nestjs/core';
 import { THROTTLER_CONFIG } from './throttler.config.js';
+import { ThrottlerException, ThrottlerStorageService } from '@nestjs/throttler';
 import type { ExecutionContext } from '@nestjs/common';
 
 /**

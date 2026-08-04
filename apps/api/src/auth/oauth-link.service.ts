@@ -3,10 +3,10 @@ import {
   ConflictException,
   Injectable,
 } from '@nestjs/common';
-import { requireEnv } from '../common/index.js';
-import { Prisma, PrismaService } from '../prisma/index.js';
-import { UserOAuthService, UsersService } from '../users/index.js';
 import { generateLinkState } from './oauth-link-state.js';
+import { Prisma, PrismaService } from '../prisma/index.js';
+import { requireEnv } from '../common/index.js';
+import { UserOAuthService, UsersService } from '../users/index.js';
 
 @Injectable()
 export class OAuthLinkService {

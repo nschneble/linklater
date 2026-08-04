@@ -1,10 +1,10 @@
-import { stumbleLink } from '../../lib/api';
-import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
-import { isSafeRedirectUrl } from '../../lib/safe-redirect-url';
 import Alert from '../common/Alert';
 import IconButton from '../common/IconButton';
+import { isSafeRedirectUrl } from '../../lib/safe-redirect-url';
 import StumbleEmptyView from './StumbleEmptyView';
+import { stumbleLink } from '../../lib/api';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 
 type StumbleState = 'loading' | 'empty' | 'error';
 

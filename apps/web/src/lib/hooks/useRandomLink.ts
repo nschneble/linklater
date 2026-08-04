@@ -1,5 +1,5 @@
-import { readLink, getRandomLink } from '../api';
 import { isSafeRedirectUrl } from '../safe-redirect-url';
+import { readLink, getRandomLink } from '../api';
 import { useCallback, useState } from 'react';
 
 interface UseRandomLinkOptions {

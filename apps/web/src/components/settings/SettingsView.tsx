@@ -1,8 +1,3 @@
-import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
-import { useFlashQueryParameters } from '../../lib/hooks/useFlashQueryParameters';
-import { useToast } from '../../lib/hooks/useToast';
-import ToastAnnouncer from '../common/ToastAnnouncer';
-import StumbleSection from '../stumble/StumbleSection';
 import AccountSettingsForm from './AccountSettingsForm';
 import ApiTokensSection from './ApiTokensSection';
 import BookmarkletSection from './BookmarkletSection';
@@ -11,14 +6,19 @@ import DangerZone from './DangerZone';
 import DyslexicFontToggle from './DyslexicFontToggle';
 import IdPsSection from './IdPsSection';
 import KeyboardShortcutsToggle from './KeyboardShortcutsToggle';
+import { LINK_ERROR_MESSAGES, LINKED_MESSAGES } from './oauthFlashMessages';
 import MultiFactorSection from './MultiFactorSection';
+import { setActiveSettingsSection } from './settingsScroll';
 import SettingsGroup from './SettingsGroup';
 import SettingsLayout from './SettingsLayout';
-import { LINK_ERROR_MESSAGES, LINKED_MESSAGES } from './oauthFlashMessages';
-import { setActiveSettingsSection } from './settingsScroll';
-import { useSettingsActiveSection } from './useSettingsActiveSection';
+import StumbleSection from '../stumble/StumbleSection';
+import ToastAnnouncer from '../common/ToastAnnouncer';
+import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import { useEffect, useMemo, useState } from 'react';
+import { useFlashQueryParameters } from '../../lib/hooks/useFlashQueryParameters';
 import { useLocation, useNavigate } from 'react-router';
+import { useSettingsActiveSection } from './useSettingsActiveSection';
+import { useToast } from '../../lib/hooks/useToast';
 import type { SettingsSection } from './settingsSections';
 
 interface FlashMessages {

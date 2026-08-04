@@ -1,4 +1,11 @@
 import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
+import {
   ConflictException,
   Controller,
   Delete,
@@ -10,17 +17,10 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { OAuthLinkService } from './oauth-link.service.js';
-import type { Response } from 'express';
 import type { AuthRequest } from './auth-request.type.js';
+import type { Response } from 'express';
 
 /**
  * OAuth account-linking flows. Shares the `auth` route prefix with the other

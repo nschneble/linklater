@@ -1,6 +1,6 @@
-import { useReducedMotion } from './useReducedMotion';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { useReducedMotion } from './useReducedMotion';
 
 type EmittableMediaQueryList = MediaQueryList & {
   _emit: (matches: boolean) => void;

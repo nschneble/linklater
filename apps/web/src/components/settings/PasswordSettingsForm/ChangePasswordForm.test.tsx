@@ -8,7 +8,6 @@
  *   - Loading/error/success state transitions.
  */
 
-import ChangePasswordForm from './ChangePasswordForm';
 import {
   act,
   fireEvent,
@@ -17,6 +16,7 @@ import {
   waitFor,
 } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import ChangePasswordForm from './ChangePasswordForm';
 
 // ─── Module mocks ─────────────────────────────────────────────────────────────
 

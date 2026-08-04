@@ -1,6 +1,6 @@
-import SchemaTable from './SchemaTable';
-import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import SchemaTable from './SchemaTable';
 import type { OpenAPIV3 } from 'openapi-types';
 
 /** Resolve a disclosure trigger's panel <tr> via its `aria-controls` target. */

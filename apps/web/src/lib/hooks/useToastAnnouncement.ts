@@ -1,6 +1,6 @@
+import { useCallback, useEffect, useState } from 'react';
 import { useReannounce } from './useReannounce';
 import { useTransientState } from './useTransientState';
-import { useCallback, useEffect, useState } from 'react';
 
 /**
  * Bridges a conditionally-mounted `<Toast>` to an always-mounted live region.

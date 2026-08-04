@@ -6,8 +6,8 @@ import {
   Param,
 } from '@nestjs/common';
 
-import { isTestingUi } from '../common/index.js';
 import { EmailPreviewService } from './email-preview.service.js';
+import { isTestingUi } from '../common/index.js';
 
 /**
  * Dev/test-only surface that exposes each transactional email template at a

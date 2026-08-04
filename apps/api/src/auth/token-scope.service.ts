@@ -3,9 +3,9 @@ import { Reflector } from '@nestjs/core';
 import { ThrottlerException, ThrottlerStorage } from '@nestjs/throttler';
 import type { ExecutionContext } from '@nestjs/common';
 
+import { BOOKMARKLET_SCOPE_KEY } from './token-scope.decorator.js';
 import { isTestingUi } from '../common/index.js';
 import { TokenKind } from '../prisma/index.js';
-import { BOOKMARKLET_SCOPE_KEY } from './token-scope.decorator.js';
 
 /** The two retrievable kinds that carry scope + rate-limit restrictions. */
 type SpecialTokenKind =

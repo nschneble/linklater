@@ -1,6 +1,6 @@
-import { Transform } from 'class-transformer';
 import { IsInt, Max, Min } from 'class-validator';
 import { toOptionalInteger } from '../../common/index.js';
+import { Transform } from 'class-transformer';
 
 /** Smallest number of suggestions a caller may request. */
 export const MIN_COUNT = 1;

@@ -12,10 +12,10 @@
  *   - Privacy policy link present in register mode, navigating to /privacy
  */
 
-import LoginRegisterView from './LoginRegisterView';
-import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRef } from 'react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import LoginRegisterView from './LoginRegisterView';
 import type { RefObject } from 'react';
 
 const navigate = vi.fn();

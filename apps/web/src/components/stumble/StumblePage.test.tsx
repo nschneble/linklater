@@ -12,10 +12,10 @@
  * isSafeRedirectUrl rejection prevents open-redirect security regression.
  */
 
-import StumblePage from './StumblePage';
 import { act, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { MemoryRouter } from 'react-router';
+import StumblePage from './StumblePage';
 
 // ─── Module mocks ─────────────────────────────────────────────────────────────
 

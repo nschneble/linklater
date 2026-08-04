@@ -1,14 +1,14 @@
 import EndpointDetail from './EndpointDetail';
+import { endpointHeadingId } from './endpointId';
 import EndpointNav from './EndpointNav';
 import EndpointNavCompact from './EndpointNavCompact';
-import WelcomePanel from './WelcomePanel';
-import { endpointHeadingId } from './endpointId';
 import { fetchOpenApi, resolveOpenApiUrl } from '../../lib/openapi';
 import {
   useApiReferenceSelection,
   WELCOME_HEADING_ID,
 } from './useApiReferenceSelection';
 import { useEffect, useState } from 'react';
+import WelcomePanel from './WelcomePanel';
 import type { NormalizedApi } from '../../lib/openapi';
 
 /**

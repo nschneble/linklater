@@ -1,5 +1,5 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
+import { Test, TestingModule } from '@nestjs/testing';
 import type { INestApplication } from '@nestjs/common';
 
 import { applySecurityHeaders } from './security-headers.js';

@@ -8,11 +8,11 @@ jest.mock('../prisma/generated/client', () => ({ Prisma: {} }));
 import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { sha256Hex } from '../common/index';
-import { MagicLinkService } from './magic-link.service';
 import { EmailQueueService } from '../email/email-queue.service';
-import { UserTokensService } from '../users/user-tokens.service';
+import { MagicLinkService } from './magic-link.service';
+import { sha256Hex } from '../common/index';
 import { UsersService } from '../users/users.service';
+import { UserTokensService } from '../users/user-tokens.service';
 
 const USER_ID = 'user-1';
 const USER_EMAIL = 'user@example.com';

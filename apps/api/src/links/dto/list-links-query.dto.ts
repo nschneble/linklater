@@ -1,4 +1,3 @@
-import { Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsInt,
@@ -7,8 +6,9 @@ import {
   Max,
   Min,
 } from 'class-validator';
-import { toOptionalBoolean, toOptionalInteger } from '../../common/index.js';
 import { MAX_LIMIT } from '../links-query.service.js';
+import { toOptionalBoolean, toOptionalInteger } from '../../common/index.js';
+import { Transform } from 'class-transformer';
 
 /**
  * Validated query parameters for `GET /links`. Query strings always arrive as

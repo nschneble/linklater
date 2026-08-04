@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import {
   findNewLinks,
   formatNewLinksAnnouncement,
@@ -5,7 +6,6 @@ import {
   isMetadataSettled,
   mergeSettledMetadata,
 } from './linksData.utils';
-import { describe, expect, it } from 'vitest';
 import type { Link, LinkMeta } from '../api';
 
 function makeLink(overrides: Partial<Link> = {}): Link {

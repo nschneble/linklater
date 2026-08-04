@@ -6,9 +6,9 @@
  * accessible-theme affordance still renders, and clicking selects.
  */
 
-import InlineThemeList from './InlineThemeList';
-import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import InlineThemeList from './InlineThemeList';
 
 vi.mock('../../theme/ThemeContext', async (importActual) => {
   const actual =

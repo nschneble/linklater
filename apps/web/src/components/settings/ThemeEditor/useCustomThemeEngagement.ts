@@ -1,5 +1,5 @@
-import { useCallback, useRef, type MutableRefObject } from 'react';
 import { updateMe } from '../../../lib/api';
+import { useCallback, useRef, type MutableRefObject } from 'react';
 import type { CustomTheme } from '../../../theme/customTheme';
 
 interface UseCustomThemeEngagementOptions {

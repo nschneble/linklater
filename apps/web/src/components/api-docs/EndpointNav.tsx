@@ -1,6 +1,6 @@
-import MethodIconBadge from './MethodIconBadge';
 import { endpointSlug } from './endpointId';
 import { FOCUS_RING } from '../../lib/styles';
+import MethodIconBadge from './MethodIconBadge';
 import type { NormalizedEndpoint } from '../../lib/openapi';
 
 /**

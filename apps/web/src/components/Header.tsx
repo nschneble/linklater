@@ -1,6 +1,6 @@
 import MobileBottomSheet from './UserMenu/MobileBottomSheet';
-import UserMenu from './UserMenu';
 import { useEffect, useRef } from 'react';
+import UserMenu from './UserMenu';
 import { useTheme } from '../theme/ThemeContext';
 import type { AppView } from '../lib/navigation';
 import type { BaseTheme } from '../theme/ThemeContext';

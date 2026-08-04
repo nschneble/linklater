@@ -1,10 +1,10 @@
+import { describe, expect, it } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
 
-import ResponseTabs from './ResponseTabs';
 import { endpointHeadingId } from './endpointId';
 import { FOCUS_RING } from '../../lib/styles';
+import ResponseTabs from './ResponseTabs';
 import type { NormalizedEndpoint } from '../../lib/openapi';
 
 function makeEndpoint(

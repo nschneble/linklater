@@ -1,10 +1,10 @@
 import { BRANDING_DEFAULTS } from './brandingDefaults';
-import { CUSTOM_TOKEN_KEYS } from './customTheme';
 import {
   BUNDLES_CSS,
   extractBlock,
   parseDeclarations,
 } from './styles/bundles-color-utils';
+import { CUSTOM_TOKEN_KEYS } from './customTheme';
 import { describe, expect, it } from 'vitest';
 
 /**

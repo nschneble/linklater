@@ -10,11 +10,11 @@
  */
 
 import { commonRoutes } from './Common';
-import { render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import { MemoryRouter, Routes, useLocation } from 'react-router';
+import { render, screen } from '@testing-library/react';
 import { unauthenticatedRoutes } from './Unauthenticated';
 import { userRoutes } from './User';
-import { describe, expect, it, vi } from 'vitest';
 
 // stub AuthForm: this suite only asserts the surface wrapper, not the form
 vi.mock('../components/auth/AuthForm', () => ({

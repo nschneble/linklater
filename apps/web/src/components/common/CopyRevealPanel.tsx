@@ -1,6 +1,6 @@
-import { useTransientState } from '../../lib/hooks/useTransientState';
 import CopyButton from './CopyButton';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useTransientState } from '../../lib/hooks/useTransientState';
 import type { ReactNode } from 'react';
 
 interface CopyRevealPanelProps {

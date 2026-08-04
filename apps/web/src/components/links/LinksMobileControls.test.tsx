@@ -9,8 +9,8 @@
  */
 
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
 import LinksMobileControls from './LinksMobileControls';
+import { render, screen } from '@testing-library/react';
 
 const baseProps = {
   filter: 'unread' as const,

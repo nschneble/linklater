@@ -7,8 +7,8 @@ jest.mock('../prisma/generated/client', () => ({
 }));
 
 import { BadRequestException, ConflictException } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
 import { Prisma } from '../prisma/generated/client';
+import { Test, TestingModule } from '@nestjs/testing';
 
 import { OAuthLinkService } from './oauth-link.service';
 import { PrismaService } from '../prisma/prisma.service';

@@ -1,8 +1,8 @@
 import BundleTabs from './BundleTabs';
 import { useId } from 'react';
 import type { Bundle } from './useThemeOverrides';
-import type { TokenContrastFailure } from './contrastResults';
 import type { ThemeVariable } from './useThemeOverrides';
+import type { TokenContrastFailure } from './contrastResults';
 
 interface ColorEditorProps {
   /** The current (possibly overridden) values for all editable CSS variables. */

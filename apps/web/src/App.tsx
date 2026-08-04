@@ -1,11 +1,4 @@
-import ErrorBoundary from './components/errors/ErrorBoundary';
 import { commonRoutes } from './routes/Common';
-import { unauthenticatedRoutes } from './routes/Unauthenticated';
-import { userRoutes } from './routes/User';
-import { useAuth } from './auth/AuthContext';
-import { useEffect } from 'react';
-import { useServerBooleanPrefSync } from './theme/useServerBooleanPrefSync';
-import { useTheme } from './theme/ThemeContext';
 import {
   CVD_MODE_KEY,
   CVD_UPDATED_AT_KEY,
@@ -13,7 +6,14 @@ import {
   DYSLEXIC_FONT_UPDATED_AT_KEY,
   readLocalStorage,
 } from './theme/storage';
+import ErrorBoundary from './components/errors/ErrorBoundary';
 import { Routes } from 'react-router';
+import { unauthenticatedRoutes } from './routes/Unauthenticated';
+import { useAuth } from './auth/AuthContext';
+import { useEffect } from 'react';
+import { userRoutes } from './routes/User';
+import { useServerBooleanPrefSync } from './theme/useServerBooleanPrefSync';
+import { useTheme } from './theme/ThemeContext';
 
 export default function App() {
   const { user, loading } = useAuth();

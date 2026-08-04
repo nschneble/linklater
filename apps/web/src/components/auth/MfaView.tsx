@@ -1,9 +1,9 @@
 import Alert from '../common/Alert';
+import AuthCard from './AuthCard';
+import { formatTotpCode, normalizeTotpInput } from '../../lib/totpCode';
 import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
-import AuthCard from './AuthCard';
-import { formatTotpCode, normalizeTotpInput } from '../../lib/totpCode';
 import { useEffect, useRef } from 'react';
 import type { FormEvent, RefObject } from 'react';
 

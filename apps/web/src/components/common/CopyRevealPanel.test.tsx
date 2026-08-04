@@ -14,9 +14,9 @@
  *    readers announce the reveal heading on mount.
  */
 
+import CopyRevealPanel from './CopyRevealPanel';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
-import CopyRevealPanel from './CopyRevealPanel';
 
 const baseProps = {
   headingText: 'Your token has been created.',

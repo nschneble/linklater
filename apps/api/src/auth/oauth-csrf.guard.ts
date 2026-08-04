@@ -1,6 +1,6 @@
-import { Injectable, UnauthorizedException, mixin } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { consumeOAuthState, issueOAuthState } from './oauth-state-cookie.js';
+import { Injectable, UnauthorizedException, mixin } from '@nestjs/common';
 import type { CanActivate, ExecutionContext, Type } from '@nestjs/common';
 import type { IAuthModuleOptions } from '@nestjs/passport';
 import type { Request, Response } from 'express';

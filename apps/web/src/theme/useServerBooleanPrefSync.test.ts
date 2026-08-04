@@ -5,10 +5,10 @@
  * 30s optimistic-toggle timestamp guard and the local `'on'` disable guard.
  */
 
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RECENT_LOCAL_CHANGE_MS } from './storage';
 import { renderHook } from '@testing-library/react';
 import { useServerBooleanPrefSync } from './useServerBooleanPrefSync';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const UPDATED_AT_KEY = 'test_pref_updated_at';
 const VALUE_KEY = 'test_pref';

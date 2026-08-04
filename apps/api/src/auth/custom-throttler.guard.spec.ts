@@ -1,6 +1,6 @@
+import { CustomThrottlerGuard } from './custom-throttler.guard.js';
 import { jest } from '@jest/globals';
 import { Reflector } from '@nestjs/core';
-import { CustomThrottlerGuard } from './custom-throttler.guard.js';
 import {
   ThrottleMessage,
   THROTTLE_MESSAGE_KEY,

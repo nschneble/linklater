@@ -33,7 +33,6 @@ vi.mock('../../../auth/AuthContext', () => ({
 
 // ─── Imports after mocks ──────────────────────────────────────────────────────
 
-import { useAuth } from '../../../auth/AuthContext';
 import {
   cancelTotpSetup,
   disableMfa,
@@ -41,6 +40,7 @@ import {
   setupTotp,
   verifyTotpSetup,
 } from '../../../lib/api';
+import { useAuth } from '../../../auth/AuthContext';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

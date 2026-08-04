@@ -5,10 +5,10 @@
  * so the highlight fill tiers against the orbit panel, not the mount default.
  */
 
-import WelcomeModal from './WelcomeModal';
+import { describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import WelcomeModal from './WelcomeModal';
 
 describe('WelcomeModal', () => {
   it('bookmarklet PrimaryButton declares surface="orbit" – modal panel is --orbit-bg', () => {

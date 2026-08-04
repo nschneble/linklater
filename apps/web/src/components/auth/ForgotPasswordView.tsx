@@ -1,8 +1,8 @@
 import Alert from '../common/Alert';
+import AuthCard from './AuthCard';
 import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
-import AuthCard from './AuthCard';
 import type { FormEvent, RefObject } from 'react';
 
 interface ForgotPasswordViewProps {

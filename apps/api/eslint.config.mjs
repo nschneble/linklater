@@ -1,6 +1,7 @@
 import js from '@eslint/js';
 import prettier from 'eslint-config-prettier';
 import tseslint from 'typescript-eslint';
+import importIdentifierOrder from '../../eslint-rules/import-identifier-order.mjs';
 import typeImportsAfterValue from '../../eslint-rules/type-imports-after-value.mjs';
 
 export default tseslint.config(
@@ -26,6 +27,7 @@ export default tseslint.config(
     plugins: {
       local: {
         rules: {
+          'import-identifier-order': importIdentifierOrder,
           'type-imports-after-value': typeImportsAfterValue,
         },
       },
@@ -35,6 +37,7 @@ export default tseslint.config(
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
+      'local/import-identifier-order': 'error',
       'local/type-imports-after-value': 'error',
     },
   },

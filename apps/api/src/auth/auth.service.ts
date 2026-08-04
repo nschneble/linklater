@@ -3,8 +3,9 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
+import { EmailQueueService } from '../email/index.js';
+import { EmailVerificationService } from './email-verification.service.js';
 import {
   expiresInMs,
   generateHexToken,
@@ -13,7 +14,10 @@ import {
   normalizeRecoveryCode,
   sha256Hex,
 } from '../common/index.js';
-import { EmailQueueService } from '../email/index.js';
+import { JwtService } from '@nestjs/jwt';
+import { MagicLinkService } from './magic-link.service.js';
+import { RefreshTokenService } from './refresh-token.service.js';
+import { TotpService } from './totp.service.js';
 import {
   UserMfaService,
   UserOAuthService,
@@ -21,10 +25,6 @@ import {
   UsersService,
   withoutPasswordHash,
 } from '../users/index.js';
-import { EmailVerificationService } from './email-verification.service.js';
-import { MagicLinkService } from './magic-link.service.js';
-import { RefreshTokenService } from './refresh-token.service.js';
-import { TotpService } from './totp.service.js';
 
 const ACCOUNT_DELETION_TOKEN_TTL_MS = 15 * 60 * 1000;
 

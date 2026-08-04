@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import {
   BUNDLES,
   CARD_BUNDLES,
@@ -6,6 +5,7 @@ import {
   type Bundle,
   type ThemeVariable,
 } from './useThemeOverrides';
+import { useMemo } from 'react';
 
 /**
  * Shared WCAG contrast computation for the theme editor's live contract

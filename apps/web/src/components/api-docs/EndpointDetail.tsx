@@ -1,13 +1,13 @@
+import { buildExampleFromSchema } from '../../lib/apiDocs/buildExampleFromSchema';
 import CodeBlock from '../common/CodeBlock';
 import CurlExample from './CurlExample';
+import { endpointHeadingId } from './endpointId';
 import MethodBadge from './MethodBadge';
 import ParameterTable from './ParameterTable';
 import ResponseTabs from './ResponseTabs';
 import SchemaTable from './SchemaTable';
 import SectionPanel from './SectionPanel';
 import SlidingTabBar from '../common/SlidingTabBar';
-import { buildExampleFromSchema } from '../../lib/apiDocs/buildExampleFromSchema';
-import { endpointHeadingId } from './endpointId';
 import { useState } from 'react';
 import type { NormalizedEndpoint } from '../../lib/openapi';
 

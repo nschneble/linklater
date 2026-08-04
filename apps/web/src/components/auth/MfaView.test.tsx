@@ -1,7 +1,7 @@
+import { describe, expect, it, vi } from 'vitest';
 import MfaView from './MfaView';
 import { render, waitFor } from '@testing-library/react';
 import { useRef } from 'react';
-import { describe, expect, it, vi } from 'vitest';
 import type { FormEvent, RefObject } from 'react';
 
 interface HarnessProps {

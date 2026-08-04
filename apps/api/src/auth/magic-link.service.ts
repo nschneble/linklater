@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { expiresInMs, generateHexToken, sha256Hex } from '../common/index.js';
 import { EmailQueueService } from '../email/index.js';
-import { UserTokensService } from '../users/user-tokens.service.js';
+import { expiresInMs, generateHexToken, sha256Hex } from '../common/index.js';
 import { UsersService } from '../users/users.service.js';
+import { UserTokensService } from '../users/user-tokens.service.js';
 
 const FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
 

@@ -5,10 +5,10 @@ jest.mock('../prisma/prisma.service', () => ({
 }));
 jest.mock('../prisma/generated/client', () => ({ Prisma: {} }));
 
-import { ReadLinkCleanupService } from './read-link-cleanup.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { QueueService } from '../queue/queue.service';
 import { QUEUES, RECURRING_JOB_RETRY_OPTIONS } from '../queue/queue.constants';
+import { QueueService } from '../queue/queue.service';
+import { ReadLinkCleanupService } from './read-link-cleanup.service';
 import { Test, TestingModule } from '@nestjs/testing';
 
 const WORKER_ID = 'worker-1';

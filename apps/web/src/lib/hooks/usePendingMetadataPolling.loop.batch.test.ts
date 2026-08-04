@@ -1,5 +1,5 @@
-import { runPollBatch } from './usePendingMetadataPolling.loop.batch';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { runPollBatch } from './usePendingMetadataPolling.loop.batch';
 import type { Link } from '../api';
 
 const DEADLINE_MS = 10_000;

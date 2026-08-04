@@ -1,10 +1,10 @@
 import { jest } from '@jest/globals';
 
-import { Test, type TestingModule } from '@nestjs/testing';
-import { CustomThrottlerGuard } from '../auth/custom-throttler.guard.js';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 import { ApiDocsTokensService } from './api-docs-tokens.service.js';
 import { BookmarkletTokensService } from './bookmarklet-tokens.service.js';
+import { CustomThrottlerGuard } from '../auth/custom-throttler.guard.js';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { TokensController } from './tokens.controller.js';
 import { TokensService } from './tokens.service.js';
 import type { AuthRequest } from '../auth/index.js';

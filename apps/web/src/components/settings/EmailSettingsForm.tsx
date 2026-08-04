@@ -1,11 +1,11 @@
-import { useAuth } from '../../auth/AuthContext';
-import { ApiError, requestEmailChange } from '../../lib/api';
-import { getErrorMessage } from '../../lib/errors';
 import Alert from '../common/Alert';
+import { ApiError, requestEmailChange } from '../../lib/api';
 import FormInput from '../common/FormInput';
+import { getErrorMessage } from '../../lib/errors';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
 import StatusBadge from '../common/StatusBadge';
+import { useAuth } from '../../auth/AuthContext';
 import { useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 

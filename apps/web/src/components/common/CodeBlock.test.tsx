@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
 import CodeBlock from './CodeBlock';
+import { describe, expect, it } from 'vitest';
+import { render, screen } from '@testing-library/react';
 
 const props = {
   label: 'Example request body',

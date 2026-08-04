@@ -6,10 +6,10 @@
  * default so a refactor can't silently override it to the wrong surface.
  */
 
+import { describe, expect, it, vi } from 'vitest';
 import ExtensionAuthorizePage from './ExtensionAuthorizePage';
 import { MemoryRouter } from 'react-router';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../auth/AuthContext', () => ({
   useAuth: () => ({

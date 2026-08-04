@@ -1,5 +1,5 @@
-import { validate } from 'class-validator';
 import { UpdateMeDto } from './update-me.dto.js';
+import { validate } from 'class-validator';
 
 const makeDto = (overrides: Partial<UpdateMeDto> = {}) =>
   Object.assign(new UpdateMeDto(), overrides);

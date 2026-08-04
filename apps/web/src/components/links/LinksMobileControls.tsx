@@ -1,6 +1,6 @@
 import IconButton from '../common/IconButton';
-import PrimaryButton from '../common/PrimaryButton';
 import { LINK_FORM_ID } from './constants';
+import PrimaryButton from '../common/PrimaryButton';
 import type { LinksControlsProps } from './links-controls-props';
 
 /**

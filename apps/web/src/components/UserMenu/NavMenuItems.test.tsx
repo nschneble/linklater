@@ -4,9 +4,9 @@
  * theme-editor view.
  */
 
-import NavMenuItems from './NavMenuItems';
-import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import NavMenuItems from './NavMenuItems';
 
 function renderNav(onViewChange = vi.fn()) {
   render(

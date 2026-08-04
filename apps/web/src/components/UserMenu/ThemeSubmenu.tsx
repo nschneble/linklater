@@ -1,14 +1,14 @@
 import {
+  customThemeSrSuffix,
+  isCustomThemeConfigured,
+} from '../../theme/customTheme';
+import {
   CVD_BASE_THEME,
   THEMES,
   pickerThemes,
   useTheme,
 } from '../../theme/ThemeContext';
 import { FOCUS_RING, menuRevealStyle } from '../../lib/styles';
-import {
-  customThemeSrSuffix,
-  isCustomThemeConfigured,
-} from '../../theme/customTheme';
 import type { BaseTheme } from '../../theme/ThemeContext';
 import type { RefObject } from 'react';
 

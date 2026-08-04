@@ -1,20 +1,20 @@
-import { jest } from '@jest/globals';
 import * as bcrypt from 'bcryptjs';
+import { jest } from '@jest/globals';
 
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { AuthService } from './auth.service';
+import { EmailQueueService } from '../email/email-queue.service';
 import { EmailVerificationService } from './email-verification.service';
 import { MagicLinkService } from './magic-link.service';
 import { RefreshTokenService } from './refresh-token.service';
 import { TotpService } from './totp.service';
-import { EmailQueueService } from '../email/email-queue.service';
 import { UserMfaService } from '../users/user-mfa.service';
 import { UserOAuthService } from '../users/user-oauth.service';
-import { UserTokensService } from '../users/user-tokens.service';
 import { UsersService } from '../users/users.service';
+import { UserTokensService } from '../users/user-tokens.service';
 
 const KNOWN_PASSWORD = 'open-sesame';
 const KNOWN_PASSWORD_HASH = bcrypt.hashSync(KNOWN_PASSWORD, 1);

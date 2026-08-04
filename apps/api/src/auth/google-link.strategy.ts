@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy, type Profile } from 'passport-google-oauth20';
 import { requireEnv } from '../common/index.js';
+import { Strategy, type Profile } from 'passport-google-oauth20';
 import { verifyLinkState } from './oauth-link-state.js';
 
 /** Maximum age of the OAuth link state token before it is rejected. */

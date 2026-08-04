@@ -1,8 +1,8 @@
-import { jest } from '@jest/globals';
 import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import { jest } from '@jest/globals';
 
-import { ApiKeyStrategy, type ValidatedToken } from './api-key.strategy';
 import { AnyAuthGuard } from './any-auth.guard';
+import { ApiKeyStrategy, type ValidatedToken } from './api-key.strategy';
 import { TokenScopeService } from './token-scope.service';
 
 const USER_ID = 'user-1';

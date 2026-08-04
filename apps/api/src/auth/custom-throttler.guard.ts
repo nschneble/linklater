@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { ThrottlerGuard } from '@nestjs/throttler';
 import { isTestingUi } from '../common/index.js';
 import { THROTTLE_MESSAGE_KEY } from './throttle-message.decorator.js';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import type { ExecutionContext } from '@nestjs/common';
 import type { ThrottlerLimitDetail } from '@nestjs/throttler';
 

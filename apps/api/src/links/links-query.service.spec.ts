@@ -12,11 +12,11 @@ jest.mock('../prisma/generated/client', () => ({
   },
 }));
 
-import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
 import { LinksQueryService } from './links-query.service';
-import { PrismaService } from '../prisma/prisma.service';
+import { NotFoundException } from '@nestjs/common';
 import { Prisma } from '../prisma/generated/client';
+import { PrismaService } from '../prisma/prisma.service';
+import { Test, TestingModule } from '@nestjs/testing';
 
 const LINK_ID = 'link-1';
 const LINK_URL = 'https://example.com/page';

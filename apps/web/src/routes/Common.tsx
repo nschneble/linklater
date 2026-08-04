@@ -1,14 +1,14 @@
 import ConfirmAccountDeletionPage from '../components/auth/ConfirmAccountDeletionPage';
 import ExtensionAuthorizePage from '../components/auth/ExtensionAuthorizePage';
 import FailWhalePage from '../components/FailWhalePage';
+import { lazy, Suspense } from 'react';
 import LogoutPage from '../components/auth/LogoutPage';
 import OAuthCallbackPage from '../components/auth/OAuthCallbackPage';
 import ResetPasswordPage from '../components/auth/ResetPasswordPage';
+import { Route } from 'react-router';
 import VerifyEmailChangePage from '../components/verify/VerifyEmailChangePage';
 import VerifyEmailPage from '../components/verify/VerifyEmailPage';
 import VerifyLoginPage from '../components/auth/VerifyLoginPage';
-import { lazy, Suspense } from 'react';
-import { Route } from 'react-router';
 
 const ApiDocs = lazy(() => import('../components/api-docs'));
 const Privacy = lazy(() => import('../components/privacy/PrivacyPolicyPage'));
