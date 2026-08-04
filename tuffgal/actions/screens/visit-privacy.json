@@ -3,6 +3,5 @@
   "steps": [{ "kind": "navigate", "path": "/privacy" }],
   "expect": {
     "anyOf": [{ "role": "heading", "text": "Privacy policy" }]
-  },
-  "diff": { "maxDiffRatio": 0.02 }
+  }
 }

@@ -3,6 +3,5 @@
   "steps": [{ "kind": "navigate", "path": "/settings" }],
   "expect": {
     "anyOf": [{ "role": "heading", "text": "Settings" }]
-  },
-  "diff": { "maxDiffRatio": 0.02 }
+  }
 }

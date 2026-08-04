@@ -8,6 +8,5 @@
   ],
   "expect": {
     "anyOf": [{ "role": "heading", "text": "Sign in to authorize" }]
-  },
-  "diff": { "maxDiffRatio": 0.02 }
+  }
 }

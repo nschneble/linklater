@@ -170,5 +170,26 @@ describe('GoogleLinkStrategy', () => {
         ),
       ).rejects.toThrow(BadRequestException);
     });
+
+    it('throws "JWT_SECRET must be set" when the secret is unset at verify time', async () => {
+      // the state was signed while the secret was present; validate must still
+      // fail loud rather than feed `undefined` into the HMAC verify
+      const state = generateLinkState(USER_ID, process.env.JWT_SECRET!);
+      const original = process.env.JWT_SECRET;
+      delete process.env.JWT_SECRET;
+
+      try {
+        await expect(
+          strategy.validate(
+            { query: { state } },
+            'ignored-access-token',
+            'ignored-refresh-token',
+            makeProfile(),
+          ),
+        ).rejects.toThrow('JWT_SECRET must be set');
+      } finally {
+        process.env.JWT_SECRET = original;
+      }
+    });
   });
 });

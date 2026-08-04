@@ -1,10 +1,10 @@
-// Shared Font Awesome scanning + parsing utilities. Two consumers:
+// shared Font Awesome scanning + parsing utilities. Two consumers:
 //   - sync-fa-manifest.mjs: rewrites font-awesome-manifest.json from source scan
 //   - subset-fa-fonts.mjs: needs codepoints, used by font subsetter
 //   - font-awesome-manifest.test.ts: assertion-mode sync check (kept as a
 //     belt-and-suspenders CI gate against the writer ever regressing)
 //
-// Keeping these in one module makes "what counts as an icon token" a single
+// keeping these in one module makes "what counts as an icon token" a single
 // definition. Drift here used to mean a manifest entry that the test accepted
 // but the subsetter rejected (or vice versa).
 

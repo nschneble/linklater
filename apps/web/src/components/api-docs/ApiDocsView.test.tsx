@@ -294,12 +294,17 @@ describe('ApiDocsView visual branch', () => {
   }
 
   describe('logged out → brand chrome', () => {
-    it('pins bg-hit-man and dark color-scheme on the wrapper', () => {
+    it('gates bg-hit-man and dark color-scheme behind the active branding attr', () => {
       mockAuth(null);
       const { container } = renderApiDocs();
       const node = wrapper(container);
-      expect(node.className).toContain('bg-hit-man');
-      expect(node.className).toContain('[color-scheme:dark]');
+      // the paint is auth-invariant in the class string; the data-theme attr
+      // (set when logged out) is what activates the gated brand surface
+      expect(node.className).toContain("data-[theme='branding']:bg-hit-man");
+      expect(node.className).toContain(
+        "data-[theme='branding']:[color-scheme:dark]",
+      );
+      expect(node.getAttribute('data-theme')).toBe('branding');
     });
 
     it('activates the off-book branding theme cascade on the wrapper', () => {
@@ -312,45 +317,94 @@ describe('ApiDocsView visual branch', () => {
       expect(node.style.getPropertyValue('--mount-border')).toBe('');
     });
 
-    it('keeps the marketing gradient h1', () => {
+    it('keeps the marketing gradient h1 gated to the branding group', () => {
       mockAuth(null);
       renderApiDocs();
       const heading = screen.getByRole('heading', {
         level: 1,
         name: 'Linklater API',
       });
-      expect(heading.className).toContain('from-[var(--base-text)]');
-      expect(heading.className).toContain('to-[var(--base-highlight)]');
+      expect(heading.className).toContain(
+        "group-data-[theme='branding']/document:from-[var(--base-text)]",
+      );
+      expect(heading.className).toContain(
+        "group-data-[theme='branding']/document:to-[var(--base-highlight)]",
+      );
     });
   });
 
   describe('logged in → active theme', () => {
-    it('drops bg-hit-man and the branding theme override', () => {
+    it('leaves the gated bg-hit-man inactive without the branding attr', () => {
       mockAuth(SOME_USER);
       const { container } = renderApiDocs();
       const node = wrapper(container);
-      expect(node.className).not.toContain('bg-hit-man');
+      // the gated form rides along in the class string but paints nothing;
+      // the missing data-theme attr is the real proof of the logged-in branch
+      expect(node.className).toContain("data-[theme='branding']:bg-hit-man");
+      expect(node.className).not.toMatch(/(^|\s)bg-hit-man(\s|$)/);
       // no data-theme override; the <html> active-theme cascade supplies every slot
       expect(node.getAttribute('data-theme')).toBeNull();
       expect(node.style.getPropertyValue('--base-bg')).toBe('');
     });
 
-    it('leaves color-scheme mode-driven (no pinned dark) on the wrapper', () => {
+    it('leaves color-scheme mode-driven (no ungated dark) on the wrapper', () => {
       mockAuth(SOME_USER);
       const { container } = renderApiDocs();
       const node = wrapper(container);
-      expect(node.className).not.toContain('[color-scheme:dark]');
+      expect(node.className).not.toMatch(/(^|\s)\[color-scheme:dark\]/);
+      expect(node.getAttribute('data-theme')).toBeNull();
     });
 
-    it('renders a solid base-text h1 (no marketing gradient)', () => {
+    it('renders a solid base-text h1 (no ungated marketing gradient)', () => {
       mockAuth(SOME_USER);
       renderApiDocs();
       const heading = screen.getByRole('heading', {
         level: 1,
         name: 'Linklater API',
       });
+      // the solid title is the unconditional base-text; the gradient is gated
+      // behind the branding group, absent when logged in
       expect(heading.className).toContain('text-[var(--base-text)]');
-      expect(heading.className).not.toContain('from-[var(--base-text)]');
+      expect(heading.className).not.toMatch(
+        /(^|\s)from-\[var\(--base-text\)\]/,
+      );
     });
+  });
+});
+
+// guards the token migration: skip-link + gradient h1 must not regress to the
+// old hardcoded white/hex chrome or silently lose the forced-colors resets
+describe('ApiDocsView token chrome', () => {
+  it('drives the skip link off theme tokens, not hardcoded brand hex', () => {
+    renderApiDocs();
+    const skipLink = screen.getByRole('link', {
+      name: 'Skip to API documentation',
+    });
+    const className = skipLink.className;
+
+    expect(className).toContain('focus:bg-[var(--base-highlight)]');
+    expect(className).toContain('focus:text-[var(--base-highlight-fg)]');
+    expect(className).toContain('focus:outline-[var(--focus-ring)]');
+    expect(className).toContain('focus:outline-offset-2');
+
+    expect(className).not.toContain('focus:bg-white');
+    expect(className).not.toContain('#14103a');
+    expect(className).not.toContain('focus:ring-white');
+  });
+
+  it('keeps all four forced-colors resets on the gradient h1 (HCM)', () => {
+    renderApiDocs();
+    const heading = screen.getByRole('heading', {
+      level: 1,
+      name: 'Linklater API',
+    });
+    const className = heading.className;
+
+    expect(className).toContain('forced-colors:bg-none');
+    expect(className).toContain('forced-colors:bg-clip-border');
+    expect(className).toContain(
+      'forced-colors:[-webkit-background-clip:border-box]',
+    );
+    expect(className).toContain('forced-colors:text-[CanvasText]');
   });
 });

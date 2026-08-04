@@ -11,8 +11,9 @@ import { EmailVerificationService } from './email-verification.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { MagicLinkController } from './magic-link.controller';
 import { MfaAuthGuard } from './mfa-auth.guard';
-import { OAuthAccountService } from './oauth-account.service';
-import { OAuthController } from './oauth.controller';
+import { OAuthLinkController } from './oauth-link.controller';
+import { OAuthLinkService } from './oauth-link.service';
+import { OAuthSignInController } from './oauth-sign-in.controller';
 import { TotpService } from './totp.service';
 import { MultiFactorController } from './multi-factor.controller';
 
@@ -80,11 +81,11 @@ describe('AuthController', () => {
     verifyEmail: jest.fn(),
   } as unknown as EmailVerificationService;
 
-  const oauthAccountServiceMock = {
+  const oauthLinkServiceMock = {
     buildGoogleLinkUrl: jest.fn(),
     linkOAuthAccountToUser: jest.fn(),
     unlinkOAuthProvider: jest.fn(),
-  } as unknown as OAuthAccountService;
+  } as unknown as OAuthLinkService;
 
   const totpServiceMock = {
     generateSetup: jest.fn(),
@@ -97,7 +98,8 @@ describe('AuthController', () => {
         AuthController,
         ExtensionAuthController,
         MagicLinkController,
-        OAuthController,
+        OAuthLinkController,
+        OAuthSignInController,
         MultiFactorController,
       ],
       providers: [
@@ -110,7 +112,7 @@ describe('AuthController', () => {
           provide: ExtensionAuthService,
           useValue: extensionAuthServiceMock,
         },
-        { provide: OAuthAccountService, useValue: oauthAccountServiceMock },
+        { provide: OAuthLinkService, useValue: oauthLinkServiceMock },
         { provide: TotpService, useValue: totpServiceMock },
       ],
     })

@@ -82,7 +82,7 @@ export async function assertPublicHost(
     throw new PrivateHostError(hostname);
   }
 
-  // A public IP literal needs no DNS resolution. It is already an address.
+  // a public IP literal is already an address, no DNS resolution needed
   if (isIP(hostname) !== 0) {
     return [hostname];
   }

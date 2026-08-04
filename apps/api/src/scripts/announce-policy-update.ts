@@ -2,12 +2,20 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../app.module.js';
 import { EmailQueueService } from '../email/index.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import {
+  parseArguments,
+  verifiedRecipientWhere,
+} from './announce-policy-update.args.js';
 
 /**
  * One-shot operator script: enqueues the privacy-policy change notice for
  * every verified account (docs/PRIVACY.md promises email notice before
  * material changes take effect). Unverified accounts are skipped; their
  * address was never proven to belong to the person who typed it.
+ *
+ * Argument parsing and the verified-recipient filter live in the sibling
+ * `announce-policy-update.args.ts` so they can be unit-tested without booting
+ * the AppModule.
  *
  * Delivery rides the normal `email-send` pg-boss queue, so the worker in the
  * running API process performs the sends with the usual retry policy, and
@@ -26,24 +34,6 @@ import { PrismaService } from '../prisma/prisma.service.js';
  * worker, both processes share the same SMTP configuration, and the
  * recurring-job schedules it re-registers are idempotent.
  */
-function parseArguments(argv: string[]): {
-  effectiveDate: string;
-  dryRun: boolean;
-} {
-  const dryRun = argv.includes('--dry-run');
-  const flagIndex = argv.indexOf('--effective-date');
-  const effectiveDate = flagIndex === -1 ? undefined : argv[flagIndex + 1];
-
-  if (!effectiveDate) {
-    console.error(
-      'Usage: announce-policy-update --effective-date "<human-readable date>" [--dry-run]',
-    );
-    process.exit(1);
-  }
-
-  return { effectiveDate, dryRun };
-}
-
 async function main(): Promise<void> {
   const { effectiveDate, dryRun } = parseArguments(process.argv.slice(2));
 
@@ -57,7 +47,7 @@ async function main(): Promise<void> {
     const emailQueue = applicationContext.get(EmailQueueService);
 
     const recipients = await prisma.user.findMany({
-      where: { emailVerifiedAt: { not: null } },
+      where: verifiedRecipientWhere,
       select: { email: true, theme: true },
       orderBy: { createdAt: 'asc' },
     });

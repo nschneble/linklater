@@ -12,10 +12,7 @@
     { "kind": "wait", "ms": 600 }
   ],
   "expect": {
-    "anyOf": [
-      { "role": "heading", "text": "Boo. Your reading list is empty." }
-    ]
+    "anyOf": [{ "role": "heading", "text": "Boo. Your reading list is empty." }]
   },
-  "mask": [{ "selector": "#suggestion-callout-title" }],
-  "diff": { "maxDiffRatio": 0.02 }
+  "mask": [{ "selector": "#suggestion-callout-title" }]
 }

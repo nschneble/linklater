@@ -3,6 +3,5 @@
   "steps": [{ "kind": "navigate", "path": "/signup" }],
   "expect": {
     "anyOf": [{ "role": "button", "text": "Sign up" }]
-  },
-  "diff": { "maxDiffRatio": 0.02 }
+  }
 }

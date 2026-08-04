@@ -3,6 +3,5 @@
   "steps": [{ "kind": "navigate", "path": "/failwhale" }],
   "expect": {
     "anyOf": [{ "role": "heading", "text": "You found the failwhale" }]
-  },
-  "diff": { "maxDiffRatio": 0.02 }
+  }
 }

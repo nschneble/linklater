@@ -8,7 +8,7 @@ process.env.APPLE_PRIVATE_KEY = 'test-private-key';
 process.env.APPLE_TEAM_ID = 'test-team-id';
 
 import { AppleStrategy } from './apple.strategy';
-import { OAuthAccountService } from './oauth-account.service';
+import { OAuthSignInService } from './oauth-sign-in.service';
 
 const APPLE_PROFILE_ID = 'apple-profile-789';
 const PROVIDER_EMAIL = 'test@example.com';
@@ -25,12 +25,12 @@ function makeProfile(email?: string) {
 describe('AppleStrategy', () => {
   let strategy: AppleStrategy;
 
-  const oauthAccountServiceMock = {
+  const oauthSignInServiceMock = {
     findOrCreateOAuthUser: jest.fn(),
-  } as unknown as OAuthAccountService;
+  } as unknown as OAuthSignInService;
 
   beforeEach(() => {
-    strategy = new AppleStrategy(oauthAccountServiceMock);
+    strategy = new AppleStrategy(oauthSignInServiceMock);
     jest.clearAllMocks();
   });
 
@@ -44,7 +44,7 @@ describe('AppleStrategy', () => {
       delete process.env.APPLE_CALLBACK_URL;
 
       try {
-        expect(() => new AppleStrategy(oauthAccountServiceMock)).toThrow(
+        expect(() => new AppleStrategy(oauthSignInServiceMock)).toThrow(
           'APPLE_CALLBACK_URL must be set',
         );
       } finally {
@@ -57,7 +57,7 @@ describe('AppleStrategy', () => {
       delete process.env.APPLE_CLIENT_ID;
 
       try {
-        expect(() => new AppleStrategy(oauthAccountServiceMock)).toThrow(
+        expect(() => new AppleStrategy(oauthSignInServiceMock)).toThrow(
           'APPLE_CLIENT_ID must be set',
         );
       } finally {
@@ -70,7 +70,7 @@ describe('AppleStrategy', () => {
       delete process.env.APPLE_KEY_ID;
 
       try {
-        expect(() => new AppleStrategy(oauthAccountServiceMock)).toThrow(
+        expect(() => new AppleStrategy(oauthSignInServiceMock)).toThrow(
           'APPLE_KEY_ID must be set',
         );
       } finally {
@@ -83,7 +83,7 @@ describe('AppleStrategy', () => {
       delete process.env.APPLE_PRIVATE_KEY;
 
       try {
-        expect(() => new AppleStrategy(oauthAccountServiceMock)).toThrow(
+        expect(() => new AppleStrategy(oauthSignInServiceMock)).toThrow(
           'APPLE_PRIVATE_KEY must be set',
         );
       } finally {
@@ -96,7 +96,7 @@ describe('AppleStrategy', () => {
       delete process.env.APPLE_TEAM_ID;
 
       try {
-        expect(() => new AppleStrategy(oauthAccountServiceMock)).toThrow(
+        expect(() => new AppleStrategy(oauthSignInServiceMock)).toThrow(
           'APPLE_TEAM_ID must be set',
         );
       } finally {
@@ -109,7 +109,7 @@ describe('AppleStrategy', () => {
     it('delegates to findOrCreateOAuthUser with the extracted email for a valid profile', async () => {
       const delegateResult = { userId: 'user-1', email: PROVIDER_EMAIL };
       (
-        oauthAccountServiceMock.findOrCreateOAuthUser as jest.Mock
+        oauthSignInServiceMock.findOrCreateOAuthUser as jest.Mock
       ).mockResolvedValue(delegateResult);
 
       const result = await strategy.validate(
@@ -118,9 +118,11 @@ describe('AppleStrategy', () => {
         'ignored-refresh-token',
       );
 
-      expect(
-        oauthAccountServiceMock.findOrCreateOAuthUser,
-      ).toHaveBeenCalledWith('apple', APPLE_PROFILE_ID, PROVIDER_EMAIL);
+      expect(oauthSignInServiceMock.findOrCreateOAuthUser).toHaveBeenCalledWith(
+        'apple',
+        APPLE_PROFILE_ID,
+        PROVIDER_EMAIL,
+      );
       expect(result).toBe(delegateResult);
     });
 
@@ -134,7 +136,7 @@ describe('AppleStrategy', () => {
       ).rejects.toThrow('No email returned from Apple');
 
       expect(
-        oauthAccountServiceMock.findOrCreateOAuthUser,
+        oauthSignInServiceMock.findOrCreateOAuthUser,
       ).not.toHaveBeenCalled();
     });
   });

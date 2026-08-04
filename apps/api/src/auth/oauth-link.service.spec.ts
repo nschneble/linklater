@@ -1,308 +1,81 @@
 import { jest } from '@jest/globals';
 
-class MockPrismaClientKnownRequestError extends Error {
-  code: string;
-  constructor(message: string, { code }: { code: string }) {
-    super(message);
-    this.code = code;
-  }
-}
-
 jest.mock('../prisma/generated/client', () => ({
-  Prisma: { PrismaClientKnownRequestError: MockPrismaClientKnownRequestError },
+  Prisma: {
+    TransactionIsolationLevel: { ReadCommitted: 'ReadCommitted' },
+  },
 }));
 
 import { BadRequestException, ConflictException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Prisma } from '../prisma/generated/client';
 
-import { OAuthAccountService } from './oauth-account.service';
+import { OAuthLinkService } from './oauth-link.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { UserOAuthService } from '../users/user-oauth.service';
 import { UsersService } from '../users/users.service';
-
-const makeP2002 = () =>
-  new (
-    Prisma as {
-      PrismaClientKnownRequestError: typeof MockPrismaClientKnownRequestError;
-    }
-  ).PrismaClientKnownRequestError('Unique constraint failed', {
-    code: 'P2002',
-  });
 
 const OAUTH_PROVIDER = 'google';
 const OAUTH_PROVIDER_ID = 'google-uid-123';
 const USER_EMAIL = 'email@addy.com';
 const USER_ID = 'user-1';
 
-describe('OAuthAccountService', () => {
-  let service: OAuthAccountService;
+describe('OAuthLinkService', () => {
+  let service: OAuthLinkService;
 
   const usersServiceMock = {
-    findByEmail: jest.fn(),
     findById: jest.fn(),
     getCredentialState: jest.fn(),
+    lockUserRow: jest.fn(),
     markEmailVerified: jest.fn(),
-    verifyEmailAndInvalidateStalePassword: jest.fn(),
   } as unknown as UsersService;
 
   const userOAuthServiceMock = {
-    createOAuthUserAndLink: jest.fn(),
     findOAuthAccount: jest.fn(),
     linkOAuthAccount: jest.fn(),
     unlinkOAuthAccount: jest.fn(),
-    updateOAuthProviderEmail: jest.fn(),
   } as unknown as UserOAuthService;
+
+  // each interactive transaction gets its own transaction-client sentinel and
+  // frees every row lock it holds when it settles, mirroring how Postgres
+  // holds a FOR UPDATE lock until the transaction commits or rolls back. The
+  // concurrent-unlink test drives serialization from the lock itself, so it
+  // fails if the production lock is removed rather than passing on the mock.
+  let heldLockReleases: Map<object, () => void>;
+  const prismaMock = {
+    $transaction: jest.fn(),
+  } as unknown as PrismaService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        OAuthAccountService,
+        OAuthLinkService,
+        { provide: PrismaService, useValue: prismaMock },
         { provide: UsersService, useValue: usersServiceMock },
         { provide: UserOAuthService, useValue: userOAuthServiceMock },
       ],
     }).compile();
 
-    service = module.get<OAuthAccountService>(OAuthAccountService);
+    service = module.get<OAuthLinkService>(OAuthLinkService);
     jest.clearAllMocks();
+
+    heldLockReleases = new Map();
+    (prismaMock.$transaction as jest.Mock).mockImplementation(
+      async (callback: (transaction: object) => Promise<unknown>) => {
+        const transaction = {};
+        try {
+          return await callback(transaction);
+        } finally {
+          // release the row lock this transaction acquired, if any
+          heldLockReleases.get(transaction)?.();
+          heldLockReleases.delete(transaction);
+        }
+      },
+    );
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
-  });
-
-  describe('findOrCreateOAuthUser', () => {
-    it('returns existing user when OAuth account already exists', async () => {
-      (userOAuthServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue({
-        userId: USER_ID,
-        providerEmail: USER_EMAIL,
-        user: { id: USER_ID, email: USER_EMAIL },
-      });
-
-      const result = await service.findOrCreateOAuthUser(
-        OAUTH_PROVIDER,
-        OAUTH_PROVIDER_ID,
-        USER_EMAIL,
-      );
-
-      expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
-      expect(userOAuthServiceMock.linkOAuthAccount).not.toHaveBeenCalled();
-      expect(
-        userOAuthServiceMock.createOAuthUserAndLink,
-      ).not.toHaveBeenCalled();
-      expect(
-        userOAuthServiceMock.updateOAuthProviderEmail,
-      ).not.toHaveBeenCalled();
-    });
-
-    it('refreshes providerEmail when the provider asserts a new value on sign-in', async () => {
-      (userOAuthServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue({
-        userId: USER_ID,
-        providerEmail: 'stale@gmail.com',
-        user: { id: USER_ID, email: USER_EMAIL },
-      });
-
-      await service.findOrCreateOAuthUser(
-        OAUTH_PROVIDER,
-        OAUTH_PROVIDER_ID,
-        'fresh@gmail.com',
-      );
-
-      expect(
-        userOAuthServiceMock.updateOAuthProviderEmail,
-      ).toHaveBeenCalledWith(
-        USER_ID,
-        OAUTH_PROVIDER,
-        OAUTH_PROVIDER_ID,
-        'fresh@gmail.com',
-      );
-    });
-
-    it('auto-links OAuth account to existing user with same email', async () => {
-      (userOAuthServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(
-        null,
-      );
-      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue({
-        id: USER_ID,
-        email: USER_EMAIL,
-        emailVerifiedAt: new Date(),
-      });
-      (userOAuthServiceMock.linkOAuthAccount as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-
-      const result = await service.findOrCreateOAuthUser(
-        OAUTH_PROVIDER,
-        OAUTH_PROVIDER_ID,
-        USER_EMAIL,
-      );
-
-      expect(userOAuthServiceMock.linkOAuthAccount).toHaveBeenCalledWith(
-        USER_ID,
-        OAUTH_PROVIDER,
-        OAUTH_PROVIDER_ID,
-        USER_EMAIL,
-      );
-      expect(
-        userOAuthServiceMock.createOAuthUserAndLink,
-      ).not.toHaveBeenCalled();
-      expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
-      // already-verified account: password survives linking a second provider
-      expect(
-        usersServiceMock.verifyEmailAndInvalidateStalePassword,
-      ).not.toHaveBeenCalled();
-    });
-
-    it('invalidates a stale password when auto-linking an unverified account', async () => {
-      (userOAuthServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(
-        null,
-      );
-      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue({
-        id: USER_ID,
-        email: USER_EMAIL,
-        emailVerifiedAt: null,
-      });
-      (userOAuthServiceMock.linkOAuthAccount as jest.Mock).mockResolvedValue(
-        undefined,
-      );
-      (
-        usersServiceMock.verifyEmailAndInvalidateStalePassword as jest.Mock
-      ).mockResolvedValue(undefined);
-
-      await service.findOrCreateOAuthUser(
-        OAUTH_PROVIDER,
-        OAUTH_PROVIDER_ID,
-        USER_EMAIL,
-      );
-
-      expect(
-        usersServiceMock.verifyEmailAndInvalidateStalePassword,
-      ).toHaveBeenCalledWith(USER_ID);
-      expect(usersServiceMock.markEmailVerified).not.toHaveBeenCalled();
-    });
-
-    it('creates a new user and OAuth account atomically when no match exists', async () => {
-      (userOAuthServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(
-        null,
-      );
-      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
-      (
-        userOAuthServiceMock.createOAuthUserAndLink as jest.Mock
-      ).mockResolvedValue({
-        id: USER_ID,
-        email: USER_EMAIL,
-      });
-
-      const result = await service.findOrCreateOAuthUser(
-        OAUTH_PROVIDER,
-        OAUTH_PROVIDER_ID,
-        USER_EMAIL,
-      );
-
-      expect(userOAuthServiceMock.createOAuthUserAndLink).toHaveBeenCalledWith(
-        USER_EMAIL,
-        OAUTH_PROVIDER,
-        OAUTH_PROVIDER_ID,
-        USER_EMAIL,
-      );
-      expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
-    });
-
-    it('recovers via OAuth account lookup when concurrent creation causes P2002', async () => {
-      (userOAuthServiceMock.findOAuthAccount as jest.Mock)
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce({
-          userId: USER_ID,
-          providerEmail: USER_EMAIL,
-          user: { id: USER_ID, email: USER_EMAIL },
-        });
-      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
-      (
-        userOAuthServiceMock.createOAuthUserAndLink as jest.Mock
-      ).mockRejectedValue(makeP2002());
-
-      const result = await service.findOrCreateOAuthUser(
-        OAUTH_PROVIDER,
-        OAUTH_PROVIDER_ID,
-        USER_EMAIL,
-      );
-
-      expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
-    });
-
-    it('recovers via email lookup when OAuth account not yet linked after P2002', async () => {
-      (userOAuthServiceMock.findOAuthAccount as jest.Mock)
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(null);
-      (usersServiceMock.findByEmail as jest.Mock)
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce({
-          id: USER_ID,
-          email: USER_EMAIL,
-          emailVerifiedAt: new Date(),
-        });
-      (
-        userOAuthServiceMock.createOAuthUserAndLink as jest.Mock
-      ).mockRejectedValue(makeP2002());
-
-      const result = await service.findOrCreateOAuthUser(
-        OAUTH_PROVIDER,
-        OAUTH_PROVIDER_ID,
-        USER_EMAIL,
-      );
-
-      expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
-      expect(
-        usersServiceMock.verifyEmailAndInvalidateStalePassword,
-      ).not.toHaveBeenCalled();
-    });
-
-    it('invalidates a stale password on the P2002 race-recovered user when unverified', async () => {
-      (userOAuthServiceMock.findOAuthAccount as jest.Mock)
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(null);
-      (usersServiceMock.findByEmail as jest.Mock)
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce({
-          id: USER_ID,
-          email: USER_EMAIL,
-          emailVerifiedAt: null,
-        });
-      (
-        userOAuthServiceMock.createOAuthUserAndLink as jest.Mock
-      ).mockRejectedValue(makeP2002());
-      (
-        usersServiceMock.verifyEmailAndInvalidateStalePassword as jest.Mock
-      ).mockResolvedValue(undefined);
-
-      const result = await service.findOrCreateOAuthUser(
-        OAUTH_PROVIDER,
-        OAUTH_PROVIDER_ID,
-        USER_EMAIL,
-      );
-
-      expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
-      expect(
-        usersServiceMock.verifyEmailAndInvalidateStalePassword,
-      ).toHaveBeenCalledWith(USER_ID);
-    });
-
-    it('re-throws non-P2002 errors from createOAuthUserAndLink', async () => {
-      (
-        userOAuthServiceMock.findOAuthAccount as jest.Mock
-      ).mockResolvedValueOnce(null);
-      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValueOnce(null);
-      (
-        userOAuthServiceMock.createOAuthUserAndLink as jest.Mock
-      ).mockRejectedValue(new Error('unexpected database error'));
-
-      await expect(
-        service.findOrCreateOAuthUser(
-          OAUTH_PROVIDER,
-          OAUTH_PROVIDER_ID,
-          USER_EMAIL,
-        ),
-      ).rejects.toThrow('unexpected database error');
-    });
   });
 
   describe('unlinkOAuthProvider', () => {
@@ -320,6 +93,7 @@ describe('OAuthAccountService', () => {
       expect(userOAuthServiceMock.unlinkOAuthAccount).toHaveBeenCalledWith(
         USER_ID,
         OAUTH_PROVIDER,
+        expect.anything(),
       );
     });
 
@@ -337,6 +111,7 @@ describe('OAuthAccountService', () => {
       expect(userOAuthServiceMock.unlinkOAuthAccount).toHaveBeenCalledWith(
         USER_ID,
         OAUTH_PROVIDER,
+        expect.anything(),
       );
     });
 
@@ -350,6 +125,101 @@ describe('OAuthAccountService', () => {
         service.unlinkOAuthProvider(USER_ID, OAUTH_PROVIDER),
       ).rejects.toThrow(BadRequestException);
       expect(userOAuthServiceMock.unlinkOAuthAccount).not.toHaveBeenCalled();
+    });
+
+    it('locks the user row, reads, and deletes inside one shared transaction', async () => {
+      (usersServiceMock.getCredentialState as jest.Mock).mockResolvedValue({
+        hasPassword: true,
+        oauthProviders: [OAUTH_PROVIDER],
+      });
+      (userOAuthServiceMock.unlinkOAuthAccount as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      await service.unlinkOAuthProvider(USER_ID, OAUTH_PROVIDER);
+
+      expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
+      // pinned to READ COMMITTED so a global default change cannot regress the
+      // guard's post-lock re-read of the committed delete
+      expect(prismaMock.$transaction).toHaveBeenCalledWith(
+        expect.any(Function),
+        {
+          isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
+        },
+      );
+      const transaction = (usersServiceMock.lockUserRow as jest.Mock).mock
+        .calls[0][1];
+      // the lock must run before the guard reads state, and every step must
+      // share the same transaction client, or the guard is not truly atomic
+      expect(usersServiceMock.lockUserRow).toHaveBeenCalledWith(
+        USER_ID,
+        transaction,
+      );
+      expect(usersServiceMock.getCredentialState).toHaveBeenCalledWith(
+        USER_ID,
+        transaction,
+      );
+      expect(userOAuthServiceMock.unlinkOAuthAccount).toHaveBeenCalledWith(
+        USER_ID,
+        OAUTH_PROVIDER,
+        transaction,
+      );
+      const lockOrder = (usersServiceMock.lockUserRow as jest.Mock).mock
+        .invocationCallOrder[0];
+      const readOrder = (usersServiceMock.getCredentialState as jest.Mock).mock
+        .invocationCallOrder[0];
+      expect(lockOrder).toBeLessThan(readOrder);
+    });
+
+    it('closes the concurrent-unlink race: two unlinks of different providers cannot strand a passwordless account', async () => {
+      // shared state stands in for the two OAuth rows the unlinks race over
+      let linkedProviders = [OAUTH_PROVIDER, 'apple'];
+      (usersServiceMock.getCredentialState as jest.Mock).mockImplementation(
+        async () => ({
+          hasPassword: false,
+          oauthProviders: [...linkedProviders],
+        }),
+      );
+      (userOAuthServiceMock.unlinkOAuthAccount as jest.Mock).mockImplementation(
+        async (_userId: string, provider: string) => {
+          linkedProviders = linkedProviders.filter(
+            (linked) => linked !== provider,
+          );
+        },
+      );
+
+      // the lock, not the mock, is what serializes: lockUserRow grants the row
+      // to one transaction at a time and only frees it when that transaction
+      // settles (via heldLockReleases). Delete lockUserRow from production and
+      // both reads see the stale two-provider set, both pass, both delete, and
+      // this test fails, which is the point.
+      let rowLock = Promise.resolve();
+      (usersServiceMock.lockUserRow as jest.Mock).mockImplementation(
+        async (_userId: string, client: object) => {
+          const heldByPrior = rowLock;
+          let release!: () => void;
+          rowLock = new Promise<void>((resolve) => {
+            release = resolve;
+          });
+          heldLockReleases.set(client, release);
+          await heldByPrior;
+        },
+      );
+
+      const [first, second] = await Promise.allSettled([
+        service.unlinkOAuthProvider(USER_ID, OAUTH_PROVIDER),
+        service.unlinkOAuthProvider(USER_ID, 'apple'),
+      ]);
+
+      // exactly one unlink lands; the other is refused before it can strand
+      expect(first.status).toBe('fulfilled');
+      expect(second.status).toBe('rejected');
+      expect((second as PromiseRejectedResult).reason).toBeInstanceOf(
+        BadRequestException,
+      );
+      // a login path survives
+      expect(linkedProviders).toEqual(['apple']);
+      expect(userOAuthServiceMock.unlinkOAuthAccount).toHaveBeenCalledTimes(1);
     });
   });
 

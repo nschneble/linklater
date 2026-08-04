@@ -23,7 +23,7 @@ export default function LandingPage() {
     <div data-theme="branding" className="min-h-screen bg-hit-man">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-white focus:text-[#14103a] focus:text-sm focus:font-semibold focus:outline-none focus:ring-2 focus:ring-white focus:rounded-lg"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-[var(--base-highlight)] focus:text-[var(--base-highlight-fg)] focus:text-sm focus:font-semibold focus:outline-2 focus:outline-offset-2 focus:outline-[var(--focus-ring)] focus:rounded-lg"
       >
         Skip to main content
       </a>
@@ -35,7 +35,7 @@ export default function LandingPage() {
       >
         Fork me on GitHub
       </a>
-      <main id="main-content">
+      <main id="main-content" tabIndex={-1} className="focus:outline-none">
         <HeroSection />
         <FeaturesSection />
       </main>

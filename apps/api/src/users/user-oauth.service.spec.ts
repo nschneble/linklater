@@ -7,6 +7,7 @@ jest.mock('../prisma/prisma.service', () => ({
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserOAuthService } from './user-oauth.service';
+import type { Prisma } from '../prisma/generated/client';
 
 const USER_ID = 'user-1';
 const USER_EMAIL = 'user@example.com';
@@ -227,6 +228,24 @@ describe('UserOAuthService', () => {
       await expect(
         service.unlinkOAuthAccount(USER_ID, PROVIDER),
       ).resolves.toBeUndefined();
+    });
+
+    it('deletes through the supplied transaction client, not the default prisma client', async () => {
+      const transactionClient = {
+        oAuthAccount: { deleteMany: jest.fn() },
+      } as unknown as Prisma.TransactionClient;
+      (
+        transactionClient.oAuthAccount.deleteMany as jest.Mock
+      ).mockResolvedValue({ count: 1 });
+
+      await service.unlinkOAuthAccount(USER_ID, PROVIDER, transactionClient);
+
+      // the delete must ride the passed lock-holding client, or it runs
+      // outside the transaction and reopens the concurrent-unlink race
+      expect(transactionClient.oAuthAccount.deleteMany).toHaveBeenCalledWith({
+        where: { userId: USER_ID, provider: PROVIDER },
+      });
+      expect(prismaMock.oAuthAccount.deleteMany).not.toHaveBeenCalled();
     });
   });
 });

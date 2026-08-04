@@ -6,7 +6,7 @@ process.env.GOOGLE_CLIENT_SECRET = 'test-client-secret';
 process.env.GOOGLE_CALLBACK_URL = 'http://localhost/auth/google/callback';
 
 import { GoogleStrategy } from './google.strategy';
-import { OAuthAccountService } from './oauth-account.service';
+import { OAuthSignInService } from './oauth-sign-in.service';
 
 const GOOGLE_PROFILE_ID = 'google-profile-456';
 const PROVIDER_EMAIL = 'test@example.com';
@@ -23,12 +23,12 @@ function makeProfile(email: string | null = PROVIDER_EMAIL) {
 describe('GoogleStrategy', () => {
   let strategy: GoogleStrategy;
 
-  const oauthAccountServiceMock = {
+  const oauthSignInServiceMock = {
     findOrCreateOAuthUser: jest.fn(),
-  } as unknown as OAuthAccountService;
+  } as unknown as OAuthSignInService;
 
   beforeEach(() => {
-    strategy = new GoogleStrategy(oauthAccountServiceMock);
+    strategy = new GoogleStrategy(oauthSignInServiceMock);
     jest.clearAllMocks();
   });
 
@@ -42,7 +42,7 @@ describe('GoogleStrategy', () => {
       delete process.env.GOOGLE_CLIENT_ID;
 
       try {
-        expect(() => new GoogleStrategy(oauthAccountServiceMock)).toThrow(
+        expect(() => new GoogleStrategy(oauthSignInServiceMock)).toThrow(
           'GOOGLE_CLIENT_ID must be set',
         );
       } finally {
@@ -55,7 +55,7 @@ describe('GoogleStrategy', () => {
       delete process.env.GOOGLE_CLIENT_SECRET;
 
       try {
-        expect(() => new GoogleStrategy(oauthAccountServiceMock)).toThrow(
+        expect(() => new GoogleStrategy(oauthSignInServiceMock)).toThrow(
           'GOOGLE_CLIENT_SECRET must be set',
         );
       } finally {
@@ -68,7 +68,7 @@ describe('GoogleStrategy', () => {
       delete process.env.GOOGLE_CALLBACK_URL;
 
       try {
-        expect(() => new GoogleStrategy(oauthAccountServiceMock)).toThrow(
+        expect(() => new GoogleStrategy(oauthSignInServiceMock)).toThrow(
           'GOOGLE_CALLBACK_URL must be set',
         );
       } finally {
@@ -81,7 +81,7 @@ describe('GoogleStrategy', () => {
     it('delegates to findOrCreateOAuthUser with the extracted email for a valid profile', async () => {
       const delegateResult = { userId: 'user-1', email: PROVIDER_EMAIL };
       (
-        oauthAccountServiceMock.findOrCreateOAuthUser as jest.Mock
+        oauthSignInServiceMock.findOrCreateOAuthUser as jest.Mock
       ).mockResolvedValue(delegateResult);
 
       const result = await strategy.validate(
@@ -90,9 +90,11 @@ describe('GoogleStrategy', () => {
         makeProfile(),
       );
 
-      expect(
-        oauthAccountServiceMock.findOrCreateOAuthUser,
-      ).toHaveBeenCalledWith('google', GOOGLE_PROFILE_ID, PROVIDER_EMAIL);
+      expect(oauthSignInServiceMock.findOrCreateOAuthUser).toHaveBeenCalledWith(
+        'google',
+        GOOGLE_PROFILE_ID,
+        PROVIDER_EMAIL,
+      );
       expect(result).toBe(delegateResult);
     });
 
@@ -106,7 +108,7 @@ describe('GoogleStrategy', () => {
       ).rejects.toThrow('No email returned from Google');
 
       expect(
-        oauthAccountServiceMock.findOrCreateOAuthUser,
+        oauthSignInServiceMock.findOrCreateOAuthUser,
       ).not.toHaveBeenCalled();
     });
   });

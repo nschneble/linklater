@@ -12,6 +12,7 @@ export {
   hashRecoveryCodes,
   normalizeRecoveryCode,
 } from './recovery-codes.js';
+export { requireEnv } from './require-env.js';
 export { validateRequiredEnvVars } from './required-env.js';
 export { safeFetch } from './safe-fetch.js';
 export { applySecurityHeaders } from './security-headers.js';

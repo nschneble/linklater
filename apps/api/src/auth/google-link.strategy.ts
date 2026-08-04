@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, type Profile } from 'passport-google-oauth20';
+import { requireEnv } from '../common/index.js';
 import { verifyLinkState } from './oauth-link-state.js';
 
 /** Maximum age of the OAuth link state token before it is rejected. */
@@ -26,17 +27,10 @@ export class GoogleLinkStrategy extends PassportStrategy(
   'google-link',
 ) {
   constructor() {
-    if (!process.env.GOOGLE_CLIENT_ID)
-      throw new Error('GOOGLE_CLIENT_ID must be set');
-    if (!process.env.GOOGLE_CLIENT_SECRET)
-      throw new Error('GOOGLE_CLIENT_SECRET must be set');
-    if (!process.env.GOOGLE_LINK_CALLBACK_URL)
-      throw new Error('GOOGLE_LINK_CALLBACK_URL must be set');
-
     super({
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: process.env.GOOGLE_LINK_CALLBACK_URL,
+      clientID: requireEnv('GOOGLE_CLIENT_ID'),
+      clientSecret: requireEnv('GOOGLE_CLIENT_SECRET'),
+      callbackURL: requireEnv('GOOGLE_LINK_CALLBACK_URL'),
       scope: ['email', 'profile'],
       passReqToCallback: true,
       state: false,
@@ -64,7 +58,7 @@ export class GoogleLinkStrategy extends PassportStrategy(
     const state = request.query?.state ?? '';
     const userId = verifyLinkState(
       state,
-      process.env.JWT_SECRET!,
+      requireEnv('JWT_SECRET'),
       FIVE_MINUTES_MS,
     );
     if (!userId) {

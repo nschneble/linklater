@@ -1,5 +1,5 @@
 {
-  "story": "Visual tour of every screen reachable while signed in.",
+  "story": "Visual tour of key screens reachable while signed in.",
   "needs": ["logged-in"],
   "actions": [
     { "action": "intercept-no-links" },

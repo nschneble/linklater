@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { PrismaService } from '../prisma/index.js';
+import { Prisma, PrismaService } from '../prisma/index.js';
 import { withoutPasswordHash } from './users.utils.js';
 
 /**
@@ -90,7 +90,11 @@ export class UserOAuthService {
     }));
   }
 
-  async unlinkOAuthAccount(userId: string, provider: string): Promise<void> {
-    await this.prisma.oAuthAccount.deleteMany({ where: { userId, provider } });
+  async unlinkOAuthAccount(
+    userId: string,
+    provider: string,
+    client: Prisma.TransactionClient = this.prisma,
+  ): Promise<void> {
+    await client.oAuthAccount.deleteMany({ where: { userId, provider } });
   }
 }

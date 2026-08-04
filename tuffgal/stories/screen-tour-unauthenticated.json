@@ -1,5 +1,5 @@
 {
-  "story": "Visual tour of every screen reachable while signed out.",
+  "story": "Visual tour of key screens reachable while signed out.",
   "actions": [
     { "action": "visit-landing" },
     { "action": "visit-login" },

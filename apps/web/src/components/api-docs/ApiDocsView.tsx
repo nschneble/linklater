@@ -8,24 +8,29 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string | undefined;
 
 /**
  * API documentation. A single token-driven component tree that paints two
- * ways depending on auth:
+ * ways depending on auth, off one attribute:
  *
  *   - Logged OUT (`user === null`): the landing/marketing BRAND chrome. The
- *     wrapper pins `bg-hit-man`, forces dark `color-scheme`, and activates the
- *     off-book `branding` theme via `data-theme='branding'` (branding.css) so
- *     the now-token-driven tree resolves to the brand palette. The wrapper's
- *     `data-theme` shadows `<html data-theme>` for its subtree, and the
- *     branding cascade supplies every bundle slot plus `--focus-ring` and the
- *     `--base-bg` the CVD focus-halo anchors to.
+ *     wrapper sets `data-theme='branding'` (branding.css), which both activates
+ *     the off-book `branding` theme so the token-driven tree resolves to the
+ *     brand palette AND drives the `data-[theme='branding']:` variants that pin
+ *     the navy `bg-hit-man` surface and force dark `color-scheme`. The
+ *     wrapper's `data-theme` shadows `<html data-theme>` for its subtree, and
+ *     the branding cascade supplies every bundle slot plus `--focus-ring` and
+ *     the `--base-bg` the CVD focus-halo anchors to.
  *
  *   - Logged IN (`user !== null`): the user's ACTIVE theme. `ThemeProvider`
  *     already sets `data-theme`/`data-mode` on `<html>` above the router
  *     (`main.tsx`), so every `var(--…)` bundle token cascades here for free.
- *     No inline token pins, no `bg-hit-man`; `color-scheme` follows the mode.
+ *     Without the branding attribute the gated brand variants stay inactive, so
+ *     nothing pins `bg-hit-man` and `color-scheme` follows the mode.
  *
- * The child components read bundle tokens via `var(--…)` in both branches –
- * the brand branch just swaps in the `branding` cascade for those tokens, so
- * one styling path serves both modes.
+ * The chrome (wrapper surface, gradient title) is now data-attribute-driven the
+ * same way as the legal `PolicyDocumentPage` shell: the class strings are
+ * auth-invariant and the lone `data-theme` ternary decides whether the brand
+ * paint activates. The child components read bundle tokens via `var(--…)` in
+ * both branches; the brand branch just swaps in the `branding` cascade for
+ * those tokens, so one styling path serves both modes.
  */
 export default function ApiDocsView() {
   useDocumentTitle('Linklater – API documentation');
@@ -35,12 +40,12 @@ export default function ApiDocsView() {
   return (
     // brand branch pins branding so --focus-ring clears SC 1.4.11 on navy
     <div
-      className={`min-h-screen ${isBrand ? 'bg-hit-man [color-scheme:dark]' : ''}`}
+      className="group/document min-h-screen data-[theme='branding']:bg-hit-man data-[theme='branding']:[color-scheme:dark]"
       data-theme={isBrand ? 'branding' : undefined}
     >
       <a
         href="#api-docs"
-        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-white focus:text-[#14103a] focus:text-sm focus:font-semibold focus:outline-none focus:ring-2 focus:ring-white focus:rounded-lg"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-[var(--base-highlight)] focus:text-[var(--base-highlight-fg)] focus:text-sm focus:font-semibold focus:outline-2 focus:outline-offset-2 focus:outline-[var(--focus-ring)] focus:rounded-lg"
       >
         Skip to API documentation
       </a>
@@ -75,13 +80,7 @@ export default function ApiDocsView() {
           )}
         </nav>
         <div className="flex flex-col gap-3">
-          <h1
-            className={
-              isBrand
-                ? 'bg-gradient-to-br from-[var(--base-text)] to-[var(--base-highlight)] bg-clip-text text-transparent forced-colors:bg-none forced-colors:bg-clip-border forced-colors:[-webkit-background-clip:border-box] forced-colors:text-[CanvasText] text-4xl sm:text-5xl font-bold tracking-tight text-balance'
-                : 'text-[var(--base-text)] text-4xl sm:text-5xl font-bold tracking-tight text-balance'
-            }
-          >
+          <h1 className="group-data-[theme='branding']/document:bg-gradient-to-br group-data-[theme='branding']/document:from-[var(--base-text)] group-data-[theme='branding']/document:to-[var(--base-highlight)] group-data-[theme='branding']/document:bg-clip-text group-data-[theme='branding']/document:forced-colors:bg-none group-data-[theme='branding']/document:forced-colors:bg-clip-border group-data-[theme='branding']/document:forced-colors:[-webkit-background-clip:border-box] text-[var(--base-text)] group-data-[theme='branding']/document:text-transparent group-data-[theme='branding']/document:forced-colors:text-[CanvasText] text-4xl sm:text-5xl font-bold tracking-tight text-balance">
             Linklater API
           </h1>
           <p className="flex items-center gap-2 max-w-2xl text-[var(--base-text)] text-base sm:text-lg text-pretty leading-relaxed">
