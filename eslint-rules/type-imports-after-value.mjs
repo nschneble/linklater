@@ -30,9 +30,13 @@
  * without also re-sorting imports by module path, which is churn this repo does
  * not want. A small local rule avoids pulling in a broad import-sorting
  * dependency for one narrow ordering guarantee.
+ *
+ * Group detection and comment attachment are shared with
+ * `import-identifier-order` via `import-groups.mjs`: both rules rewrite runs of
+ * imports, so they have to agree on which text moves with one.
  */
 
-const BLANK_LINE = /\n[ \t]*\n/;
+import { forEachImportGroup, makeGetBlock } from './import-groups.mjs';
 
 /** @type {import('eslint').Rule.RuleModule} */
 const rule = {
@@ -51,51 +55,7 @@ const rule = {
   },
   create(context) {
     const sourceCode = context.sourceCode;
-
-    // true when the comment starts its own line (leading, not a trailing comment)
-    const startsOwnLine = (comment) => {
-      const lineStart =
-        sourceCode.text.lastIndexOf('\n', comment.range[0] - 1) + 1;
-      return sourceCode.text.slice(lineStart, comment.range[0]).trim() === '';
-    };
-
-    // each comment is captured once: leading own-line or trailing same-line, never both
-    const getBlock = (node) => {
-      const before = sourceCode.getCommentsBefore(node);
-      let start = node.range[0];
-
-      for (let index = before.length - 1; index >= 0; index--) {
-        const comment = before[index];
-        const between = sourceCode.text.slice(comment.range[1], start);
-
-        if (BLANK_LINE.test(between)) {
-          break;
-        }
-        if (!startsOwnLine(comment)) {
-          break;
-        }
-        start = comment.range[0];
-      }
-
-      const after = sourceCode.getCommentsAfter(node);
-      let end = node.range[1];
-
-      for (const comment of after) {
-        const between = sourceCode.text.slice(end, comment.range[0]);
-
-        // a newline ends the decl's line; a comment past it leads the next block
-        if (between.includes('\n')) {
-          break;
-        }
-        end = comment.range[1];
-      }
-
-      return {
-        start,
-        end,
-        text: sourceCode.text.slice(start, end),
-      };
-    };
+    const getBlock = makeGetBlock(sourceCode);
 
     const checkGroup = (group) => {
       if (group.length < 2) {
@@ -150,33 +110,7 @@ const rule = {
 
     return {
       Program(program) {
-        let group = [];
-        let previousImport = null;
-
-        for (const node of program.body) {
-          if (node.type !== 'ImportDeclaration') {
-            checkGroup(group);
-            group = [];
-            previousImport = null;
-            continue;
-          }
-
-          if (previousImport) {
-            const between = sourceCode.text.slice(
-              previousImport.range[1],
-              node.range[0],
-            );
-            if (BLANK_LINE.test(between)) {
-              checkGroup(group);
-              group = [];
-            }
-          }
-
-          group.push(node);
-          previousImport = node;
-        }
-
-        checkGroup(group);
+        forEachImportGroup(program, sourceCode, checkGroup);
       },
     };
   },
