@@ -18,8 +18,8 @@ exports for v5 consumers like `minimatch` 10.x.
 `brace-expansion` reaches this repo only through dev-tooling chains, so the
 patch carries the `.dev.patch` suffix: patch-package applies it on a full
 install but silently skips it on a production install (`npm ci --omit=dev`,
-the API image's proddeps stage), where the package is absent — without the
-suffix that skip prints a spurious `1 error(s)` on every deploy.
+the API image's proddeps stage), where the package is absent. Without the
+suffix, that skip prints a spurious `1 error(s)` on every deploy.
 
 ### Remove when
 

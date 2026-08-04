@@ -21,7 +21,7 @@ export class OAuthSignInController {
   @UseGuards(createOAuthInitiateGuard('google'))
   @Get('google')
   async googleAuth() {
-    // Passport redirects to Google - no body needed
+    // Passport redirects to Google, no body needed
   }
 
   @ApiOperation({ summary: 'Google OAuth callback' })
@@ -35,7 +35,7 @@ export class OAuthSignInController {
   @UseGuards(createOAuthInitiateGuard('apple'))
   @Get('apple')
   async appleAuth() {
-    // Passport redirects to Apple - no body needed
+    // Passport redirects to Apple, no body needed
   }
 
   @ApiOperation({ summary: 'Apple Sign In callback' })

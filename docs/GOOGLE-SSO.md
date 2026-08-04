@@ -8,11 +8,11 @@ running production stack (see [DEPLOYMENT.md](./DEPLOYMENT.md)) to a working
 
 There are three sides to wire, and all three must line up:
 
-1. **Google Cloud Console** — an OAuth client, plus the exact redirect URLs
+1. **Google Cloud Console**: an OAuth client, plus the exact redirect URLs
    Google is allowed to send users back to.
-2. **The API** — the client credentials and callback URLs, supplied as
+2. **The API**: the client credentials and callback URLs, supplied as
    production environment variables.
-3. **The web build** — a build-time flag that renders the button. It is baked
+3. **The web build**: a build-time flag that renders the button. It is baked
    into the static bundle, so it takes a rebuild, not just a restart.
 
 Miss any one and the flow fails in a specific, diagnosable way; the
@@ -67,7 +67,7 @@ Miss any one and the flow fails in a specific, diagnosable way; the
      (`apps/api/src/auth/google.strategy.ts` and `google-link.strategy.ts`),
      so registering only one leaves the other flow broken.
 
-     Google matches redirect URIs **exactly** — scheme, host, path, and
+     Google matches redirect URIs **exactly**: scheme, host, path, and
      trailing slash all count. `https://YOUR_DOMAIN/api/auth/google/callback/`
      (trailing slash) is a different URI and will be rejected with
      `redirect_uri_mismatch`. Copy the paths above verbatim.
@@ -119,13 +119,13 @@ The login page renders the Google button only when `VITE_GOOGLE_SSO_ENABLED`
 is `'true'` (`apps/web/src/components/auth/LoginRegisterView.tsx`). Vite reads
 `import.meta.env.VITE_GOOGLE_SSO_ENABLED` **at build time** and bakes the
 result into the static bundle, so this is not a runtime environment variable
-you can set on the container — it has to be present when the web image is
+you can set on the container; it has to be present when the web image is
 built.
 
 The deploy workflow passes it through as a Docker build argument sourced from a
 repository variable, so you flip it on without touching code:
 
-1. Set the repository **variable** (not a secret — it is not sensitive)
+1. Set the repository **variable** (not a secret, since it is not sensitive)
    `ENABLE_GOOGLE_SSO` to `true` (Settings → Secrets and variables →
    Actions → Variables).
 2. Cut a release (push a `vX.Y.Z` tag). CI rebuilds the web image with the
@@ -172,8 +172,8 @@ Either works; the app only ever knows the callback URLs you hand it.
 Google's flows change; verify against the current console when in doubt.
 
 - [Using OAuth 2.0 for Web Server Applications](https://developers.google.com/identity/protocols/oauth2/web-server)
-  — Web-application client type and the exact-match redirect URI rule.
+  - Web-application client type and the exact-match redirect URI rule.
 - [OAuth 2.0 Scopes for Google APIs](https://developers.google.com/identity/protocols/oauth2/scopes)
-  — scope classification (`userinfo.email`, `userinfo.profile`, `openid`).
+  - Scope classification (`userinfo.email`, `userinfo.profile`, `openid`).
 - [Setting up your OAuth consent screen](https://support.google.com/cloud/answer/10311615)
-  — Testing vs. In production publishing status and verification triggers.
+  - Testing vs. In production publishing status and verification triggers.

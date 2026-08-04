@@ -2,6 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '../prisma/index.js';
 import { UserOAuthService, UsersService } from '../users/index.js';
 
+/**
+ * Owns the OAuth sign-in identity path: find-or-create the user for a
+ * verified provider identity, closing the account-pre-hijack window.
+ */
 @Injectable()
 export class OAuthSignInService {
   constructor(

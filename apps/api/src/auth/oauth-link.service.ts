@@ -22,8 +22,9 @@ export class OAuthLinkService {
    * request originated from this server and was initiated by this user.
    *
    * @param userId - The UUID of the authenticated user initiating the link.
-   * @returns An object with `url` – the full Google authorization URL to
-   *   navigate to, including the signed state parameter.
+   * @returns An object with a `url` property: the full Google
+   *   authorization URL to navigate to, including the signed state
+   *   parameter.
    */
   buildGoogleLinkUrl(userId: string): { url: string } {
     const linkState = generateLinkState(userId, requireEnv('JWT_SECRET'));
