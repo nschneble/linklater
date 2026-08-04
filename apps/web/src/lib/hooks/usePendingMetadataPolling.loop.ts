@@ -6,7 +6,7 @@ import { runPollBatch } from './usePendingMetadataPolling.loop.batch';
 import type {
   MetadataPollLoop,
   MetadataPollLoopOptions,
-} from './usePendingMetadataPolling.loop.types';
+} from './usePendingMetadataPolling.loop.timing';
 
 /**
  * A framework-agnostic poll loop over a caller-owned pending set. `start`

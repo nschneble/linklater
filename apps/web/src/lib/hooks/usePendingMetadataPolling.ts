@@ -1,10 +1,10 @@
 import { getLink } from '../api';
 import { isMetadataPending, isMetadataSettled } from './linksData.utils';
 import { createMetadataPollLoop } from './usePendingMetadataPolling.loop';
-import { METADATA_POLL_TIMING } from './usePendingMetadataPolling.loop.types';
+import { METADATA_POLL_TIMING } from './usePendingMetadataPolling.loop.timing';
 import { useEffect, useRef } from 'react';
 import type { Link } from '../api';
-import type { MetadataPollLoop } from './usePendingMetadataPolling.loop.types';
+import type { MetadataPollLoop } from './usePendingMetadataPolling.loop.timing';
 
 /**
  * Polls `GET /links/:id` for every rendered link whose metadata has not been
