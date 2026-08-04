@@ -1,13 +1,11 @@
-import {
-  createMetadataPollLoop,
-  METADATA_POLL_TIMING,
-} from './usePendingMetadataPolling.loop';
+import { createMetadataPollLoop } from './usePendingMetadataPolling.loop';
+import { METADATA_POLL_TIMING } from './usePendingMetadataPolling.loop.types';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Link } from '../api';
 import type {
   MetadataPollLoop,
   VisibilitySource,
-} from './usePendingMetadataPolling.loop';
+} from './usePendingMetadataPolling.loop.types';
 
 const { initialIntervalMs, maxIntervalMs, requestDeadlineMs } =
   METADATA_POLL_TIMING;

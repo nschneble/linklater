@@ -171,9 +171,6 @@ Either works; the app only ever knows the callback URLs you hand it.
 
 Google's flows change; verify against the current console when in doubt.
 
-- [Using OAuth 2.0 for Web Server Applications](https://developers.google.com/identity/protocols/oauth2/web-server)
-  - Web-application client type and the exact-match redirect URI rule.
-- [OAuth 2.0 Scopes for Google APIs](https://developers.google.com/identity/protocols/oauth2/scopes)
-  - Scope classification (`userinfo.email`, `userinfo.profile`, `openid`).
-- [Setting up your OAuth consent screen](https://support.google.com/cloud/answer/10311615)
-  - Testing vs. In production publishing status and verification triggers.
+- [Using OAuth 2.0 for Web Server Applications](https://developers.google.com/identity/protocols/oauth2/web-server): web-application client type and the exact-match redirect URI rule.
+- [OAuth 2.0 Scopes for Google APIs](https://developers.google.com/identity/protocols/oauth2/scopes): scope classification (`userinfo.email`, `userinfo.profile`, `openid`).
+- [Setting up your OAuth consent screen](https://support.google.com/cloud/answer/10311615): testing vs. In production publishing status and verification triggers.
