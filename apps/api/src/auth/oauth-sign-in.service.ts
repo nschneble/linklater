@@ -1,10 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { Prisma } from '../prisma/index.js';
 import { UserOAuthService, UsersService } from '../users/index.js';
 
 /**
  * Owns the OAuth sign-in identity path: find-or-create the user for a
  * verified provider identity, closing the account-pre-hijack window.
+ *
+ * Matching an incoming provider identity to a PRE-EXISTING account by email
+ * is the one branch that can hand someone another person's account, so it is
+ * gated on the provider asserting it verified that email. Callers pass the
+ * provider's own claim (`email_verified` / `emails[].verified`); an absent
+ * claim must arrive here as `false`.
  */
 @Injectable()
 export class OAuthSignInService {
@@ -17,6 +23,7 @@ export class OAuthSignInService {
     provider: string,
     providerId: string,
     email: string,
+    providerEmailVerified: boolean,
   ): Promise<{ userId: string; email: string }> {
     const account = await this.userOAuthService.findOAuthAccount(
       provider,
@@ -37,6 +44,7 @@ export class OAuthSignInService {
 
     const existingUser = await this.usersService.findByEmail(email);
     if (existingUser) {
+      this.assertProviderVerifiedEmail(providerEmailVerified);
       await this.userOAuthService.linkOAuthAccount(
         existingUser.id,
         provider,
@@ -69,6 +77,7 @@ export class OAuthSignInService {
         const raceUser = await this.usersService.findByEmail(email);
         if (raceUser) {
           // same pre-hijack closure as above, reached via the registration race
+          this.assertProviderVerifiedEmail(providerEmailVerified);
           return this.resolveExistingIdentity(raceUser);
         }
       }
@@ -77,9 +86,22 @@ export class OAuthSignInService {
   }
 
   /**
+   * Refuses to adopt an existing account when the provider will not vouch for
+   * the email it just handed us. Runs before any write, so a refused sign-in
+   * leaves no half-linked account behind.
+   */
+  private assertProviderVerifiedEmail(providerEmailVerified: boolean): void {
+    if (!providerEmailVerified) {
+      throw new UnauthorizedException(
+        'Your provider has not verified this email address.',
+      );
+    }
+  }
+
+  /**
    * Finalizes sign-in for an account matched by email. Auto-verify is safe
-   * because the match is by this email; any stale password is invalidated to
-   * close the account-pre-hijack window.
+   * because the match is by this email AND the provider vouched for it; any
+   * stale password is invalidated to close the account-pre-hijack window.
    */
   private async resolveExistingIdentity(user: {
     id: string;

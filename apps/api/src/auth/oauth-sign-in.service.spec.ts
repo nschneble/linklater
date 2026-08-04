@@ -15,6 +15,7 @@ jest.mock('../prisma/generated/client', () => ({
 }));
 
 import { Test, TestingModule } from '@nestjs/testing';
+import { UnauthorizedException } from '@nestjs/common';
 import { Prisma } from '../prisma/generated/client';
 
 import { OAuthSignInService } from './oauth-sign-in.service';
@@ -80,6 +81,7 @@ describe('OAuthSignInService', () => {
         OAUTH_PROVIDER,
         OAUTH_PROVIDER_ID,
         USER_EMAIL,
+        true,
       );
 
       expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
@@ -103,6 +105,7 @@ describe('OAuthSignInService', () => {
         OAUTH_PROVIDER,
         OAUTH_PROVIDER_ID,
         'fresh@gmail.com',
+        true,
       );
 
       expect(
@@ -132,6 +135,7 @@ describe('OAuthSignInService', () => {
         OAUTH_PROVIDER,
         OAUTH_PROVIDER_ID,
         USER_EMAIL,
+        true,
       );
 
       expect(userOAuthServiceMock.linkOAuthAccount).toHaveBeenCalledWith(
@@ -170,6 +174,7 @@ describe('OAuthSignInService', () => {
         OAUTH_PROVIDER,
         OAUTH_PROVIDER_ID,
         USER_EMAIL,
+        true,
       );
 
       expect(
@@ -194,6 +199,7 @@ describe('OAuthSignInService', () => {
         OAUTH_PROVIDER,
         OAUTH_PROVIDER_ID,
         USER_EMAIL,
+        true,
       );
 
       expect(userOAuthServiceMock.createOAuthUserAndLink).toHaveBeenCalledWith(
@@ -222,6 +228,7 @@ describe('OAuthSignInService', () => {
         OAUTH_PROVIDER,
         OAUTH_PROVIDER_ID,
         USER_EMAIL,
+        true,
       );
 
       expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
@@ -246,6 +253,7 @@ describe('OAuthSignInService', () => {
         OAUTH_PROVIDER,
         OAUTH_PROVIDER_ID,
         USER_EMAIL,
+        true,
       );
 
       expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
@@ -276,6 +284,7 @@ describe('OAuthSignInService', () => {
         OAUTH_PROVIDER,
         OAUTH_PROVIDER_ID,
         USER_EMAIL,
+        true,
       );
 
       expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
@@ -298,8 +307,109 @@ describe('OAuthSignInService', () => {
           OAUTH_PROVIDER,
           OAUTH_PROVIDER_ID,
           USER_EMAIL,
+          true,
         ),
       ).rejects.toThrow('unexpected database error');
+    });
+  });
+
+  describe('findOrCreateOAuthUser provider email verification', () => {
+    /**
+     * Only the match-by-email branch is gated. That branch links a provider
+     * identity to a PRE-EXISTING account and verifies it, so an unverified
+     * provider email there is an account takeover. The other two branches key
+     * on the provider id, or have no account to take over.
+     */
+    it('refuses to auto-link an existing account when the provider has not verified the email', async () => {
+      (userOAuthServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(
+        null,
+      );
+      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue({
+        id: USER_ID,
+        email: USER_EMAIL,
+        emailVerifiedAt: new Date(),
+      });
+
+      await expect(
+        service.findOrCreateOAuthUser(
+          OAUTH_PROVIDER,
+          OAUTH_PROVIDER_ID,
+          USER_EMAIL,
+          false,
+        ),
+      ).rejects.toThrow(UnauthorizedException);
+
+      expect(userOAuthServiceMock.linkOAuthAccount).not.toHaveBeenCalled();
+      expect(
+        usersServiceMock.verifyEmailAndInvalidateStalePassword,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('refuses to auto-link on the P2002 race-recovery path when the provider has not verified the email', async () => {
+      (userOAuthServiceMock.findOAuthAccount as jest.Mock)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null);
+      (usersServiceMock.findByEmail as jest.Mock)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({
+          id: USER_ID,
+          email: USER_EMAIL,
+          emailVerifiedAt: null,
+        });
+      (
+        userOAuthServiceMock.createOAuthUserAndLink as jest.Mock
+      ).mockRejectedValue(makeP2002());
+
+      await expect(
+        service.findOrCreateOAuthUser(
+          OAUTH_PROVIDER,
+          OAUTH_PROVIDER_ID,
+          USER_EMAIL,
+          false,
+        ),
+      ).rejects.toThrow(UnauthorizedException);
+
+      expect(
+        usersServiceMock.verifyEmailAndInvalidateStalePassword,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('still signs in an already-linked account when the provider has not verified the email', async () => {
+      (userOAuthServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue({
+        userId: USER_ID,
+        providerEmail: USER_EMAIL,
+        user: { id: USER_ID, email: USER_EMAIL },
+      });
+
+      const result = await service.findOrCreateOAuthUser(
+        OAUTH_PROVIDER,
+        OAUTH_PROVIDER_ID,
+        USER_EMAIL,
+        false,
+      );
+
+      // identity keys on (provider, providerId); the email claim is not load-bearing
+      expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
+    });
+
+    it('still creates a new user when the provider has not verified the email', async () => {
+      (userOAuthServiceMock.findOAuthAccount as jest.Mock).mockResolvedValue(
+        null,
+      );
+      (usersServiceMock.findByEmail as jest.Mock).mockResolvedValue(null);
+      (
+        userOAuthServiceMock.createOAuthUserAndLink as jest.Mock
+      ).mockResolvedValue({ id: USER_ID, email: USER_EMAIL });
+
+      const result = await service.findOrCreateOAuthUser(
+        OAUTH_PROVIDER,
+        OAUTH_PROVIDER_ID,
+        USER_EMAIL,
+        false,
+      );
+
+      // no pre-existing account to take over, so the claim is not load-bearing
+      expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
     });
   });
 });
