@@ -35,6 +35,12 @@ beforeEach(() => {
 });
 
 describe('PrivacyPolicyPage', () => {
+  /**
+   * The exact `toEqual` on three column headers is load-bearing, not a
+   * stylistic choice: it is what catches `scope="row"` leaking onto the
+   * header row, which would report ten column headers. Do not scope the
+   * query to `thead` and do not soften it to a length check.
+   */
   it('renders the GDPR table with column headers inside a labeled, keyboard-scrollable region', () => {
     renderPage(null);
 
@@ -56,6 +62,25 @@ describe('PrivacyPolicyPage', () => {
     ]);
     for (const columnHeader of columnHeaders) {
       expect(columnHeader).toHaveAttribute('scope', 'col');
+    }
+  });
+
+  it('gives every GDPR row its purpose as a row header', () => {
+    renderPage(null);
+
+    const table = within(
+      screen.getByRole('region', { name: 'How we use your information' }),
+    ).getByRole('table');
+
+    // five of the seven rows repeat another row's legal basis, so without
+    // these the last column reads the same value over with no owning purpose
+    const rowHeaders = within(table).getAllByRole('rowheader');
+    expect(rowHeaders).toHaveLength(7);
+    expect(rowHeaders[0].textContent).toBe(
+      'Creating and maintaining your account',
+    );
+    for (const rowHeader of rowHeaders) {
+      expect(rowHeader).toHaveAttribute('scope', 'row');
     }
   });
 
