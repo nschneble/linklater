@@ -5,7 +5,11 @@ import {
   MAX_URL_LENGTH,
 } from './metadata.constants.js';
 import * as cheerio from 'cheerio/slim';
-import { isPrivateHost, safeFetch } from '../common/index.js';
+import {
+  isPrivateHost,
+  isSafeRedirectUrl,
+  safeFetch,
+} from '../common/index.js';
 import type { LinkMetadata } from './metadata.types.js';
 
 /**
@@ -227,24 +231,29 @@ export class MetadataFetcherService {
 
   /**
    * Resolves a raw URL (which may be relative) against the page URL and
-   * truncates it to `MAX_URL_LENGTH`. Absolute URLs pass through unchanged
-   * (after truncation). Relative URLs are resolved using the `URL` constructor.
-   * Returns an empty string if resolution fails.
+   * truncates it to `MAX_URL_LENGTH`.
+   *
+   * The scheme check runs on the RESOLVED value because `new URL()` treats
+   * `javascript:` and `data:` as absolute and hands them straight back, so a
+   * page author controls what lands in the column. Truncation happens after
+   * the check, since chopping a URL cannot make its scheme unsafe.
    *
    * @param rawUrl - The raw href/src string extracted from the HTML.
    * @param pageUrl - The base URL for resolving relative paths.
-   * @returns The resolved, truncated URL string.
+   * @returns The resolved, truncated URL, or `null` if it is unresolvable or
+   * not http(s).
    */
-  private resolveUrl(rawUrl: string, pageUrl: string): string {
-    if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) {
-      return rawUrl.slice(0, MAX_URL_LENGTH);
+  private resolveUrl(rawUrl: string, pageUrl: string): string | null {
+    let absoluteUrl = rawUrl;
+    if (!isSafeRedirectUrl(absoluteUrl)) {
+      try {
+        absoluteUrl = new URL(rawUrl, pageUrl).toString();
+      } catch {
+        return null;
+      }
     }
 
-    try {
-      const resolved = new URL(rawUrl, pageUrl).toString();
-      return resolved.slice(0, MAX_URL_LENGTH);
-    } catch {
-      return '';
-    }
+    if (!isSafeRedirectUrl(absoluteUrl)) return null;
+    return absoluteUrl.slice(0, MAX_URL_LENGTH);
   }
 }
