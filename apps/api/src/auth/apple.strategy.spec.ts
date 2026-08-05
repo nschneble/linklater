@@ -14,10 +14,11 @@ const APPLE_PROFILE_ID = 'apple-profile-789';
 const PROVIDER_EMAIL = 'test@example.com';
 
 // Apple exposes email as profile.email, not Google's emails[0].value
-function makeProfile(email?: string) {
+function makeProfile(email?: string, emailVerified?: boolean) {
   return {
     id: APPLE_PROFILE_ID,
     email,
+    emailVerified,
     provider: 'apple',
   };
 }
@@ -113,7 +114,7 @@ describe('AppleStrategy', () => {
       ).mockResolvedValue(delegateResult);
 
       const result = await strategy.validate(
-        makeProfile(PROVIDER_EMAIL),
+        makeProfile(PROVIDER_EMAIL, true),
         'ignored-access-token',
         'ignored-refresh-token',
       );
@@ -122,6 +123,7 @@ describe('AppleStrategy', () => {
         'apple',
         APPLE_PROFILE_ID,
         PROVIDER_EMAIL,
+        true,
       );
       expect(result).toBe(delegateResult);
     });
@@ -139,5 +141,32 @@ describe('AppleStrategy', () => {
         oauthSignInServiceMock.findOrCreateOAuthUser,
       ).not.toHaveBeenCalled();
     });
+
+    it.each([
+      ['false', false, false],
+      ['absent', undefined, false],
+    ])(
+      'treats an emailVerified claim of %s as unverified',
+      async (_label, claim, expected) => {
+        (
+          oauthSignInServiceMock.findOrCreateOAuthUser as jest.Mock
+        ).mockResolvedValue({ userId: 'user-1', email: PROVIDER_EMAIL });
+
+        await strategy.validate(
+          makeProfile(PROVIDER_EMAIL, claim),
+          'ignored-access-token',
+          'ignored-refresh-token',
+        );
+
+        expect(
+          oauthSignInServiceMock.findOrCreateOAuthUser,
+        ).toHaveBeenCalledWith(
+          'apple',
+          APPLE_PROFILE_ID,
+          PROVIDER_EMAIL,
+          expected,
+        );
+      },
+    );
   });
 });

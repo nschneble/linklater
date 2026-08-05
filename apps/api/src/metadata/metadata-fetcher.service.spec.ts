@@ -17,15 +17,9 @@ undiciFetchMock.mockImplementation(
 const { MetadataFetcherService: MetadataFetcherServiceClass } =
   await import('./metadata-fetcher.service');
 
-/**
- * Builds a minimal fetch mock that returns a valid HTML response. Used to
- * confirm a URL passes the SSRF guard (i.e. a fetch mock being called means
- * the guard allowed the request through).
- */
-const mockFetchSuccess = () => {
-  const html = '<html><head><title>Test</title></head><body></body></html>';
-  const encoder = new TextEncoder();
-  const bytes = encoder.encode(html);
+/** Points global.fetch at a 200 text/html response carrying `html`. */
+const mockFetchHtml = (html: string) => {
+  const bytes = new TextEncoder().encode(html);
   global.fetch = jest.fn().mockResolvedValue({
     status: 200,
     headers: {
@@ -40,6 +34,15 @@ const mockFetchSuccess = () => {
       },
     }),
   }) as unknown as typeof fetch;
+};
+
+/**
+ * Builds a minimal fetch mock that returns a valid HTML response. Used to
+ * confirm a URL passes the SSRF guard (i.e. a fetch mock being called means
+ * the guard allowed the request through).
+ */
+const mockFetchSuccess = () => {
+  mockFetchHtml('<html><head><title>Test</title></head><body></body></html>');
 };
 
 const mockFetchReject = () => {
@@ -125,27 +128,62 @@ describe('MetadataFetcherService', () => {
 
   describe('fetchMetadata – favicon fallback', () => {
     it('adds /favicon.ico fallback when no favicon found in HTML', async () => {
-      const html =
-        '<html><head><title>No icon</title></head><body></body></html>';
-      const encoder = new TextEncoder();
-      const bytes = encoder.encode(html);
-      global.fetch = jest.fn().mockResolvedValue({
-        status: 200,
-        headers: {
-          get: (key: string) =>
-            key.toLowerCase() === 'content-type' ? 'text/html' : null,
-        },
-        ok: true,
-        body: new ReadableStream<Uint8Array>({
-          start(controller) {
-            controller.enqueue(bytes);
-            controller.close();
-          },
-        }),
-      }) as unknown as typeof fetch;
+      mockFetchHtml(
+        '<html><head><title>No icon</title></head><body></body></html>',
+      );
 
       const result = await service.fetchMetadata('https://93.184.216.34/page');
       expect(result.faviconUrl).toBe('https://93.184.216.34/favicon.ico');
+    });
+  });
+
+  // the page author controls these attributes, so the scheme is untrusted
+  // input; render-time gating stays, this keeps the junk out of the column
+  describe('fetchMetadata – URL scheme allowlist', () => {
+    it.each([
+      ['javascript:', 'javascript:alert(1)'],
+      ['data:', 'data:image/svg+xml,<svg/>'],
+      ['file:', 'file:///etc/passwd'],
+      ['vbscript:', 'vbscript:msgbox(1)'],
+    ])(
+      'refuses a %s favicon and falls back to /favicon.ico',
+      async (_scheme, href) => {
+        mockFetchHtml(
+          `<html><head><title>t</title><link rel="icon" href="${href}"></head><body></body></html>`,
+        );
+
+        const result = await service.fetchMetadata(
+          'https://93.184.216.34/page',
+        );
+        expect(result.faviconUrl).toBe('https://93.184.216.34/favicon.ico');
+      },
+    );
+
+    it('refuses a non-http(s) og:image and stores null', async () => {
+      mockFetchHtml(
+        '<html><head><title>t</title><meta property="og:image" content="javascript:alert(1)"></head><body></body></html>',
+      );
+
+      const result = await service.fetchMetadata('https://93.184.216.34/page');
+      expect(result.imageUrl).toBeNull();
+    });
+
+    it('still resolves a relative favicon against the page URL', async () => {
+      mockFetchHtml(
+        '<html><head><title>t</title><link rel="icon" href="/icons/site.png"></head><body></body></html>',
+      );
+
+      const result = await service.fetchMetadata('https://93.184.216.34/page');
+      expect(result.faviconUrl).toBe('https://93.184.216.34/icons/site.png');
+    });
+
+    it('still passes an absolute https image through', async () => {
+      mockFetchHtml(
+        '<html><head><title>t</title><meta property="og:image" content="https://cdn.example.com/hero.png"></head><body></body></html>',
+      );
+
+      const result = await service.fetchMetadata('https://93.184.216.34/page');
+      expect(result.imageUrl).toBe('https://cdn.example.com/hero.png');
     });
   });
 });

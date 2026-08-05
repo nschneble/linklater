@@ -54,6 +54,26 @@ const ATOM_XML = `<?xml version="1.0" encoding="UTF-8"?>
   </entry>
 </feed>`;
 
+const RSS_XML_WITH_UNSAFE_SCHEMES = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Sample Feed</title>
+    <item>
+      <title>Hostile Link</title>
+      <link>javascript:alert(1)</link>
+      <description>Should never be persisted.</description>
+      <pubDate>Wed, 28 May 2026 12:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Hostile Image</title>
+      <link>https://example.com/safe</link>
+      <description>Link is fine, enclosure is not.</description>
+      <pubDate>Tue, 27 May 2026 09:00:00 GMT</pubDate>
+      <enclosure url="data:image/svg+xml,&lt;svg/&gt;" />
+    </item>
+  </channel>
+</rss>`;
+
 function textResponse(body: string, ok = true, status = 200): Response {
   return {
     ok,
@@ -259,6 +279,35 @@ describe('RssFeedService', () => {
           type: 'random',
         }),
       ).rejects.toThrow(/non-RSS source/);
+    });
+
+    // a feed we do not control can hand us any scheme it likes
+    it('drops an item whose link is not http(s) and nulls an unsafe image', async () => {
+      fetchMock.mockResolvedValueOnce(
+        textResponse(RSS_XML_WITH_UNSAFE_SCHEMES),
+      );
+      (prismaMock.rssEntry.findMany as jest.Mock).mockResolvedValueOnce([]);
+      (prismaMock.rssEntry.createMany as jest.Mock).mockResolvedValue({
+        count: 1,
+      });
+
+      await service.refreshOne({
+        key: 'aeon',
+        name: 'Aeon',
+        type: 'latest',
+        feedUrl: 'https://aeon.co/feed.rss',
+        siteName: 'Aeon',
+      });
+
+      const createCall = (prismaMock.rssEntry.createMany as jest.Mock).mock
+        .calls[0][0] as {
+        data: Array<{ url: string; imageUrl: string | null }>;
+      };
+      expect(createCall.data).toHaveLength(1);
+      expect(createCall.data[0]).toMatchObject({
+        url: 'https://example.com/safe',
+        imageUrl: null,
+      });
     });
 
     it('persists all N entries when the feed returns N items', async () => {

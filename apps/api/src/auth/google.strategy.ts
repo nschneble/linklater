@@ -22,12 +22,16 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     _refreshToken: string,
     profile: Profile,
   ) {
-    const email = profile.emails?.[0]?.value;
-    if (!email) throw new Error('No email returned from Google');
+    const primaryEmail = profile.emails?.[0];
+    if (!primaryEmail?.value) throw new Error('No email returned from Google');
+    // OIDC providers send email_verified as either a boolean or the string
+    // "true"; anything else, including absent, counts as unverified
+    const claim: unknown = primaryEmail.verified;
     return this.oauthSignInService.findOrCreateOAuthUser(
       'google',
       profile.id,
-      email,
+      primaryEmail.value,
+      claim === true || claim === 'true',
     );
   }
 }

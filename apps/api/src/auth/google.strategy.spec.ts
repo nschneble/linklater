@@ -11,10 +11,13 @@ import { OAuthSignInService } from './oauth-sign-in.service';
 const GOOGLE_PROFILE_ID = 'google-profile-456';
 const PROVIDER_EMAIL = 'test@example.com';
 
-function makeProfile(email: string | null = PROVIDER_EMAIL) {
+function makeProfile(
+  email: string | null = PROVIDER_EMAIL,
+  verified: unknown = true,
+) {
   return {
     id: GOOGLE_PROFILE_ID,
-    emails: email !== null ? [{ value: email }] : [],
+    emails: email !== null ? [{ value: email, verified }] : [],
     provider: 'google',
     displayName: 'Test User',
   };
@@ -94,6 +97,7 @@ describe('GoogleStrategy', () => {
         'google',
         GOOGLE_PROFILE_ID,
         PROVIDER_EMAIL,
+        true,
       );
       expect(result).toBe(delegateResult);
     });
@@ -110,6 +114,50 @@ describe('GoogleStrategy', () => {
       expect(
         oauthSignInServiceMock.findOrCreateOAuthUser,
       ).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['the string "true"', 'true', true],
+      ['a boolean false', false, false],
+      ['the string "false"', 'false', false],
+      ['a null claim', null, false],
+    ])('reads %s as %j', async (_label, claim, expected) => {
+      (
+        oauthSignInServiceMock.findOrCreateOAuthUser as jest.Mock
+      ).mockResolvedValue({ userId: 'user-1', email: PROVIDER_EMAIL });
+
+      await strategy.validate(
+        'ignored-access-token',
+        'ignored-refresh-token',
+        makeProfile(PROVIDER_EMAIL, claim),
+      );
+
+      expect(oauthSignInServiceMock.findOrCreateOAuthUser).toHaveBeenCalledWith(
+        'google',
+        GOOGLE_PROFILE_ID,
+        PROVIDER_EMAIL,
+        expected,
+      );
+    });
+
+    it('reads a profile with no verified key at all as unverified', async () => {
+      (
+        oauthSignInServiceMock.findOrCreateOAuthUser as jest.Mock
+      ).mockResolvedValue({ userId: 'user-1', email: PROVIDER_EMAIL });
+
+      await strategy.validate('ignored-access-token', 'ignored-refresh-token', {
+        id: GOOGLE_PROFILE_ID,
+        emails: [{ value: PROVIDER_EMAIL }],
+        provider: 'google',
+        displayName: 'Test User',
+      });
+
+      expect(oauthSignInServiceMock.findOrCreateOAuthUser).toHaveBeenCalledWith(
+        'google',
+        GOOGLE_PROFILE_ID,
+        PROVIDER_EMAIL,
+        false,
+      );
     });
   });
 });

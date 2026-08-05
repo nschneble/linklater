@@ -15,5 +15,6 @@ export {
 export { requireEnv } from './require-env.js';
 export { validateRequiredEnvVars } from './required-env.js';
 export { safeFetch } from './safe-fetch.js';
+export { isSafeRedirectUrl } from './safe-redirect-url.js';
 export { applySecurityHeaders } from './security-headers.js';
 export { assertTestingUiNotInProduction, isTestingUi } from './testing-ui.js';
