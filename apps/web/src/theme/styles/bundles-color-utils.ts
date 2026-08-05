@@ -197,7 +197,29 @@ export function compositeOverBg(foreground: Rgba, background: Rgb): Rgb {
   ];
 }
 
+/**
+ * Resolves an opaque foreground to its rendered channels.
+ *
+ * REFUSES a translucent value rather than quietly dropping its alpha. WCAG's
+ * relative-luminance formula has no alpha term, so a translucent color has no
+ * contrast ratio of its own; only its composited result does. Discarding the
+ * alpha measures a color nobody can see, and reports it as a PASS: an
+ * `#eeeede40` body text reads as clearing 15:1 when what renders is nearer
+ * 2:1. Throwing turns that silent false pass into a failure that names its
+ * own fix.
+ *
+ * No shipped token carries alpha on a foreground slot, so this cannot fire
+ * today. It fires the moment one is introduced, which is precisely when the
+ * caller has to composite over the real backdrop instead.
+ */
 export function resolveFg(value: Rgba): Rgb {
+  if (value[3] < 1) {
+    throw new Error(
+      `resolveFg received a translucent color (alpha ${value[3]}). ` +
+        'A translucent foreground has no contrast ratio of its own: ' +
+        'composite it over its backdrop with compositeOverBg first.',
+    );
+  }
   return [value[0], value[1], value[2]];
 }
 

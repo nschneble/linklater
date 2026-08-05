@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 import ReactMarkdown from 'react-markdown';
 import { rehypeBreakTags } from './rehypeBreakTags';
+import { rehypeRowHeaders } from './rehypeRowHeaders';
 import remarkGfm from 'remark-gfm';
 import { useAuth } from '../../auth/AuthContext';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
@@ -86,7 +87,7 @@ export default function PolicyDocumentPage({
       >
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeBreakTags]}
+          rehypePlugins={[rehypeBreakTags, rehypeRowHeaders]}
           components={markdownComponents}
         >
           {markdown}
