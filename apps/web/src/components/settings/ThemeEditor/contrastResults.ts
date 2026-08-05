@@ -219,6 +219,29 @@ export interface ContrastResults {
   totalUnverified: number;
 }
 
+/** What the title-row status icon reports about the palette as a whole. */
+export type ContrastStatus = 'fail' | 'uncheckable' | 'pass';
+
+/**
+ * Rolls the whole palette up to one verdict.
+ *
+ * A pair whose ratio could not be computed is NOT a pass. Counting it as one
+ * is how the editor came to announce "Theme colors meet minimum contrast"
+ * over a palette with translucent backgrounds: every pair touching one
+ * resolves to `null`, `pairsTouchingToken` skips it, and the roll-up saw zero
+ * failures. That is a conformance claim about pairs nothing ever measured,
+ * and a screen reader user has no other signal to go on.
+ *
+ * `unverifiedCount` was already computed for exactly this and had no reader.
+ */
+export function resolveContrastStatus(
+  results: ContrastResults,
+): ContrastStatus {
+  if (results.totalFailures > 0) return 'fail';
+  if (results.totalUnverified > 0) return 'uncheckable';
+  return 'pass';
+}
+
 /**
  * A single token's worst FAILING contrast pair, used by the per-bundle slot
  * rows to surface failure feedback on the hex input (BL1). Only failing pairs

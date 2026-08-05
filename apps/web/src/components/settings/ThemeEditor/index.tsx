@@ -4,7 +4,12 @@ import ComponentShowcase from './ComponentShowcase';
 import { generateRandomPalette } from './randomPalette';
 import IconButton from '../../common/IconButton';
 import ModeToggle, { modeTabId } from './ModeToggle';
-import { pairsTouchingToken, useContrastResults } from './contrastResults';
+import {
+  pairsTouchingToken,
+  resolveContrastStatus,
+  useContrastResults,
+  type ContrastStatus,
+} from './contrastResults';
 import RandomizeButton from './RandomizeButton';
 import { readThemeTokens } from './themeProbe';
 import { THEMES, type Mode } from '../../../theme/constants';
@@ -24,6 +29,23 @@ const EDITOR_MODE_LABELS: Record<Mode, string> = {
 };
 
 // single role="tabpanel" the Light/Dark tabs control
+/*
+ * Three states, not two: "couldn't be checked" is its own answer rather than
+ * being folded into either verdict. The glyphs differ in SHAPE as well as
+ * color so the distinction survives without color (SC 1.4.1).
+ */
+const CONTRAST_STATUS_LABEL: Record<ContrastStatus, string> = {
+  fail: "Theme colors don't meet minimum contrast",
+  uncheckable: "Some theme colors couldn't be checked for contrast",
+  pass: 'Theme colors meet minimum contrast',
+};
+
+const CONTRAST_STATUS_ICON: Record<ContrastStatus, string> = {
+  fail: 'fa-triangle-exclamation text-[var(--warn-text)]',
+  uncheckable: 'fa-circle-info text-[var(--base-subtle-text)]',
+  pass: 'fa-circle-check text-[var(--base-subtle-text)]',
+};
+
 const EDITOR_PANEL_ID = 'theme-editor-panel';
 
 // aria-describedby target naming why copy is disabled, for AT users
@@ -202,7 +224,7 @@ export default function ThemeEditor() {
   const announcement = useAnnouncer(savedCount, savedMessage);
 
   // supplementary roll-up for title-row status icon; rows stay authoritative
-  const hasContrastIssue = failures.size > 0;
+  const contrastStatus = resolveContrastStatus(contrastResults);
 
   // mount surface + card-enter fade; per-card delay staggers; always mounted
   const cardClassName =
@@ -233,17 +255,9 @@ export default function ThemeEditor() {
               the inline failure text (accepted, it is supplementary). */}
           <i
             role="img"
-            aria-label={
-              hasContrastIssue
-                ? "Theme colors don't meet minimum contrast"
-                : 'Theme colors meet minimum contrast'
-            }
-            title={
-              hasContrastIssue
-                ? "Theme colors don't meet minimum contrast"
-                : 'Theme colors meet minimum contrast'
-            }
-            className={`fa-solid text-sm ${hasContrastIssue ? 'fa-triangle-exclamation text-[var(--warn-text)]' : 'fa-circle-check text-[var(--base-subtle-text)]'}`}
+            aria-label={CONTRAST_STATUS_LABEL[contrastStatus]}
+            title={CONTRAST_STATUS_LABEL[contrastStatus]}
+            className={`fa-solid text-sm ${CONTRAST_STATUS_ICON[contrastStatus]}`}
           />
         </div>
         <p className="mt-1 text-[var(--base-alt-text)] text-xs">
