@@ -1,5 +1,5 @@
-import { useToastAnnouncement } from '../../lib/hooks/useToastAnnouncement';
 import Toast from './Toast';
+import { useToastAnnouncement } from '../../lib/hooks/useToastAnnouncement';
 
 interface ToastAnnouncerProps {
   /**

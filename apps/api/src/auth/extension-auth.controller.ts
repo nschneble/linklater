@@ -1,4 +1,11 @@
 import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import {
   Body,
   Controller,
   Get,
@@ -9,21 +16,14 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiQuery,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
 import { CustomThrottlerGuard } from './custom-throttler.guard.js';
 import { ExtensionAuthService } from './extension-auth.service.js';
-import { JwtAuthGuard } from './jwt-auth.guard.js';
-import { ThrottleMessage } from './throttle-message.decorator.js';
 import { ExtensionTokenDto } from './dto/extension-token.dto.js';
-import type { Response } from 'express';
+import { JwtAuthGuard } from './jwt-auth.guard.js';
+import { Throttle } from '@nestjs/throttler';
+import { ThrottleMessage } from './throttle-message.decorator.js';
 import type { AuthRequest } from './auth-request.type.js';
+import type { Response } from 'express';
 
 /**
  * Browser-extension PKCE authorization endpoints. Authorize step requires a

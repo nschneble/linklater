@@ -1,8 +1,8 @@
 import { jest } from '@jest/globals';
 
+import { AuthGuard } from '@nestjs/passport';
 import { BadRequestException, ConflictException, Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthGuard } from '@nestjs/passport';
 import type { Response } from 'express';
 
 import { JwtAuthGuard } from './jwt-auth.guard';

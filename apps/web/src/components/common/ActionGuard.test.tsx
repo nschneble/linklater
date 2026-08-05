@@ -20,8 +20,6 @@
  *     owned by `DangerZone.test.tsx`.
  */
 
-import ActionGuard from './ActionGuard';
-import { actionGuardInitialFocusProps } from '../../lib/hooks/useFocusFirstButton';
 import {
   act,
   fireEvent,
@@ -29,6 +27,8 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react';
+import ActionGuard from './ActionGuard';
+import { actionGuardInitialFocusProps } from '../../lib/hooks/useFocusFirstButton';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 // ─── Harness ──────────────────────────────────────────────────────────────────

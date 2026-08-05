@@ -1,6 +1,6 @@
+import { describe, expect, it } from 'vitest';
 import ParameterTable from './ParameterTable';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
 import type { NormalizedParameter } from '../../lib/openapi';
 
 // single-location list (all query); the caller partitions by location and picks the caption

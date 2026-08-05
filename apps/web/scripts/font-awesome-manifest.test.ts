@@ -15,8 +15,6 @@
 // The scan logic itself lives in fa-scan.mjs and is shared with the writer
 // (sync-fa-manifest.mjs) and the subsetter (subset-fa-fonts.mjs).
 
-import { statSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   NON_ICON_UTILITY_PREFIXES,
@@ -26,6 +24,8 @@ import {
   scanRegularNames,
   scanSources,
 } from './fa-scan.mjs';
+import { resolve } from 'node:path';
+import { statSync } from 'node:fs';
 
 const manifest = await loadManifest();
 const catalogs = await loadCatalogs();

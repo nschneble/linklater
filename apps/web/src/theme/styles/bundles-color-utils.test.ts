@@ -8,13 +8,13 @@
  * that stops being true.
  */
 
-import { describe, expect, it } from 'vitest';
 import {
   compositeOverBg,
   contrastRatio,
   parseColor,
   resolveFg,
 } from './bundles-color-utils';
+import { describe, expect, it } from 'vitest';
 
 describe('resolveFg', () => {
   it('passes an opaque color straight through', () => {

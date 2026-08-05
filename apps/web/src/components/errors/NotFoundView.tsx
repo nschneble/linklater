@@ -1,6 +1,6 @@
+import PrimaryButton from '../common/PrimaryButton';
 import { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import PrimaryButton from '../common/PrimaryButton';
 
 export default function NotFoundView() {
   const navigate = useNavigate();

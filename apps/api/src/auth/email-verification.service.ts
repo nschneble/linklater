@@ -5,20 +5,20 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { EmailQueueService } from '../email/index.js';
 import {
   expiresInMs,
   generateHexToken,
   normalizeRecoveryCode,
   sha256Hex,
 } from '../common/index.js';
-import { EmailQueueService } from '../email/index.js';
+import { Prisma } from '../prisma/index.js';
+import { TotpService } from './totp.service.js';
 import {
   UserMfaService,
   UserTokensService,
   UsersService,
 } from '../users/index.js';
-import { Prisma } from '../prisma/index.js';
-import { TotpService } from './totp.service.js';
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
 const TWENTY_FOUR_HOURS_MS = 24 * ONE_HOUR_MS;

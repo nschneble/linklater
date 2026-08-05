@@ -1,8 +1,8 @@
 import { jest } from '@jest/globals';
 
 import { PGBOSS_INSTANCE } from './queue.constants';
-import { Test, TestingModule } from '@nestjs/testing';
 import { QueueService } from './queue.service';
+import { Test, TestingModule } from '@nestjs/testing';
 
 const JOB_ID = 'job-1';
 const QUEUE_NAME = 'my-queue';

@@ -12,8 +12,8 @@
  * Toast to the always-mounted mirror.
  */
 
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 // ─── Module mocks ─────────────────────────────────────────────────────────────
 
@@ -46,8 +46,8 @@ vi.mock('./BookmarkletRegenerateButton', () => ({
 
 // ─── Imports after mocks ──────────────────────────────────────────────────────
 
-import { getBookmarkletToken } from '../../lib/api';
 import BookmarkletSection from './BookmarkletSection';
+import { getBookmarkletToken } from '../../lib/api';
 import type { BookmarkletToken } from '../../lib/api/tokens';
 
 const getBookmarkletTokenMock = vi.mocked(getBookmarkletToken);

@@ -183,7 +183,8 @@ Use [Test Driven Development](https://martinfowler.com/bliki/TestDrivenDevelopme
 - Contexts: `createContext(undefined)` with custom hook that throws outside provider
 - Form state sequence: clear error → set loading → attempt action → handle result
 - Extract errors: `error instanceof Error ? error.message : 'Something went wrong'`
-- Sort imports alphabetically — within individual imports + across import list. Put `import {}` before `import type {}`.
+- Sort imports alphabetically by the **first identifier each import binds**, case-insensitively: the default binding, the namespace alias, or the first named specifier. A renamed import (`{ alpha as zulu }`) sorts under `alpha`, the name written first. Sort within individual imports too, and put `import {}` before `import type {}`.
+- Enforced by `local/import-identifier-order` (autofixable, `npm run lint -- --fix`). It never reorders three things: anything across a blank line or a non-import statement (group boundaries you drew), side-effect imports like `import './polyfill'` (evaluation order is observable, so they act as barriers), and value imports against type imports (that partition is `local/type-imports-after-value`'s job).
 
 ```typescript
 // Example of poor import organization

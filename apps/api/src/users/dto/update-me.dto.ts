@@ -1,3 +1,4 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsBoolean,
   IsIn,
@@ -8,7 +9,6 @@ import {
   ValidatorConstraint,
   registerDecorator,
 } from 'class-validator';
-import { ApiPropertyOptional } from '@nestjs/swagger';
 import { VALID_MODES, VALID_THEMES } from '../users.constants.js';
 import type {
   ValidationArguments,

@@ -13,6 +13,7 @@
  * such input).
  */
 
+import { BUNDLES } from './useThemeOverrides';
 import {
   computeContrastRatio,
   focusRingPairs,
@@ -20,7 +21,6 @@ import {
 } from './contrastResults';
 import { describe, expect, it } from 'vitest';
 import { EDITABLE_VARS } from '../../../theme/customThemeTokens';
-import { BUNDLES } from './useThemeOverrides';
 import { generateRandomPalette } from './randomPalette';
 import type { Mode } from '../../../theme/constants';
 import type { ThemeVariable } from './useThemeOverrides';

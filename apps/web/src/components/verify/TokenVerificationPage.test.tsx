@@ -16,10 +16,10 @@
  * notice as an assertive toast.
  */
 
-import TokenVerificationPage from './TokenVerificationPage';
 import { act, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { MemoryRouter } from 'react-router';
+import TokenVerificationPage from './TokenVerificationPage';
 import type { PendingNotice } from '../../lib/pendingNotice';
 import type { User } from '../../auth/AuthContext';
 

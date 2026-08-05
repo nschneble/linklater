@@ -1,5 +1,5 @@
-import { useRef, type ReactNode } from 'react';
 import TabButton from './TabButton';
+import { useRef, type ReactNode } from 'react';
 import { useTabNavigation } from '../../lib/hooks/useTabNavigation';
 
 /**

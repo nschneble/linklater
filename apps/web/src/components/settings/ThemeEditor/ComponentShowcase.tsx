@@ -1,13 +1,13 @@
+import { MOCK_STATUS_GLYPHS } from './mockGlyphs';
 import MockBanner from './MockBanner';
 import MockHeader from './MockHeader';
 import MockLinkCard from './MockLinkCard';
 import MockToast from './MockToast';
 import MockToolbar from './MockToolbar';
-import { MOCK_STATUS_GLYPHS } from './mockGlyphs';
 import { useId } from 'react';
 import type { Bundle } from './useThemeOverrides';
-import type { Mode } from '../../../theme/constants';
 import type { CSSProperties } from 'react';
+import type { Mode } from '../../../theme/constants';
 
 interface ComponentShowcaseProps {
   /**

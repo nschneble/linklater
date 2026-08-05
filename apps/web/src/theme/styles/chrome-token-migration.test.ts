@@ -7,10 +7,10 @@
  * shows as a flat string mismatch, not a downstream contract failure.
  */
 
-import { readFileSync } from 'node:fs';
+import { describe, expect, it } from 'vitest';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 

@@ -17,6 +17,7 @@
  * tests (only the scripts block disables that rule).
  */
 
+import { BRANDING_DEFAULTS_LIGHT } from './brandingDefaults';
 import {
   CARD_BUNDLES,
   CVD_TYPES,
@@ -27,7 +28,6 @@ import {
   resolveFg,
   cvdDeltaE,
 } from './styles/bundles-color-utils';
-import { BRANDING_DEFAULTS_LIGHT } from './brandingDefaults';
 import { CUSTOM_TOKEN_KEYS } from './customTheme';
 import { describe, expect, it } from 'vitest';
 import type { Bundle, Rgb } from './styles/bundles-color-utils';

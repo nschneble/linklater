@@ -1,15 +1,15 @@
-import { Injectable, Logger } from '@nestjs/common';
-import {
-  MAX_DESCRIPTION_LENGTH,
-  MAX_HTML_BYTES,
-  MAX_URL_LENGTH,
-} from './metadata.constants.js';
 import * as cheerio from 'cheerio/slim';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   isPrivateHost,
   isSafeRedirectUrl,
   safeFetch,
 } from '../common/index.js';
+import {
+  MAX_DESCRIPTION_LENGTH,
+  MAX_HTML_BYTES,
+  MAX_URL_LENGTH,
+} from './metadata.constants.js';
 import type { LinkMetadata } from './metadata.types.js';
 
 /**

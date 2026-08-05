@@ -1,6 +1,6 @@
-import { useCallback, useState } from 'react';
-import { updateMe } from '../../../lib/api';
 import { collectTokens, CUSTOM_TOKEN_KEYS } from '../../../theme/customTheme';
+import { updateMe } from '../../../lib/api';
+import { useCallback, useState } from 'react';
 import { useTheme } from '../../../theme/ThemeContext';
 import type { CustomTheme } from '../../../theme/customTheme';
 import type { Mode } from '../../../theme/constants';

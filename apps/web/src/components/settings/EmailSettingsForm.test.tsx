@@ -9,7 +9,6 @@
  *   - Resend success / error
  */
 
-import EmailSettingsForm from './EmailSettingsForm';
 import {
   act,
   fireEvent,
@@ -18,6 +17,7 @@ import {
   waitFor,
 } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import EmailSettingsForm from './EmailSettingsForm';
 import type { User } from '../../auth/AuthContext/types';
 
 // ─── Module mocks ─────────────────────────────────────────────────────────────
@@ -44,8 +44,8 @@ vi.mock('../../auth/AuthContext', () => ({
 
 // ─── Imports after mocks ──────────────────────────────────────────────────────
 
-import * as apiModule from '../../lib/api';
 import { ApiError } from '../../lib/api';
+import * as apiModule from '../../lib/api';
 import { useAuth } from '../../auth/AuthContext';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

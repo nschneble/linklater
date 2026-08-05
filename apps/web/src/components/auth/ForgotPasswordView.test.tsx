@@ -16,10 +16,10 @@
  *   - Back-to-login link wired
  */
 
-import ForgotPasswordView from './ForgotPasswordView';
-import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRef } from 'react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import ForgotPasswordView from './ForgotPasswordView';
 import type { RefObject } from 'react';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

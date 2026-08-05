@@ -6,8 +6,8 @@ const USER_ID = 'user-1';
 // JWT_SECRET must be set before importing JwtStrategy (eager constructor)
 process.env.JWT_SECRET = 'test-secret-for-unit-tests';
 
-import { PrismaService } from '../prisma/prisma.service';
 import { JwtStrategy } from './jwt.strategy';
+import { PrismaService } from '../prisma/prisma.service';
 
 describe('JwtStrategy', () => {
   let strategy: JwtStrategy;

@@ -1,12 +1,12 @@
-import { setPassword as apiSetPassword } from '../../../lib/api';
-import { capitalizeFirst } from '../../../lib/strings';
-import { getErrorMessage } from '../../../lib/errors';
 import Alert from '../../common/Alert';
+import { capitalizeFirst } from '../../../lib/strings';
 import FormInput from '../../common/FormInput';
+import { getErrorMessage } from '../../../lib/errors';
 import PrimaryButton from '../../common/PrimaryButton';
+import { setPassword as apiSetPassword } from '../../../lib/api';
 import { useState } from 'react';
-import type { FormEvent } from 'react';
 import type { AddPasswordFormProps } from './types';
+import type { FormEvent } from 'react';
 
 /**
  * Add-password form for passwordless accounts (created via SSO or magic

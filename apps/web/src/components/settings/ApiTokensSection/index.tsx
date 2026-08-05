@@ -1,12 +1,12 @@
 import Alert from '../../common/Alert';
+import ApiTokensList from '../ApiTokensList';
 import CopyRevealPanel from '../../common/CopyRevealPanel';
 import FormInput from '../../common/FormInput';
 import IconButton from '../../common/IconButton';
+import { Link } from 'react-router';
 import LinkButton from '../../common/LinkButton';
 import PrimaryButton from '../../common/PrimaryButton';
-import ApiTokensList from '../ApiTokensList';
 import { useApiTokens } from './useApiTokens';
-import { Link } from 'react-router';
 import type { FormEvent } from 'react';
 
 /**

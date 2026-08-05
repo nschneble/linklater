@@ -1,12 +1,12 @@
-import { gravatarUrl } from '../../lib/gravatar';
 import { FOCUS_RING, menuRevealStyle } from '../../lib/styles';
 import { forwardRef, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
-import { useTheme, type BaseTheme } from '../../theme/ThemeContext';
-import MenuSection from './MenuSection';
+import { gravatarUrl } from '../../lib/gravatar';
 import MenuItem from './MenuItem';
+import MenuSection from './MenuSection';
 import NavMenuItems from './NavMenuItems';
 import ThemeSubmenu from './ThemeSubmenu';
 import { useMenuNavigation } from './useMenuNavigation';
+import { useTheme, type BaseTheme } from '../../theme/ThemeContext';
 import { useThemePreview } from './useThemePreview';
 import type { AppView } from '../../lib/navigation';
 import type { User } from '../../auth/AuthContext';

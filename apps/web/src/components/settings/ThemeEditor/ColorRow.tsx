@@ -1,9 +1,9 @@
+import { isAlphaValue, type ThemeVariable } from './useThemeOverrides';
 import {
   isSixDigitHex,
   isValidColorValue,
   normalizeToSixDigitHex,
 } from './hexColor';
-import { isAlphaValue, type ThemeVariable } from './useThemeOverrides';
 import { useEffect, useState } from 'react';
 import type { TokenContrastFailure } from './contrastResults';
 

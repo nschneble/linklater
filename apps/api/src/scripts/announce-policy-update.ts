@@ -1,11 +1,11 @@
-import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../app.module.js';
 import { EmailQueueService } from '../email/index.js';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { NestFactory } from '@nestjs/core';
 import {
   parseArguments,
   verifiedRecipientWhere,
 } from './announce-policy-update.args.js';
+import { PrismaService } from '../prisma/prisma.service.js';
 
 /**
  * One-shot operator script: enqueues the privacy-policy change notice for

@@ -1,10 +1,10 @@
 import { jest } from '@jest/globals';
 
-import { Test, TestingModule } from '@nestjs/testing';
 import { AccountDeletionController } from './account-deletion.controller';
 import { AuthService } from '../auth/auth.service';
 import { CustomThrottlerGuard } from '../auth/custom-throttler.guard';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Test, TestingModule } from '@nestjs/testing';
 
 const USER_ID = 'user-1';
 const RAW_TOKEN = 'raw-confirmation-token';

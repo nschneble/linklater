@@ -1,5 +1,5 @@
-import { renderHook, cleanup } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
+import { renderHook, cleanup } from '@testing-library/react';
 import { useDocumentTitle } from './useDocumentTitle';
 
 describe('useDocumentTitle', () => {

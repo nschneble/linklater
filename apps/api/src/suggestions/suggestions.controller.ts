@@ -1,4 +1,11 @@
 import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import {
   Controller,
   Get,
   Query,
@@ -6,13 +13,6 @@ import {
   ServiceUnavailableException,
   UseGuards,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiQuery,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
 
 import { AnyAuthGuard, type AuthRequest } from '../auth/index.js';
 import {

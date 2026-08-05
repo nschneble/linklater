@@ -1,19 +1,19 @@
+import { capitalizeFirst } from '../../lib/strings';
+import {
+  consumePendingNotice,
+  hasPendingNotice,
+} from '../../lib/pendingNotice';
 import {
   forgotPassword as apiForgotPassword,
   registerMagicLink,
   requestMagicLink,
   verifyOtp,
 } from '../../lib/api';
-import {
-  consumePendingNotice,
-  hasPendingNotice,
-} from '../../lib/pendingNotice';
-import { useAuth } from '../../auth/AuthContext';
 import { getErrorMessage } from '../../lib/errors';
-import { useTransientState } from '../../lib/hooks/useTransientState';
-import { capitalizeFirst } from '../../lib/strings';
+import { useAuth } from '../../auth/AuthContext';
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
+import { useTransientState } from '../../lib/hooks/useTransientState';
 import type { FormEvent } from 'react';
 
 export type Mode = 'login' | 'register' | 'forgot-password';

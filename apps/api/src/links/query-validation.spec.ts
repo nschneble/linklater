@@ -5,8 +5,8 @@ import {
   INestApplication,
   ValidationPipe,
 } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
+import { Test, TestingModule } from '@nestjs/testing';
 import type { Request } from 'express';
 
 import { AnyAuthGuard } from '../auth/any-auth.guard';

@@ -1,6 +1,6 @@
-import privacyPolicyMarkdown from '../../../../../docs/PRIVACY.md?raw';
 import { makePolicyMarkdownComponents } from '../legal/policyMarkdownComponents';
 import PolicyDocumentPage from '../legal/PolicyDocumentPage';
+import privacyPolicyMarkdown from '../../../../../docs/PRIVACY.md?raw';
 
 const privacyMarkdownComponents = makePolicyMarkdownComponents({
   tableLabel: 'How we use your information',

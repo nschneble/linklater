@@ -1,11 +1,11 @@
 import IconListButton from '../common/IconListButton';
-import SettingsSectionNav from './SettingsSectionNav';
-import SettingsSidebar from './SettingsSidebar';
 import {
   isPlainAnchorClick,
   prefersReducedMotion,
   scrollToSettingsSection,
 } from './settingsScroll';
+import SettingsSectionNav from './SettingsSectionNav';
+import SettingsSidebar from './SettingsSidebar';
 import type { MouseEvent, ReactNode } from 'react';
 import type { SettingsSection } from './settingsSections';
 

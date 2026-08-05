@@ -13,11 +13,11 @@
 // are common (aliases); aliases share a codepoint so the manifest can use
 // canonical OR alias names.
 
-import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import subsetFont from 'subset-font';
 import { parseCodepoints, paths } from './fa-scan.mjs';
+import { readFile, writeFile } from 'node:fs/promises';
+import subsetFont from 'subset-font';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const sourceDir = resolve(here, 'font-awesome-source/webfonts');

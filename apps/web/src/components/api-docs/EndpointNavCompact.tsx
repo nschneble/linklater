@@ -1,6 +1,6 @@
-import MethodBadge from './MethodBadge';
 import { endpointSlug } from './endpointId';
 import { FOCUS_RING } from '../../lib/styles';
+import MethodBadge from './MethodBadge';
 import { useEffect, useRef } from 'react';
 import type { NormalizedEndpoint } from '../../lib/openapi';
 

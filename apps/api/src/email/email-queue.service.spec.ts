@@ -2,8 +2,8 @@ import { jest } from '@jest/globals';
 
 import { EmailQueueService, type EmailJob } from './email-queue.service';
 import { EmailService } from './email.service';
-import { QueueService } from '../queue/queue.service';
 import { QUEUES } from '../queue/queue.constants';
+import { QueueService } from '../queue/queue.service';
 import { Test, TestingModule } from '@nestjs/testing';
 
 const EMAIL = 'user@example.com';

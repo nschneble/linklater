@@ -18,15 +18,15 @@ import {
   ForbiddenException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
 import { Prisma } from '../prisma/generated/client';
+import { Test, TestingModule } from '@nestjs/testing';
 
+import { EmailQueueService } from '../email/email-queue.service';
 import { EmailVerificationService } from './email-verification.service';
 import { TotpService } from './totp.service';
-import { EmailQueueService } from '../email/email-queue.service';
 import { UserMfaService } from '../users/user-mfa.service';
-import { UserTokensService } from '../users/user-tokens.service';
 import { UsersService } from '../users/users.service';
+import { UserTokensService } from '../users/user-tokens.service';
 
 const makeP2002 = () =>
   new (

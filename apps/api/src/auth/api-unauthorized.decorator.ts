@@ -1,5 +1,5 @@
-import { applyDecorators } from '@nestjs/common';
 import { ApiResponse } from '@nestjs/swagger';
+import { applyDecorators } from '@nestjs/common';
 
 /**
  * Attaches the standard 401 response shape used by every PAT-callable

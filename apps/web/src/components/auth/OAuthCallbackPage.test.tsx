@@ -1,8 +1,8 @@
-import OAuthCallbackPage from './OAuthCallbackPage';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { consumePendingNotice } from '../../lib/pendingNotice';
 import { MemoryRouter } from 'react-router';
+import OAuthCallbackPage from './OAuthCallbackPage';
 import { render, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const loginWithToken = vi.fn();
 const navigate = vi.fn();

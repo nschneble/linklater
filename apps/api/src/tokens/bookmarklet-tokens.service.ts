@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 
+import { mintRawToken } from './mint-raw-token.js';
 import { Prisma, TokenKind } from '../prisma/index.js';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { mintRawToken } from './mint-raw-token.js';
 
 const BOOKMARKLET_TOKEN_NAME = 'Bookmarklet';
 

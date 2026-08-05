@@ -27,8 +27,8 @@ vi.mock('../useReanchorOnLoad', () => ({
 
 // ─── Imports after mocks ──────────────────────────────────────────────────────
 
-import { useApiTokens } from './useApiTokens';
 import * as apiModule from '../../../lib/api';
+import { useApiTokens } from './useApiTokens';
 import type { ApiToken, CreatedApiToken } from '../../../lib/api';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

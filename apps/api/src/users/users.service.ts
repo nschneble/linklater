@@ -6,11 +6,11 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 
-import { Prisma, PrismaService } from '../prisma/index.js';
 import { assertValidCustomTheme } from './custom-theme.js';
-import { withoutPasswordHash } from './users.utils.js';
-import { VALID_MODES, VALID_THEMES } from './users.constants.js';
 import * as bcrypt from 'bcryptjs';
+import { Prisma, PrismaService } from '../prisma/index.js';
+import { VALID_MODES, VALID_THEMES } from './users.constants.js';
+import { withoutPasswordHash } from './users.utils.js';
 
 export { VALID_MODES, VALID_THEMES };
 

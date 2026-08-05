@@ -11,9 +11,9 @@
  * 3. Clicking invokes onCopy; surface forwards to the IconButton.
  */
 
+import CopyButton from './CopyButton';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
-import CopyButton from './CopyButton';
 
 describe('CopyButton', () => {
   it('defaults the visible text to "Copy to clipboard"', () => {

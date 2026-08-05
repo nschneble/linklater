@@ -6,9 +6,9 @@
  * `<br/>` table transform in rehypeBreakTags.test.tsx.
  */
 
-import { render, screen, within } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { MemoryRouter } from 'react-router';
+import { render, screen, within } from '@testing-library/react';
 import type { User } from '../../auth/AuthContext/types';
 
 // auth drives the visual branch (brand chrome vs active theme); mock it

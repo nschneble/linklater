@@ -7,9 +7,9 @@
  * per-document copy on top of this shared contract.
  */
 
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { MemoryRouter } from 'react-router';
+import { render, screen } from '@testing-library/react';
 import type { Components } from 'react-markdown';
 import type { User } from '../../auth/AuthContext/types';
 

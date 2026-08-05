@@ -1,10 +1,10 @@
-import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service.js';
+import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
 import { CustomThrottlerGuard } from './custom-throttler.guard.js';
-import { ThrottleMessage } from './throttle-message.decorator.js';
 import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
+import { Throttle } from '@nestjs/throttler';
+import { ThrottleMessage } from './throttle-message.decorator.js';
 import { VerifyEmailDto } from './dto/verify-email.dto.js';
 
 /**

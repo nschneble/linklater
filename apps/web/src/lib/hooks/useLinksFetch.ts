@@ -1,7 +1,7 @@
 import { fetchParametersReducer } from './useLinksData.reducer';
-import { getLinks, type Link, type PaginatedLinks } from '../api';
-import { getErrorMessage } from '../errors';
 import { findNewLinks, mergeSettledMetadata } from './linksData.utils';
+import { getErrorMessage } from '../errors';
+import { getLinks, type Link, type PaginatedLinks } from '../api';
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { LinksFilter } from './types';

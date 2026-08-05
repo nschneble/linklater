@@ -14,10 +14,10 @@
  *   - ←    → `closeFlyout`      (same)                          → trigger refocused
  */
 
-import UserMenu from './index';
-import { ThemeProvider } from '../../theme/ThemeContext';
-import { fireEvent, render } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent, render } from '@testing-library/react';
+import { ThemeProvider } from '../../theme/ThemeContext';
+import UserMenu from './index';
 import type { AppView } from '../../lib/navigation';
 import type { User } from '../../auth/AuthContext';
 

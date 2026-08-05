@@ -1,7 +1,7 @@
-import { useNavigate } from 'react-router';
 import IconButton from '../common/IconButton';
 import PixelArtGhost from './PixelArtGhost';
 import SuggestionCallout from '../links/SuggestionCallout';
+import { useNavigate } from 'react-router';
 
 /**
  * Full-page empty state shown by `StumblePage` when the user has no

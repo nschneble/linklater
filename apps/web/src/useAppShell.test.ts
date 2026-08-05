@@ -33,11 +33,11 @@ vi.mock('./lib/api', () => ({
   updateMe: vi.fn().mockResolvedValue({}),
 }));
 
-import { useAuth } from './auth/AuthContext';
-import { useTheme } from './theme/ThemeContext';
-import { useAppShell } from './useAppShell';
-import { useLocation, useNavigate } from 'react-router';
 import { setShortcutsEnabled } from './lib/hooks/useShortcutsEnabled';
+import { useAppShell } from './useAppShell';
+import { useAuth } from './auth/AuthContext';
+import { useLocation, useNavigate } from 'react-router';
+import { useTheme } from './theme/ThemeContext';
 
 function makeUser(overrides = {}) {
   return {

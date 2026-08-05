@@ -1,7 +1,7 @@
-import { isIP, type LookupFunction } from 'node:net';
-import { lookup as dnsLookup } from 'node:dns/promises';
 import { Agent, fetch as undiciFetch } from 'undici';
+import { isIP, type LookupFunction } from 'node:net';
 import { isPrivateAddress, isPrivateHost } from './private-host.js';
+import { lookup as dnsLookup } from 'node:dns/promises';
 
 /**
  * SSRF-hardened fetch for the metadata worker.

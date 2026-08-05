@@ -1,5 +1,5 @@
-import { actionGuardInitialFocusProps } from '../../../lib/hooks/useFocusFirstButton';
 import ActionGuard from '../../common/ActionGuard';
+import { actionGuardInitialFocusProps } from '../../../lib/hooks/useFocusFirstButton';
 import IconButton from '../../common/IconButton';
 import type { ProviderRowProps } from './types';
 

@@ -5,9 +5,9 @@
  * CVD mode), and the optimistic flip rolls back when the persist fails.
  */
 
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import DyslexicFontToggle from './DyslexicFontToggle';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { updateMe } from '../../lib/api';
 
 vi.mock('../../lib/api', () => ({ updateMe: vi.fn() }));

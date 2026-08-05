@@ -1,6 +1,6 @@
-import { IsUrl } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsPublicUrl } from '../../common/index.js';
+import { IsUrl } from 'class-validator';
 
 /** Request body for POST /links. */
 export class CreateLinkDto {

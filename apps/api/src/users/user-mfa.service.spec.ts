@@ -1,7 +1,7 @@
-import { jest } from '@jest/globals';
-import { UnauthorizedException } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
 import * as bcrypt from 'bcryptjs';
+import { jest } from '@jest/globals';
+import { Test, TestingModule } from '@nestjs/testing';
+import { UnauthorizedException } from '@nestjs/common';
 
 jest.mock('../prisma/prisma.service', () => ({
   PrismaService: jest.fn().mockImplementation(() => ({})),

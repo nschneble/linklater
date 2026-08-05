@@ -8,8 +8,8 @@
  * skip-link/main contract and away from their router dependencies.
  */
 
-import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
 
 vi.mock('./HeroSection', () => ({
   default: () => <div data-testid="hero-section" />,

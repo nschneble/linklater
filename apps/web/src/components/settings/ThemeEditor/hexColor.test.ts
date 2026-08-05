@@ -7,8 +7,8 @@
  * 8-digit alpha hex pass through untouched; true garbage stays invalid.
  */
 
-import { isValidColorValue, normalizeToSixDigitHex } from './hexColor';
 import { describe, expect, it } from 'vitest';
+import { isValidColorValue, normalizeToSixDigitHex } from './hexColor';
 
 describe('normalizeToSixDigitHex – # prefix is optional (Postel’s Law)', () => {
   it('prepends # to a bare 6-digit hex body', () => {

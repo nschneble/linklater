@@ -1,8 +1,8 @@
-import { Global, Module } from '@nestjs/common';
-import { PGBOSS_INSTANCE } from './queue.constants.js';
-import { PgBoss } from 'pg-boss';
-import { QueueService } from './queue.service.js';
 import * as dotenv from 'dotenv';
+import { Global, Module } from '@nestjs/common';
+import { PgBoss } from 'pg-boss';
+import { PGBOSS_INSTANCE } from './queue.constants.js';
+import { QueueService } from './queue.service.js';
 
 dotenv.config();
 

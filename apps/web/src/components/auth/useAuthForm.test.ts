@@ -7,8 +7,8 @@
  */
 
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MemoryRouter } from 'react-router';
 import type { FormEvent } from 'react';
 
 // ─── Module mocks ────────────────────────────────────────────────────────────
@@ -31,10 +31,10 @@ vi.mock('../../lib/pendingNotice', () => ({
 
 // ─── Imports after mocks ─────────────────────────────────────────────────────
 
-import { useAuthForm } from './useAuthForm';
-import { useAuth } from '../../auth/AuthContext';
-import * as pendingNoticeModule from '../../lib/pendingNotice';
 import * as apiModule from '../../lib/api';
+import * as pendingNoticeModule from '../../lib/pendingNotice';
+import { useAuth } from '../../auth/AuthContext';
+import { useAuthForm } from './useAuthForm';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

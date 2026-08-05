@@ -1,9 +1,9 @@
 import { jest } from '@jest/globals';
 
-import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from '../auth/auth.service';
 import { CustomThrottlerGuard } from '../auth/custom-throttler.guard';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Test, TestingModule } from '@nestjs/testing';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 

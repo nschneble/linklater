@@ -1,5 +1,5 @@
-import { jest } from '@jest/globals';
 import { isTestingUi, assertTestingUiNotInProduction } from './testing-ui.js';
+import { jest } from '@jest/globals';
 
 describe('isTestingUi', () => {
   const originalEnv = process.env.TESTING_UI;

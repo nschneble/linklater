@@ -19,8 +19,8 @@
  * at the module boundary, mirroring `useAppShell.test.ts`.
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 vi.mock('./auth/AuthContext', () => ({
   useAuth: vi.fn(),
@@ -76,8 +76,8 @@ vi.mock('./components/welcome/WelcomeModal', () => ({
 
 import AppShell from './AppShell';
 import { useAuth } from './auth/AuthContext';
-import { useTheme } from './theme/ThemeContext';
 import { useLocation, useNavigate } from 'react-router';
+import { useTheme } from './theme/ThemeContext';
 
 function makeUser(overrides = {}) {
   return {

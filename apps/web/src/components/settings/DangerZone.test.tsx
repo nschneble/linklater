@@ -9,7 +9,6 @@
  *                idle → confirming → email-sent → (never-mind → idle)
  */
 
-import DangerZone from './DangerZone';
 import {
   act,
   fireEvent,
@@ -17,8 +16,9 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import DangerZone from './DangerZone';
+import { MemoryRouter } from 'react-router';
 import { useEffect, useState } from 'react';
 import type { User } from '../../auth/AuthContext/types';
 

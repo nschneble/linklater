@@ -9,12 +9,12 @@
  * from the semantics, because it is the same attribute.
  */
 
-import { readFileSync } from 'node:fs';
-import { createRequire } from 'node:module';
-import { dirname, resolve } from 'node:path';
 import { compile } from 'tailwindcss';
+import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
+import { dirname, resolve } from 'node:path';
 import { makePolicyMarkdownComponents } from './policyMarkdownComponents';
+import { readFileSync } from 'node:fs';
 
 const requireFromHere = createRequire(import.meta.url);
 

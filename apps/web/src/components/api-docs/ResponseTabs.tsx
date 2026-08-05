@@ -1,8 +1,8 @@
-import CodeBlock from '../common/CodeBlock';
-import SchemaTable from './SchemaTable';
 import { buildExampleFromSchema } from '../../lib/apiDocs/buildExampleFromSchema';
+import CodeBlock from '../common/CodeBlock';
 import { endpointHeadingId } from './endpointId';
 import { FOCUS_RING } from '../../lib/styles';
+import SchemaTable from './SchemaTable';
 import { useRef, useState } from 'react';
 import { useTabNavigation } from '../../lib/hooks/useTabNavigation';
 import type { NormalizedEndpoint, NormalizedResponse } from '../../lib/openapi';

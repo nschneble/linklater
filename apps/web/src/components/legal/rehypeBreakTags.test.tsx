@@ -5,11 +5,11 @@
  * undocumented, so this also tripwires react-markdown upgrades.
  */
 
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { describe, expect, it } from 'vitest';
-import { render } from '@testing-library/react';
+import ReactMarkdown from 'react-markdown';
 import { rehypeBreakTags } from './rehypeBreakTags';
+import remarkGfm from 'remark-gfm';
+import { render } from '@testing-library/react';
 
 function renderMarkdown(markdown: string) {
   return render(

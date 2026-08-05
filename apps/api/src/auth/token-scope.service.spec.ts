@@ -1,10 +1,10 @@
-import { jest } from '@jest/globals';
 import { ForbiddenException } from '@nestjs/common';
+import { jest } from '@jest/globals';
 import { ThrottlerException } from '@nestjs/throttler';
 
 import { Reflector } from '@nestjs/core';
-import { TokenScopeService } from './token-scope.service';
 import { TokenKind } from '../prisma/index';
+import { TokenScopeService } from './token-scope.service';
 import type { ExecutionContext } from '@nestjs/common';
 import type { ThrottlerStorage } from '@nestjs/throttler';
 

@@ -23,7 +23,6 @@
  * Shared color parsing + WCAG helpers live in bundles-color-utils.ts.
  */
 
-import { describe, expect, it } from 'vitest';
 import {
   BUNDLES,
   BUNDLES_CSS,
@@ -40,6 +39,7 @@ import {
   readPageBg,
   resolveFg,
 } from './bundles-color-utils';
+import { describe, expect, it } from 'vitest';
 import type { Rgb, Slot } from './bundles-color-utils';
 
 const AA_NORMAL = 4.5;

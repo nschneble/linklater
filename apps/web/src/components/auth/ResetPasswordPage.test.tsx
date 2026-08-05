@@ -17,7 +17,6 @@
  * pending-notice mirror.
  */
 
-import ResetPasswordPage from './ResetPasswordPage';
 import {
   act,
   fireEvent,
@@ -25,8 +24,9 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { MemoryRouter } from 'react-router';
+import ResetPasswordPage from './ResetPasswordPage';
 
 // ─── Module mocks ─────────────────────────────────────────────────────────────
 

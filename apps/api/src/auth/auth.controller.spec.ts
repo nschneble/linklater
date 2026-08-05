@@ -1,21 +1,21 @@
 import { jest } from '@jest/globals';
 
-import { Test, TestingModule } from '@nestjs/testing';
-import { CustomThrottlerGuard } from './custom-throttler.guard';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { CustomThrottlerGuard } from './custom-throttler.guard';
+import { EmailVerificationService } from './email-verification.service';
 import { ExtensionAuthController } from './extension-auth.controller';
 import { ExtensionAuthService } from './extension-auth.service';
-import { LocalAuthGuard } from './local-auth.guard';
-import { EmailVerificationService } from './email-verification.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { LocalAuthGuard } from './local-auth.guard';
 import { MagicLinkController } from './magic-link.controller';
 import { MfaAuthGuard } from './mfa-auth.guard';
+import { MultiFactorController } from './multi-factor.controller';
 import { OAuthLinkController } from './oauth-link.controller';
 import { OAuthLinkService } from './oauth-link.service';
 import { OAuthSignInController } from './oauth-sign-in.controller';
+import { Test, TestingModule } from '@nestjs/testing';
 import { TotpService } from './totp.service';
-import { MultiFactorController } from './multi-factor.controller';
 
 const ACCESS_TOKEN = 'token';
 const SITE_MODE = 'dark';

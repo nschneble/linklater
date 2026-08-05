@@ -1,9 +1,9 @@
+import { afterEach, describe, expect, it } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
-import { afterEach, describe, expect, it } from 'vitest';
 
-import KeyboardShortcutsToggle from './KeyboardShortcutsToggle';
 import { KEYBOARD_SHORTCUTS_KEY } from '../../lib/hooks/useShortcutsEnabled';
+import KeyboardShortcutsToggle from './KeyboardShortcutsToggle';
 
 function renderToggle() {
   return render(

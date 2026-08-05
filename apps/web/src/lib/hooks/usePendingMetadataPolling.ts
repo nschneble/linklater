@@ -1,6 +1,6 @@
+import { createMetadataPollLoop } from './usePendingMetadataPolling.loop';
 import { getLink } from '../api';
 import { isMetadataPending, isMetadataSettled } from './linksData.utils';
-import { createMetadataPollLoop } from './usePendingMetadataPolling.loop';
 import { METADATA_POLL_TIMING } from './usePendingMetadataPolling.loop.timing';
 import { useEffect, useRef } from 'react';
 import type { Link } from '../api';

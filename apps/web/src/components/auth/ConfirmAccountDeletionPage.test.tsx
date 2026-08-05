@@ -13,10 +13,10 @@
  * notice as an assertive toast.
  */
 
-import ConfirmAccountDeletionPage from './ConfirmAccountDeletionPage';
 import { act, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import ConfirmAccountDeletionPage from './ConfirmAccountDeletionPage';
+import { MemoryRouter } from 'react-router';
 
 // ─── Module mocks ─────────────────────────────────────────────────────────────
 

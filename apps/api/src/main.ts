@@ -1,7 +1,3 @@
-import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { AppModule } from './app.module.js';
 import {
   applySecurityHeaders,
   assertTestingUiNotInProduction,
@@ -9,10 +5,14 @@ import {
   parseCorsOrigin,
   validateRequiredEnvVars,
 } from './common/index.js';
-import { LinksModule } from './links/links.module.js';
+import { AppModule } from './app.module.js';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { existsSync, readFileSync } from 'fs';
-import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { join, dirname } from 'path';
+import { LinksModule } from './links/links.module.js';
+import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import type { Request, Response, NextFunction } from 'express';
 

@@ -1,5 +1,5 @@
-import { FOCUS_RING } from '../../lib/styles';
 import { createPortal } from 'react-dom';
+import { FOCUS_RING } from '../../lib/styles';
 import { useEffect, useImperativeHandle, useRef } from 'react';
 import { useFocusReturn } from '../../lib/hooks/useFocusReturn';
 import { useFocusTrap } from '../../lib/hooks/useFocusTrap';

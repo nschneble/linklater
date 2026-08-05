@@ -1,6 +1,6 @@
-import { jest } from '@jest/globals';
 import { BadRequestException } from '@nestjs/common';
 import { generateLinkState } from './oauth-link-state';
+import { jest } from '@jest/globals';
 
 // set env before GoogleLinkStrategy import; constructor reads it eagerly
 process.env.GOOGLE_CLIENT_ID = 'test-client-id';

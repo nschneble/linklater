@@ -1,5 +1,5 @@
-import { jest } from '@jest/globals';
 import { CompactLogger } from './compact-logger.js';
+import { jest } from '@jest/globals';
 
 describe('CompactLogger', () => {
   let logger: CompactLogger;

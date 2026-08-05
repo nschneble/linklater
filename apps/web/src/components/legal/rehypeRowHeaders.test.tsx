@@ -8,11 +8,11 @@
  * nothing, and looks like it worked. Only a real render catches that.
  */
 
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { describe, expect, it } from 'vitest';
-import { render } from '@testing-library/react';
+import ReactMarkdown from 'react-markdown';
 import { rehypeRowHeaders } from './rehypeRowHeaders';
+import remarkGfm from 'remark-gfm';
+import { render } from '@testing-library/react';
 
 const TABLE_MARKDOWN = [
   '| Purpose | Data used | Legal basis |',

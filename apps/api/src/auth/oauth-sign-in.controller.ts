@@ -1,12 +1,12 @@
-import { Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service.js';
+import { Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
 import {
   createOAuthCallbackGuard,
   createOAuthInitiateGuard,
 } from './oauth-csrf.guard.js';
-import type { Response } from 'express';
 import type { AuthRequest } from './auth-request.type.js';
+import type { Response } from 'express';
 
 /**
  * OAuth sign-in flows (Google, Apple). Kept on the shared `auth` route prefix

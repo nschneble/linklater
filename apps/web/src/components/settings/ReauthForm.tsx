@@ -1,9 +1,9 @@
-import { useEffect, useId, useRef } from 'react';
 import Alert from '../common/Alert';
+import { formatTotpCode } from '../../lib/totpCode';
 import FormInput from '../common/FormInput';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
-import { formatTotpCode } from '../../lib/totpCode';
+import { useEffect, useId, useRef } from 'react';
 import type { FormEvent } from 'react';
 
 // TOTP = up to 6 digits; a hyphen or letter marks a recovery code

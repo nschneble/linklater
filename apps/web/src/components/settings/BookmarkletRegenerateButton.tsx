@@ -1,6 +1,6 @@
 import ActionGuard from '../common/ActionGuard';
-import IconButton from '../common/IconButton';
 import { actionGuardInitialFocusProps } from '../../lib/hooks/useFocusFirstButton';
+import IconButton from '../common/IconButton';
 
 interface BookmarkletRegenerateButtonProps {
   /**

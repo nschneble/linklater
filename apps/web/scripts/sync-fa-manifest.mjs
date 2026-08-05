@@ -15,8 +15,6 @@
 // the file is left untouched and the exit message says "no changes". Lets
 // `subset-fa` chain it without dirtying the working tree on every build.
 
-import { readFile, writeFile } from 'node:fs/promises';
-import prettier from 'prettier';
 import {
   NON_ICON_UTILITY_PREFIXES,
   loadCatalogs,
@@ -25,6 +23,8 @@ import {
   scanRegularNames,
   scanSources,
 } from './fa-scan.mjs';
+import prettier from 'prettier';
+import { readFile, writeFile } from 'node:fs/promises';
 
 /**
  * Build the next manifest from the scan + catalogs + current manifest.

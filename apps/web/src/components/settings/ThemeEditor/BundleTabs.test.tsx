@@ -8,10 +8,6 @@
  * panel + roving tabindex track the selection.
  */
 
-import BundleTabs from './BundleTabs';
-import { fireEvent, render, screen, within } from '@testing-library/react';
-import { useState } from 'react';
-import { describe, expect, it, vi } from 'vitest';
 import {
   BUNDLES,
   EDITABLE_VARS,
@@ -19,6 +15,10 @@ import {
   type Bundle,
   type ThemeVariable,
 } from './useThemeOverrides';
+import BundleTabs from './BundleTabs';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, within } from '@testing-library/react';
+import { useState } from 'react';
 import type { TokenContrastFailure } from './contrastResults';
 
 const A_FAILURE: TokenContrastFailure = {

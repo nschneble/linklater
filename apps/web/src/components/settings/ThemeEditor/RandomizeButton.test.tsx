@@ -5,9 +5,9 @@
  * mechanism; the die stays aria-hidden so the spin carries no semantic load.
  */
 
-import RandomizeButton from './RandomizeButton';
-import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import RandomizeButton from './RandomizeButton';
 
 function getDie() {
   return screen.getByTestId('randomize-die');

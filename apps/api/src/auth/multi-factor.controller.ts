@@ -1,4 +1,11 @@
 import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { AuthService } from './auth.service.js';
+import {
   Body,
   Controller,
   Delete,
@@ -7,21 +14,14 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
-import { AuthService } from './auth.service.js';
 import { CustomThrottlerGuard } from './custom-throttler.guard.js';
+import { DisableMfaDto } from './dto/disable-mfa.dto.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { MfaAuthGuard } from './mfa-auth.guard.js';
+import { RegenerateRecoveryCodesDto } from './dto/regenerate-recovery-codes.dto.js';
+import { Throttle } from '@nestjs/throttler';
 import { ThrottleMessage } from './throttle-message.decorator.js';
 import { TotpService } from './totp.service.js';
-import { DisableMfaDto } from './dto/disable-mfa.dto.js';
-import { RegenerateRecoveryCodesDto } from './dto/regenerate-recovery-codes.dto.js';
 import { TotpVerifySetupDto } from './dto/totp-verify-setup.dto.js';
 import { VerifyOtpDto } from './dto/verify-otp.dto.js';
 import type { AuthRequest } from './auth-request.type.js';

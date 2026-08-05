@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
 import { isSafeRedirectUrl } from '../safe-redirect-url';
+import { useEffect, useState } from 'react';
 import type { Link } from '../api';
 import type { LinksFilter } from './types';
 

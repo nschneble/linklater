@@ -1,11 +1,11 @@
-import { useRef } from 'react';
-import { render } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   ACTION_GUARD_INITIAL_FOCUS_ATTRIBUTE,
   actionGuardInitialFocusProps,
   useFocusFirstButton,
 } from './useFocusFirstButton';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { render } from '@testing-library/react';
+import { useRef } from 'react';
 
 // safe button (Cancel) carries the marker; focus follows it, not DOM order
 function Harness({ isActive }: { isActive: boolean }) {

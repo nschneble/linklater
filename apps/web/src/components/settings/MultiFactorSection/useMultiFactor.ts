@@ -1,4 +1,3 @@
-import { useAuth } from '../../../auth/AuthContext';
 import {
   cancelTotpSetup,
   disableMfa,
@@ -7,6 +6,7 @@ import {
   verifyTotpSetup,
 } from '../../../lib/api';
 import { getErrorMessage } from '../../../lib/errors';
+import { useAuth } from '../../../auth/AuthContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 

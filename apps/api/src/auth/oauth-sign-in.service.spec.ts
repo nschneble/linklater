@@ -14,9 +14,9 @@ jest.mock('../prisma/generated/client', () => ({
   },
 }));
 
+import { Prisma } from '../prisma/generated/client';
 import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException } from '@nestjs/common';
-import { Prisma } from '../prisma/generated/client';
 
 import { OAuthSignInService } from './oauth-sign-in.service';
 import { UserOAuthService } from '../users/user-oauth.service';

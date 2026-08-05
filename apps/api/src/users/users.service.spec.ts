@@ -1,5 +1,5 @@
-import { jest } from '@jest/globals';
 import * as bcrypt from 'bcryptjs';
+import { jest } from '@jest/globals';
 
 import {
   BadRequestException,

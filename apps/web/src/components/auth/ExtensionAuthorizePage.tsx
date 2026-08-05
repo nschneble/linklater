@@ -1,9 +1,9 @@
+import { FOCUS_RING } from '../../lib/styles';
 import IconButton from '../common/IconButton';
 import PrimaryButton from '../common/PrimaryButton';
-import { FOCUS_RING } from '../../lib/styles';
 import { useAuth } from '../../auth/AuthContext';
-import { useState } from 'react';
 import { useSearchParams } from 'react-router';
+import { useState } from 'react';
 
 type Status = 'idle' | 'authorizing';
 

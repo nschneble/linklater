@@ -10,9 +10,9 @@
  *   - Empty state: no error, no providers shown → returns null
  */
 
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import IdPsSection from '.';
 import { render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { User } from '../../../auth/AuthContext/types';
 
 // ─── Module mocks ─────────────────────────────────────────────────────────────

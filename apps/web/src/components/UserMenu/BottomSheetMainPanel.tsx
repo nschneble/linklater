@@ -1,8 +1,8 @@
-import { THEMES } from '../../theme/ThemeContext';
 import { FOCUS_RING } from '../../lib/styles';
 import MenuItem from './MenuItem';
 import MenuSection from './MenuSection';
 import NavMenuItems from './NavMenuItems';
+import { THEMES } from '../../theme/ThemeContext';
 import type { AppView } from '../../lib/navigation';
 import type { BaseTheme, Mode } from '../../theme/ThemeContext';
 import type { RefObject } from 'react';

@@ -1,6 +1,6 @@
-import termsMarkdown from '../../../../../docs/TERMS.md?raw';
 import { makePolicyMarkdownComponents } from '../legal/policyMarkdownComponents';
 import PolicyDocumentPage from '../legal/PolicyDocumentPage';
+import termsMarkdown from '../../../../../docs/TERMS.md?raw';
 
 const termsMarkdownComponents = makePolicyMarkdownComponents();
 

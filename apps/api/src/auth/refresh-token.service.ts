@@ -1,6 +1,6 @@
+import { expiresInMs, generateHexToken, sha256Hex } from '../common/index.js';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { expiresInMs, generateHexToken, sha256Hex } from '../common/index.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 /**

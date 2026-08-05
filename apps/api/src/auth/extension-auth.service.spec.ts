@@ -4,8 +4,8 @@ import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { ExtensionAuthService } from './extension-auth.service';
-import { RefreshTokenService } from './refresh-token.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { RefreshTokenService } from './refresh-token.service';
 
 const ACCESS_TOKEN = 'access-token';
 const REFRESH_TOKEN = 'refresh-token';

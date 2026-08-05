@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
 import { capitalizeFirst, stripHtml } from './strings';
+import { describe, expect, it } from 'vitest';
 
 describe('capitalizeFirst', () => {
   it('capitalizes the first letter of a lowercase string', () => {

@@ -1,5 +1,5 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 
 /**
  * Guards a route by validating the `Authorization: Bearer <token>` header

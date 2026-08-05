@@ -1,9 +1,9 @@
 import ErrorBoundary from './components/errors/ErrorBoundary';
 import Header from './components/Header';
+import { lazy, Suspense } from 'react';
 import LinkButton from './components/common/LinkButton';
 import LinksView from './components/links/LinksView';
 import SettingsView from './components/settings/SettingsView';
-import { lazy, Suspense } from 'react';
 import { useAppShell } from './useAppShell';
 
 // lazy-loaded: rarely visited, its color-math is heavy in the bundle

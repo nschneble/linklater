@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { PassportStrategy } from '@nestjs/passport';
 import AppleStrategyLib from '@nicokaiser/passport-apple';
-import { requireEnv } from '../common/index.js';
+import { Injectable } from '@nestjs/common';
 import { OAuthSignInService } from './oauth-sign-in.service.js';
+import { PassportStrategy } from '@nestjs/passport';
+import { requireEnv } from '../common/index.js';
 
 const APPLE_PARAMS = [
   'CALLBACK_URL',

@@ -11,11 +11,11 @@
  * always-readable app theme.
  */
 
-import ComponentShowcase, { BUNDLE_EXPLANATIONS } from './ComponentShowcase';
-import { MOCK_GLYPHS, MOCK_STATUS_GLYPHS } from './mockGlyphs';
 import { BUNDLES, type Bundle } from './useThemeOverrides';
-import { render, screen } from '@testing-library/react';
+import ComponentShowcase, { BUNDLE_EXPLANATIONS } from './ComponentShowcase';
 import { describe, expect, it } from 'vitest';
+import { MOCK_GLYPHS, MOCK_STATUS_GLYPHS } from './mockGlyphs';
+import { render, screen } from '@testing-library/react';
 import type { CSSProperties } from 'react';
 import type { Mode } from '../../../theme/constants';
 

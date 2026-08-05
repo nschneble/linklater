@@ -14,12 +14,12 @@
  */
 
 import AuthForm from './AuthForm';
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRef } from 'react';
-import type { RefObject } from 'react';
+import { MemoryRouter } from 'react-router';
+import { render, screen } from '@testing-library/react';
 import type { MfaChallenge, Mode } from './useAuthForm';
+import type { RefObject } from 'react';
 
 // ─── Module mocks ─────────────────────────────────────────────────────────────
 

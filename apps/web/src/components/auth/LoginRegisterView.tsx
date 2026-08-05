@@ -1,10 +1,10 @@
 import Alert from '../common/Alert';
+import AuthCard from './AuthCard';
 import FormInput from '../common/FormInput';
 import IconButton from '../common/IconButton';
 import LinkButton from '../common/LinkButton';
 import PrimaryButton from '../common/PrimaryButton';
 import SlidingTabBar from '../common/SlidingTabBar';
-import AuthCard from './AuthCard';
 import { useNavigate } from 'react-router';
 import type { FormEvent, RefObject } from 'react';
 

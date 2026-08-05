@@ -1,6 +1,6 @@
+import { EmailService } from './email.service.js';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { QueueService, QUEUES } from '../queue/index.js';
-import { EmailService } from './email.service.js';
 import type { SendOptions } from 'pg-boss';
 
 /**
