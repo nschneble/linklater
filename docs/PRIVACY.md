@@ -56,11 +56,14 @@ trackers, and we do **not** display ads.
 | ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------- | -------------------------------------------------------------------- |
 | Creating and maintaining your account                                                                            | Email, password hash, Google account info     | Performance of a contract<br/>Art. 6(1)(b)                             |
 | Storing and displaying your saved links                                                                          | Saved links, fetched page metadata            | Performance of a contract<br/>Art. 6(1)(b)                             |
-| Sending transactional email, such as account verification, password resets, magic sign-in links, and account deletion confirmations | Email                                         | Performance of a contract<br/>Art. 6(1)(b)                             |
+| Sending transactional email                                                                                      | Email                                         | Performance of a contract<br/>Art. 6(1)(b)                             |
 | Keeping you signed in and remembering preferences                                                                   | Cookies, local storage, auth tokens | Performance of a contract / legitimate interests<br/>Art. 6(1)(b), (f) |
 | Account security, including two-factor authentication                                                            | TOTP secret, recovery codes, token data       | Performance of a contract / legitimate interests<br/>Art. 6(1)(b), (f) |
 | Security, fraud prevention, and debugging                                                                            | Server logs, IP address                       | Legitimate interests<br/>Art. 6(1)(f)                                  |
 | Complying with legal obligations                                                                                 | Any of the above, as required                 | Legal obligation<br/>Art. 6(1)(c)                                      |
+
+Transactional email covers account verification, password resets, magic
+sign-in links, and account deletion confirmations.
 
 We do not use your information for marketing, profiling, or automated
 decision-making that produces legal or similarly significant effects.
