@@ -730,6 +730,14 @@ function passingTokens(): Record<string, string> {
 }
 
 describe('ThemeEditor contrast status icon (title row)', () => {
+  // these cases swap the probe for a real palette; put the module-level stub
+  // back so the seeding tests after them still see their expected seed
+  afterEach(() => {
+    vi.mocked(readThemeTokens).mockImplementation(
+      (theme: string, mode: string) => ({ '--mount-bg': `${theme}-${mode}` }),
+    );
+  });
+
   it('shows a non-interactive check glyph when the palette is contrast-clean', () => {
     vi.mocked(readThemeTokens).mockReturnValue(passingTokens());
 
@@ -746,12 +754,13 @@ describe('ThemeEditor contrast status icon (title row)', () => {
   });
 
   it('refuses to claim conformance over pairs it could not measure', () => {
-    // a translucent background makes every pair touching it unmeasurable.
-    // Those used to be skipped, so this palette reported "meets minimum
-    // contrast" to a screen reader user over pairs nothing had measured.
+    // the page background is the root of every backdrop chain, so a
+    // translucent one has nothing behind it to composite against. Pairs
+    // touching it used to be skipped, and this palette then reported "meets
+    // minimum contrast" over pairs nothing had measured.
     vi.mocked(readThemeTokens).mockReturnValue({
       ...passingTokens(),
-      '--mount-bg': '#ffffff0d',
+      '--base-bg': '#ffffff0d',
     });
 
     render(<ThemeEditor />);

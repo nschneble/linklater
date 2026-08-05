@@ -6,6 +6,7 @@ import {
   type ThemeVariable,
 } from './useThemeOverrides';
 import { contrastRatio } from '../../../theme/colorMath';
+import { evaluatePair } from './contrastResults.evaluate';
 import { useMemo } from 'react';
 import type { Rgb } from '../../../theme/colorMath';
 
@@ -16,11 +17,19 @@ import type { Rgb } from '../../../theme/colorMath';
  * edited. The rows all read this SINGLE source of truth so they can never
  * disagree.
  *
- * The governing invariant: an edit to token X can only change the contrast of
- * pairs that TOUCH X, so surfacing each failing pair on BOTH its endpoints
- * (`pairsTouchingToken`) guarantees the warning lands on whichever slot row the
- * user just edited. `contrastResults.test.ts` mechanizes the completeness of
- * that coverage (the C1 invariant).
+ * The governing invariant (C1): a pair's ratio is a pure function of the
+ * tokens the measurement actually CONSUMED, so an edit to token X can only
+ * move pairs where X is among them. Surfacing each failing pair on every
+ * token it read guarantees the warning lands on whichever slot row the user
+ * just edited.
+ *
+ * "Consumed" rather than "declared" is what keeps this tight. Compositing
+ * stops at the first opaque backdrop, so on an opaque palette a pair reads
+ * exactly its two endpoints and the keying is identical to the two-endpoint
+ * rule this replaced. A backdrop only enters the picture when something above
+ * it is genuinely translucent. `contrastResults.test.ts` mechanizes it
+ * differentially: perturb each token, and assert everything that moved had
+ * declared it.
  */
 
 /** A foreground/background color pair to test for WCAG contrast compliance. */
@@ -194,7 +203,12 @@ interface GroupResult {
   /** A bundle id, or the synthetic `'focus'` group id. */
   group: Bundle | 'focus';
   label: string;
-  pairs: Array<{ pair: ContrastPair; ratio: number | null }>;
+  pairs: Array<{
+    pair: ContrastPair;
+    ratio: number | null;
+    /** Tokens the measurement consumed; absent means just the two endpoints. */
+    reads?: ReadonlySet<string>;
+  }>;
   /** Pairs whose ratio resolved AND fell below threshold. */
   failureCount: number;
   /** Pairs whose ratio could not be computed (alpha / unset token). */
@@ -326,10 +340,13 @@ export function pairsTouchingToken(
     });
   };
   for (const group of results.groups) {
-    for (const { pair, ratio } of group.pairs) {
+    for (const { pair, ratio, reads } of group.pairs) {
       if (ratio === null || ratio >= pair.threshold) continue;
-      consider(pair.foreground, ratio, pair);
-      consider(pair.background, ratio, pair);
+      // every token the ratio READ can move it back over threshold, backdrops
+      // included; on an opaque palette that is exactly the two endpoints
+      for (const token of reads ?? [pair.foreground, pair.background]) {
+        consider(token, ratio, pair);
+      }
     }
   }
   return failures;
@@ -359,24 +376,21 @@ export function useContrastResults(
   colorValues: Record<ThemeVariable, string>,
 ): ContrastResults {
   return useMemo(() => {
-    const bundleGroups: GroupResult[] = BUNDLES.map((bundle) => {
-      const pairs = pairsForBundle(bundle).map((pair) => ({
-        pair,
-        ratio: computeContrastRatio(
-          resolveValue(pair.foreground, colorValues),
-          resolveValue(pair.background, colorValues),
-        ),
-      }));
-      return buildGroup(bundle, labelFor(bundle), pairs);
-    });
+    const resolve = (token: string) => resolveValue(token, colorValues);
+    const measure = (pair: ContrastPair) => {
+      const evaluation = evaluatePair(
+        pair.foreground,
+        pair.background,
+        resolve,
+      );
+      return { pair, ratio: evaluation.ratio, reads: evaluation.reads };
+    };
 
-    const focusPairs = focusRingPairs().map((pair) => ({
-      pair,
-      ratio: computeContrastRatio(
-        resolveValue(pair.foreground, colorValues),
-        resolveValue(pair.background, colorValues),
-      ),
-    }));
+    const bundleGroups: GroupResult[] = BUNDLES.map((bundle) =>
+      buildGroup(bundle, labelFor(bundle), pairsForBundle(bundle).map(measure)),
+    );
+
+    const focusPairs = focusRingPairs().map(measure);
     const focusGroup = buildGroup('focus', 'Focus ring', focusPairs);
 
     const groups = [...bundleGroups, focusGroup];
@@ -398,7 +412,11 @@ function labelFor(bundle: Bundle): string {
 function buildGroup(
   group: Bundle | 'focus',
   label: string,
-  pairs: Array<{ pair: ContrastPair; ratio: number | null }>,
+  pairs: Array<{
+    pair: ContrastPair;
+    ratio: number | null;
+    reads?: ReadonlySet<string>;
+  }>,
 ): GroupResult {
   return {
     group,
