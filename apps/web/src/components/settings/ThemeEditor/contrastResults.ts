@@ -5,7 +5,9 @@ import {
   type Bundle,
   type ThemeVariable,
 } from './useThemeOverrides';
+import { contrastRatio } from '../../../theme/colorMath';
 import { useMemo } from 'react';
+import type { Rgb } from '../../../theme/colorMath';
 
 /**
  * Shared WCAG contrast computation for the theme editor's live contract
@@ -144,21 +146,12 @@ export function focusRingPairs(): ContrastPair[] {
 }
 
 /**
- * Converts a single 8-bit sRGB channel value (0–1) to its linear light
- * equivalent, as specified by the WCAG 2.1 relative luminance formula.
+ * Parses an OPAQUE hex color to its channels. Supports 3- and 6-digit hex,
+ * with or without `#`, and rejects everything else including the 8-digit
+ * alpha form: a translucent color has no luminance of its own, so there is
+ * nothing honest to return for one here.
  */
-function linearizeColorComponent(component: number): number {
-  return component <= 0.03928
-    ? component / 12.92
-    : Math.pow((component + 0.055) / 1.055, 2.4);
-}
-
-/**
- * Computes the WCAG 2.1 relative luminance of a hex color string.
- * Supports 3-digit and 6-digit hex (with or without `#`).
- * Returns `null` if the input is not a parseable hex color.
- */
-function hexToRelativeLuminance(hex: string): number | null {
+function hexToRgb(hex: string): Rgb | null {
   const clean = hex.replace('#', '');
   const expanded =
     clean.length === 3
@@ -170,15 +163,11 @@ function hexToRelativeLuminance(hex: string): number | null {
 
   if (!/^[0-9a-fA-F]{6}$/.test(expanded)) return null;
 
-  const redComponent = parseInt(expanded.substring(0, 2), 16) / 255;
-  const greenComponent = parseInt(expanded.substring(2, 4), 16) / 255;
-  const blueComponent = parseInt(expanded.substring(4, 6), 16) / 255;
-
-  return (
-    0.2126 * linearizeColorComponent(redComponent) +
-    0.7152 * linearizeColorComponent(greenComponent) +
-    0.0722 * linearizeColorComponent(blueComponent)
-  );
+  return [
+    parseInt(expanded.substring(0, 2), 16),
+    parseInt(expanded.substring(2, 4), 16),
+    parseInt(expanded.substring(4, 6), 16),
+  ];
 }
 
 /**
@@ -186,17 +175,19 @@ function hexToRelativeLuminance(hex: string): number | null {
  * if either color is invalid or uses alpha (alpha tokens require composite
  * math the runtime editor does not perform – the compiled bundle tests in
  * `bundles.contrast.test.ts` cover those rigorously).
+ *
+ * The ratio itself comes from `theme/colorMath`, the same module the static
+ * bundle suites measure with, so the number shown to a user editing a theme
+ * and the number CI enforces cannot drift apart.
  */
 export function computeContrastRatio(
   hexA: string,
   hexB: string,
 ): number | null {
-  const luminanceA = hexToRelativeLuminance(hexA);
-  const luminanceB = hexToRelativeLuminance(hexB);
-  if (luminanceA === null || luminanceB === null) return null;
-  const lighter = Math.max(luminanceA, luminanceB);
-  const darker = Math.min(luminanceA, luminanceB);
-  return (lighter + 0.05) / (darker + 0.05);
+  const foreground = hexToRgb(hexA);
+  const background = hexToRgb(hexB);
+  if (foreground === null || background === null) return null;
+  return contrastRatio(foreground, background);
 }
 
 interface GroupResult {
