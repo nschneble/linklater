@@ -71,31 +71,31 @@
           - columnheader "GDPR legal basis"
       - rowgroup:
         - row "Creating and maintaining your account Email, password hash, Google account info Performance of a contract Art. 6(1)(b)":
-          - cell "Creating and maintaining your account"
+          - rowheader "Creating and maintaining your account"
           - cell "Email, password hash, Google account info"
           - cell "Performance of a contract Art. 6(1)(b)"
         - row "Storing and displaying your saved links Saved links, fetched page metadata Performance of a contract Art. 6(1)(b)":
-          - cell "Storing and displaying your saved links"
+          - rowheader "Storing and displaying your saved links"
           - cell "Saved links, fetched page metadata"
           - cell "Performance of a contract Art. 6(1)(b)"
         - row "Sending transactional email, such as account verification, password resets, magic sign-in links, and account deletion confirmations Email Performance of a contract Art. 6(1)(b)":
-          - cell "Sending transactional email, such as account verification, password resets, magic sign-in links, and account deletion confirmations"
+          - rowheader "Sending transactional email, such as account verification, password resets, magic sign-in links, and account deletion confirmations"
           - cell "Email"
           - cell "Performance of a contract Art. 6(1)(b)"
         - row "Keeping you signed in and remembering preferences Cookies, local storage, auth tokens Performance of a contract / legitimate interests Art. 6(1)(b), (f)":
-          - cell "Keeping you signed in and remembering preferences"
+          - rowheader "Keeping you signed in and remembering preferences"
           - cell "Cookies, local storage, auth tokens"
           - cell "Performance of a contract / legitimate interests Art. 6(1)(b), (f)"
         - row "Account security, including two-factor authentication TOTP secret, recovery codes, token data Performance of a contract / legitimate interests Art. 6(1)(b), (f)":
-          - cell "Account security, including two-factor authentication"
+          - rowheader "Account security, including two-factor authentication"
           - cell "TOTP secret, recovery codes, token data"
           - cell "Performance of a contract / legitimate interests Art. 6(1)(b), (f)"
         - row "Security, fraud prevention, and debugging Server logs, IP address Legitimate interests Art. 6(1)(f)":
-          - cell "Security, fraud prevention, and debugging"
+          - rowheader "Security, fraud prevention, and debugging"
           - cell "Server logs, IP address"
           - cell "Legitimate interests Art. 6(1)(f)"
         - row "Complying with legal obligations Any of the above, as required Legal obligation Art. 6(1)(c)":
-          - cell "Complying with legal obligations"
+          - rowheader "Complying with legal obligations"
           - cell "Any of the above, as required"
           - cell "Legal obligation Art. 6(1)(c)"
   - paragraph: We do not use your information for marketing, profiling, or automated decision-making that produces legal or similarly significant effects.
