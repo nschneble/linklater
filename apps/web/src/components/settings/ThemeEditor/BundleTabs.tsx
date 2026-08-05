@@ -177,10 +177,10 @@ export default function BundleTabs({
           Colors
         </h3>
 
+        {/* thresholds differ by pair: 4.5:1 is SC 1.4.3, 3:1 is SC 1.4.11 */}
         {contrastFailures.size > 0 && (
           <p role="note" className="text-[var(--mount-alt-text)] text-[0.7rem]">
-            All color pairs should have a minimum contrast ratio of at least
-            4.5:1.
+            Text needs 4.5:1 contrast. Borders and highlights need 3:1.
           </p>
         )}
 
