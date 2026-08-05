@@ -15,6 +15,9 @@ const APPLE_PARAMS = [
 interface AppleProfile {
   id: string;
   email?: string;
+  // the strategy normalizes Apple's email_verified claim, and omits the field
+  // entirely when Apple sends nothing
+  emailVerified?: boolean;
   provider: string;
 }
 
@@ -51,6 +54,7 @@ export class AppleStrategy extends PassportStrategy(
       'apple',
       profile.id,
       email,
+      profile.emailVerified === true,
     );
   }
 }

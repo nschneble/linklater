@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import Parser from 'rss-parser';
 
+import { isSafeRedirectUrl } from '../common/index.js';
 import { PrismaService } from '../prisma/index.js';
 import { RSS_SOURCES, SOURCES, type SourceDefinition } from './sources.js';
 import type { Suggestion } from './suggestions.types.js';
@@ -200,7 +201,9 @@ export class RssFeedService {
   ): Suggestion | null {
     const url = item.link?.trim();
     const title = this.stripHtml(item.title);
-    if (!url || !title) return null;
+    // the feed is third-party, so its schemes are untrusted: a link we cannot
+    // safely render is worth dropping, a bad image is worth only dropping
+    if (!url || !title || !isSafeRedirectUrl(url)) return null;
 
     const description =
       item.contentSnippet?.trim() ||
@@ -208,8 +211,9 @@ export class RssFeedService {
       this.stripHtml(item.content) ||
       null;
 
-    const imageUrl =
+    const rawImageUrl =
       item.enclosure?.url ?? item['media:content']?.$?.url ?? null;
+    const imageUrl = isSafeRedirectUrl(rawImageUrl) ? rawImageUrl : null;
 
     return {
       url,
