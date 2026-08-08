@@ -24,7 +24,7 @@ import type { TokenContrastFailure } from './contrastResults.notes';
 const A_FAILURE: TokenContrastFailure = {
   ratio: 2,
   threshold: 4.5,
-  noteSubject: 'Text',
+  noteSubject: 'Text contrast',
 };
 
 const PLACEHOLDER_VALUE = '#abcdef';

@@ -25,8 +25,10 @@ export interface TokenContrastFailure {
   /** Threshold the pair must clear. */
   threshold: number;
   /**
-   * The failing pair, named for the row the note renders on: its partner slot
-   * when the row is an endpoint, both slots when the row is only a backdrop.
+   * The failing pair as the SUBJECT of the note sentence, phrased for
+   * the row it renders on: the partner slot when the row is an endpoint,
+   * both slots when the row is only a backdrop. The row completes the
+   * sentence and appends the ratio.
    */
   noteSubject: string;
 }
@@ -84,17 +86,22 @@ function slotLabelFor(token: string, rowToken: string): string {
  * A row that is neither endpoint took part as a backdrop the measurement
  * composited through, and naming one endpoint there reads as a claim that this
  * row pairs with it, which is false, so both are named instead.
+ *
+ * Naming both also decides the sentence shape. Two multi-word slot names
+ * stacked in front of the noun build a pile-up nobody parses at a
+ * glance, so that case leads with the noun and hangs both names off it.
+ * The endpoint case has one name to place and keeps the shorter form.
  */
 function noteSubjectFor(rowToken: string, pair: ContrastPair): string {
   if (rowToken === pair.foreground) {
-    return slotLabelFor(pair.background, rowToken);
+    return `${slotLabelFor(pair.background, rowToken)} contrast`;
   }
   if (rowToken === pair.background) {
-    return slotLabelFor(pair.foreground, rowToken);
+    return `${slotLabelFor(pair.foreground, rowToken)} contrast`;
   }
-  const foreground = slotLabelFor(pair.foreground, rowToken);
+  const foreground = slotLabelFor(pair.foreground, rowToken).toLowerCase();
   const background = slotLabelFor(pair.background, rowToken).toLowerCase();
-  return `${foreground} on ${background}`;
+  return `Contrast between ${foreground} and ${background}`;
 }
 
 /**

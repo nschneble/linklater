@@ -75,9 +75,13 @@ export const BUNDLE_BACKDROPS: Record<Bundle, readonly (readonly string[])[]> =
  * highlight on whatever host it was dropped into.
  *
  * The editor's own mock counts as a render site, but only for the bundle it is
- * showing. The mock subtree is one hidden container of decorative, asemic copy,
- * so nothing in it carries a conformance obligation of its own under SC 1.4.3;
- * it is listed anyway because worst-of scoring can only ever be made stricter
+ * showing. Nothing in that subtree carries a conformance obligation of
+ * its own under SC 1.4.3: its controls are inert, everything it paints
+ * is pure decoration, and its copy is asemic filler that is part of a
+ * picture of an application rather than text anyone reads. Being hidden
+ * from assistive technology sits alongside those rather than standing as
+ * an exemption of its own, so it cannot carry the argument. The mock is
+ * listed anyway because worst-of scoring can only ever be made stricter
  * by another site, never laxer. That is why leaving the muted bundles OUT of
  * the toast mock forfeits no claim. The reason they are out is that the toast
  * mock is the one mock that never un-mutes on hover, so for the three chrome

@@ -344,6 +344,13 @@ function isReachable(path: string): boolean {
  * A background paint, with whatever variant prefix gates it. Class strings in
  * this codebase are written one element per line, so a line stands in for an
  * element; the alternative is parsing JSX to find the real boundaries.
+ *
+ * Gate 4 rests entirely on that stand-in, and it holds for one string
+ * literal per element and no further. A class string assembled from
+ * parts spreads one element's paints across the lines the parts are
+ * written on, so a swap this gate would catch inside a single literal
+ * reads as two elements and passes. Closing it means finding the real
+ * element boundaries.
  */
 const BACKGROUND_PAINT = /(\S*?)bg-\[var\((--[a-z-]+)\)\]/g;
 

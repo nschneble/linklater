@@ -400,7 +400,7 @@ describe('pairsTouchingToken keys failures by BOTH endpoints', () => {
 
     const touching = pairsTouchingToken(results);
     // the `--mount-bg` row shows the severe pair; same-bundle partner = bare slot name
-    expect(touching.get('--mount-bg')?.noteSubject).toBe('Text');
+    expect(touching.get('--mount-bg')?.noteSubject).toBe('Text contrast');
     expect(touching.get('--mount-bg')?.ratio).toBe(1.5);
   });
 
@@ -431,11 +431,14 @@ describe('pairsTouchingToken keys failures by BOTH endpoints', () => {
     } as unknown as ContrastResults;
 
     const touching = pairsTouchingToken(results);
+    // both names hang off the noun rather than stacking in front of it
     expect(touching.get('--base-bg')?.noteSubject).toBe(
-      'Mount text on mount background',
+      'Contrast between mount text and mount background',
     );
     // the endpoints keep the shorter phrasing, each implying the other
-    expect(touching.get('--mount-text')?.noteSubject).toBe('Background');
+    expect(touching.get('--mount-text')?.noteSubject).toBe(
+      'Background contrast',
+    );
   });
 
   it('bundle-qualifies a partner that lives in a different bundle', () => {
@@ -458,8 +461,12 @@ describe('pairsTouchingToken keys failures by BOTH endpoints', () => {
     } as unknown as ContrastResults;
 
     const touching = pairsTouchingToken(results);
-    expect(touching.get('--mount-border')?.noteSubject).toBe('Base background');
-    expect(touching.get('--base-bg')?.noteSubject).toBe('Mount border');
+    expect(touching.get('--mount-border')?.noteSubject).toBe(
+      'Base background contrast',
+    );
+    expect(touching.get('--base-bg')?.noteSubject).toBe(
+      'Mount border contrast',
+    );
   });
 
   it('makes no entry for passing or unverified pairs', () => {
