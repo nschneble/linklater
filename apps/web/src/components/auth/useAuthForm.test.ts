@@ -1011,6 +1011,42 @@ describe('useAuthForm', () => {
       expect(focusSpy).toHaveBeenCalled();
     });
 
+    // the catalog copy and the API's error strings are two vocabularies
+    // with nothing keeping them disjoint, and an overlap fails silently:
+    // the Alert drops its role, the focus effect skips it, and the submit
+    // has already dismissed the mirror
+    it('announces a submit error that repeats the arrival copy', async () => {
+      const loginMock = vi.fn().mockRejectedValue(new Error(ARRIVAL_MESSAGE));
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+
+      const errorParagraph = document.createElement('p');
+      const focusSpy = vi.spyOn(errorParagraph, 'focus');
+      const { result } = renderWithReferences(ARRIVAL_PATH, (hook) => {
+        if (hook.errorReference.current === null) {
+          hook.errorReference.current = errorParagraph;
+        }
+      });
+
+      await waitFor(() => {
+        expect(result.current.error).toBe(ARRIVAL_MESSAGE);
+      });
+      expect(focusSpy).not.toHaveBeenCalled();
+
+      act(() => {
+        result.current.setEmail(USER_EMAIL);
+        result.current.setPassword(USER_PASSWORD);
+      });
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        await result.current.handleSubmit(event);
+      });
+
+      // same string, different channel: the Alert speaks for this one
+      expect(result.current.error).toBe(ARRIVAL_MESSAGE);
+      expect(result.current.announceError).toBe(true);
+      expect(focusSpy).toHaveBeenCalled();
+    });
+
     describe('announcement timing', () => {
       beforeEach(() => {
         vi.useFakeTimers();
@@ -1068,6 +1104,26 @@ describe('useAuthForm', () => {
         expect(result.current.errorAnnouncement).toBe('');
         // the Alert takes its own live region back for the submit error
         expect(result.current.announceError).toBe(true);
+      });
+
+      // a mode change inside the hold window sends focus into the new
+      // screen while the queued text still fires a beat later, unlabelled
+      // and last in a document with no `main` landmark
+      it('drops the queued announcement when a mode change supersedes it', async () => {
+        const { result } = renderAuthFormHook(ARRIVAL_PATH);
+        await act(async () => {});
+        expect(result.current.errorAnnouncement).toBe('');
+
+        await act(async () => {
+          result.current.handleModeChange('register');
+        });
+
+        await act(async () => {
+          vi.advanceTimersByTime(ANNOUNCE_DELAY_MS);
+        });
+
+        expect(result.current.mode).toBe('register');
+        expect(result.current.errorAnnouncement).toBe('');
       });
     });
   });

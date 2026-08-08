@@ -10,14 +10,7 @@ import { AUTH_ERROR_CODES, authErrorMessage } from './authFlashMessages';
 import { describe, expect, it } from 'vitest';
 
 // every one of these resolves on a plain object literal without ?? firing
-const INHERITED_KEYS = [
-  '__proto__',
-  'constructor',
-  'hasOwnProperty',
-  'isPrototypeOf',
-  'toString',
-  'valueOf',
-];
+const INHERITED_KEYS = Object.getOwnPropertyNames(Object.prototype);
 
 describe('authErrorMessage', () => {
   it('names the provider when the redirect carries one', () => {

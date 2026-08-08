@@ -12,6 +12,7 @@ import {
 import { getErrorMessage } from '../../lib/errors';
 import { useAuth } from '../../auth/AuthContext';
 import { useEffect, useRef, useState } from 'react';
+import { useFormError } from './useFormError';
 import { useLocation, useNavigate } from 'react-router';
 import { useOAuthArrivalError } from './useOAuthArrivalError';
 import { useTransientState } from '../../lib/hooks/useTransientState';
@@ -36,7 +37,10 @@ export function useAuthForm() {
   const passwordReference = useRef<HTMLInputElement>(null);
 
   const [email, setEmail] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  // errorFromArrival keeps the Alert visual-only while errorAnnouncement
+  // carries the message. recorded with the write rather than compared by
+  // string, so a submit error repeating the copy still announces
+  const { error, errorFromArrival, setError } = useFormError();
   const [loading, setLoading] = useState(false);
   // holds the button "sent!" for the toast's 5000ms, blocking a re-request
   const [magicLinkSentJustNow, setMagicLinkSentJustNow] = useState(false);
@@ -57,11 +61,6 @@ export function useAuthForm() {
     dismissAnnouncement,
     message: oauthErrorMessage,
   } = useOAuthArrivalError();
-
-  // true while the Alert holds a redirect-borne error: that message is
-  // announced by errorAnnouncement, so the Alert stays visual-only.
-  // derived rather than latched so it cannot drift from what is painted
-  const errorFromArrival = error !== null && error === oauthErrorMessage;
 
   // hold both "sent!" flags for the toast's 5000ms, then auto-release
   useTransientState(magicLinkSentJustNow, false, setMagicLinkSentJustNow, 5000);
@@ -103,14 +102,14 @@ export function useAuthForm() {
       return;
     }
     emailReference.current?.focus();
-  }, [mode, arrivedWithOAuthError]);
+  }, [mode, arrivedWithOAuthError, setError]);
 
   // ordered after the mode effect defensively. the two do not collide
   // today: useFlashQueryParameters defers its read to a mount effect, so
   // oauthErrorMessage is still null while the mode effect clears `error`
   useEffect(() => {
-    if (oauthErrorMessage !== null) setError(oauthErrorMessage);
-  }, [oauthErrorMessage]);
+    if (oauthErrorMessage !== null) setError(oauthErrorMessage, 'arrival');
+  }, [oauthErrorMessage, setError]);
 
   useEffect(() => {
     const pending = consumePendingNotice();
@@ -140,9 +139,9 @@ export function useAuthForm() {
       setNotice(null);
     }
 
-    // the arrival message is superseded from here. a queued announcement
-    // would otherwise fire the stale text alongside this submit's own
-    // error, since useReannounce reads its message at fire time
+    // this submit supersedes the arrival message. useReannounce reads its
+    // message at fire time, so a queued announcement would otherwise fire
+    // the stale text alongside this submit's own error
     dismissAnnouncement();
 
     setError(null);
@@ -218,6 +217,11 @@ export function useAuthForm() {
   };
 
   const handleModeChange = (newMode: Mode) => {
+    // this navigation supersedes it too: a queued announcement would fire
+    // on the screen the user left for, and a fired one outlives the Alert
+    // the mode change clears
+    dismissAnnouncement();
+
     const from = (location.state as { from?: string })?.from;
     let path = '/login';
     if (newMode === 'register') path = '/signup';
