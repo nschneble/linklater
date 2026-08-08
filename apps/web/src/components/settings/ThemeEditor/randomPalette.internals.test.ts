@@ -87,7 +87,7 @@ describe('deriveForeground: the 0/1 lightness rail fallback', () => {
 
   it('returns #ffffff at the rail in dark mode and still clears the threshold', () => {
     // dark walks up; mid-gray high-chroma bg keeps candidates below 3:1 to L=1
-    const result = deriveForeground('#8a8a8a', 3, 'dark' as Mode, 60, 0.22);
+    const result = deriveForeground(['#8a8a8a'], 3, 'dark' as Mode, 60, 0.22);
     expect(result).toBe('#ffffff');
     const ratio = computeContrastRatio(result, '#8a8a8a');
     expect(ratio).not.toBeNull();
@@ -96,7 +96,13 @@ describe('deriveForeground: the 0/1 lightness rail fallback', () => {
 
   it('returns #000000 at the rail in light mode and still clears the threshold', () => {
     // light walks down; mid-gray high-chroma bg keeps candidates below 4.5:1 to L=0
-    const result = deriveForeground('#7a7a7a', 4.5, 'light' as Mode, 280, 0.25);
+    const result = deriveForeground(
+      ['#7a7a7a'],
+      4.5,
+      'light' as Mode,
+      280,
+      0.25,
+    );
     expect(result).toBe('#000000');
     const ratio = computeContrastRatio(result, '#7a7a7a');
     expect(ratio).not.toBeNull();
