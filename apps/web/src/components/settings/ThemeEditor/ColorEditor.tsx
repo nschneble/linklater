@@ -40,16 +40,16 @@ interface ColorEditorProps {
 /**
  * The Colors editing region: a bundle tablist driving a single panel of the
  * chosen bundle's raw slots, in the editor's current mode. The full ~49-token
- * list and the five human knobs are both retired — users pick a bundle, then
+ * list and the five human knobs are both retired: users pick a bundle, then
  * edit only its 7-10 slots (PRD point 3). The Light/Dark palette toggle that
  * chooses the mode now lives in the header toolbar (a sibling above this
  * region), not here.
  *
  * This is a NAMED region (`<section aria-labelledby>` on the "Color Bundles" h2)
  * so AT still announces it after the old `SettingsGroup` card was dropped (a11y
- * brief §3). The region holds two headings — the "Color Bundles" h2 (also the
+ * brief §3). The region holds two headings: the "Color Bundles" h2 (also the
  * tablist's `aria-labelledby` target) and a "Colors" h3 rendered inside
- * `BundleTabs` between the tablist and the slot panel — so the outline runs
+ * `BundleTabs` between the tablist and the slot panel, so the outline runs
  * h1 → h2 → h3 with no skipped level. The bundle tabs themselves are NOT headings
  * (the tab role self-voices).
  */

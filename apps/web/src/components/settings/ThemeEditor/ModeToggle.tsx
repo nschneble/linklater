@@ -3,7 +3,7 @@ import type { Mode } from '../../../theme/constants';
 
 const MODE_OPTIONS: Mode[] = ['light', 'dark'];
 
-/** Stable tab id for a mode option — the controlled panel points back at it. */
+/** Stable tab id for a mode option: the controlled panel points back at it. */
 export function modeTabId(mode: Mode): string {
   return `mode-tab-${mode}`;
 }

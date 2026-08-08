@@ -17,7 +17,7 @@ import type { Rgb } from '../../../theme/colorMath';
  * full WCAG AA contract the live editor enforces (PRD point 11). This is the
  * "Randomize" button's engine. The hard guarantee is the headline: the returned
  * map satisfies every pair `pairsForBundle()` + `focusRingPairs()` produce, for
- * all 7 bundles + the focus ring — the SAME 52-pair set `randomPalette.test.ts`
+ * all 7 bundles + the focus ring: the SAME 52-pair set `randomPalette.test.ts`
  * asserts, derived from the same exported builders so generator and checker can
  * never drift.
  *
@@ -48,7 +48,7 @@ import type { Rgb } from '../../../theme/colorMath';
  * bg band.
  *
  * CVD distinguishability is BEST-EFFORT (the 4 state bundles get hues spaced
- * ~90° apart), not a hard gate — the editor validates CVD live, and the WCAG
+ * ~90° apart), not a hard gate; the editor validates CVD live, and the WCAG
  * contract is the only thing this function must guarantee.
  */
 
@@ -109,7 +109,7 @@ export function computeContrastRatio(
 export type Rng = () => number;
 
 /**
- * Mulberry32 — a tiny, fast, well-distributed seedable PRNG. Used so a failing
+ * Mulberry32: a tiny, fast, well-distributed seedable PRNG. Used so a failing
  * 200-iteration test case can be reproduced from its seed. When no seed is
  * passed the generator falls back to `Math.random`.
  */
@@ -159,7 +159,7 @@ function clamp01(value: number): number {
  * Builds a 6-digit hex from oklch components, clamping the result into sRGB so
  * `formatHex` never returns a short or out-of-gamut string. culori clamps
  * out-of-gamut oklch to the sRGB boundary on conversion, which is exactly what
- * we want — a slightly desaturated in-gamut color over an unrenderable one.
+ * we want: a slightly desaturated in-gamut color over an unrenderable one.
  */
 export function oklchHex(
   lightness: number,
@@ -229,7 +229,7 @@ export function deriveForeground(
 }
 
 /**
- * Like `deriveForeground` but must clear a SECONDARY background too — used by
+ * Like `deriveForeground` but must clear a SECONDARY background too. Used by
  * the cross-bundle border guard, which needs `B-border` to clear BOTH its own
  * `B-bg` AND `--base-bg`. Solves against the tighter (lower-contrast) of the two
  * backgrounds at each step so both end up satisfied.
@@ -384,7 +384,7 @@ export interface HighlightTriple {
  *     it trivially; we drive the highlight lightness down until white reads at
  *     4.5, which also keeps the ≥3.0-vs-bg margin.
  *   - dark mode: the bg is near-black, so the highlight must be LIGHTER than the
- *     bg to clear 3.0 — but not so light that white text fails on it. The
+ *     bg to clear 3.0, but not so light that white text fails on it. The
  *     feasible window (white-fg ≥4.5 ⇒ highlight L ≲ 0.5; vs-bg ≥3.0 ⇒ highlight
  *     L above the bg) is non-empty because the bg sits at L≈0.10-0.18.
  * The hover is a small same-hue lightness step that re-verifies both
@@ -588,7 +588,7 @@ function failingForegrounds(palette: Palette, pairs: PairCheck[]): PairCheck[] {
 
 /**
  * The full contract pair list, in the generator's `PairCheck` space, DERIVED
- * from the editor's own `pairsForBundle` / `focusRingPairs` builders — the same
+ * from the editor's own `pairsForBundle` / `focusRingPairs` builders: the same
  * builders `useContrastResults` (the live checker) and `randomPalette.test.ts`
  * (the gate) read. Sharing one definition means the generator's repair pass can
  * never check a different pair set than the editor enforces; there is nothing to
@@ -610,7 +610,7 @@ const CONTRACT_PAIRS = contractPairs();
 
 /**
  * Forces a still-failing foreground to whichever pure extreme clears its
- * background — the guaranteed terminator. For a focus-ring or border that
+ * background: the guaranteed terminator. For a focus-ring or border that
  * answers to multiple bgs the SAME extreme clears all of them (all bgs sit in
  * one band), so a single extreme per foreground suffices.
  */
