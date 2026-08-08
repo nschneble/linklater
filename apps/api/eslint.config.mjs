@@ -2,6 +2,7 @@ import js from '@eslint/js';
 import prettier from 'eslint-config-prettier';
 import tseslint from 'typescript-eslint';
 import importIdentifierOrder from '../../eslint-rules/import-identifier-order.mjs';
+import noCommentBlockInBody from '../../eslint-rules/no-comment-block-in-body.mjs';
 import typeImportsAfterValue from '../../eslint-rules/type-imports-after-value.mjs';
 
 export default tseslint.config(
@@ -28,6 +29,7 @@ export default tseslint.config(
       local: {
         rules: {
           'import-identifier-order': importIdentifierOrder,
+          'no-comment-block-in-body': noCommentBlockInBody,
           'type-imports-after-value': typeImportsAfterValue,
         },
       },
@@ -38,6 +40,7 @@ export default tseslint.config(
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
       'local/import-identifier-order': 'error',
+      'local/no-comment-block-in-body': 'error',
       'local/type-imports-after-value': 'error',
     },
   },

@@ -64,8 +64,7 @@ export class EmailService {
              the email.
    */
   private async send(options: nodemailer.SendMailOptions) {
-    // testing-ui drops emails so the harness needs no SMTP relay
-    // log the subject only, never the recipient (avoid leaking addresses)
+    // subject only, never the recipient, to keep addresses out of logs
     if (isTestingUi()) {
       const subject =
         options.subject === undefined

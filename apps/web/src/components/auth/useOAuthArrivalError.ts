@@ -48,8 +48,7 @@ export function useOAuthArrivalError(): OAuthArrivalError {
     present: new URLSearchParams(location.search).has(ERROR_PARAMETER),
   }));
 
-  // releases once the user navigates on, so later mode switches still
-  // focus; latched in render because StrictMode reruns mount effects
+  // latched in render because StrictMode reruns mount effects
   const leftArrival = useRef(false);
   if (location.pathname !== arrival.pathname) leftArrival.current = true;
 

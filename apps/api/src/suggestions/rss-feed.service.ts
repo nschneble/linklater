@@ -201,8 +201,7 @@ export class RssFeedService {
   ): Suggestion | null {
     const url = item.link?.trim();
     const title = this.stripHtml(item.title);
-    // the feed is third-party, so its schemes are untrusted: a link we cannot
-    // safely render is worth dropping, a bad image is worth only dropping
+    // an unsafe link drops the item, an unsafe image only the image
     if (!url || !title || !isSafeRedirectUrl(url)) return null;
 
     const description =

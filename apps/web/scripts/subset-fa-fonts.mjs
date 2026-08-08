@@ -53,8 +53,7 @@ async function subsetFamily(family, names) {
     );
   }
 
-  // subset-font keeps any glyph whose codepoint appears in the `text` arg.
-  // String.fromCodePoint handles surrogate pairs for codepoints > 0xFFFF.
+  // subset-font keeps the glyphs whose codepoints appear in this text
   const wanted = [...new Set(names.map((name) => codepoints.get(name)))];
   wanted.sort((left, right) => left - right);
   const text = String.fromCodePoint(...wanted);

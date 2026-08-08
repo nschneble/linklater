@@ -43,8 +43,7 @@ export default function BookmarkletSection() {
 
   const code = rawToken ? buildBookmarkletCode(rawToken) : null;
 
-  // React sanitizes javascript: hrefs; setAttribute bypasses it
-  // https://github.com/facebook/react/issues/16382
+  // setAttribute bypasses React's javascript: sanitizing (react#16382)
   useEffect(() => {
     if (!bookmarkletReference.current || !code) return;
     bookmarkletReference.current.setAttribute('href', code);

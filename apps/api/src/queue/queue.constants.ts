@@ -10,6 +10,8 @@ export const RECURRING_JOB_RETRY_OPTIONS: SendOptions = {
   retryBackoff: true,
 };
 
+// a name here is dead without a worker started from a module init
+// hook, the way the metadata service does it
 export const QUEUES = {
   READ_LINK_CLEANUP: 'read-link-cleanup',
   RSS_ENTRY_PRUNE: 'rss-entry-prune',
