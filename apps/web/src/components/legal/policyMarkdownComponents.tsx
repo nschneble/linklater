@@ -99,10 +99,7 @@ export function makePolicyMarkdownComponents({
         </table>
       </div>
     );
-    // scope is destructured OUT of the spread so prop order cannot decide it:
-    // `rehypeRowHeaders` sets scope='row', everything else defaults to a
-    // column header. The matching variants keep the visual tied to the same
-    // attribute that carries the semantics, so the two cannot drift.
+    // destructured out of the spread so prop order cannot decide scope
     components.th = ({ scope = 'col', ...properties }) => (
       <th
         scope={scope}
