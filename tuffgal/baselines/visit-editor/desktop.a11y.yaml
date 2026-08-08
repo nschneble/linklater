@@ -5,7 +5,7 @@
   - button "User menu (testing-ui@linklater.test)"
 - main "Theme editor":
   - heading "Theme editor" [level=1]
-  - img "Theme colors meet minimum contrast"
+  - img "Some theme colors couldn't be checked for contrast"
   - paragraph: All changes are saved automatically.
   - status
   - tablist "Palette to edit":
