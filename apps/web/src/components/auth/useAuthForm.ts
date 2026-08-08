@@ -54,14 +54,14 @@ export function useAuthForm() {
   const {
     announcement: errorAnnouncement,
     arrived: arrivedWithOAuthError,
+    dismissAnnouncement,
     message: oauthErrorMessage,
   } = useOAuthArrivalError();
 
   // true while the Alert holds a redirect-borne error: that message is
-  // announced by errorAnnouncement, so the Alert stays visual-only
-  const [errorFromArrival, setErrorFromArrival] = useState(
-    arrivedWithOAuthError,
-  );
+  // announced by errorAnnouncement, so the Alert stays visual-only.
+  // derived rather than latched so it cannot drift from what is painted
+  const errorFromArrival = error !== null && error === oauthErrorMessage;
 
   // hold both "sent!" flags for the toast's 5000ms, then auto-release
   useTransientState(magicLinkSentJustNow, false, setMagicLinkSentJustNow, 5000);
@@ -105,8 +105,9 @@ export function useAuthForm() {
     emailReference.current?.focus();
   }, [mode, arrivedWithOAuthError]);
 
-  // declared after the mode effect, which clears `error` on the same mount
-  // flush: earlier, both writes would batch and the clear would win
+  // ordered after the mode effect defensively. the two do not collide
+  // today: useFlashQueryParameters defers its read to a mount effect, so
+  // oauthErrorMessage is still null while the mode effect clears `error`
   useEffect(() => {
     if (oauthErrorMessage !== null) setError(oauthErrorMessage);
   }, [oauthErrorMessage]);
@@ -139,8 +140,12 @@ export function useAuthForm() {
       setNotice(null);
     }
 
+    // the arrival message is superseded from here. a queued announcement
+    // would otherwise fire the stale text alongside this submit's own
+    // error, since useReannounce reads its message at fire time
+    dismissAnnouncement();
+
     setError(null);
-    setErrorFromArrival(false);
     setLoading(true);
 
     try {

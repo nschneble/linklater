@@ -37,10 +37,12 @@ function authDocumentTitle(
  * lands here. It stays mounted and empty until `useOAuthArrivalError`
  * fills it, because a live region already populated on first paint is read
  * as part of the page rather than announced, and this arrival waits on
- * nothing else. The visible `Alert` paints the same text immediately with
- * its own live semantics off (`announceError`), so exactly one region
- * announces. Submit errors keep the opposite split: the `Alert` announces
- * itself and this region stays empty.
+ * nothing else. It empties again once the message has been heard: this
+ * component does not remount across the auth routes, so a region left
+ * populated outlives the `Alert` beside it. The visible `Alert` paints the
+ * same text immediately with its own live semantics off (`announceError`),
+ * so exactly one region announces. Submit errors keep the opposite split:
+ * the `Alert` announces itself and this region stays empty.
  */
 export default function AuthForm() {
   const {
@@ -136,7 +138,7 @@ export default function AuthForm() {
   return (
     <>
       {view}
-      {/* mounted empty, filled a beat later; see the block above */}
+      {/* mounted empty, filled a beat later, emptied again; see above */}
       <span
         className="sr-only"
         role="alert"

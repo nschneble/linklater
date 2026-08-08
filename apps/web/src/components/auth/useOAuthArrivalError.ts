@@ -1,8 +1,9 @@
 import { authErrorMessage } from './authFlashMessages';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFlashQueryParameters } from '../../lib/hooks/useFlashQueryParameters';
 import { useLocation } from 'react-router';
 import { useReannounce } from '../../lib/hooks/useReannounce';
-import { useState } from 'react';
+import { useTransientState } from '../../lib/hooks/useTransientState';
 
 const ERROR_PARAMETER = 'error';
 const PROVIDER_PARAMETER = 'provider';
@@ -15,6 +16,23 @@ const PROVIDER_PARAMETER = 'provider';
  */
 const ANNOUNCE_DELAY_MS = 1000;
 
+/**
+ * How long the announcement stays in the region before it is emptied.
+ *
+ * `AuthForm` does not remount across `/login`, `/signup` and
+ * `/forgot-password`, so an announcement left in place outlives the visible
+ * Alert that the mode change clears, and ends up the only copy of the
+ * message on the page: unlabelled, last in the document, on a page with no
+ * `main` landmark. Both in-repo mirrors clear for the same reason.
+ *
+ * Well above the 5000ms toast default because nothing paces this one. The
+ * longest string is 17 words, about 5.7 seconds at a slow 180wpm, so this
+ * leaves headroom without stretching the window a mode switch can strand.
+ * Emptying is not itself an announcement: the default `aria-relevant` is
+ * `additions text`.
+ */
+const CLEAR_DELAY_MS = 8000;
+
 function readArrivalError(parameters: URLSearchParams): string | null {
   const code = parameters.get(ERROR_PARAMETER);
   if (!code) return null;
@@ -22,10 +40,12 @@ function readArrivalError(parameters: URLSearchParams): string | null {
 }
 
 export interface OAuthArrivalError {
-  /** Text for an always-mounted sr-only region. Empty until the delay ends. */
+  /** Text for an always-mounted sr-only region. Empty outside its window. */
   announcement: string;
-  /** Whether this render's URL carried an error code. Fixed at mount. */
+  /** Whether the URL still being viewed is the one that carried the code. */
   arrived: boolean;
+  /** Empties the announcement early, for a caller that supersedes it. */
+  dismissAnnouncement: () => void;
   /** The message to paint, or `null` when the arrival was clean. */
   message: string | null;
 }
@@ -49,20 +69,55 @@ export interface OAuthArrivalError {
 export function useOAuthArrivalError(): OAuthArrivalError {
   const location = useLocation();
 
-  const [arrived] = useState(() =>
-    new URLSearchParams(location.search).has(ERROR_PARAMETER),
-  );
+  const [arrival] = useState(() => ({
+    pathname: location.pathname,
+    present: new URLSearchParams(location.search).has(ERROR_PARAMETER),
+  }));
+
+  // `arrived` suppresses auto-focus, so it has to release once the user
+  // navigates on, or every later mode switch skips focus for the rest of
+  // the session. latched in render, not consumed in an effect: StrictMode
+  // double-invokes mount effects and would release during the arrival
+  // itself. the pathname is the signal because stripping the parameters is
+  // a replace that keeps it while changing `location.key`
+  const leftArrival = useRef(false);
+  if (location.pathname !== arrival.pathname) leftArrival.current = true;
 
   const message = useFlashQueryParameters(readArrivalError, [
     ERROR_PARAMETER,
     PROVIDER_PARAMETER,
   ]);
 
+  // clear-then-set driver, mirroring useToastAnnouncement: the trigger bump
+  // forces a real text-node change, and the empty pendingMessage settles
+  // the region back to ''
+  const [trigger, setTrigger] = useState(0);
+  const [pendingMessage, setPendingMessage] = useState('');
+
+  useEffect(() => {
+    if (message === null) return;
+    setPendingMessage(message);
+    setTrigger((current) => current + 1);
+  }, [message]);
+
   const announcement = useReannounce(
-    message === null ? 0 : 1,
-    message ?? '',
+    trigger,
+    pendingMessage,
     ANNOUNCE_DELAY_MS,
   );
 
-  return { announcement, arrived, message };
+  // stable setter is load-bearing: an inline arrow reschedules the timer
+  const dismissAnnouncement = useCallback(() => {
+    setPendingMessage('');
+    setTrigger((current) => current + 1);
+  }, []);
+
+  useTransientState(announcement, '', dismissAnnouncement, CLEAR_DELAY_MS);
+
+  return {
+    announcement,
+    arrived: arrival.present && !leftArrival.current,
+    dismissAnnouncement,
+    message,
+  };
 }

@@ -918,6 +918,32 @@ describe('useAuthForm', () => {
       expect(focusSpy).not.toHaveBeenCalled();
     });
 
+    // C5: negative control for the arrival guard. AuthForm never remounts
+    // across the auth routes, so a guard frozen at its mount value skips
+    // auto-focus for every mode switch left in the session
+    it('DOES auto-focus the email input on a mode change after an arrival (negative control)', async () => {
+      const emailInput = document.createElement('input');
+      const focusSpy = vi.spyOn(emailInput, 'focus');
+
+      const { result } = renderWithReferences(ARRIVAL_PATH, (hook) => {
+        if (hook.emailReference.current === null) {
+          hook.emailReference.current = emailInput;
+        }
+      });
+
+      await waitFor(() => {
+        expect(result.current.error).toBe(ARRIVAL_MESSAGE);
+      });
+      expect(focusSpy).not.toHaveBeenCalled();
+
+      await act(async () => {
+        result.current.handleModeChange('register');
+      });
+
+      expect(result.current.mode).toBe('register');
+      expect(focusSpy).toHaveBeenCalled();
+    });
+
     it('does not focus the error alert when the error arrived on the URL', async () => {
       const errorParagraph = document.createElement('p');
       const focusSpy = vi.spyOn(errorParagraph, 'focus');
@@ -1008,6 +1034,40 @@ describe('useAuthForm', () => {
         });
 
         expect(result.current.errorAnnouncement).toBe(ARRIVAL_MESSAGE);
+      });
+
+      // useReannounce reads its message at fire time, so a submit inside
+      // the hold window used to announce the stale arrival text next to
+      // the error the submit had just produced
+      it('drops the queued announcement when a submit supersedes it', async () => {
+        const loginMock = vi
+          .fn()
+          .mockRejectedValue(new Error('Invalid credentials'));
+        vi.mocked(useAuth).mockReturnValue(
+          makeAuthContext({ login: loginMock }),
+        );
+
+        const { result } = renderAuthFormHook(ARRIVAL_PATH);
+        await act(async () => {});
+        expect(result.current.errorAnnouncement).toBe('');
+
+        act(() => {
+          result.current.setEmail(USER_EMAIL);
+          result.current.setPassword(USER_PASSWORD);
+        });
+        await act(async () => {
+          const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+          await result.current.handleSubmit(event);
+        });
+
+        await act(async () => {
+          vi.advanceTimersByTime(ANNOUNCE_DELAY_MS);
+        });
+
+        expect(result.current.error).toBe('Invalid credentials');
+        expect(result.current.errorAnnouncement).toBe('');
+        // the Alert takes its own live region back for the submit error
+        expect(result.current.announceError).toBe(true);
       });
     });
   });

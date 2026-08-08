@@ -17,7 +17,28 @@
  * - no positional wording ("the form below"). The form sits above the
  *   provider buttons, and position is not a reliable cue (WCAG 1.3.3).
  */
-const AUTH_ERROR_MESSAGES: Record<string, string> = {
+
+/**
+ * The bare codes the API can send, mirroring `OAuthSignInFailure`. Exported
+ * so the copy tests iterate the real list instead of a hand-copied one that
+ * stays green while a new code serves the fallback.
+ */
+export const AUTH_ERROR_CODES = [
+  'mfa_required',
+  'oauth_failed',
+  'oauth_state_invalid',
+  'provider_email_unverified',
+] as const;
+
+type AuthErrorCode = (typeof AUTH_ERROR_CODES)[number];
+
+/**
+ * The catalog described above. Typed so a code added to `AUTH_ERROR_CODES`
+ * fails the build until it has copy, while the string index keeps the
+ * `<code>:<provider>` keys.
+ */
+const AUTH_ERROR_MESSAGES: Record<AuthErrorCode, string> &
+  Record<string, string> = {
   'mfa_required:apple':
     "Apple can't ask for your authenticator code. Log in with your email instead.",
   'mfa_required:google':
@@ -48,14 +69,25 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
 const UNKNOWN_AUTH_ERROR_MESSAGE =
   "That sign-in didn't finish. Log in with your email instead.";
 
+/**
+ * Own-property read. The key is a URL parameter, and a plain object literal
+ * answers `__proto__`, `constructor` and `toString` off its prototype with
+ * a non-undefined value, so `??` never reaches the fallback and an object
+ * or a function escapes into the render.
+ */
+function ownMessage(key: string): string | undefined {
+  if (!Object.hasOwn(AUTH_ERROR_MESSAGES, key)) return undefined;
+  return AUTH_ERROR_MESSAGES[key];
+}
+
 /** Resolves the login-page copy for a redirect's error code and provider. */
 export function authErrorMessage(
   code: string,
   provider: string | null,
 ): string {
   if (provider) {
-    const perProvider = AUTH_ERROR_MESSAGES[`${code}:${provider}`];
+    const perProvider = ownMessage(`${code}:${provider}`);
     if (perProvider) return perProvider;
   }
-  return AUTH_ERROR_MESSAGES[code] ?? UNKNOWN_AUTH_ERROR_MESSAGE;
+  return ownMessage(code) ?? UNKNOWN_AUTH_ERROR_MESSAGE;
 }
