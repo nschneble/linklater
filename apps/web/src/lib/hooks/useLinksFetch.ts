@@ -1,9 +1,10 @@
 import { fetchParametersReducer } from './useLinksData.reducer';
 import { findNewLinks, mergeSettledMetadata } from './linksData.utils';
-import { getErrorMessage } from '../errors';
-import { getLinks, type Link, type PaginatedLinks } from '../api';
+import { loadLinksPage } from './useLinksFetch.page';
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import { useTrailingItemAutoLoad } from './useLinksFetch.trailingItem';
 import type { Dispatch, SetStateAction } from 'react';
+import type { Link, PaginatedLinks } from '../api';
 import type { LinksFilter } from './types';
 
 type Pagination = Pick<PaginatedLinks, 'total' | 'limit'> | null;
@@ -29,11 +30,10 @@ export interface UseLinksFetchResult {
  * the visibility refresh over the same list state without a second source
  * of truth.
  *
- * On a page-1 settle the response is merged over the current list via
- * `mergeSettledMetadata` rather than replacing it outright: incoming still
- * wins ordering, membership, and every other field, but stale null metadata
- * cannot overwrite a card the client already settled, so a search/filter
- * refetch never reverts a settled card to its loading skeleton.
+ * What is left here is the part that genuinely needs React: state, effect
+ * lifetimes, and cancellation. Request shaping and the outcome the caller
+ * applies live in `useLinksFetch.page`; the trailing-item decision, loop
+ * guard included, lives in `useLinksFetch.trailingItem`.
  *
  * @param filter - `'unread'` or `'read'`.
  * @param search - Full-text search query, or empty string for no filter.
@@ -72,38 +72,26 @@ export function useLinksFetch(
       setLinks([]);
     }
     setLoadingLinks(true);
+    setFetchError(null);
 
     const load = async () => {
-      setFetchError(null);
-      try {
-        const result = await getLinks({
-          search: fetchParameters.search || undefined,
-          read: fetchParameters.filter === 'read',
-          page: fetchParameters.page,
-        });
-        if (!cancelled) {
-          if (fetchParameters.page === 1) {
-            setLinks((previous) => mergeSettledMetadata(result.data, previous));
-          } else {
-            // append only new rows: a prepend shifts the offset, so a later page can re-serve an on-screen row
-            setLinks((previous) => [
-              ...previous,
-              ...findNewLinks(result.data, previous),
-            ]);
-          }
-          setPagination({ total: result.total, limit: result.limit });
-        }
-      } catch (error) {
-        if (!cancelled) {
-          setFetchError(getErrorMessage(error, 'Failed to load links'));
-        }
-      } finally {
-        if (!cancelled) {
-          setLoadingLinks(false);
-          hasSettledOnceReference.current = true;
-          setHasSettledOnce(true);
-        }
+      const outcome = await loadLinksPage(fetchParameters);
+      if (cancelled) return;
+
+      if (outcome.status === 'failed') {
+        setFetchError(outcome.message);
+      } else {
+        setLinks((previous) =>
+          outcome.mode === 'merge'
+            ? mergeSettledMetadata(outcome.data, previous)
+            : [...previous, ...findNewLinks(outcome.data, previous)],
+        );
+        setPagination(outcome.pagination);
       }
+
+      setLoadingLinks(false);
+      hasSettledOnceReference.current = true;
+      setHasSettledOnce(true);
     };
 
     load();
@@ -116,19 +104,10 @@ export function useLinksFetch(
     dispatchFetchParameters({ type: 'load-more' });
   }, []);
 
-  // "less doesn't need more": auto-load a lone trailing item as its own page; last-fired key stops a refetch loop
-  const lastAutoFireKeyReference = useRef<string | null>(null);
-  useEffect(() => {
-    if (loadingLinks) return;
-    if (!pagination) return;
-    if (links.length === 0) return;
-    const remaining = pagination.total - links.length;
-    if (remaining !== 1) return;
-    const key = `${links.length}:${pagination.total}`;
-    if (lastAutoFireKeyReference.current === key) return;
-    lastAutoFireKeyReference.current = key;
-    dispatchFetchParameters({ type: 'load-more' });
-  }, [loadingLinks, pagination, links.length]);
+  useTrailingItemAutoLoad(
+    { loadingLinks, pagination, linkCount: links.length },
+    handleLoadMore,
+  );
 
   return {
     fetchError,
