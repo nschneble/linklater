@@ -1,7 +1,7 @@
 # Privacy Policy
 
 **Effective date:** July 25, 2026  
-**Last updated:** July 25, 2026
+**Last updated:** August 7, 2026
 
 Linklater (the "Service") is operated by Nick Schneble ("we," "us," or "our").
 This Privacy Policy describes how we collect, use, and protect your personal
