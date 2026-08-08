@@ -11,4 +11,5 @@
     - /placeholder: Leave blank to use a magic link
   - button "Sign up with magic link"
 - button "Read our privacy policy"
+- alert
 - status

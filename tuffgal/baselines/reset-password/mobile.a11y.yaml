@@ -5,6 +5,7 @@
 - button "Send password reset link" [disabled]
 - paragraph:
   - button "Back to login"
+- alert
 - status:
   - text: Reset link sent!
   - button "Dismiss"
