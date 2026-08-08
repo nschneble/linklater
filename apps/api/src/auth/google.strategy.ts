@@ -24,8 +24,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   ) {
     const primaryEmail = profile.emails?.[0];
     if (!primaryEmail?.value) throw new Error('No email returned from Google');
-    // OIDC providers send email_verified as either a boolean or the string
-    // "true"; anything else, including absent, counts as unverified
+    // providers send email_verified as a boolean or as a string
     const claim: unknown = primaryEmail.verified;
     return this.oauthSignInService.findOrCreateOAuthUser(
       'google',

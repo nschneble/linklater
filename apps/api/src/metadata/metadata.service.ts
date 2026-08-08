@@ -93,9 +93,7 @@ export class MetadataService implements OnModuleInit {
         },
       });
 
-      // update the search vector; unaccent() collapses diacritics so
-      // "Montréal" indexes the same as "Montreal", mirrored on the search
-      // side in LinksService.findAllByText (Postel's Law)
+      // unaccent here must mirror the query side in LinksQueryService
       await this.prisma.$executeRaw`
         UPDATE "Link" SET "searchVector" = to_tsvector('english', unaccent(
           coalesce(${metadata.title}, '') || ' ' ||
@@ -106,8 +104,7 @@ export class MetadataService implements OnModuleInit {
       `;
     } catch (error) {
       this.logger.warn(`Metadata fetch failed for ${url}: ${String(error)}`);
-      // record the attempt (fetchedAt) even on failure, else the front-end
-      // polling hook would never stop polling
+      // stamp the attempt even on failure or the client polls forever
       await this.prisma.meta
         .upsert({
           where: { linkId },

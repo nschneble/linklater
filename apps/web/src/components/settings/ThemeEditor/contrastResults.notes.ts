@@ -130,8 +130,7 @@ export function pairsTouchingToken(
   for (const group of results.groups) {
     for (const { pair, ratio, reads } of group.pairs) {
       if (ratio === null || ratio >= pair.threshold) continue;
-      // every token the ratio READ can move it back over threshold, backdrops
-      // included; on an opaque palette that is exactly the two endpoints
+      // any token the ratio read can fix it, backdrops included
       for (const token of reads ?? [pair.foreground, pair.background]) {
         consider(token, ratio, pair);
       }
