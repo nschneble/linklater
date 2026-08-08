@@ -128,6 +128,9 @@ Use [Test Driven Development](https://martinfowler.com/bliki/TestDrivenDevelopme
   - Extract common code when used 3+ times
 - No god files
   - Refactor files over 100 lines of code (comments + blank lines don't count)
+- Comments inside a function body are single-line, enforced by `local/no-comment-block-in-body`
+  - Longer context belongs in the file or section overview, or in a well-named symbol
+  - `apps/{api,web}/eslint-suppressions.json` pins pre-existing runs; prune entries as you sweep them, never add to them
 - No premature optimization
   - 1-2s homepage load fine
   - Worry when load time scales exponentially with link count

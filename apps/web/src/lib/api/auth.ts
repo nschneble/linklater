@@ -254,8 +254,7 @@ export async function requestMagicLink(email: string): Promise<void> {
 export async function verifyMagicLink(
   token: string,
 ): Promise<MagicLinkVerifyResponse> {
-  // no auto-store: caller compares userId, then keeps or swaps the session.
-  // server still consumes the magic-link token on every call (single-use)
+  // no auto-store: the caller compares userId, then keeps or swaps
   return apiFetchRequired<MagicLinkVerifyResponse>(
     '/auth/verify-magic-link',
     { body: JSON.stringify({ token }), method: 'POST' },

@@ -15,7 +15,11 @@ import { BUNDLES, EDITABLE_VARS, VAR_GROUPS } from './useThemeOverrides';
 import { computeContrastRatio } from './randomPalette';
 import { describe, expect, it } from 'vitest';
 import { evaluatePair } from './contrastResults.evaluate';
-import { focusRingPairs, pairsForBundle } from './contrastResults.pairs';
+import {
+  focusRingPairs,
+  INPUT_FILL_BUNDLES,
+  pairsForBundle,
+} from './contrastResults.pairs';
 import { pairsTouchingToken } from './contrastResults.notes';
 import { renderHook } from '@testing-library/react';
 import { resolveContrastStatus, useContrastResults } from './contrastResults';
@@ -329,17 +333,28 @@ describe('pairsForBundle', () => {
 });
 
 // mirrors the static bundles.contrast.test.ts contract; keep the two in sync
-const STATIC_CONTRACT: ReadonlyArray<{
+interface StaticPair {
   fg: string;
   bg: string;
   threshold: number;
-}> = [
+}
+
+const STATIC_CONTRACT: ReadonlyArray<StaticPair> = [
   { fg: 'text', bg: 'bg', threshold: 4.5 },
   { fg: 'alt-text', bg: 'bg', threshold: 4.5 },
   { fg: 'border', bg: 'bg', threshold: 3 },
   { fg: 'highlight', bg: 'bg', threshold: 3 },
   { fg: 'highlight-fg', bg: 'highlight', threshold: 4.5 },
   { fg: 'highlight-fg', bg: 'highlight-hover', threshold: 4.5 },
+];
+
+// the input rows of that same static contract, on the bundles that host
+// a form input. Their absence here is how the runtime set came to check
+// fewer pairs than the stylesheets are held to
+const STATIC_INPUT_CONTRACT: ReadonlyArray<StaticPair> = [
+  { fg: 'text', bg: 'input-bg', threshold: 4.5 },
+  { fg: 'alt-text', bg: 'input-bg', threshold: 4.5 },
+  { fg: 'border', bg: 'input-bg', threshold: 3 },
 ];
 
 describe('pairsTouchingToken keys failures by BOTH endpoints', () => {
@@ -529,7 +544,10 @@ describe('runtime pair set ⊇ static bundles.contrast.test.ts contract', () => 
   for (const bundle of BUNDLES) {
     it(`covers every static contract pair for ${bundle}`, () => {
       const runtimePairs = pairsForBundle(bundle);
-      for (const contract of STATIC_CONTRACT) {
+      const expected = INPUT_FILL_BUNDLES.includes(bundle)
+        ? [...STATIC_CONTRACT, ...STATIC_INPUT_CONTRACT]
+        : STATIC_CONTRACT;
+      for (const contract of expected) {
         const match = runtimePairs.find(
           (pair) =>
             pair.foreground === `--${bundle}-${contract.fg}` &&

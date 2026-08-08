@@ -88,9 +88,9 @@ export function useAuthForm() {
     setMagicLinkSentJustNow(false);
     setForgotPasswordSentJustNow(false);
 
-    // auto-focus flips screen readers to forms mode, swallowing any
-    // announcement already inbound
-    if (hasPendingNotice() || arrivedWithOAuthError) return;
+    const hasInboundAnnouncement = hasPendingNotice() || arrivedWithOAuthError;
+    // auto-focus would flip a screen reader into forms mode, muting it
+    if (hasInboundAnnouncement) return;
 
     const emailInputValue = emailReference.current?.value ?? '';
     if (mode !== 'forgot-password' && emailInputValue.length > 0) {
@@ -115,8 +115,7 @@ export function useAuthForm() {
     }
   }, [mfaChallenge]);
 
-  // the Alert sits below both inputs, so focusing an arrival error would
-  // send the next Tab past fields the user still has to fill
+  // an arrival error must not steal focus; the Alert sits below the inputs
   useEffect(() => {
     if (error && !errorFromArrival) {
       errorReference.current?.focus();

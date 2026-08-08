@@ -6,6 +6,7 @@ import reactPlugin from 'eslint-plugin-react';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
 import importIdentifierOrder from '../../eslint-rules/import-identifier-order.mjs';
+import noCommentBlockInBody from '../../eslint-rules/no-comment-block-in-body.mjs';
 import typeImportsAfterValue from '../../eslint-rules/type-imports-after-value.mjs';
 import vitest from 'eslint-plugin-vitest';
 
@@ -39,6 +40,7 @@ export default tseslint.config(
       local: {
         rules: {
           'import-identifier-order': importIdentifierOrder,
+          'no-comment-block-in-body': noCommentBlockInBody,
           'type-imports-after-value': typeImportsAfterValue,
         },
       },
@@ -55,6 +57,7 @@ export default tseslint.config(
         { controlComponents: ['FormInput'], assert: 'either', depth: 2 },
       ],
       'local/import-identifier-order': 'error',
+      'local/no-comment-block-in-body': 'error',
       'local/type-imports-after-value': 'error',
       'react/react-in-jsx-scope': 'off',
       'react-hooks/exhaustive-deps': 'warn',
@@ -84,6 +87,7 @@ export default tseslint.config(
       local: {
         rules: {
           'import-identifier-order': importIdentifierOrder,
+          'no-comment-block-in-body': noCommentBlockInBody,
           'type-imports-after-value': typeImportsAfterValue,
         },
       },
@@ -92,6 +96,7 @@ export default tseslint.config(
     rules: {
       ...vitest.configs.recommended.rules,
       'local/import-identifier-order': 'error',
+      'local/no-comment-block-in-body': 'error',
       'local/type-imports-after-value': 'error',
       'vitest/no-focused-tests': 'error',
       // valid-expect enforces Jest's 1-arg; the manifest test uses 2-arg

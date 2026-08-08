@@ -57,7 +57,6 @@ function promoteFirstCell(row: Element) {
   }
 
   firstCell.tagName = 'th';
-  // the literal string matters: a boolean serializes to scope="true", which
-  // is invalid and falls back to the UA guessing the scope itself
+  // a boolean here serializes to an invalid scope the UA has to guess
   firstCell.properties = { ...firstCell.properties, scope: 'row' };
 }

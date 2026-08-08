@@ -105,8 +105,7 @@ export function useAppShell() {
     document.title = `Linklater – ${VIEW_LABELS[view]}`;
   }, [view]);
 
-  // focus <main> on route change, not first load (would skip the skip link)
-  // and not on a Settings scrollTo intent (SettingsView focuses the section)
+  // first load would skip past the skip link, Settings focuses itself
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;

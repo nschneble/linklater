@@ -1,0 +1,57 @@
+{
+  "src/auth/extension-auth.controller.spec.ts": {
+    "local/no-comment-block-in-body": {
+      "count": 2
+    }
+  },
+  "src/auth/google-link.strategy.spec.ts": {
+    "local/no-comment-block-in-body": {
+      "count": 1
+    }
+  },
+  "src/auth/magic-link.controller.spec.ts": {
+    "local/no-comment-block-in-body": {
+      "count": 3
+    }
+  },
+  "src/auth/oauth-csrf.guard.spec.ts": {
+    "local/no-comment-block-in-body": {
+      "count": 2
+    }
+  },
+  "src/auth/oauth-link.controller.spec.ts": {
+    "local/no-comment-block-in-body": {
+      "count": 3
+    }
+  },
+  "src/auth/oauth-link.service.spec.ts": {
+    "local/no-comment-block-in-body": {
+      "count": 4
+    }
+  },
+  "src/auth/oauth-sign-in.controller.spec.ts": {
+    "local/no-comment-block-in-body": {
+      "count": 2
+    }
+  },
+  "src/common/safe-fetch.spec.ts": {
+    "local/no-comment-block-in-body": {
+      "count": 2
+    }
+  },
+  "src/links/links.service.spec.ts": {
+    "local/no-comment-block-in-body": {
+      "count": 5
+    }
+  },
+  "src/metadata/metadata-fetcher.service.spec.ts": {
+    "local/no-comment-block-in-body": {
+      "count": 5
+    }
+  },
+  "src/users/user-oauth.service.spec.ts": {
+    "local/no-comment-block-in-body": {
+      "count": 6
+    }
+  }
+}

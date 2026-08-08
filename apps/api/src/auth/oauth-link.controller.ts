@@ -44,8 +44,7 @@ export class OAuthLinkController {
   @UseGuards(JwtAuthGuard)
   @Get('google/link')
   googleLink(@Req() request: AuthRequest): { url: string } {
-    // JSON not redirect: the SPA fetches this to attach the bearer JWT
-    // (a top-level navigation can't send an Authorization header)
+    // JSON not a redirect: a top-level navigation carries no bearer JWT
     return this.oauthLinkService.buildGoogleLinkUrl(request.user.userId);
   }
 
@@ -77,8 +76,7 @@ export class OAuthLinkController {
         );
         return;
       }
-      // don't let an unexpected error escape as HTML 500 in the OAuth popup;
-      // log it, then redirect to a generic error state the SPA can render
+      // an HTML 500 would surface inside the OAuth popup
       this.logger.error(
         `Unexpected error linking google account for user ${request.user.userId}: ${String(error)}`,
       );

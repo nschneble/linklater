@@ -15,7 +15,11 @@
  */
 
 import { BUNDLES } from './useThemeOverrides';
-import { computeContrastRatio, generateRandomPalette } from './randomPalette';
+import {
+  computeContrastRatio,
+  derivePaletteOnce,
+  generateRandomPalette,
+} from './randomPalette';
 import { describe, expect, it } from 'vitest';
 import { EDITABLE_VARS } from '../../../theme/customThemeTokens';
 import { evaluatePair } from './contrastResults.evaluate';
@@ -35,12 +39,13 @@ const CONTRACT_PAIRS = [
 
 const MODES: Mode[] = ['light', 'dark'];
 const ITERATIONS = 200;
+const DERIVATIONS = 2000;
 const HEX_6 = /^#[0-9a-fA-F]{6}$/;
 
-describe('generateRandomPalette: the 52-pair WCAG AA contract', () => {
-  it('rebuilds exactly 52 contract pairs from the editor builders', () => {
-    // 42 (7×6) + 6 cross-bundle + 1 subtle-text + 3 focus-ring = 52; pin it
-    expect(CONTRACT_PAIRS).toHaveLength(52);
+describe('generateRandomPalette: the 60-pair WCAG AA contract', () => {
+  it('rebuilds exactly 60 contract pairs from the editor builders', () => {
+    // 42 (7×6) + 6 cross-bundle + 1 subtle + 6 input-fill + 5 focus-ring
+    expect(CONTRACT_PAIRS).toHaveLength(60);
   });
 
   for (const mode of MODES) {
@@ -73,6 +78,37 @@ describe('generateRandomPalette: the 52-pair WCAG AA contract', () => {
               .toBeGreaterThanOrEqual(pair.threshold);
           }
         });
+      }
+    });
+  }
+});
+
+/*
+ * DERIVE-TO-SATISFY, held directly rather than inferred.
+ *
+ * The gate above runs the public entry point, which throws a failing draw
+ * away and repairs the last one, so it stays green over a derivation that
+ * has stopped solving a pair. That is not hypothetical: adding the
+ * input-fill pairs to the contract turned that gate green on its own while
+ * more than half of all light draws still failed them. This runs ONE
+ * derivation per seed, with nothing behind it to launder the result.
+ */
+describe('one derivation clears the contract before any repair', () => {
+  for (const mode of MODES) {
+    it(`${mode} mode needs no second attempt`, () => {
+      for (let iteration = 0; iteration < DERIVATIONS; iteration += 1) {
+        const seed = iteration + (mode === 'dark' ? 300000 : 2000);
+        const palette = derivePaletteOnce(mode, seed);
+
+        for (const pair of CONTRACT_PAIRS) {
+          const ratio = computeContrastRatio(
+            palette[pair.foreground as ThemeVariable] ?? '',
+            palette[pair.background as ThemeVariable] ?? '',
+          );
+          expect
+            .soft(ratio ?? 0, `${pair.label} (seed ${seed})`)
+            .toBeGreaterThanOrEqual(pair.threshold);
+        }
       }
     });
   }
