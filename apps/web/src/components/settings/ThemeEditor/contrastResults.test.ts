@@ -1,12 +1,15 @@
 /*
  * Tests for the live contrast math behind the Theme Editor's contract checker.
  *
- * `computeContrastRatio` is the WCAG 2.1 ratio used to flag failing pairs;
- * `pairsForBundle` is the per-bundle contract pair set. A superset assertion
- * mechanizes that the runtime pair set can never drift below the static
- * `bundles.contrast.test.ts` contract (the two sources must agree).
+ * `pairsForBundle` is the per-bundle contract pair set, and a superset
+ * assertion mechanizes that the runtime pair set can never drift below the
+ * static `bundles.contrast.test.ts` contract (the two sources must agree).
+ * `computeContrastRatio` is the two-endpoint opaque ratio the Randomize
+ * generator solves against; what the checker itself measures with is
+ * `evaluatePair`, covered in `contrastResults.evaluate.test.ts`.
  */
 
+import { BRANDING_DEFAULTS } from '../../../theme/brandingDefaults';
 import { BUNDLES, EDITABLE_VARS, VAR_GROUPS } from './useThemeOverrides';
 import {
   computeContrastRatio,
@@ -17,6 +20,7 @@ import {
   useContrastResults,
 } from './contrastResults';
 import { describe, expect, it } from 'vitest';
+import { evaluatePair } from './contrastResults.evaluate';
 import { renderHook } from '@testing-library/react';
 import type { ContrastPair, ContrastResults } from './contrastResults';
 
@@ -122,17 +126,164 @@ describe('an unmeasurable pair is never rolled up as passing', () => {
     expect(resolveContrastStatus(result.current)).toBe('pass');
   });
 
-  it('refuses to claim conformance when a translucent background hid pairs', () => {
-    // the shipped dark seed shape: --mount-bg carries alpha, so every pair
-    // touching it resolves to null. Those used to be skipped outright, and
-    // the editor told a screen reader user the palette met minimum contrast.
+  it('measures a translucent card instead of skipping it', () => {
+    // the shipped dark seed shape, whose pairs used to resolve to null and be
+    // skipped, letting the editor claim conformance over them; composited
+    // over an opaque page they are ordinary measurable colors
     const palette = { ...passingPalette(), '--mount-bg': '#ffffff0d' };
 
     const { result } = renderHook(() => useContrastResults(palette));
 
-    expect(result.current.totalFailures).toBe(0);
+    expect(result.current.totalUnverified).toBe(0);
+    expect(resolveContrastStatus(result.current)).toBe('pass');
+  });
+
+  it('catches a translucent card that composites into a failure', () => {
+    // near-transparent black over a white page lands close to white, so black
+    // text still passes but a near-white highlight no longer clears 3:1
+    const palette = {
+      ...passingPalette(),
+      '--mount-bg': '#0000000d',
+      '--mount-highlight': '#f0f0f0',
+    };
+
+    const { result } = renderHook(() => useContrastResults(palette));
+
+    expect(result.current.totalFailures).toBeGreaterThan(0);
+    expect(resolveContrastStatus(result.current)).toBe('fail');
+  });
+
+  it('still refuses to claim conformance when the page itself is translucent', () => {
+    // --base-bg is the root of every chain, so there is nothing behind it to
+    // composite against and no honest number to report
+    const palette = { ...passingPalette(), '--base-bg': '#ffffff0d' };
+
+    const { result } = renderHook(() => useContrastResults(palette));
+
     expect(result.current.totalUnverified).toBeGreaterThan(0);
     expect(resolveContrastStatus(result.current)).toBe('uncheckable');
+  });
+
+  it('measures every pair of the shipped dark seed', () => {
+    const seed = BRANDING_DEFAULTS as Record<string, string>;
+    // five translucent backgrounds put 21 pairs beyond a two-endpoint ratio
+    const beyondTwoEndpoints = allContractPairs().filter(
+      (pair) =>
+        computeContrastRatio(
+          seed[pair.foreground] ?? '',
+          seed[pair.background] ?? '',
+        ) === null,
+    );
+    expect(beyondTwoEndpoints).toHaveLength(21);
+
+    const { result } = renderHook(() => useContrastResults(seed));
+
+    expect(result.current.totalUnverified).toBe(0);
+  });
+});
+
+/**
+ * The multi-site apparatus, exercised where the sites actually disagree.
+ *
+ * `passingPalette` sets every `-bg` slot to `#ffffff`, which is exactly the
+ * case compositing short-circuits: every chain collapses to one number and
+ * worst-of has nothing to choose between. A palette with translucent card
+ * backgrounds is the only shape that puts a real number on each site.
+ */
+describe('worst-of scoring across the sites a surface renders in', () => {
+  // a 50% white card over a black page: #808080 on the page, #c0c0c0 in a card
+  const divergent = {
+    ...passingPalette(),
+    '--base-bg': '#000000',
+    '--mount-bg': '#ffffff80',
+    '--mount-text': '#000000',
+  };
+
+  it('reports the worse of two sites that measure differently', () => {
+    const resolve = (token: string) => divergent[token] ?? '';
+    const evaluation = evaluatePair('--mount-text', '--mount-bg', resolve);
+
+    expect(evaluation.ratio).toBeCloseTo(5.317, 3);
+    expect(evaluation.backdrop).toEqual(['--base-bg']);
+  });
+
+  it('surfaces the failure on the backdrop row, not just the two endpoints', () => {
+    // editing --base-bg moves this pair, so --base-bg has to carry the note
+    const failing = { ...divergent, '--mount-text': '#6a6a6a' };
+    const { result } = renderHook(() => useContrastResults(failing));
+
+    const touching = pairsTouchingToken(result.current);
+    expect(touching.has('--base-bg')).toBe(true);
+  });
+});
+
+/**
+ * C1, restated for compositing.
+ *
+ * The old invariant was "an edit to token X can only change pairs X is an
+ * ENDPOINT of", which held only because nothing else was ever read. Once a
+ * backdrop participates, editing `--base-bg` moves `--mount-text / --mount-bg`,
+ * a pair that names neither.
+ *
+ * The general property is: the ratio of a pair is a pure function of the
+ * tokens the computation actually CONSUMED, so an edit to X can only move
+ * pairs where X is in `reads(p)`. The word doing the work is "actually":
+ * compositing short-circuits on the first opaque backdrop, so on an opaque
+ * palette `reads(p)` is exactly the two endpoints and keying is unchanged.
+ *
+ * SCOPE, so this is not read as more than it is. It is differential, not
+ * structural: it perturbs each token to one value and checks that everything
+ * which moved had declared it. A dependency that happens to leave the ratio
+ * unchanged at THIS perturbation is invisible to it, which is why `reads` is
+ * the union over every site rather than the winning site's set. That union is
+ * what makes the property true by construction, and this test is the
+ * regression guard on it, not its proof.
+ */
+describe('C1 differential: only pairs that READ a token move when it changes', () => {
+  const allPairs = allContractPairs();
+
+  // a translucent card, so backdrops genuinely participate; on an all-opaque
+  // palette this test would pass vacuously
+  const palette = { ...passingPalette(), '--mount-bg': '#ffffff26' };
+
+  function evaluateAll(values: Record<string, string>) {
+    const resolve = (token: string) => values[token] ?? '';
+    return allPairs.map((pair) =>
+      evaluatePair(pair.foreground, pair.background, resolve),
+    );
+  }
+
+  it.each(EDITABLE_VARS.map((variable) => [variable]))(
+    'editing %s moves only pairs that read it',
+    (variable) => {
+      const baseline = evaluateAll(palette);
+      // a value far from the original, so any real dependency shows up
+      const perturbed = evaluateAll({ ...palette, [variable]: '#ff00ff' });
+
+      const movedWithoutReading = baseline.flatMap((before, index) => {
+        if (before.ratio === perturbed[index].ratio) return [];
+        if (before.reads.has(variable)) return [];
+        return [allPairs[index].label];
+      });
+
+      expect(movedWithoutReading).toEqual([]);
+    },
+  );
+
+  it('reads exactly the two endpoints when nothing is translucent', () => {
+    const opaque = passingPalette();
+    const resolve = (token: string) => opaque[token] ?? '';
+
+    for (const pair of allPairs) {
+      const evaluation = evaluatePair(
+        pair.foreground,
+        pair.background,
+        resolve,
+      );
+      expect([...evaluation.reads].sort()).toEqual(
+        [pair.foreground, pair.background].sort(),
+      );
+    }
   });
 });
 

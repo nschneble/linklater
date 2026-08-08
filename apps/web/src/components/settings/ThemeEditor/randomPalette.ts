@@ -26,17 +26,26 @@ import type { Mode } from '../../../theme/constants';
  * The strategy is DERIVE-TO-SATISFY, never blind rejection sampling: each
  * background is chosen first (in a mode-appropriate lightness band), then every
  * foreground is solved AWAY from its background in the contrast-increasing
- * direction and nudged until it clears its threshold. The single source of
- * contrast truth is the editor's own `computeContrastRatio`, so the generator
- * and the live checker can't disagree. Pure black (`#000000`) / pure white
- * (`#ffffff`) are the guaranteed fallbacks — they give the maximal ratio — so
- * the nudge loop and the defensive outer loop always terminate with a passing
- * palette.
+ * direction and nudged until it clears its threshold. Pure black (`#000000`) /
+ * pure white (`#ffffff`) are the guaranteed fallbacks (they give the maximal
+ * ratio), so the nudge loop and the defensive outer loop always terminate with
+ * a passing palette.
  *
- * Every emitted value is 6-digit hex: `computeContrastRatio` returns `null` on
- * alpha / non-hex input, which would be a SILENT contract hole, so the generator
- * never emits anything else. `input-bg` slots have no contrast pair and are set
- * cosmetically inside the bg band.
+ * It solves against `computeContrastRatio`, the two-endpoint opaque ratio,
+ * while the live checker scores each pair on the WORST of the render stacks
+ * its background composites down. Those are two different models, and this one
+ * is the simpler on purpose: every emitted value is opaque 6-digit hex, and on
+ * an opaque background compositing short-circuits, so for the palettes this
+ * function can produce the two models return the same number. Solving through
+ * the composited checker would buy nothing and would drag a table of render
+ * sites into a color generator. `randomPalette.test.ts` holds that equivalence
+ * to account by running a generated palette through the checker itself, so the
+ * argument cannot quietly stop being true.
+ *
+ * The opacity is load-bearing, not cosmetic: `computeContrastRatio` returns
+ * `null` on alpha / non-hex input, which would be a SILENT contract hole.
+ * `input-bg` slots have no contrast pair and are set cosmetically inside the
+ * bg band.
  *
  * CVD distinguishability is BEST-EFFORT (the 4 state bundles get hues spaced
  * ~90° apart), not a hard gate — the editor validates CVD live, and the WCAG

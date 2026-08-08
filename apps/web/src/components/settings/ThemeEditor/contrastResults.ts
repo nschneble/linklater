@@ -6,6 +6,7 @@ import {
   type ThemeVariable,
 } from './useThemeOverrides';
 import { contrastRatio } from '../../../theme/colorMath';
+import { evaluatePair } from './contrastResults.evaluate';
 import { useMemo } from 'react';
 import type { Rgb } from '../../../theme/colorMath';
 
@@ -16,11 +17,19 @@ import type { Rgb } from '../../../theme/colorMath';
  * edited. The rows all read this SINGLE source of truth so they can never
  * disagree.
  *
- * The governing invariant: an edit to token X can only change the contrast of
- * pairs that TOUCH X, so surfacing each failing pair on BOTH its endpoints
- * (`pairsTouchingToken`) guarantees the warning lands on whichever slot row the
- * user just edited. `contrastResults.test.ts` mechanizes the completeness of
- * that coverage (the C1 invariant).
+ * The governing invariant (C1): a pair's ratio is a pure function of the
+ * tokens the measurement actually CONSUMED, so an edit to token X can only
+ * move pairs where X is among them. Surfacing each failing pair on every
+ * token it read guarantees the warning lands on whichever slot row the user
+ * just edited.
+ *
+ * "Consumed" rather than "declared" is what keeps this tight. Compositing
+ * stops at the first opaque backdrop, so on an opaque palette a pair reads
+ * exactly its two endpoints and the keying is identical to the two-endpoint
+ * rule this replaced. A backdrop only enters the picture when something above
+ * it is genuinely translucent. `contrastResults.test.ts` mechanizes it
+ * differentially: perturb each token, and assert everything that moved had
+ * declared it.
  */
 
 /** A foreground/background color pair to test for WCAG contrast compliance. */
@@ -171,10 +180,16 @@ function hexToRgb(hex: string): Rgb | null {
 }
 
 /**
- * Computes the WCAG 2.1 contrast ratio between two hex colors. Returns `null`
- * if either color is invalid or uses alpha (alpha tokens require composite
- * math the runtime editor does not perform – the compiled bundle tests in
- * `bundles.contrast.test.ts` cover those rigorously).
+ * Computes the WCAG 2.1 contrast ratio between two OPAQUE hex colors, with no
+ * compositing. Returns `null` if either color is invalid or carries alpha.
+ *
+ * This is NOT what the live checker measures with: `evaluatePair` composites
+ * each background down its real render stack first. It survives as the
+ * two-endpoint form the Randomize generator solves against
+ * (`randomPalette.ts`), which is sound there because that generator emits only
+ * opaque 6-digit hex, and on an opaque background compositing short-circuits
+ * to exactly this. Feeding it a translucent value is a silent hole, so it
+ * refuses rather than guessing.
  *
  * The ratio itself comes from `theme/colorMath`, the same module the static
  * bundle suites measure with, so the number shown to a user editing a theme
@@ -190,23 +205,40 @@ export function computeContrastRatio(
   return contrastRatio(foreground, background);
 }
 
+/** One contract pair as measured across every place its background renders. */
+export interface PairResult {
+  pair: ContrastPair;
+  /** Worst MEASURED ratio; null when no render site could be measured. */
+  ratio: number | null;
+  /** Tokens the measurement consumed; absent means just the two endpoints. */
+  reads?: ReadonlySet<string>;
+  /** Render sites that could not be measured; absent means none. */
+  unmeasurable?: number;
+}
+
+/** Render sites of `entry` that could not be measured. */
+function unmeasurableSites(entry: PairResult): number {
+  if (entry.unmeasurable !== undefined) return entry.unmeasurable;
+  return entry.ratio === null ? 1 : 0;
+}
+
 interface GroupResult {
   /** A bundle id, or the synthetic `'focus'` group id. */
   group: Bundle | 'focus';
   label: string;
-  pairs: Array<{ pair: ContrastPair; ratio: number | null }>;
-  /** Pairs whose ratio resolved AND fell below threshold. */
+  pairs: PairResult[];
+  /** Pairs whose worst measured ratio fell below threshold. */
   failureCount: number;
-  /** Pairs whose ratio could not be computed (alpha / unset token). */
+  /** Pairs with at least one render site nothing could measure. */
   unverifiedCount: number;
-  /** Pairs whose ratio resolved (verified, pass or fail). */
+  /** Pairs that measured somewhere (verified, pass or fail). */
   totalCount: number;
 }
 
 export interface ContrastResults {
   groups: GroupResult[];
   totalFailures: number;
-  /** Total pairs that could not be verified across all groups. */
+  /** Pairs with an unmeasurable render site, across all groups. */
   totalUnverified: number;
 }
 
@@ -304,12 +336,13 @@ function partnerLabelFor(rowToken: string, pair: ContrastPair): string {
 }
 
 /**
- * Keys each failing pair under BOTH its foreground AND its background token, so
- * a token that fails only as a BACKGROUND (e.g. a too-light `--mount-bg` under
- * card text) still reports a failure on its OWN slot row, not only on the far
- * foreground row (C3). Reuses the ratios already computed by `useContrastResults`
- * — it makes NO new `computeContrastRatio` calls — so a failing pair is
- * reachable from either of its two endpoint rows.
+ * Keys each failing pair under every token its measurement READ, so a token
+ * that fails only as a BACKGROUND (e.g. a too-light `--mount-bg` under card
+ * text) still reports a failure on its OWN slot row, not only on the far
+ * foreground row (C3). A backdrop the pair names nowhere, like `--base-bg`
+ * under a translucent card, reports on its own row too. Reuses the
+ * evaluations already computed by `useContrastResults`; it measures nothing
+ * itself.
  */
 export function pairsTouchingToken(
   results: ContrastResults,
@@ -326,10 +359,13 @@ export function pairsTouchingToken(
     });
   };
   for (const group of results.groups) {
-    for (const { pair, ratio } of group.pairs) {
+    for (const { pair, ratio, reads } of group.pairs) {
       if (ratio === null || ratio >= pair.threshold) continue;
-      consider(pair.foreground, ratio, pair);
-      consider(pair.background, ratio, pair);
+      // every token the ratio READ can move it back over threshold, backdrops
+      // included; on an opaque palette that is exactly the two endpoints
+      for (const token of reads ?? [pair.foreground, pair.background]) {
+        consider(token, ratio, pair);
+      }
     }
   }
   return failures;
@@ -339,7 +375,7 @@ export function pairsTouchingToken(
  * Resolves the value for a contrast pair endpoint from the editor's live
  * `colorValues`. `--focus-ring` is now an editable, injected token (W1), so it
  * is looked up here like any bundle slot. Returns an empty string for any
- * unresolved token so `computeContrastRatio` reports it as unverified ("–")
+ * unresolved token so `evaluatePair` reports that site as unverified ("–")
  * rather than throwing.
  */
 function resolveValue(
@@ -351,32 +387,35 @@ function resolveValue(
 
 /**
  * Computes WCAG contrast results for every bundle's contract pairs plus the
- * focus-ring pairs. Memoized on `colorValues` so live edits trigger a single
- * recompute. The focus ring is read from `colorValues` like any other token
- * now that it is editable for the Custom theme (W1).
+ * focus-ring pairs, each measured against every place its background really
+ * renders and scored on the worst of them. Memoized on `colorValues` so live
+ * edits trigger a single recompute. The focus ring is read from `colorValues`
+ * like any other token now that it is editable for the Custom theme (W1).
  */
 export function useContrastResults(
   colorValues: Record<ThemeVariable, string>,
 ): ContrastResults {
   return useMemo(() => {
-    const bundleGroups: GroupResult[] = BUNDLES.map((bundle) => {
-      const pairs = pairsForBundle(bundle).map((pair) => ({
+    const resolve = (token: string) => resolveValue(token, colorValues);
+    const measure = (pair: ContrastPair): PairResult => {
+      const evaluation = evaluatePair(
+        pair.foreground,
+        pair.background,
+        resolve,
+      );
+      return {
         pair,
-        ratio: computeContrastRatio(
-          resolveValue(pair.foreground, colorValues),
-          resolveValue(pair.background, colorValues),
-        ),
-      }));
-      return buildGroup(bundle, labelFor(bundle), pairs);
-    });
+        ratio: evaluation.ratio,
+        reads: evaluation.reads,
+        unmeasurable: evaluation.unmeasurable,
+      };
+    };
 
-    const focusPairs = focusRingPairs().map((pair) => ({
-      pair,
-      ratio: computeContrastRatio(
-        resolveValue(pair.foreground, colorValues),
-        resolveValue(pair.background, colorValues),
-      ),
-    }));
+    const bundleGroups: GroupResult[] = BUNDLES.map((bundle) =>
+      buildGroup(bundle, labelFor(bundle), pairsForBundle(bundle).map(measure)),
+    );
+
+    const focusPairs = focusRingPairs().map(measure);
     const focusGroup = buildGroup('focus', 'Focus ring', focusPairs);
 
     const groups = [...bundleGroups, focusGroup];
@@ -398,7 +437,7 @@ function labelFor(bundle: Bundle): string {
 function buildGroup(
   group: Bundle | 'focus',
   label: string,
-  pairs: Array<{ pair: ContrastPair; ratio: number | null }>,
+  pairs: PairResult[],
 ): GroupResult {
   return {
     group,
@@ -407,7 +446,8 @@ function buildGroup(
     failureCount: pairs.filter(
       ({ pair, ratio }) => ratio !== null && ratio < pair.threshold,
     ).length,
-    unverifiedCount: pairs.filter(({ ratio }) => ratio === null).length,
+    unverifiedCount: pairs.filter((entry) => unmeasurableSites(entry) > 0)
+      .length,
     totalCount: pairs.filter(({ ratio }) => ratio !== null).length,
   };
 }
