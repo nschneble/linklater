@@ -13,8 +13,11 @@ import {
   focusRingPairs,
   pairsForBundle,
   pairsTouchingToken,
+  resolveContrastStatus,
+  useContrastResults,
 } from './contrastResults';
 import { describe, expect, it } from 'vitest';
+import { renderHook } from '@testing-library/react';
 import type { ContrastPair, ContrastResults } from './contrastResults';
 
 /** Every contract pair the live checker evaluates: per-bundle plus focus ring. */
@@ -55,6 +58,83 @@ function makePair(overrides: Partial<ContrastPair>): ContrastPair {
     ...overrides,
   };
 }
+
+/**
+ * A palette where every contract pair passes: backgrounds white, foregrounds
+ * black, and the highlight slots a grey squeezed between two thresholds. The
+ * highlight has to clear 4.5:1 against a black highlight-fg AND 3:1 against a
+ * white background, which pins its relative luminance to roughly 0.175-0.3.
+ * `#7c7c7c` sits at 0.2015, giving 5.03 and 4.18.
+ */
+function passingPalette(): Record<string, string> {
+  const values: Record<string, string> = {};
+  for (const variable of EDITABLE_VARS) {
+    if (variable.endsWith('-bg')) {
+      values[variable] = '#ffffff';
+    } else if (
+      variable.endsWith('-highlight') ||
+      variable.endsWith('-highlight-hover')
+    ) {
+      values[variable] = '#7c7c7c';
+    } else {
+      values[variable] = '#000000';
+    }
+  }
+  return values;
+}
+
+describe('resolveContrastStatus', () => {
+  it.each([
+    ['fail', 3, 2],
+    ['fail', 1, 0],
+    ['uncheckable', 0, 5],
+    ['pass', 0, 0],
+  ])(
+    'is %s for %i failures and %i unverified',
+    (status, failures, unverified) => {
+      expect(
+        resolveContrastStatus({
+          groups: [],
+          totalFailures: failures,
+          totalUnverified: unverified,
+        } as unknown as ContrastResults),
+      ).toBe(status);
+    },
+  );
+
+  it('reports a measured failure ahead of an unmeasurable pair', () => {
+    // a real number the user can act on beats "we could not tell"
+    expect(
+      resolveContrastStatus({
+        groups: [],
+        totalFailures: 1,
+        totalUnverified: 9,
+      } as unknown as ContrastResults),
+    ).toBe('fail');
+  });
+});
+
+describe('an unmeasurable pair is never rolled up as passing', () => {
+  it('passes only when every pair actually resolved', () => {
+    const { result } = renderHook(() => useContrastResults(passingPalette()));
+
+    expect(result.current.totalUnverified).toBe(0);
+    expect(resolveContrastStatus(result.current)).toBe('pass');
+  });
+
+  it('refuses to claim conformance when a translucent background hid pairs', () => {
+    // the shipped dark seed shape: --mount-bg carries alpha, so every pair
+    // touching it resolves to null. Those used to be skipped outright, and
+    // the editor told a screen reader user the palette met minimum contrast.
+    const palette = { ...passingPalette(), '--mount-bg': '#ffffff0d' };
+
+    const { result } = renderHook(() => useContrastResults(palette));
+
+    expect(result.current.totalFailures).toBe(0);
+    expect(result.current.totalUnverified).toBeGreaterThan(0);
+    expect(resolveContrastStatus(result.current)).toBe('uncheckable');
+  });
+});
 
 describe('computeContrastRatio', () => {
   it('returns 21 for black on white', () => {

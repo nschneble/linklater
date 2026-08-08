@@ -18,6 +18,7 @@ import {
   within,
 } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { EDITABLE_VARS } from './useThemeOverrides';
 import { MOCK_GLYPHS } from './mockGlyphs';
 import { readThemeTokens } from './themeProbe';
 import ThemeEditor from './index';
@@ -702,8 +703,36 @@ describe('ThemeEditor slot edit while already custom', () => {
  * auto-announce channel (R-A3), and conveys state by distinct glyph, not color
  * alone (R-A5).
  */
+/**
+ * A palette where every contract pair resolves AND passes. The module-level
+ * `readThemeTokens` stub returns a single non-color token, which leaves almost
+ * every pair unmeasurable — fine for the seeding tests, but useless for
+ * asserting a contrast verdict, so these cases supply a real one.
+ *
+ * The highlight grey is pinned between two thresholds: 4.5:1 against a black
+ * highlight-fg and 3:1 against a white background.
+ */
+function passingTokens(): Record<string, string> {
+  const values: Record<string, string> = {};
+  for (const variable of EDITABLE_VARS) {
+    if (variable.endsWith('-bg')) {
+      values[variable] = '#ffffff';
+    } else if (
+      variable.endsWith('-highlight') ||
+      variable.endsWith('-highlight-hover')
+    ) {
+      values[variable] = '#7c7c7c';
+    } else {
+      values[variable] = '#000000';
+    }
+  }
+  return values;
+}
+
 describe('ThemeEditor contrast status icon (title row)', () => {
   it('shows a non-interactive check glyph when the palette is contrast-clean', () => {
+    vi.mocked(readThemeTokens).mockReturnValue(passingTokens());
+
     render(<ThemeEditor />);
     const icon = screen.getByRole('img', {
       name: 'Theme colors meet minimum contrast',
@@ -714,6 +743,25 @@ describe('ThemeEditor contrast status icon (title row)', () => {
     expect(icon).not.toHaveAttribute('tabindex');
     // No auto-announce channel — the polite save region owns speech (R-A3).
     expect(icon).not.toHaveAttribute('aria-live');
+  });
+
+  it('refuses to claim conformance over pairs it could not measure', () => {
+    // a translucent background makes every pair touching it unmeasurable.
+    // Those used to be skipped, so this palette reported "meets minimum
+    // contrast" to a screen reader user over pairs nothing had measured.
+    vi.mocked(readThemeTokens).mockReturnValue({
+      ...passingTokens(),
+      '--mount-bg': '#ffffff0d',
+    });
+
+    render(<ThemeEditor />);
+    const icon = screen.getByRole('img', {
+      name: "Some theme colors couldn't be checked for contrast",
+    });
+    // third state, third SHAPE: not the check, not the triangle (SC 1.4.1)
+    expect(icon).toHaveClass('fa-circle-info');
+    expect(icon).not.toHaveClass('fa-circle-check');
+    expect(icon).not.toHaveClass('fa-triangle-exclamation');
   });
 
   it('flips to a warning triangle when a contract pair fails', async () => {
