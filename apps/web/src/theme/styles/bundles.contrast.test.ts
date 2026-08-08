@@ -391,7 +391,13 @@ describe('bundle contrast contract', () => {
    * --focus-ring is a UNIVERSAL chrome token (not a per-bundle slot).
    * SC 1.4.11 requires the focus indicator clear 3:1 against every
    * surface a focused element can sit on: base-bg, mount-bg, orbit-bg,
-   * and each state bundle's composited bg.
+   * each state bundle's composited bg, and both input fills.
+   *
+   * The two input fills are here because a focused input has no border
+   * left to separate them from the ring. Both painters drop the border
+   * to transparent on focus, so the ring is the whole boundary and its
+   * inner edge meets the fill. Tightest is the base fill on
+   * before-sunrise dark at 3.455:1, so the headroom is real but thin.
    *
    * Every per-theme cascade ships an explicit `--focus-ring: #...` hex;
    * the `:root` synthetic fallback omits the slot, so the resolver
@@ -406,6 +412,8 @@ describe('bundle contrast contract', () => {
       'warn-bg',
       'info-bg',
       'success-bg',
+      'base-input-bg',
+      'mount-input-bg',
     ] as const;
 
     /*
@@ -777,8 +785,8 @@ describe('bundle contrast contract', () => {
 
   /*
    * --base-input-bg and --mount-input-bg are base/mount-only slots
-   * tuning the form-input fill per host surface (consumed by FormInput,
-   * LinksToolbar, and ColorEditor).
+   * tuning the form-input fill per host surface. Painted by FormInput,
+   * LinksToolbar, ColorRow, CodeBlock, CurlExample and MockToolbar.
    *
    * Contract per slot:
    *   {surface}-text on {surface}-input-bg          >= 4.5:1 (SC 1.4.3)
@@ -1184,6 +1192,67 @@ describe('bundle contrast contract', () => {
               .soft(
                 ratio,
                 `alert-${slot} on ${host}-bg (${fixture.label}): got ${describeRatio(ratio)}`,
+              )
+              .toBeGreaterThanOrEqual(threshold);
+          });
+        }
+      });
+    }
+  });
+
+  /*
+   * A mount-tier form on a card that is not mount-tier. ReauthForm asks
+   * for the mount surface at both of its inputs and takes no surface of
+   * its own, so the tier is fixed at the component rather than chosen per
+   * call site. One of its two hosts is the account-deletion path, which
+   * renders it inside the danger variant of a settings card; that variant
+   * fills from the alert bundle. The prompt, the field labels and the
+   * cancel link paint the mount text tiers straight onto that fill, and
+   * the input paints the mount border on it.
+   *
+   * The alert fill carries alpha on most cascades, so the card is that
+   * fill composited over the page rather than the raw token.
+   *
+   * Tightest is the border on nouvelle-vague light at 3.013:1, which is
+   * a third of a percent of headroom on a non-text check.
+   */
+  describe('mount-tier form on the danger card', () => {
+    const CARD_PAIRS = [
+      { slot: 'border' as const, threshold: AA_NON_TEXT },
+      { slot: 'text' as const, threshold: AA_NORMAL },
+      { slot: 'alt-text' as const, threshold: AA_NORMAL },
+    ];
+
+    for (const fixture of FIXTURES) {
+      if (!fixture.checkAdjacency) {
+        continue;
+      }
+      const block = extractBlock(BUNDLES_CSS, fixture.selector);
+      const declarations = parseDeclarations(block);
+      const alertBg = getSlot(declarations, 'alert', 'bg');
+      if (alertBg === null) {
+        continue;
+      }
+      const usablePairs = CARD_PAIRS.flatMap((pair) => {
+        const value = getSlot(declarations, 'mount', pair.slot);
+        if (value === null) {
+          return [];
+        }
+        return [{ ...pair, value }];
+      });
+      if (usablePairs.length === 0) {
+        continue;
+      }
+      const card = compositeOverBg(alertBg, fixture.pageBg);
+
+      describe(`${fixture.label}`, () => {
+        for (const { slot, threshold, value } of usablePairs) {
+          it(`mount-${slot} on the danger card >= ${threshold}:1`, () => {
+            const ratio = contrastRatio(resolveFg(value), card);
+            expect
+              .soft(
+                ratio,
+                `mount-${slot} on the danger card (${fixture.label}): got ${describeRatio(ratio)}`,
               )
               .toBeGreaterThanOrEqual(threshold);
           });
