@@ -24,9 +24,8 @@ function submitLabel(isMagicLink: boolean, mode: LoginRegisterMode): string {
 
 interface LoginRegisterViewProps {
   /**
-   * `false` when the error arrived on the URL rather than from a submit:
-   * `AuthForm` announces that one through its own live region, and two
-   * regions holding one message race each other on NVDA.
+   * `false` when the error arrived on the URL: AuthForm announces that one
+   * itself, and two regions holding one message race each other.
    */
   announceError?: boolean;
   email: string;
@@ -34,12 +33,6 @@ interface LoginRegisterViewProps {
   error: string | null;
   errorReference: RefObject<HTMLParagraphElement | null>;
   loading: boolean;
-  /**
-   * True for the 5000ms window after a successful magic-link request. Holds
-   * the submit button in a "Magic link sent!" success state – kept in sync
-   * with the toast's auto-dismiss lifetime so the two surfaces never read
-   * as contradictory.
-   */
   magicLinkSentJustNow: boolean;
   mode: LoginRegisterMode;
   onEmailChange: (email: string) => void;
@@ -79,8 +72,7 @@ export default function LoginRegisterView({
         Save links now, read them later.
       </p>
 
-      {/* mb-[24.5px] reserves the exact height of an Alert row so the layout
-          does not shift when an error appears below the form. */}
+      {/* reserves an Alert row's height so an error shifts nothing */}
       <SlidingTabBar
         ariaLabel="Authentication mode"
         activeIndex={mode === 'register' ? 1 : 0}
@@ -149,8 +141,7 @@ export default function LoginRegisterView({
           aria-describedby="auth-form-error"
         />
 
-        {/* Always mounted so aria-describedby="auth-form-error" is never
-            a dangling reference. Empty content renders nothing visible. */}
+        {/* always mounted: the inputs' aria-describedby cannot dangle */}
         <Alert
           announce={announceError}
           id="auth-form-error"

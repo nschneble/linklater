@@ -7,10 +7,8 @@ import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import type { MfaChallenge, Mode } from './useAuthForm';
 
 /**
- * The page title for each auth flow. An MFA challenge takes precedence over
- * `mode` because the MFA view renders on top of the login flow, matching the
- * render precedence below (WCAG 2.4.2 Page Titled). The "Linklater – X"
- * en-dash separator matches the app-wide title convention.
+ * An MFA challenge outranks the mode because its view renders on top of
+ * the login flow, and the title must name what is on screen (WCAG 2.4.2).
  */
 function authDocumentTitle(
   mode: Mode,
@@ -23,26 +21,14 @@ function authDocumentTitle(
 }
 
 /**
- * Top-level authentication form. Drives login, register, forgot-password, and
- * MFA challenge flows from a single component by deriving `mode` from the
- * current URL pathname (`/login`, `/signup`, `/forgot-password`).
+ * Top-level authentication form: login, register, forgot-password and the
+ * MFA challenge, chosen by route.
  *
- * After a successful credential check, if the server returns a `mfaToken`
- * the form transitions to an `MfaView` where the user enters their TOTP or
- * recovery code. The `mfaToken` is a short-lived server-issued token that
- * identifies the pending MFA session – it is not a full JWT.
- *
- * The sr-only region below the view is the announcement channel for an
- * error that arrived on the URL, which is how a refused OAuth callback
- * lands here. It stays mounted and empty until `useOAuthArrivalError`
- * fills it, because a live region already populated on first paint is read
- * as part of the page rather than announced, and this arrival waits on
- * nothing else. It empties again once the message has been heard: this
- * component does not remount across the auth routes, so a region left
- * populated outlives the `Alert` beside it. The visible `Alert` paints the
- * same text immediately with its own live semantics off (`announceError`),
- * so exactly one region announces. Submit errors keep the opposite split:
- * the `Alert` announces itself and this region stays empty.
+ * The sr-only live region is the announcement channel for an error that
+ * arrived on the URL, which is how a refused OAuth callback lands here.
+ * The visible Alert paints the same text with its own live semantics off,
+ * so exactly one region announces it; submit errors take the opposite
+ * split.
  */
 export default function AuthForm() {
   const {
@@ -138,7 +124,6 @@ export default function AuthForm() {
   return (
     <>
       {view}
-      {/* mounted empty, filled a beat later, emptied again; see above */}
       <span
         className="sr-only"
         role="alert"

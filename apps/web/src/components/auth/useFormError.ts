@@ -3,16 +3,10 @@ import { useCallback, useState } from 'react';
 type ErrorSource = 'arrival' | 'submit';
 
 /**
- * The form error together with the channel that set it.
- *
- * Two behaviours hinge on that channel: the Alert holding an error that
- * arrived on the URL keeps its live region off, because
- * `useOAuthArrivalError` announces that one, and the focus effect leaves
- * the arrival alone. Telling the channels apart by comparing the painted
- * string against the arrival copy answers wrong as soon as an API message
- * matches the catalog, and it fails silently: no live region, no focus,
- * and a mirror the submit already dismissed. Nothing holds the two
- * vocabularies apart, so the channel is recorded rather than inferred.
+ * The form error together with the channel that set it. The channel is
+ * recorded rather than inferred because nothing holds the two vocabularies
+ * apart: comparing the painted string against the arrival copy answers
+ * wrong, and silently, as soon as an API message matches the catalog.
  */
 export function useFormError() {
   const [error, setErrorMessage] = useState<string | null>(null);

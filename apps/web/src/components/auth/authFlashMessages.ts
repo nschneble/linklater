@@ -1,27 +1,20 @@
 /**
- * Copy for the failure codes an OAuth sign-in callback leaves on `/login`
- * as `?error=<code>&provider=<name>`. The other half of the contract is
- * `apps/api/src/auth/oauth-sign-in-failure.ts`: a code with no entry here
- * degrades to the unknown-code copy, so the two lists move together.
+ * Copy for the failure codes an OAuth sign-in callback leaves on the login
+ * URL. The API half of the contract is oauth-sign-in-failure.ts; a code
+ * with no entry here falls back to generic copy, so the two move together.
  *
- * Keys are `<code>:<provider>` with a bare `<code>` fallback for a redirect
- * that arrives without a provider. Each string is written out per provider
- * rather than interpolated, matching `settings/oauthFlashMessages.ts`.
- *
- * Three copy constraints, all load-bearing:
- * - never the word "password". `passwordHash` is nullable and a refused
- *   account is disproportionately likely to have none, so pointing at a
- *   password would be a second dead end.
- * - "Log in", not "sign in", for the action the user should take: it
- *   matches the tab and button labels already on the page (WCAG 3.2.4).
- * - no positional wording ("the form below"). The form sits above the
- *   provider buttons, and position is not a reliable cue (WCAG 1.3.3).
+ * Three constraints on the copy itself:
+ * - never the word "password". A refused account is disproportionately
+ *   likely to have none, so that would be a second dead end.
+ * - "Log in", not "sign in", matching the tab and button already on the
+ *   page (WCAG 3.2.4).
+ * - no positional wording. The form sits above the provider buttons, and
+ *   position is not a reliable cue (WCAG 1.3.3).
  */
 
 /**
- * The bare codes the API can send, mirroring `OAuthSignInFailure`. Exported
- * so the copy tests iterate the real list instead of a hand-copied one that
- * stays green while a new code serves the fallback.
+ * Mirrors the API's failure union; exported so the copy tests iterate the
+ * real list rather than a hand-copy that stays green as codes arrive.
  */
 export const AUTH_ERROR_CODES = [
   'mfa_required',
@@ -33,9 +26,8 @@ export const AUTH_ERROR_CODES = [
 type AuthErrorCode = (typeof AUTH_ERROR_CODES)[number];
 
 /**
- * The catalog described above. Typed so a code added to `AUTH_ERROR_CODES`
- * fails the build until it has copy, while the string index keeps the
- * `<code>:<provider>` keys.
+ * Typed so a new code fails the build until it has copy, while the string
+ * index still admits the per-provider keys.
  */
 const AUTH_ERROR_MESSAGES: Record<AuthErrorCode, string> &
   Record<string, string> = {
@@ -65,22 +57,19 @@ const AUTH_ERROR_MESSAGES: Record<AuthErrorCode, string> &
     "That sign-in didn't confirm this email address. Log in with your email instead.",
 };
 
-/** Copy for a code this build doesn't know: the value rides in from a URL. */
 const UNKNOWN_AUTH_ERROR_MESSAGE =
   "That sign-in didn't finish. Log in with your email instead.";
 
 /**
- * Own-property read. The key is a URL parameter, and a plain object literal
- * answers `__proto__`, `constructor` and `toString` off its prototype with
- * a non-undefined value, so `??` never reaches the fallback and an object
- * or a function escapes into the render.
+ * Own-property read. The key comes from a URL, and a plain object answers
+ * inherited keys with something non-undefined, so the fallback would never
+ * be reached and a function could escape into the render.
  */
 function ownMessage(key: string): string | undefined {
   if (!Object.hasOwn(AUTH_ERROR_MESSAGES, key)) return undefined;
   return AUTH_ERROR_MESSAGES[key];
 }
 
-/** Resolves the login-page copy for a redirect's error code and provider. */
 export function authErrorMessage(
   code: string,
   provider: string | null,
