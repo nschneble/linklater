@@ -8,7 +8,11 @@ import {
 } from '../../../theme/customThemeTokens';
 import { contrastRatio } from '../../../theme/colorMath';
 import { converter, formatHex, type Oklch } from 'culori';
-import { focusRingPairs, pairsForBundle } from './contrastResults.pairs';
+import {
+  focusRingPairs,
+  INPUT_FILL_BUNDLES,
+  pairsForBundle,
+} from './contrastResults.pairs';
 import type { Mode } from '../../../theme/constants';
 import type { Rgb } from '../../../theme/colorMath';
 
@@ -17,17 +21,18 @@ import type { Rgb } from '../../../theme/colorMath';
  * full WCAG AA contract the live editor enforces (PRD point 11). This is the
  * "Randomize" button's engine. The hard guarantee is the headline: the returned
  * map satisfies every pair `pairsForBundle()` + `focusRingPairs()` produce, for
- * all 7 bundles + the focus ring: the SAME 52-pair set `randomPalette.test.ts`
+ * all 7 bundles + the focus ring: the SAME 60-pair set `randomPalette.test.ts`
  * asserts, derived from the same exported builders so generator and checker can
  * never drift.
  *
- * The strategy is DERIVE-TO-SATISFY, never blind rejection sampling: each
- * background is chosen first (in a mode-appropriate lightness band), then every
- * foreground is solved AWAY from its background in the contrast-increasing
- * direction and nudged until it clears its threshold. Pure black (`#000000`) /
- * pure white (`#ffffff`) are the guaranteed fallbacks (they give the maximal
- * ratio), so the nudge loop and the defensive outer loop always terminate with
- * a passing palette.
+ * The strategy is DERIVE-TO-SATISFY, never blind rejection sampling: every
+ * surface is chosen first (in a mode-appropriate lightness band), then
+ * each foreground is solved AWAY from all the surfaces it renders on, in
+ * the contrast-increasing direction, and nudged until it clears its
+ * threshold on every one of them. Pure black (`#000000`) / pure white
+ * (`#ffffff`) are the guaranteed fallbacks (they give the maximal ratio),
+ * so the nudge loop and the defensive outer loop always terminate with a
+ * passing palette.
  *
  * It solves against `computeContrastRatio` below, the two-endpoint opaque
  * ratio, while the live checker scores each pair on the WORST of the render
@@ -44,8 +49,9 @@ import type { Rgb } from '../../../theme/colorMath';
  *
  * The opacity is load-bearing, not cosmetic: `computeContrastRatio` returns
  * `null` on alpha / non-hex input, which would be a SILENT contract hole.
- * `input-bg` slots have no contrast pair and are set cosmetically inside the
- * bg band.
+ * A form-input fill is one of those surfaces, not decoration: it is fixed
+ * before the foregrounds of its bundle, which then answer to it and to the
+ * bundle background together.
  *
  * CVD distinguishability is BEST-EFFORT (the 4 state bundles get hues spaced
  * ~90° apart), not a hard gate; the editor validates CVD live, and the WCAG
@@ -192,31 +198,43 @@ function lightnessOf(hex: string): number {
 }
 
 /**
- * The core DERIVE → VERIFY → NUDGE primitive. Given a fixed background and a
- * target threshold, it walks a foreground's lightness away from the background
- * (in the mode's contrast-increasing direction) until the measured ratio clears
- * the threshold, then returns the foreground hex. Converges because the extreme
- * (#000000 / #ffffff) gives the maximal ratio; capped defensively.
+ * The core DERIVE → VERIFY → NUDGE primitive. Given every already-fixed
+ * surface a foreground renders on and a target threshold, it walks the
+ * foreground's lightness away from them (in the mode's contrast-increasing
+ * direction) until the measured ratio clears the threshold on ALL of them,
+ * then returns the foreground hex. Converges because the extreme (#000000
+ * / #ffffff) gives the maximal ratio against any in-band surface; capped
+ * defensively.
+ *
+ * One walk answers to the whole set because it starts from the LIGHTEST
+ * surface and every step after that moves away from all of them at once:
+ * the surfaces share one narrow band, so the tightest of them is simply
+ * the last to clear. A foreground handed a single surface is the same walk
+ * with nothing to reconcile.
  *
  * Chroma + hue are caller-chosen and held fixed while only lightness moves, so
  * the foreground keeps its intended color family while gaining contrast.
  */
 export function deriveForeground(
-  backgroundHex: string,
+  surfaceHexes: readonly string[],
   threshold: number,
   mode: Mode,
   hue: number,
   chroma: number,
 ): string {
   const direction = FG_DIRECTION[mode];
-  const backgroundLightness = lightnessOf(backgroundHex);
-  // start a stride from bg so the first sample leans to contrast
-  let lightness = clamp01(backgroundLightness + direction * NUDGE_STEP * 4);
+  // start a stride from the lightest surface so the first sample leans to
+  // contrast
+  const anchorLightness = Math.max(...surfaceHexes.map(lightnessOf));
+  let lightness = clamp01(anchorLightness + direction * NUDGE_STEP * 4);
 
   for (let step = 0; step < MAX_NUDGE_STEPS; step += 1) {
     const candidate = oklchHex(lightness, chroma, hue);
-    const ratio = computeContrastRatio(candidate, backgroundHex);
-    if (ratio !== null && ratio >= threshold) {
+    const clearsEvery = surfaceHexes.every((surface) => {
+      const ratio = computeContrastRatio(candidate, surface);
+      return ratio !== null && ratio >= threshold;
+    });
+    if (clearsEvery) {
       return candidate;
     }
     const next = clamp01(lightness + direction * NUDGE_STEP);
@@ -225,48 +243,6 @@ export function deriveForeground(
   }
 
   // rail reached without clearing: fall back to the pure contrast extreme
-  return direction === 1 ? '#ffffff' : '#000000';
-}
-
-/**
- * Like `deriveForeground` but must clear a SECONDARY background too. Used by
- * the cross-bundle border guard, which needs `B-border` to clear BOTH its own
- * `B-bg` AND `--base-bg`. Solves against the tighter (lower-contrast) of the two
- * backgrounds at each step so both end up satisfied.
- */
-function deriveForegroundDualBackground(
-  backgroundHexA: string,
-  backgroundHexB: string,
-  threshold: number,
-  mode: Mode,
-  hue: number,
-  chroma: number,
-): string {
-  const direction = FG_DIRECTION[mode];
-  // anchor to whichever bg the fg must travel furthest from to clear
-  const anchorLightness = Math.max(
-    lightnessOf(backgroundHexA),
-    lightnessOf(backgroundHexB),
-  );
-  let lightness = clamp01(anchorLightness + direction * NUDGE_STEP * 4);
-
-  for (let step = 0; step < MAX_NUDGE_STEPS; step += 1) {
-    const candidate = oklchHex(lightness, chroma, hue);
-    const ratioA = computeContrastRatio(candidate, backgroundHexA);
-    const ratioB = computeContrastRatio(candidate, backgroundHexB);
-    if (
-      ratioA !== null &&
-      ratioB !== null &&
-      ratioA >= threshold &&
-      ratioB >= threshold
-    ) {
-      return candidate;
-    }
-    const next = clamp01(lightness + direction * NUDGE_STEP);
-    if (next === lightness) break;
-    lightness = next;
-  }
-
   return direction === 1 ? '#ffffff' : '#000000';
 }
 
@@ -291,9 +267,15 @@ function setSlot(
 }
 
 /**
- * Derives every foreground slot of one bundle against its already-fixed `bg`.
- * `mount`/`orbit` pass `crossBundleGuard` so their border also clears
- * `--base-bg`; `base` passes its `subtle-text` slot too.
+ * Derives every foreground slot of one bundle against the surfaces it
+ * renders on: its own `bg`, plus its form-input fill where the bundle
+ * hosts one. A card bundle's border answers to `--base-bg` as well, since
+ * it touches the page; `base` gets its `subtle-text` slot too.
+ *
+ * The fill is fixed FIRST for exactly that reason. It is a second surface
+ * the same text and border render on, not a shade of the background, and
+ * deriving it afterwards is what let a foreground clear its threshold by a
+ * hair against one surface and fail against the other.
  */
 function deriveBundle(
   palette: Palette,
@@ -306,43 +288,36 @@ function deriveBundle(
 ): void {
   setSlot(palette, bundle, 'bg', bundleBgHex);
 
-  // text slots: ≥4.5 vs bundle bg; low chroma leaves room to reach AA
+  const surfaces = [bundleBgHex];
+  if (INPUT_FILL_BUNDLES.includes(bundle)) {
+    const inputFill = inputFillHex(rng, mode, textHue);
+    setSlot(palette, bundle, 'input-bg', inputFill);
+    surfaces.push(inputFill);
+  }
+
+  // text slots: ≥4.5 on every surface; low chroma leaves room for AA
   setSlot(
     palette,
     bundle,
     'text',
-    deriveForeground(bundleBgHex, 4.5, mode, textHue, 0.02),
+    deriveForeground(surfaces, 4.5, mode, textHue, 0.02),
   );
   setSlot(
     palette,
     bundle,
     'alt-text',
-    deriveForeground(bundleBgHex, 4.5, mode, (textHue + 20) % 360, 0.03),
+    deriveForeground(surfaces, 4.5, mode, (textHue + 20) % 360, 0.03),
   );
 
-  const borderHue = (textHue + 40) % 360;
-  if (CARD_BUNDLES.includes(bundle)) {
-    setSlot(
-      palette,
-      bundle,
-      'border',
-      deriveForegroundDualBackground(
-        bundleBgHex,
-        baseBgHex,
-        3,
-        mode,
-        borderHue,
-        0.04,
-      ),
-    );
-  } else {
-    setSlot(
-      palette,
-      bundle,
-      'border',
-      deriveForeground(bundleBgHex, 3, mode, borderHue, 0.04),
-    );
-  }
+  const borderSurfaces = CARD_BUNDLES.includes(bundle)
+    ? [...surfaces, baseBgHex]
+    : surfaces;
+  setSlot(
+    palette,
+    bundle,
+    'border',
+    deriveForeground(borderSurfaces, 3, mode, (textHue + 40) % 360, 0.04),
+  );
 
   const highlightHue = (textHue + 200) % 360;
   const { highlight, highlightHover, highlightFg } = deriveHighlightTriple(
@@ -355,11 +330,12 @@ function deriveBundle(
   setSlot(palette, bundle, 'highlight-fg', highlightFg);
 
   if (bundle === 'base') {
+    // page chrome only, so the fill is not one of its surfaces
     setSlot(
       palette,
       bundle,
       'subtle-text',
-      deriveForeground(bundleBgHex, 4.5, mode, (textHue + 60) % 360, 0.02),
+      deriveForeground([bundleBgHex], 4.5, mode, (textHue + 60) % 360, 0.02),
     );
   }
 }
@@ -462,44 +438,11 @@ export function deriveHighlightTriple(
 }
 
 /**
- * Derives `--focus-ring` LAST: it must clear 3:1 against base-bg, mount-bg, and
- * orbit-bg (all now fixed). Walks a hue-fixed lightness to the extreme that
- * maximizes the MINIMUM ratio across all three.
+ * A near-bg neutral for a form-input fill, drawn from the same band as the
+ * bundle backgrounds so the fill always reads as a quiet inset of the
+ * surface it sits on rather than as a second color.
  */
-function deriveFocusRing(
-  baseBgHex: string,
-  mountBgHex: string,
-  orbitBgHex: string,
-  mode: Mode,
-  hue: number,
-): string {
-  const backgrounds = [baseBgHex, mountBgHex, orbitBgHex];
-  const direction = FG_DIRECTION[mode];
-  // all three bgs share the band, so one walk away clears all three
-  const anchor =
-    mode === 'light'
-      ? Math.max(...backgrounds.map(lightnessOf))
-      : Math.min(...backgrounds.map(lightnessOf));
-  let lightness = clamp01(anchor + direction * NUDGE_STEP * 4);
-
-  for (let step = 0; step < MAX_NUDGE_STEPS; step += 1) {
-    const candidate = oklchHex(lightness, 0.12, hue);
-    const ratios = backgrounds.map((background) =>
-      computeContrastRatio(candidate, background),
-    );
-    if (ratios.every((ratio) => ratio !== null && ratio >= 3)) {
-      return candidate;
-    }
-    const next = clamp01(lightness + direction * NUDGE_STEP);
-    if (next === lightness) break;
-    lightness = next;
-  }
-
-  return direction === 1 ? '#ffffff' : '#000000';
-}
-
-/** Cosmetic input-bg (no contrast pair): a near-bg neutral in the bg band. */
-function inputBgHex(rng: Rng, mode: Mode, baseHue: number): string {
+function inputFillHex(rng: Rng, mode: Mode, baseHue: number): string {
   const hue = (baseHue + (rng() - 0.5) * 20 + 360) % 360;
   return oklchHex(randomBandLightness(rng, mode), 0.01, hue);
 }
@@ -517,7 +460,6 @@ function buildAttempt(mode: Mode, rng: Rng): Palette {
 
   // B) base bundle, derived against the fixed base-bg.
   deriveBundle(palette, 'base', baseBgHex, baseBgHex, mode, rng, baseHue);
-  palette['--base-input-bg' as ThemeVariable] = inputBgHex(rng, mode, baseHue);
 
   // C) mount/orbit near base hue; state bundles 90°-spaced for CVD spread
   const stateRotation = rng() * 360;
@@ -535,28 +477,41 @@ function buildAttempt(mode: Mode, rng: Rng): Palette {
     }
     const bundleBgHex = neutralBackgroundHex(rng, mode, bundleHue);
     deriveBundle(palette, bundle, bundleBgHex, baseBgHex, mode, rng, bundleHue);
-    if (bundle === 'mount') {
-      palette['--mount-input-bg' as ThemeVariable] = inputBgHex(
-        rng,
-        mode,
-        bundleHue,
-      );
-    }
   }
 
-  // D) focus ring LAST, against the now-fixed base/mount/orbit bgs.
-  palette[FOCUS_RING_VAR] = deriveFocusRing(
+  // D) focus ring LAST, against every now-fixed surface it is drawn on. A
+  // focused input hides its border and paints the ring in its place, so
+  // the fills belong here beside the chrome backgrounds
+  const focusSurfaces = [
     baseBgHex,
     palette['--mount-bg' as ThemeVariable]!,
     palette['--orbit-bg' as ThemeVariable]!,
+    ...INPUT_FILL_BUNDLES.map(
+      (bundle) => palette[`--${bundle}-input-bg` as ThemeVariable]!,
+    ),
+  ];
+  palette[FOCUS_RING_VAR] = deriveForeground(
+    focusSurfaces,
+    3,
     mode,
     rng() * 360,
+    0.12,
   );
 
   return palette;
 }
 
-/** The full 52-pair contract, rebuilt from the bundle/focus pair builders. */
+/**
+ * One derivation, with nothing behind it. Exported so the suites can hold
+ * the DERIVE-TO-SATISFY contract directly: a generator that had stopped
+ * solving a pair would still look green through the public entry point,
+ * which discards failing draws and repairs the last one.
+ */
+export function derivePaletteOnce(mode: Mode, seed: number): Palette {
+  return buildAttempt(mode, mulberry32(seed));
+}
+
+/** The full 60-pair contract, rebuilt from the bundle/focus pair builders. */
 export interface PairCheck {
   foreground: ThemeVariable;
   background: ThemeVariable;
@@ -631,7 +586,7 @@ export function forceExtreme(palette: Palette, pair: PairCheck): void {
  *
  * Tries up to `MAX_ATTEMPTS` fresh derivations; the FINAL attempt forces any
  * still-failing foreground to its contrast extreme, so the function ALWAYS
- * returns a complete, 52-pair-passing, all-6-digit-hex palette covering every
+ * returns a complete, 60-pair-passing, all-6-digit-hex palette covering every
  * `EDITABLE_VARS` key.
  *
  * @param mode  Which mode's palette to generate. The OTHER mode is the caller's
