@@ -70,6 +70,20 @@ describe('normalize-before-validate – the round-trip the editor relies on', ()
     expect(isValidColorValue(normalizeToSixDigitHex('#aabbccdd'))).toBe(true);
   });
 
+  it('rejects a color function the evaluator could not measure', () => {
+    // the row commits anything this accepts and the checker reads it,
+    // so accepting what the parser refuses is how 457:1 got measured
+    expect(isValidColorValue('rgb(300, 300, 300)')).toBe(false);
+    expect(isValidColorValue('rgb(0, 0, 0, 4)')).toBe(false);
+    expect(isValidColorValue('rgb(0 0 0')).toBe(false);
+    expect(isValidColorValue('rgba(nonsense)')).toBe(false);
+  });
+
+  it('keeps the color functions the seeds and stylesheets use valid', () => {
+    expect(isValidColorValue('rgb(76 5 25 / 0.4)')).toBe(true);
+    expect(isValidColorValue('rgba(0, 0, 0, 0.5)')).toBe(true);
+  });
+
   it('keeps true garbage invalid after normalization', () => {
     expect(isValidColorValue(normalizeToSixDigitHex('zzz'))).toBe(false);
     expect(isValidColorValue(normalizeToSixDigitHex('hello'))).toBe(false);

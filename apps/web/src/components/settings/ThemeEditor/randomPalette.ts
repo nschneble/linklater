@@ -6,13 +6,11 @@ import {
   type Bundle,
   type ThemeVariable,
 } from '../../../theme/customThemeTokens';
-import {
-  computeContrastRatio,
-  focusRingPairs,
-  pairsForBundle,
-} from './contrastResults';
+import { contrastRatio } from '../../../theme/colorMath';
 import { converter, formatHex, type Oklch } from 'culori';
+import { focusRingPairs, pairsForBundle } from './contrastResults.pairs';
 import type { Mode } from '../../../theme/constants';
+import type { Rgb } from '../../../theme/colorMath';
 
 /**
  * Generates a random Custom-theme palette for ONE mode that PROVABLY clears the
@@ -26,17 +24,28 @@ import type { Mode } from '../../../theme/constants';
  * The strategy is DERIVE-TO-SATISFY, never blind rejection sampling: each
  * background is chosen first (in a mode-appropriate lightness band), then every
  * foreground is solved AWAY from its background in the contrast-increasing
- * direction and nudged until it clears its threshold. The single source of
- * contrast truth is the editor's own `computeContrastRatio`, so the generator
- * and the live checker can't disagree. Pure black (`#000000`) / pure white
- * (`#ffffff`) are the guaranteed fallbacks — they give the maximal ratio — so
- * the nudge loop and the defensive outer loop always terminate with a passing
- * palette.
+ * direction and nudged until it clears its threshold. Pure black (`#000000`) /
+ * pure white (`#ffffff`) are the guaranteed fallbacks (they give the maximal
+ * ratio), so the nudge loop and the defensive outer loop always terminate with
+ * a passing palette.
  *
- * Every emitted value is 6-digit hex: `computeContrastRatio` returns `null` on
- * alpha / non-hex input, which would be a SILENT contract hole, so the generator
- * never emits anything else. `input-bg` slots have no contrast pair and are set
- * cosmetically inside the bg band.
+ * It solves against `computeContrastRatio` below, the two-endpoint opaque
+ * ratio, while the live checker scores each pair on the WORST of the render
+ * stacks its background composites down. Those are two different models, which
+ * is why the simpler one now lives in this file next to its only caller rather
+ * than beside the checker where it could be mistaken for the same thing.
+ * Simpler on purpose: every emitted value is opaque 6-digit hex, and on
+ * an opaque background compositing short-circuits, so for the palettes this
+ * function can produce the two models return the same number. Solving through
+ * the composited checker would buy nothing and would drag a table of render
+ * sites into a color generator. `randomPalette.test.ts` holds that equivalence
+ * to account by running a generated palette through the checker itself, so the
+ * argument cannot quietly stop being true.
+ *
+ * The opacity is load-bearing, not cosmetic: `computeContrastRatio` returns
+ * `null` on alpha / non-hex input, which would be a SILENT contract hole.
+ * `input-bg` slots have no contrast pair and are set cosmetically inside the
+ * bg band.
  *
  * CVD distinguishability is BEST-EFFORT (the 4 state bundles get hues spaced
  * ~90° apart), not a hard gate — the editor validates CVD live, and the WCAG
@@ -44,6 +53,57 @@ import type { Mode } from '../../../theme/constants';
  */
 
 const toOklch = converter('oklch');
+
+/**
+ * Parses an OPAQUE hex color to its channels. Supports 3- and 6-digit hex,
+ * with or without a leading hash, and rejects everything else including the
+ * 8-digit alpha form: a translucent color has no luminance of its own, so
+ * there is nothing honest to return for one here.
+ */
+function hexToRgb(hex: string): Rgb | null {
+  const clean = hex.replace('#', '');
+  const expanded =
+    clean.length === 3
+      ? clean
+          .split('')
+          .map((character) => character + character)
+          .join('')
+      : clean;
+
+  if (!/^[0-9a-fA-F]{6}$/.test(expanded)) return null;
+
+  return [
+    parseInt(expanded.substring(0, 2), 16),
+    parseInt(expanded.substring(2, 4), 16),
+    parseInt(expanded.substring(4, 6), 16),
+  ];
+}
+
+/**
+ * The WCAG 2.1 contrast ratio between two OPAQUE hex colors, with no
+ * compositing. Returns `null` if either color is invalid or carries alpha.
+ *
+ * This is the generator's model of a contrast pair, and it lives here rather
+ * than beside the editor's because it belongs to the generator alone. The live
+ * checker composites each background down its real render stack first; this
+ * one takes the two endpoints as given, which is sound HERE and only here,
+ * since every value this file emits is opaque 6-digit hex and compositing over
+ * an opaque background short-circuits to exactly this. Feeding it a
+ * translucent value is a silent hole, so it refuses rather than guessing.
+ *
+ * The ratio itself comes from `theme/colorMath`, the same module the static
+ * bundle suites measure with, so the number shown to a user editing a theme
+ * and the number CI enforces cannot drift apart.
+ */
+export function computeContrastRatio(
+  hexA: string,
+  hexB: string,
+): number | null {
+  const foreground = hexToRgb(hexA);
+  const background = hexToRgb(hexB);
+  if (foreground === null || background === null) return null;
+  return contrastRatio(foreground, background);
+}
 
 /** A seedable RNG so a failing test iteration is reproducible. */
 export type Rng = () => number;

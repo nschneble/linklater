@@ -6,22 +6,20 @@
  * The pair list is rebuilt from the editor's OWN exported builders
  * (`pairsForBundle` + `focusRingPairs`) rather than hand-copied, so this test
  * can never drift from the contract it guards - if the contract grows a pair,
- * this gate grows with it. Every pair is checked through the editor's OWN
- * `computeContrastRatio` (the single source of truth), and the `ratio !== null`
+ * this gate grows with it. Every pair is checked through `computeContrastRatio`,
+ * the two-endpoint ratio the generator solves against, and the `ratio !== null`
  * assertion proves no alpha / non-hex value ever slipped into the palette (which
  * would be a SILENT contract hole, since `computeContrastRatio` returns null on
- * such input).
+ * such input). A second gate below runs the same palettes through the live
+ * checker's composited evaluator, so the two models cannot quietly part ways.
  */
 
 import { BUNDLES } from './useThemeOverrides';
-import {
-  computeContrastRatio,
-  focusRingPairs,
-  pairsForBundle,
-} from './contrastResults';
+import { computeContrastRatio, generateRandomPalette } from './randomPalette';
 import { describe, expect, it } from 'vitest';
 import { EDITABLE_VARS } from '../../../theme/customThemeTokens';
-import { generateRandomPalette } from './randomPalette';
+import { evaluatePair } from './contrastResults.evaluate';
+import { focusRingPairs, pairsForBundle } from './contrastResults.pairs';
 import type { Mode } from '../../../theme/constants';
 import type { ThemeVariable } from './useThemeOverrides';
 
@@ -75,6 +73,48 @@ describe('generateRandomPalette: the 52-pair WCAG AA contract', () => {
               .toBeGreaterThanOrEqual(pair.threshold);
           }
         });
+      }
+    });
+  }
+});
+
+/*
+ * The generator and the live checker use DIFFERENT contrast models: the
+ * generator solves two-endpoint opaque ratios, the checker scores each pair on
+ * the worst of the render stacks its background composites down. The generator
+ * gets away with the simpler model only because it emits opaque hex, on which
+ * compositing short-circuits.
+ *
+ * That is an argument, not a guarantee, and nothing held it. This does: it
+ * runs generated palettes through the checker itself, so a change to either
+ * side that breaks the equivalence fails here rather than shipping a
+ * Randomize button whose output the editor then flags.
+ */
+describe('a generated palette clears the checker it was generated against', () => {
+  for (const mode of MODES) {
+    it(`${mode} mode passes the composited evaluator`, () => {
+      for (let iteration = 0; iteration < 25; iteration += 1) {
+        const seed = iteration + (mode === 'dark' ? 200000 : 1000);
+        const palette = generateRandomPalette(mode, seed);
+        const resolve = (token: string) =>
+          palette[token as ThemeVariable] ?? '';
+
+        for (const pair of CONTRACT_PAIRS) {
+          const evaluation = evaluatePair(
+            pair.foreground,
+            pair.background,
+            resolve,
+          );
+          expect
+            .soft(evaluation.unmeasurable, `${pair.label} (seed ${seed})`)
+            .toBe(0);
+          expect
+            .soft(
+              evaluation.ratio ?? 0,
+              `${pair.label} ≥ ${pair.threshold} (seed ${seed})`,
+            )
+            .toBeGreaterThanOrEqual(pair.threshold);
+        }
       }
     });
   }

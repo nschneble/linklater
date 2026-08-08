@@ -1,10 +1,12 @@
 /*
  * Tests for the bundle slot row (`ColorRow`).
  *
- * A row SILENTLY reverts an invalid hex to the prior value on blur and commits
- * nothing — no kept text, no error flag. This pins that deliberate quiet-revert
- * behavior so a future "surface a format error" refactor can't add one
- * unnoticed.
+ * A row puts a value it cannot read back to the prior one on blur and
+ * commits nothing, and reports the refusal instead of swallowing it.
+ * Both halves are pinned: the revert, so a partial commit cannot creep
+ * in, and the message, so the silent version cannot come back. That
+ * silent version shipped, unnoticed while everything it turned away was
+ * true garbage.
  */
 
 import { act, fireEvent, render, screen } from '@testing-library/react';
@@ -12,8 +14,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ColorRow, {
   buildSwatchStyle,
   FAILURE_NOTE_DEBOUNCE_MS,
+  REFUSED_VALUE_MESSAGE,
 } from './ColorRow';
-import type { TokenContrastFailure } from './contrastResults';
+import type { TokenContrastFailure } from './contrastResults.notes';
 
 function renderRow(currentValue = '#123456') {
   const onOverride = vi.fn();
@@ -39,7 +42,7 @@ function makeFailure(
   return {
     ratio: 2.8,
     threshold: 4.5,
-    partnerLabel: 'Text',
+    noteSubject: 'Text contrast',
     ...overrides,
   };
 }
@@ -68,17 +71,51 @@ describe('ColorRow – slot-only accessible names (SC 2.4.6 de-dupe)', () => {
   });
 });
 
-describe('ColorRow – silent invalid-hex revert', () => {
+describe('ColorRow – reverting a refused value, and saying so', () => {
   it('resets the typed value to currentValue on blur and commits nothing', () => {
     const { onOverride, input } = renderRow('#123456');
 
     fireEvent.change(input, { target: { value: 'nope' } });
     fireEvent.blur(input);
 
-    // reverted to the prior value, no kept text, no flag
+    // reverted to the prior value, no kept text
     expect(input.value).toBe('#123456');
-    expect(input).not.toHaveAttribute('aria-invalid');
     expect(onOverride).not.toHaveBeenCalled();
+  });
+
+  it('names the refusal in an alert the input points at', () => {
+    // the revert alone erases the typed text and explains nothing, and
+    // the values it turns away are no longer all garbage: tightening the
+    // checker moved real CSS colors onto this path (SC 3.3.1, SC 3.3.3)
+    const { input } = renderRow('#123456');
+
+    fireEvent.change(input, { target: { value: 'rgb(0%, 50%, 100%)' } });
+    fireEvent.blur(input);
+
+    const refusal = screen.getByRole('alert');
+    expect(refusal).toHaveTextContent(REFUSED_VALUE_MESSAGE);
+    // aria-errormessage is only exposed on a field flagged invalid
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+    expect(input.getAttribute('aria-errormessage')).toBe(
+      refusal.getAttribute('id'),
+    );
+  });
+
+  it('suggests a shape that works, not just that the value failed', () => {
+    // SC 3.3.3 wants the correction, and the accepted set is narrower
+    // than what CSS itself takes
+    expect(REFUSED_VALUE_MESSAGE).toMatch(/#[0-9a-f]{6}/);
+  });
+
+  it('clears the refusal as soon as the user types again', () => {
+    const { input } = renderRow('#123456');
+
+    fireEvent.change(input, { target: { value: 'nope' } });
+    fireEvent.blur(input);
+    fireEvent.change(input, { target: { value: '#abc' } });
+
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(input).not.toHaveAttribute('aria-invalid');
   });
 
   it('commits a valid hex (normalized) on blur', () => {
@@ -90,6 +127,7 @@ describe('ColorRow – silent invalid-hex revert', () => {
 
     expect(input.value).toBe('#aabbcc');
     expect(onOverride).toHaveBeenCalledWith('--mount-bg', '#aabbcc');
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 
   it('accepts a #-less hex on blur, prepending the # (Postel’s Law)', () => {
@@ -114,7 +152,7 @@ describe('ColorRow – silent invalid-hex revert', () => {
   });
 });
 
-// aria-invalid is live so the border flags instantly; the note + describedby debounce
+// the flag, the note and its describedby all wait out the same debounce
 describe('ColorRow – inline contrast-failure note', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -124,8 +162,11 @@ describe('ColorRow – inline contrast-failure note', () => {
     vi.useRealTimers();
   });
 
-  it('flags aria-invalid immediately but debounces the visible note + describedby', () => {
-    // the fail transition the debounce guards: aria-invalid flips now, note waits
+  it('holds aria-invalid to the same debounce as the note it needs', () => {
+    // the flag used to lead the note by the debounce, so for that
+    // window the field announced itself invalid with nothing saying
+    // why, on a value still being typed. announcing nothing is the
+    // better half-second
     const { rerender } = render(rowWith(undefined));
     const input = screen.getByLabelText(
       'Value for Background',
@@ -134,9 +175,8 @@ describe('ColorRow – inline contrast-failure note', () => {
 
     rerender(rowWith(makeFailure()));
 
-    // aria-invalid is live: the border reflects the failing value at once
-    expect(input).toHaveAttribute('aria-invalid', 'true');
-    // the visible note + its describedby link wait for the debounce
+    // nothing has flipped yet: no flag, no note, no describedby
+    expect(input).not.toHaveAttribute('aria-invalid');
     expect(input).not.toHaveAttribute('aria-describedby');
     expect(screen.queryByText(/contrast is too low/i)).not.toBeInTheDocument();
 
@@ -144,6 +184,7 @@ describe('ColorRow – inline contrast-failure note', () => {
       vi.advanceTimersByTime(FAILURE_NOTE_DEBOUNCE_MS);
     });
 
+    expect(input).toHaveAttribute('aria-invalid', 'true');
     // matches ColorRow's format: partner slot label plus the ratio to one decimal
     const note = screen.getByText('Text contrast is too low (2.8:1)');
     expect(note).toBeInTheDocument();
@@ -196,6 +237,27 @@ describe('ColorRow – alpha disables the picker, keeps the text input editable'
         label="Background"
         variable="--alert-bg"
         currentValue="#00000080"
+        failure={undefined}
+        onOverride={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByLabelText('Color picker for Background')).toBeDisabled();
+    expect(screen.getByLabelText('Value for Background')).not.toBeDisabled();
+  });
+
+  it('disables the color picker for a 4-digit (alpha) hex value', () => {
+    // the shorthand doubles each digit into the long form, so it carries
+    // alpha too. read as opaque, the picker stayed live on a value it
+    // cannot hold, and a keyboard user activating it would have written
+    // over the token. the swatch reads from the same answer, so it was
+    // painting the fallback too; jsdom drops the layered background, so
+    // that half is pinned on the helper instead
+    render(
+      <ColorRow
+        label="Background"
+        variable="--alert-bg"
+        currentValue="#abcd"
         failure={undefined}
         onOverride={vi.fn()}
       />,

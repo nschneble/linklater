@@ -12,7 +12,7 @@
 
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { useThemeOverrides } from './useThemeOverrides';
+import { isAlphaValue, useThemeOverrides } from './useThemeOverrides';
 import type { CustomTheme } from '../../../theme/customTheme';
 
 const mockTheme = {
@@ -115,4 +115,29 @@ describe('useThemeOverrides – enabled (editing the custom theme)', () => {
       '',
     );
   });
+});
+
+/*
+ * One answer decides two things a row shows: whether the native picker
+ * is offered, and whether the swatch paints the value or the picker's
+ * fallback. A shape missed here is a picker live on a value it cannot
+ * hold, above a swatch showing a color the token is nowhere near.
+ */
+describe('isAlphaValue – shapes the native picker cannot hold', () => {
+  it.each([
+    '#abcd',
+    '#ABCD',
+    '#0000ff80',
+    'rgb(76 5 25 / 0.4)',
+    'rgba(0,0,0,1)',
+  ])('refuses the picker for %s', (value) => {
+    expect(isAlphaValue(value)).toBe(true);
+  });
+
+  it.each(['#aabbcc', '#abc', '#ABCDEF'])(
+    'keeps the picker for %s',
+    (value) => {
+      expect(isAlphaValue(value)).toBe(false);
+    },
+  );
 });

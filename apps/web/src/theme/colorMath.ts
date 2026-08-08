@@ -55,6 +55,24 @@ export function luminanceRatio(first: Rgb, second: Rgb): number {
   return lighter / darker;
 }
 
+const HEX_BODY = /^[0-9a-fA-F]+$/;
+
+/** A real number inside `[0, max]`; false for not-a-number and infinity. */
+function inRange(value: number, max: number): boolean {
+  return Number.isFinite(value) && value >= 0 && value <= max;
+}
+
+/*
+ * Parsing is the ONLY place a value can be refused, so both parsers below
+ * validate rather than convert-and-hope.
+ *
+ * Nothing downstream can recover from a bad read. A caller treats any returned
+ * tuple as a successful measurement, and a not-a-number channel then passes
+ * every later guard, because a comparison against it is false: it wins the
+ * worst-ratio contest, and the winner is then not below threshold either, so
+ * the palette rolls up as conforming. An out-of-range channel is worse, since
+ * it yields a confident ratio far above the ceiling the formula can produce.
+ */
 function parseHex(hex: string): Rgba {
   const normalized = hex.startsWith('#') ? hex.slice(1) : hex;
   const expanded =
@@ -64,7 +82,10 @@ function parseHex(hex: string): Rgba {
           .map((character) => character + character)
           .join('')
       : normalized;
-  if (expanded.length !== 6 && expanded.length !== 8) {
+  if (
+    (expanded.length !== 6 && expanded.length !== 8) ||
+    !HEX_BODY.test(expanded)
+  ) {
     throw new Error(`Cannot parse hex color: ${hex}`);
   }
   const red = parseInt(expanded.slice(0, 2), 16);
@@ -82,11 +103,15 @@ function parseRgb(value: string): Rgba {
   if (!match) {
     throw new Error(`Cannot parse rgb color: ${value}`);
   }
-  const red = Number(match[1]);
-  const green = Number(match[2]);
-  const blue = Number(match[3]);
+  const channels = [Number(match[1]), Number(match[2]), Number(match[3])];
   const alpha = match[4] === undefined ? 1 : Number(match[4]);
-  return [red, green, blue, alpha];
+  if (
+    !channels.every((channel) => inRange(channel, 255)) ||
+    !inRange(alpha, 1)
+  ) {
+    throw new Error(`Cannot parse rgb color: ${value}`);
+  }
+  return [channels[0], channels[1], channels[2], alpha];
 }
 
 export function parseColor(value: string): Rgba {
@@ -101,20 +126,61 @@ export function parseColor(value: string): Rgba {
 }
 
 /**
+ * Source-over compositing, per CSS Compositing and Blending Level 1. Both
+ * operands carry alpha, so a translucent source over a translucent backdrop
+ * stays translucent: `a_out = a_s + a_b(1 - a_s)`, with each channel weighted
+ * by its own contribution and divided back out of `a_out`.
+ *
+ * Two things this deliberately does NOT do. It does not convert to linear
+ * light first: the browser blends in the destination space, which for these
+ * tokens is gamma-encoded sRGB, and linearizing is WCAG's separate step in
+ * `relativeLuminance`. A linear blend would report 50% black over white as
+ * 188 instead of 128. It also does not round, so a multi-layer stack rounds
+ * once at the end instead of once per layer.
+ */
+export function compositeOver(source: Rgba, backdrop: Rgba): Rgba {
+  const sourceAlpha = source[3];
+  const backdropAlpha = backdrop[3];
+  const alpha = sourceAlpha + backdropAlpha * (1 - sourceAlpha);
+  if (alpha === 0) {
+    return [0, 0, 0, 0];
+  }
+  const blend = (sourceChannel: number, backdropChannel: number): number =>
+    (sourceChannel * sourceAlpha +
+      backdropChannel * backdropAlpha * (1 - sourceAlpha)) /
+    alpha;
+  return [
+    blend(source[0], backdrop[0]),
+    blend(source[1], backdrop[1]),
+    blend(source[2], backdrop[2]),
+    alpha,
+  ];
+}
+
+/**
  * Flattens a translucent color against what sits behind it. WCAG's luminance
  * formula has no alpha term, so a translucent color has no contrast ratio of
  * its own; only the result of this does.
+ *
+ * PRECONDITION: `background` is OPAQUE. Dropping alpha and rounding to whole
+ * channels is only sound because of that. Leaving it unstated is how a caller
+ * came to feed this a translucent backdrop and get a plausible but wrong
+ * number, so a stack whose backdrop may itself be translucent must use
+ * `compositeOver` and round once at the end.
  */
 export function compositeOverBg(foreground: Rgba, background: Rgb): Rgb {
-  const alpha = foreground[3];
-  if (alpha >= 1) {
+  if (foreground[3] >= 1) {
     return [foreground[0], foreground[1], foreground[2]];
   }
-  const blend = (channel: number, baseChannel: number): number =>
-    Math.round(alpha * channel + (1 - alpha) * baseChannel);
+  const composited = compositeOver(foreground, [
+    background[0],
+    background[1],
+    background[2],
+    1,
+  ]);
   return [
-    blend(foreground[0], background[0]),
-    blend(foreground[1], background[1]),
-    blend(foreground[2], background[2]),
+    Math.round(composited[0]),
+    Math.round(composited[1]),
+    Math.round(composited[2]),
   ];
 }

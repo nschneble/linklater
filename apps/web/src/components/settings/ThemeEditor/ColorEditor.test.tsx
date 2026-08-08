@@ -10,7 +10,7 @@ import ColorEditor from './ColorEditor';
 import { describe, expect, it, vi } from 'vitest';
 import { EDITABLE_VARS, type ThemeVariable } from './useThemeOverrides';
 import { render, screen, within } from '@testing-library/react';
-import type { TokenContrastFailure } from './contrastResults';
+import type { TokenContrastFailure } from './contrastResults.notes';
 
 const PLACEHOLDER_VALUE = '#abcdef';
 

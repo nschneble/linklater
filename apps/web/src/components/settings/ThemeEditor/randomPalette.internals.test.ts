@@ -22,6 +22,7 @@
 
 import {
   BG_BAND,
+  computeContrastRatio,
   deriveForeground,
   deriveHighlightTriple,
   forceExtreme,
@@ -29,7 +30,6 @@ import {
   type Palette,
   type PairCheck,
 } from './randomPalette';
-import { computeContrastRatio } from './contrastResults';
 import { describe, expect, it } from 'vitest';
 import type { Mode } from '../../../theme/constants';
 
@@ -155,4 +155,34 @@ describe('deriveHighlightTriple: the 0.4-L safety branch is unreachable in band'
       expect(combinations).toBeGreaterThan(0);
     });
   }
+});
+
+/*
+ * The generator's own model of a pair, which every derivation above solves
+ * against. Its refusals are the load-bearing part: a null here is what stops a
+ * translucent or malformed value being scored as if it were opaque.
+ */
+describe('computeContrastRatio', () => {
+  it('returns 21 for black on white', () => {
+    expect(computeContrastRatio('#000000', '#ffffff')).toBeCloseTo(21, 5);
+    expect(computeContrastRatio('#fff', '#000')).toBeCloseTo(21, 5);
+  });
+
+  it('expands 3-digit hex before computing', () => {
+    expect(computeContrastRatio('#abc', '#aabbcc')).toBeCloseTo(1, 5);
+  });
+
+  it('accepts hex with or without the leading hash', () => {
+    expect(computeContrastRatio('000000', 'ffffff')).toBeCloseTo(21, 5);
+  });
+
+  it('returns null for an invalid hex string', () => {
+    expect(computeContrastRatio('not-a-color', '#ffffff')).toBeNull();
+    expect(computeContrastRatio('#12', '#ffffff')).toBeNull();
+  });
+
+  it('returns null for alpha values (composite math not done here)', () => {
+    expect(computeContrastRatio('rgb(0 0 0 / 0.5)', '#ffffff')).toBeNull();
+    expect(computeContrastRatio('#00000080', '#ffffff')).toBeNull();
+  });
 });

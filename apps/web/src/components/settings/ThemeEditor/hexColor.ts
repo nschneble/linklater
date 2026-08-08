@@ -4,10 +4,10 @@
  * place so the vocabulary is not duplicated across the picker + hex inputs.
  */
 
+import { parseColor } from '../../../theme/colorMath';
+
 const HEX3 = /^#[0-9a-fA-F]{3}$/;
 const HEX6 = /^#[0-9a-fA-F]{6}$/;
-const HEX8 = /^#[0-9a-fA-F]{8}$/;
-const RGBA = /^rgba?\(/i;
 // A bare 3- or 6-digit hex body (no `#` prefix), e.g. `abc` or `aabbcc`.
 const BARE_HEX_BODY = /^[0-9a-fA-F]{3}$|^[0-9a-fA-F]{6}$/;
 
@@ -46,10 +46,24 @@ export function isSixDigitHex(value: string): boolean {
 }
 
 /**
- * True when the value is a color the editor accepts: 6- or 8-digit hex, or an
- * `rgb()`/`rgba()` expression. Alpha forms are valid values (kept editable via
- * the text input) even though the native color picker cannot represent them.
+ * True when the value is a color the editor accepts: hex, with or without an
+ * alpha pair, or a color function. Alpha forms are valid values (kept editable
+ * via the text input) even though the native color picker cannot represent
+ * them.
+ *
+ * The answer is DELEGATED to the shared parser rather than shape-matched here,
+ * so the set of values a row will commit is exactly the set the contrast
+ * checker can read. When this was its own prefix test the two sets came apart:
+ * a color function with channels past the top of the range cleared the row and
+ * was stored verbatim, and the checker then reported a ratio no display can
+ * produce. Nothing between the row and the checker validates colors, so the two
+ * have to answer from one place.
  */
 export function isValidColorValue(value: string): boolean {
-  return HEX6.test(value) || HEX8.test(value) || RGBA.test(value);
+  try {
+    parseColor(value);
+    return true;
+  } catch {
+    return false;
+  }
 }

@@ -5,7 +5,7 @@ import {
   normalizeToSixDigitHex,
 } from './hexColor';
 import { useEffect, useState } from 'react';
-import type { TokenContrastFailure } from './contrastResults';
+import type { TokenContrastFailure } from './contrastResults.notes';
 
 /**
  * How long the describedby failure text waits after the latest keystroke
@@ -13,6 +13,16 @@ import type { TokenContrastFailure } from './contrastResults';
  * note text while the user is mid-edit (BL1).
  */
 export const FAILURE_NOTE_DEBOUNCE_MS = 400;
+
+/**
+ * What a row says when it refuses what was typed. It names a shape that
+ * works rather than only reporting the refusal: the editor accepts a
+ * narrower set of values than CSS does, so a user whose perfectly good
+ * CSS color was turned away has no other way to learn what would be
+ * taken (SC 3.3.1, SC 3.3.3).
+ */
+export const REFUSED_VALUE_MESSAGE =
+  'Not a color the editor can read. Use a hex value like #aabbcc.';
 
 /*
  * A transparency checkerboard, painted from two translucent cell colors so it
@@ -62,9 +72,11 @@ interface ColorRowProps {
  * row belongs to, so a bundle prefix would be redundant (SC 2.4.6).
  *
  * The color picker fires `onOverride` on every change (live preview). The text
- * input only fires on blur, after normalizing and validating the hex value.
- * Invalid hex strings are silently reset to `currentValue` on blur — no kept
- * text, no error flag, nothing committed.
+ * input only fires on blur, after normalizing and validating the value.
+ * A value the editor cannot read is put back to the current one and
+ * nothing is committed, but the row says so in an alert naming a shape
+ * that works. A revert with no reason leaves the typed text gone and
+ * nothing to explain it, which is the one thing a refusal must not do.
  *
  * Alpha rows (whose value is `rgb(...)` or `#RRGGBBAA`) disable the native
  * picker (it cannot represent alpha) and keep the text input editable.
@@ -82,11 +94,15 @@ export default function ColorRow({
 }: ColorRowProps) {
   const [inputValue, setInputValue] = useState(currentValue);
 
+  // set when a blur turns the value away; the next keystroke clears it
+  const [valueRefused, setValueRefused] = useState(false);
+
   useEffect(() => {
     setInputValue(currentValue);
+    setValueRefused(false);
   }, [currentValue]);
 
-  // debounce the note text; aria-invalid stays live (styling tracks now)
+  // flag and note flip together; silence beats an unexplained flag
   const [debouncedFailure, setDebouncedFailure] = useState(failure);
   useEffect(() => {
     const timer = setTimeout(
@@ -104,14 +120,17 @@ export default function ColorRow({
 
   function handleTextChange(event: React.ChangeEvent<HTMLInputElement>) {
     setInputValue(event.target.value);
+    setValueRefused(false);
   }
 
   function handleTextBlur() {
     const normalized = normalizeToSixDigitHex(inputValue);
     if (isValidColorValue(normalized)) {
+      setValueRefused(false);
       setInputValue(normalized);
       onOverride(variable, normalized);
     } else {
+      setValueRefused(true);
       setInputValue(currentValue);
     }
   }
@@ -124,9 +143,11 @@ export default function ColorRow({
   const swatchStyle = buildSwatchStyle(swatchBackground);
   const pickerAriaLabel = `Color picker for ${label}`;
   const textAriaLabel = `Value for ${label}`;
-  const failureNoteId = `theme-editor-failure-${variable.replace(/^--/, '')}`;
+  const rowId = variable.replace(/^--/, '');
+  const failureNoteId = `theme-editor-failure-${rowId}`;
+  const refusedNoteId = `theme-editor-refused-${rowId}`;
   const failureNote = debouncedFailure
-    ? `${debouncedFailure.partnerLabel} contrast is too low (${debouncedFailure.ratio.toFixed(1)}:1)`
+    ? `${debouncedFailure.noteSubject} is too low (${debouncedFailure.ratio.toFixed(1)}:1)`
     : '';
 
   return (
@@ -166,7 +187,8 @@ export default function ColorRow({
         onChange={handleTextChange}
         onBlur={handleTextBlur}
         aria-label={textAriaLabel}
-        aria-invalid={failure ? 'true' : undefined}
+        aria-invalid={debouncedFailure || valueRefused ? 'true' : undefined}
+        aria-errormessage={valueRefused ? refusedNoteId : undefined}
         aria-describedby={debouncedFailure ? failureNoteId : undefined}
         className="w-28 px-2 py-1 bg-[var(--mount-input-bg)] border border-[var(--mount-border)] aria-invalid:border-[var(--alert-border)] text-[var(--mount-text)] text-[0.65rem] font-mono focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring)] focus:border-transparent rounded-md"
         placeholder="#000000"
@@ -175,6 +197,24 @@ export default function ColorRow({
         autoCorrect="off"
         spellCheck={false}
       />
+
+      {/* The refusal is an alert, not a description: it reports what
+          just happened to the input rather than standing commentary on
+          the value, and the blur that fires it has already moved focus
+          off the field, so a description would go unread. */}
+      {valueRefused && (
+        <p
+          id={refusedNoteId}
+          role="alert"
+          className="flex basis-full items-center gap-1 text-[var(--mount-alt-text)] text-[0.6rem]"
+        >
+          <i
+            className="fa-solid fa-circle-exclamation text-[0.55rem]"
+            aria-hidden="true"
+          />
+          {REFUSED_VALUE_MESSAGE}
+        </p>
+      )}
 
       {debouncedFailure && (
         <p
