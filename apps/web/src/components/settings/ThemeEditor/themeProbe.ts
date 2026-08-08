@@ -8,7 +8,7 @@ import type { BaseTheme, Mode } from '../../../theme/constants';
  * element must be attached to the document for `getComputedStyle` to resolve
  * the `[data-theme]`-keyed cascade. Empty resolutions are dropped.
  *
- * Used to seed the custom palette from a film theme — both for "copy from
+ * Used to seed the custom palette from a film theme: both for "copy from
  * theme" and for the initial seed when the user first enables the custom theme.
  */
 export function readThemeTokens(

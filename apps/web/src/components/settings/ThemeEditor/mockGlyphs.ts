@@ -4,7 +4,7 @@
  * code points are irrelevant, only their rough length mirrors the original
  * Latin so the mock still "reads" as a UI layout. Rendered in the self-hosted
  * "Noto Sans Old Turkic" webfont (scoped to the aria-hidden mock subtree alone),
- * the preview reads as asemic decoration that discourages interaction — it is a
+ * the preview reads as asemic decoration that discourages interaction: it is a
  * picture of the app, never the app.
  *
  * Exported as named constants (never inline literals) so the mock's components
@@ -19,7 +19,7 @@ const GLYPH_RANGE_SIZE = 0x49;
 /**
  * A deterministic (seeded) run of `length` glyphs. Deterministic so the mock
  * paints the same shapes on every render and the constants stay snapshot-stable
- * for tests — a linear congruential walk over the assigned range.
+ * for tests: a linear congruential walk over the assigned range.
  */
 function asemicWord(length: number, seed: number): string {
   const codePoints: number[] = [];
@@ -34,7 +34,7 @@ function asemicWord(length: number, seed: number): string {
 /**
  * Joins seeded words with a single ASCII space so a multi-word line keeps its
  * original word-boundary shape. The space falls outside the webfont's
- * unicode-range, so it renders from the Latin fallback — exactly as wanted.
+ * unicode-range, so it renders from the Latin fallback, exactly as wanted.
  */
 function asemicLine(wordLengths: number[], seed: number): string {
   return wordLengths
@@ -83,7 +83,7 @@ export const MOCK_GLYPHS = {
  * asemic like the rest of the mock. Keyed by status bundle, each with a longer
  * `banner` line (the centered inline-alert copy) and a shorter `toast` line
  * (the pill copy) so each notice keeps the shape of the two real status forms
- * MockNotice renders — an inline `Alert` banner above a `Toast` pill. Feeds
+ * MockNotice renders: an inline `Alert` banner above a `Toast` pill. Feeds
  * MockNotice's `banner`/`toast` props (MockNotice renders them verbatim).
  */
 export const MOCK_STATUS_GLYPHS = {

@@ -37,7 +37,7 @@ const SWATCH_CHECKERBOARD =
   'rgb(0 0 0 / 0.22) 0)';
 
 /*
- * Layers the color on top of the checkerboard so alpha shows through — a
+ * Layers the color on top of the checkerboard so alpha shows through: a
  * semi-transparent value reveals the pattern, while an opaque value (alpha FF)
  * fully occludes it, leaving those rows visually unchanged. The color layer
  * MUST stay first in `background-image` for that occlusion to hold.
@@ -64,8 +64,8 @@ interface ColorRowProps {
 }
 
 /**
- * A single color variable row — a native color picker, a hex text input, and
- * the slot label — rendered under the selected bundle's tabpanel.
+ * A single color variable row, rendered under the selected bundle's
+ * tabpanel: a native color picker, a hex text input, and the slot label.
  *
  * The accessible names are slot-only ("Color picker for Background") rather than
  * bundle-qualified: the enclosing tabpanel already establishes which bundle the

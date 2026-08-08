@@ -3,7 +3,7 @@ import { MOCK_GLYPHS } from './mockGlyphs';
 /**
  * The static top nav bar in the app mock. Rendering surface is orbit (matches
  * the real header). Decorative only: the logo, wordmark, tagline, avatar, and its
- * chevron are plain <span>/<div>/<i> shapes — no <button>, no <a href>, no focusable
+ * chevron are plain <span>/<div>/<i> shapes: no <button>, no <a href>, no focusable
  * descendants. Paints every orbit slot, so the rest of the mock is free to
  * style its orbit surfaces however reads best. The visible copy is asemic Old
  * Turkic (see mockGlyphs) so the aria-hidden mock reads as decoration.

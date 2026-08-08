@@ -5,7 +5,7 @@ import type { CustomTheme } from '../../../theme/customTheme';
 interface UseCustomThemeEngagementOptions {
   /** The committed custom palette (or `null` when never configured). */
   customTheme: CustomTheme | null;
-  /** Whether custom is currently on — the state a failed commit rolls back to. */
+  /** Whether custom is currently on: the state a failed commit rolls back to. */
   customThemeEnabled: boolean;
   setCustomTheme: (customTheme: CustomTheme) => void;
   setCustomThemeEnabled: (enabled: boolean) => void;
@@ -22,7 +22,7 @@ export interface UseCustomThemeEngagementResult {
   /**
    * The shared optimistic engage→PATCH→rollback envelope behind every way the
    * editor flips the custom theme ON (first edit, Randomize-while-off). Copying
-   * a theme is NOT here — it only runs while custom is already on, as a plain
+   * a theme is NOT here; it only runs while custom is already on, as a plain
    * copy-over save, so it never touches the enable flag.
    *
    * It snapshots the current enabled flag + palette, optimistically commits the

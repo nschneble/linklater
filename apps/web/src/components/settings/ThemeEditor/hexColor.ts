@@ -15,7 +15,7 @@ const BARE_HEX_BODY = /^[0-9a-fA-F]{3}$|^[0-9a-fA-F]{6}$/;
  * Normalizes a hex value toward canonical 6-digit `#RRGGBB` form (Postel's Law):
  *
  *  1. Prepends `#` when the input is a bare 3- or 6-digit hex body (`aabbcc` →
- *     `#aabbcc`, `abc` → `#abc`). Only bare hex bodies are rescued — `rgb()`,
+ *     `#aabbcc`, `abc` → `#abc`). Only bare hex bodies are rescued: `rgb()`,
  *     8-digit alpha hex, and true garbage are left untouched so validation can
  *     reject (or accept) them on their own terms.
  *  2. Expands 3-digit shorthand to 6-digit (`#abc` → `#aabbcc`).

@@ -35,8 +35,8 @@ export interface UseThemeCopyResult {
   /**
    * Apply an already-resolved palette immediately as a copy-over and announce
    * it via the consume-once reason. Loads the palette and persists via
-   * `saveNow`. Shared by both copy-over-while-on actions — Randomize
-   * (`handleApplyRandom`) and copying the base film theme — so they can never
+   * `saveNow`. Shared by both copy-over-while-on actions: Randomize
+   * (`handleApplyRandom`) and copying the base film theme, so they can never
    * drift on how a copy-over saves.
    */
   applyPalette: (palette: Record<string, string>, reason: string) => void;
@@ -56,7 +56,7 @@ export interface UseThemeCopyResult {
  * in the handlers it renders.
  *
  * Apply is a high-intent one-shot action, so it persists via `saveNow` (not the
- * debounce) — navigating away in the debounce window must not silently drop it.
+ * debounce); navigating away in the debounce window must not silently drop it.
  * Per-keystroke edits keep using the debounced `scheduleSave`.
  */
 export function useThemeCopy({

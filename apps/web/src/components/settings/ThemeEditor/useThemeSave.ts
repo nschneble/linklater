@@ -48,8 +48,8 @@ export interface UseThemeSaveResult {
  * so a rapid double-activation cannot fire two PATCHes.
  *
  * @param editorMode The mode slot the edits belong to. This is the editor's
- *   LOCAL mode (the Light/Dark tabs), NOT the global site mode — so editing the
- *   dark tab while the site is light still writes the dark slot.
+ *   LOCAL mode (the Light/Dark tabs), NOT the global site mode. Editing
+ *   the dark tab while the site is light still writes the dark slot.
  */
 export function useThemeSave(editorMode: Mode): UseThemeSaveResult {
   const { customTheme, setCustomTheme } = useTheme();
