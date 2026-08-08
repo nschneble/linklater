@@ -5,7 +5,7 @@ import {
   normalizeToSixDigitHex,
 } from './hexColor';
 import { useEffect, useState } from 'react';
-import type { TokenContrastFailure } from './contrastResults';
+import type { TokenContrastFailure } from './contrastResults.notes';
 
 /**
  * How long the describedby failure text waits after the latest keystroke
@@ -126,7 +126,7 @@ export default function ColorRow({
   const textAriaLabel = `Value for ${label}`;
   const failureNoteId = `theme-editor-failure-${variable.replace(/^--/, '')}`;
   const failureNote = debouncedFailure
-    ? `${debouncedFailure.partnerLabel} contrast is too low (${debouncedFailure.ratio.toFixed(1)}:1)`
+    ? `${debouncedFailure.noteSubject} contrast is too low (${debouncedFailure.ratio.toFixed(1)}:1)`
     : '';
 
   return (

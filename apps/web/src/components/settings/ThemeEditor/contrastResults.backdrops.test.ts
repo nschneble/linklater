@@ -1,5 +1,5 @@
 /*
- * Holds the backdrop table to its derivation.
+ * Holds the backdrop table to its derivation, as far as a suite can.
  *
  * The table claims to be walked from real render sites rather than reasoned
  * out from token names, and before this file nothing checked that. Five of its
@@ -8,13 +8,27 @@
  * editor's own preview. Worst-of scoring means an invented chain does not sit
  * inert, it becomes the number the user reads.
  *
- * Three gates, each aimed at one of those failure modes:
- *   1. the table equals the chains the cited sites derive, so deleting a real
- *      chain or inventing one both fail
+ * What the gates below check:
+ *   1. the table matches the chains the cited sites derive, so dropping a
+ *      chain from one side without the other fails
  *   2. every cited file really paints the layer it is cited for, so a citation
  *      cannot be decorative
  *   3. the set of files painting a bundle surface is frozen, so a new consumer
  *      forces someone to walk its ancestors before the suite goes green
+ *   4. a file that swaps one background for another on a single element is not
+ *      citing a layer, since the declaration that wins replaces the other
+ *
+ * What they do NOT check, said plainly because a comment claiming a property
+ * the suite lacks is worse than no comment: that a cited host is an ANCESTOR
+ * of the surface. Gate 2 asks whether a class appears in a file, not how the
+ * two nest. Gate 1 compares two hand-written literals written from the same
+ * walk, so a chain invented consistently on both sides passes. Gate 3 freezes
+ * files rather than chains, so a new chain between two files that already
+ * paint is invisible to it. Real ancestry would mean resolving composition
+ * through children props, which these render trees lean on everywhere and
+ * which no cheap check can follow, so the walk stays a human step. Two of the
+ * entries here were wrong for exactly that reason: both named a painter that
+ * exists, in a position it never occupies.
  */
 
 import { basename, dirname, join, relative, resolve } from 'node:path';
@@ -51,6 +65,8 @@ const SHOWCASE = 'components/settings/ThemeEditor/ComponentShowcase.tsx';
 const ALERT = 'components/common/Alert.tsx';
 const ICON_BUTTON = 'components/common/IconButton.tsx';
 const MOCK_BANNER = 'components/settings/ThemeEditor/MockBanner.tsx';
+const MOCK_TOAST = 'components/settings/ThemeEditor/MockToast.tsx';
+const PRIMARY_BUTTON = 'components/common/PrimaryButton.tsx';
 const SWITCH = 'components/settings/SettingSwitch.tsx';
 const TOAST = 'components/common/Toast.tsx';
 const TOKEN_ROW = 'components/settings/ApiTokensList/ApiTokenRow.tsx';
@@ -154,6 +170,13 @@ const HIGHLIGHT_SITES: Record<Bundle, readonly RenderSite[]> = {
       surface: 'components/settings/ThemeEditor/MockLinkCard.tsx',
       hosts: ['components/settings/ThemeEditor/MockLinkCard.tsx', SHOWCASE],
     },
+    // the account-deletion submit button asks for no host, so it
+    // fills from the default chrome tier while on the danger card
+    {
+      chain: ['--alert-bg', '--base-bg'],
+      surface: PRIMARY_BUTTON,
+      hosts: [SETTINGS_GROUP, APP_SHELL],
+    },
   ],
   orbit: [
     {
@@ -161,10 +184,12 @@ const HIGHLIGHT_SITES: Record<Bundle, readonly RenderSite[]> = {
       surface: 'components/settings/ThemeEditor/MockHeader.tsx',
       hosts: ['components/settings/ThemeEditor/MockHeader.tsx', SHOWCASE],
     },
+    // the switch swaps its own background on the checked variant
+    // rather than layering, so its backdrop is the card it sits in
     {
-      chain: ['--orbit-bg', '--mount-bg', '--base-bg'],
+      chain: ['--mount-bg', '--base-bg'],
       surface: SWITCH,
-      hosts: [SWITCH, SETTINGS_GROUP, APP_SHELL],
+      hosts: [SETTINGS_GROUP, APP_SHELL],
     },
   ],
   alert: [
@@ -186,13 +211,7 @@ const HIGHLIGHT_SITES: Record<Bundle, readonly RenderSite[]> = {
     },
   ],
   warn: [{ chain: ['--base-bg'], surface: TOAST, hosts: [APP_SHELL] }],
-  info: [
-    {
-      chain: ['--base-bg'],
-      surface: 'components/settings/ThemeEditor/MockToast.tsx',
-      hosts: [SHOWCASE],
-    },
-  ],
+  info: [{ chain: ['--base-bg'], surface: MOCK_TOAST, hosts: [SHOWCASE] }],
   success: [{ chain: ['--base-bg'], surface: TOAST, hosts: [APP_SHELL] }],
 };
 
@@ -321,6 +340,50 @@ function isReachable(path: string): boolean {
   return IMPORTED.has(stem === 'index' ? basename(dirname(path)) : stem);
 }
 
+/*
+ * A background paint, with whatever variant prefix gates it. Class strings in
+ * this codebase are written one element per line, so a line stands in for an
+ * element; the alternative is parsing JSX to find the real boundaries.
+ */
+const BACKGROUND_PAINT = /(\S*?)bg-\[var\((--[a-z-]+)\)\]/g;
+
+/**
+ * Per background token, the tokens the same element paints UNGATED beneath it.
+ * A variant that swaps the background of an element does not layer over what
+ * was there: the winning declaration replaces it, so the idle background is
+ * not a backdrop of the state background and cannot be cited as one.
+ */
+function replacedBackgrounds(path: string): Map<string, Set<string>> {
+  const replaced = new Map<string, Set<string>>();
+  for (const line of (SOURCES.get(path) ?? '').split('\n')) {
+    const painted = [...line.matchAll(BACKGROUND_PAINT)];
+    const ungated = painted.filter(([, prefix]) => !prefix.endsWith(':'));
+    for (const [, prefix, token] of painted) {
+      if (!prefix.endsWith(':')) continue;
+      const beneath = replaced.get(token) ?? new Set<string>();
+      for (const [, , idle] of ungated) beneath.add(idle);
+      replaced.set(token, beneath);
+    }
+  }
+  return replaced;
+}
+
+/**
+ * The bundles the toast mock renders desaturated, read out of its own source
+ * so the exclusion resting on that muting cannot outlive it. Throws rather
+ * than returning nothing when the declaration changes shape, since a silent
+ * empty answer would pass every assertion below.
+ */
+function mutedToastBundles(): Bundle[] {
+  const declared = (SOURCES.get(MOCK_TOAST) ?? '').match(
+    /new Set<Bundle>\(\[([^\]]*)\]\)/,
+  );
+  if (declared === null) {
+    throw new Error(`No muted-bundle declaration found in ${MOCK_TOAST}`);
+  }
+  return BUNDLES.filter((bundle) => declared[1].includes(`'${bundle}'`));
+}
+
 function paints(path: string, token: string): boolean {
   const source = SOURCES.get(path);
   if (source === undefined) return false;
@@ -378,6 +441,70 @@ describe('every cited render site paints what it is cited for', () => {
     site.chain.forEach((token, index) => {
       expect(paints(site.hosts[index], token)).toBe(true);
     });
+  });
+});
+
+describe('a background replaced on one element is not a layer beneath it', () => {
+  /*
+   * Only a site that cites its OWN file as a host can make this mistake: any
+   * other host paints on a different element by construction. Both real
+   * self-hosted sites are mocks whose wrapper and accent are separate
+   * elements, which is what a genuine layer looks like.
+   */
+  const selfHosted = BUNDLES.flatMap((bundle) =>
+    [
+      ...SURFACE_SITES[bundle].map((site) => ({ site, slot: 'bg' })),
+      ...HIGHLIGHT_SITES[bundle].map((site) => ({ site, slot: 'highlight' })),
+    ].flatMap(({ site, slot }) =>
+      site.hosts.flatMap((host, index) =>
+        host === site.surface
+          ? [{ bundle, slot, host, layer: site.chain[index] }]
+          : [],
+      ),
+    ),
+  );
+
+  it('cites no layer that its own surface paints over on one element', () => {
+    const invented = selfHosted
+      .filter(({ bundle, slot, host, layer }) => {
+        const replaced = replacedBackgrounds(host);
+        const painted =
+          slot === 'highlight'
+            ? [`--${bundle}-highlight`, `--${bundle}-highlight-hover`]
+            : [`--${bundle}-bg`];
+        return painted.some(
+          (token) => replaced.get(token)?.has(layer) ?? false,
+        );
+      })
+      .map(({ bundle, slot, layer }) => `${bundle} ${slot} over ${layer}`);
+
+    expect(invented).toEqual([]);
+  });
+
+  it('reads the settings switch as replacing its own background', () => {
+    // the shape that made the old orbit citation wrong. Were the
+    // switch to stop replacing, its highlight would gain a layer and
+    // the orbit row of the table would have to be walked again
+    expect(replacedBackgrounds(SWITCH).get('--orbit-highlight')).toEqual(
+      new Set(['--orbit-bg']),
+    );
+  });
+});
+
+describe('the muted mock renders no bundle it is cited for', () => {
+  it('cites the toast mock for no bundle it draws desaturated', () => {
+    const cited = mutedToastBundles().filter((bundle) =>
+      HIGHLIGHT_SITES[bundle].some((site) => site.surface === MOCK_TOAST),
+    );
+
+    expect(cited).toEqual([]);
+  });
+
+  it('finds no hover un-mute on the toast mock', () => {
+    // its three sibling mocks un-mute on hover. Adding that one line
+    // here, which a reviewer would encourage for consistency, makes
+    // the desaturated bundles live and owes each of them a chain
+    expect(SOURCES.get(MOCK_TOAST)).not.toContain('group-hover:');
   });
 });
 

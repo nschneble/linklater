@@ -3,26 +3,24 @@
  *
  * `pairsForBundle` is the per-bundle contract pair set, and a superset
  * assertion mechanizes that the runtime pair set can never drift below the
- * static `bundles.contrast.test.ts` contract (the two sources must agree).
- * `computeContrastRatio` is the two-endpoint opaque ratio the Randomize
- * generator solves against; what the checker itself measures with is
- * `evaluatePair`, covered in `contrastResults.evaluate.test.ts`.
+ * static `bundles.contrast.test.ts` contract (the two sources must agree). The
+ * checker itself measures with `evaluatePair`, covered in
+ * `contrastResults.evaluate.test.ts`; `computeContrastRatio` appears here only
+ * as the flat two-endpoint model, to count the pairs of the shipped seed that
+ * lie beyond it.
  */
 
 import { BRANDING_DEFAULTS } from '../../../theme/brandingDefaults';
 import { BUNDLES, EDITABLE_VARS, VAR_GROUPS } from './useThemeOverrides';
-import {
-  computeContrastRatio,
-  focusRingPairs,
-  pairsForBundle,
-  pairsTouchingToken,
-  resolveContrastStatus,
-  useContrastResults,
-} from './contrastResults';
+import { computeContrastRatio } from './randomPalette';
 import { describe, expect, it } from 'vitest';
 import { evaluatePair } from './contrastResults.evaluate';
+import { focusRingPairs, pairsForBundle } from './contrastResults.pairs';
+import { pairsTouchingToken } from './contrastResults.notes';
 import { renderHook } from '@testing-library/react';
-import type { ContrastPair, ContrastResults } from './contrastResults';
+import { resolveContrastStatus, useContrastResults } from './contrastResults';
+import type { ContrastPair } from './contrastResults.pairs';
+import type { ContrastResults } from './contrastResults';
 
 /** Every contract pair the live checker evaluates: per-bundle plus focus ring. */
 function allContractPairs(): ContrastPair[] {
@@ -179,7 +177,29 @@ describe('an unmeasurable pair is never rolled up as passing', () => {
     const { result } = renderHook(() => useContrastResults(seed));
 
     expect(result.current.totalUnverified).toBe(0);
+    // the verdict the title row announces for the shipped seed, pinned
+    // so a change to the seed or the roll-up has to be argued for
+    expect(resolveContrastStatus(result.current)).toBe('pass');
   });
+
+  /*
+   * A value the parser cannot read must reach the user as "we could not tell",
+   * never as conformance. Both of these used to roll up as PASSING: the first
+   * produced a not-a-number ratio, which no later comparison is true about, and
+   * the second produced 457:1, a confident number past the 21:1 ceiling of the
+   * formula. Both then rendered the same announcement as a clean palette.
+   */
+  it.each(['#zzzzzz', 'rgb(999, 999, 999)'])(
+    'reports %s as unmeasurable rather than as conforming',
+    (unreadable) => {
+      const palette = { ...BRANDING_DEFAULTS, '--base-text': unreadable };
+
+      const { result } = renderHook(() => useContrastResults(palette));
+
+      expect(result.current.totalUnverified).toBeGreaterThan(0);
+      expect(resolveContrastStatus(result.current)).toBe('uncheckable');
+    },
+  );
 });
 
 /**
@@ -287,31 +307,6 @@ describe('C1 differential: only pairs that READ a token move when it changes', (
   });
 });
 
-describe('computeContrastRatio', () => {
-  it('returns 21 for black on white', () => {
-    expect(computeContrastRatio('#000000', '#ffffff')).toBeCloseTo(21, 5);
-    expect(computeContrastRatio('#fff', '#000')).toBeCloseTo(21, 5);
-  });
-
-  it('expands 3-digit hex before computing', () => {
-    expect(computeContrastRatio('#abc', '#aabbcc')).toBeCloseTo(1, 5);
-  });
-
-  it('accepts hex with or without the leading #', () => {
-    expect(computeContrastRatio('000000', 'ffffff')).toBeCloseTo(21, 5);
-  });
-
-  it('returns null for an invalid hex string', () => {
-    expect(computeContrastRatio('not-a-color', '#ffffff')).toBeNull();
-    expect(computeContrastRatio('#12', '#ffffff')).toBeNull();
-  });
-
-  it('returns null for rgba / alpha values (composite math not done here)', () => {
-    expect(computeContrastRatio('rgb(0 0 0 / 0.5)', '#ffffff')).toBeNull();
-    expect(computeContrastRatio('#00000080', '#ffffff')).toBeNull();
-  });
-});
-
 describe('pairsForBundle', () => {
   it('adds the border/base-bg adjacency check for card bundles', () => {
     const labels = pairsForBundle('mount').map((pair) => pair.label);
@@ -405,8 +400,42 @@ describe('pairsTouchingToken keys failures by BOTH endpoints', () => {
 
     const touching = pairsTouchingToken(results);
     // the `--mount-bg` row shows the severe pair; same-bundle partner = bare slot name
-    expect(touching.get('--mount-bg')?.partnerLabel).toBe('Text');
+    expect(touching.get('--mount-bg')?.noteSubject).toBe('Text');
     expect(touching.get('--mount-bg')?.ratio).toBe(1.5);
+  });
+
+  it('names BOTH endpoints on a row that is only a backdrop', () => {
+    // the note used to name one endpoint on a row that pairs with neither,
+    // so the page background read as though it paired with the card text
+    const cardText = makePair({
+      label: 'text / bg',
+      foreground: '--mount-text',
+      background: '--mount-bg',
+      criterion: '1.4.3',
+      threshold: 4.5,
+    });
+    const results: ContrastResults = {
+      groups: [
+        {
+          bundle: 'mount',
+          label: 'mount',
+          pairs: [
+            {
+              pair: cardText,
+              ratio: 1.4,
+              reads: new Set(['--mount-text', '--mount-bg', '--base-bg']),
+            },
+          ],
+        },
+      ],
+    } as unknown as ContrastResults;
+
+    const touching = pairsTouchingToken(results);
+    expect(touching.get('--base-bg')?.noteSubject).toBe(
+      'Mount text on mount background',
+    );
+    // the endpoints keep the shorter phrasing, each implying the other
+    expect(touching.get('--mount-text')?.noteSubject).toBe('Background');
   });
 
   it('bundle-qualifies a partner that lives in a different bundle', () => {
@@ -429,10 +458,8 @@ describe('pairsTouchingToken keys failures by BOTH endpoints', () => {
     } as unknown as ContrastResults;
 
     const touching = pairsTouchingToken(results);
-    expect(touching.get('--mount-border')?.partnerLabel).toBe(
-      'Base background',
-    );
-    expect(touching.get('--base-bg')?.partnerLabel).toBe('Mount border');
+    expect(touching.get('--mount-border')?.noteSubject).toBe('Base background');
+    expect(touching.get('--base-bg')?.noteSubject).toBe('Mount border');
   });
 
   it('makes no entry for passing or unverified pairs', () => {

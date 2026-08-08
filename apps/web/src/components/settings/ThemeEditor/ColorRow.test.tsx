@@ -13,7 +13,7 @@ import ColorRow, {
   buildSwatchStyle,
   FAILURE_NOTE_DEBOUNCE_MS,
 } from './ColorRow';
-import type { TokenContrastFailure } from './contrastResults';
+import type { TokenContrastFailure } from './contrastResults.notes';
 
 function renderRow(currentValue = '#123456') {
   const onOverride = vi.fn();
@@ -39,7 +39,7 @@ function makeFailure(
   return {
     ratio: 2.8,
     threshold: 4.5,
-    partnerLabel: 'Text',
+    noteSubject: 'Text',
     ...overrides,
   };
 }

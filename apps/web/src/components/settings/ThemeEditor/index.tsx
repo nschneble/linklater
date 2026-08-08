@@ -4,14 +4,14 @@ import ComponentShowcase from './ComponentShowcase';
 import { generateRandomPalette } from './randomPalette';
 import IconButton from '../../common/IconButton';
 import ModeToggle, { modeTabId } from './ModeToggle';
+import { pairsTouchingToken } from './contrastResults.notes';
+import RandomizeButton from './RandomizeButton';
+import { readThemeTokens } from './themeProbe';
 import {
-  pairsTouchingToken,
   resolveContrastStatus,
   useContrastResults,
   type ContrastStatus,
 } from './contrastResults';
-import RandomizeButton from './RandomizeButton';
-import { readThemeTokens } from './themeProbe';
 import { THEMES, type Mode } from '../../../theme/constants';
 import Toast from '../../common/Toast';
 import { useAnnouncer } from './useAnnouncer';

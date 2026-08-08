@@ -55,6 +55,24 @@ export function luminanceRatio(first: Rgb, second: Rgb): number {
   return lighter / darker;
 }
 
+const HEX_BODY = /^[0-9a-fA-F]+$/;
+
+/** A real number inside `[0, max]`; false for not-a-number and infinity. */
+function inRange(value: number, max: number): boolean {
+  return Number.isFinite(value) && value >= 0 && value <= max;
+}
+
+/*
+ * Parsing is the ONLY place a value can be refused, so both parsers below
+ * validate rather than convert-and-hope.
+ *
+ * Nothing downstream can recover from a bad read. A caller treats any returned
+ * tuple as a successful measurement, and a not-a-number channel then passes
+ * every later guard, because a comparison against it is false: it wins the
+ * worst-ratio contest, and the winner is then not below threshold either, so
+ * the palette rolls up as conforming. An out-of-range channel is worse, since
+ * it yields a confident ratio far above the ceiling the formula can produce.
+ */
 function parseHex(hex: string): Rgba {
   const normalized = hex.startsWith('#') ? hex.slice(1) : hex;
   const expanded =
@@ -64,7 +82,10 @@ function parseHex(hex: string): Rgba {
           .map((character) => character + character)
           .join('')
       : normalized;
-  if (expanded.length !== 6 && expanded.length !== 8) {
+  if (
+    (expanded.length !== 6 && expanded.length !== 8) ||
+    !HEX_BODY.test(expanded)
+  ) {
     throw new Error(`Cannot parse hex color: ${hex}`);
   }
   const red = parseInt(expanded.slice(0, 2), 16);
@@ -82,11 +103,15 @@ function parseRgb(value: string): Rgba {
   if (!match) {
     throw new Error(`Cannot parse rgb color: ${value}`);
   }
-  const red = Number(match[1]);
-  const green = Number(match[2]);
-  const blue = Number(match[3]);
+  const channels = [Number(match[1]), Number(match[2]), Number(match[3])];
   const alpha = match[4] === undefined ? 1 : Number(match[4]);
-  return [red, green, blue, alpha];
+  if (
+    !channels.every((channel) => inRange(channel, 255)) ||
+    !inRange(alpha, 1)
+  ) {
+    throw new Error(`Cannot parse rgb color: ${value}`);
+  }
+  return [channels[0], channels[1], channels[2], alpha];
 }
 
 export function parseColor(value: string): Rgba {

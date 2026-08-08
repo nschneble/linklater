@@ -51,29 +51,53 @@ export const BUNDLE_BACKDROPS: Record<Bundle, readonly (readonly string[])[]> =
  * Where each bundle's HIGHLIGHT fill renders. Separate from the table above
  * because a highlight is not a layer painted on its own bundle background.
  *
- * For the chrome bundles it happens to be: a primary button sits on the card
- * that owns it. For the state bundles it is not, and the difference is the
- * most prominent use those tokens have. A toast paints `--{bundle}-highlight`
- * as its own background, `position: fixed` over the page, with no
- * `--{bundle}-bg` anywhere beneath it; a danger-filled icon button paints
- * `--alert-highlight` on whatever host it was dropped into.
+ * For the chrome bundles it OFTEN is: a primary button sits on the card that
+ * owns it. Two things break that reading, and both were wrong here before.
+ *
+ * The first is the host. A button takes its fill from the bundle it was told
+ * hosts it, which is not always the bundle of the card it landed in. The
+ * account-deletion form is the case: its submit button asks for no host, so it
+ * fills from the default chrome tier while sitting on the danger card, and the
+ * pairing that produces is measured nowhere else.
+ *
+ * The second is same-element replacement. A control that swaps its own
+ * background on a state variant does NOT layer the new fill over the old one:
+ * the declaration that wins REPLACES the other, so the bundle background it
+ * paints when idle is not a backdrop of the highlight it paints when on. The
+ * settings switch reads that way, and its real backdrop is the card its
+ * section renders in, not itself. Its component is correct as written, and the
+ * project asks for exactly that pattern; this table is what had to change.
+ *
+ * For the state bundles the "sits on its own card" reading fails outright, and
+ * the difference is the most prominent use those tokens have. A toast paints
+ * its highlight as its own background, fixed over the page, with no bundle
+ * background anywhere beneath it; a danger-filled icon button paints the alert
+ * highlight on whatever host it was dropped into.
  *
  * The editor's own mock counts as a render site, but only for the bundle it is
- * showing. `MockToast` paints every bundle's highlight over the mock's
- * `--base-bg`, and unlike its sibling mocks it never un-mutes: base, mount and
- * orbit stay grayscaled at 30% there, so those three are not rendering their
- * highlight color and `--base-bg` is not one of their hosts. For a status
- * bundle the pill is live, which is `info`'s only fill site anywhere.
+ * showing. The mock subtree is one hidden container of decorative, asemic copy,
+ * so nothing in it carries a conformance obligation of its own under SC 1.4.3;
+ * it is listed anyway because worst-of scoring can only ever be made stricter
+ * by another site, never laxer. That is why leaving the muted bundles OUT of
+ * the toast mock forfeits no claim. The reason they are out is that the toast
+ * mock is the one mock that never un-mutes on hover, so for the three chrome
+ * bundles it shows a desaturated swatch rather than their highlight color. Its
+ * suite pins that, because the one-line hover un-mute a reviewer would ask for
+ * is what makes the exclusion wrong. For a status bundle the pill is live,
+ * which is the only fill site the info bundle has anywhere.
  */
 export const HIGHLIGHT_BACKDROPS: Record<
   Bundle,
   readonly (readonly string[])[]
 > = {
   base: [['--base-bg']],
-  mount: [['--mount-bg', '--base-bg']],
+  mount: [
+    ['--mount-bg', '--base-bg'],
+    ['--alert-bg', '--base-bg'],
+  ],
   orbit: [
     ['--orbit-bg', '--base-bg'],
-    ['--orbit-bg', '--mount-bg', '--base-bg'],
+    ['--mount-bg', '--base-bg'],
   ],
   alert: [
     ['--base-bg'],

@@ -11,6 +11,43 @@
 import { compositeOver, compositeOverBg, parseColor } from './colorMath';
 import { describe, expect, it } from 'vitest';
 
+/*
+ * The parse boundary is the only place a value can be refused. Everything
+ * downstream treats a returned tuple as a successful read, and a not-a-number
+ * channel survives every later guard: a comparison against it is false, so it
+ * becomes the worst ratio, and the worst ratio is then not below threshold, so
+ * the palette rolls up as conforming. An out-of-range channel is worse still,
+ * because it yields a confident number no display can produce.
+ */
+describe('parseColor refuses what it cannot honestly measure', () => {
+  it('rejects a body of the right length made of non-hex characters', () => {
+    expect(() => parseColor('#zzzzzz')).toThrow(/hex/);
+    expect(() => parseColor('#gggggggg')).toThrow(/hex/);
+  });
+
+  it('rejects a channel past the top of the 8-bit range', () => {
+    // this one reported 457:1, well past the 21:1 ceiling of the formula
+    expect(() => parseColor('rgb(999, 999, 999)')).toThrow(/rgb/);
+    expect(() => parseColor('rgb(0 0 256)')).toThrow(/rgb/);
+  });
+
+  it('rejects an alpha outside the unit interval', () => {
+    expect(() => parseColor('rgba(0, 0, 0, 4)')).toThrow(/rgb/);
+  });
+
+  it('rejects an alpha that is not a number at all', () => {
+    expect(() => parseColor('rgb(0 0 0 / 1.2.3)')).toThrow(/rgb/);
+  });
+
+  it('still accepts every form the stylesheets and seeds are written in', () => {
+    expect(parseColor('rgb(23 37 84 / 0.55)')).toEqual([23, 37, 84, 0.55]);
+    expect(parseColor('rgba(0, 0, 0, 0.5)')).toEqual([0, 0, 0, 0.5]);
+    expect(parseColor('#eeeede')).toEqual([238, 238, 222, 1]);
+    expect(parseColor('#abc')).toEqual([170, 187, 204, 1]);
+    expect(parseColor('#ffffff0d')).toEqual([255, 255, 255, 13 / 255]);
+  });
+});
+
 describe('compositeOver', () => {
   it('accumulates alpha as a_s + a_b(1 - a_s)', () => {
     // 0.5 + 0.5(1 - 0.5) = 0.75, not either operand's alpha

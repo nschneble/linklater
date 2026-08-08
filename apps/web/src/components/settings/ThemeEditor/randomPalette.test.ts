@@ -15,15 +15,11 @@
  */
 
 import { BUNDLES } from './useThemeOverrides';
-import {
-  computeContrastRatio,
-  focusRingPairs,
-  pairsForBundle,
-} from './contrastResults';
+import { computeContrastRatio, generateRandomPalette } from './randomPalette';
 import { describe, expect, it } from 'vitest';
 import { EDITABLE_VARS } from '../../../theme/customThemeTokens';
 import { evaluatePair } from './contrastResults.evaluate';
-import { generateRandomPalette } from './randomPalette';
+import { focusRingPairs, pairsForBundle } from './contrastResults.pairs';
 import type { Mode } from '../../../theme/constants';
 import type { ThemeVariable } from './useThemeOverrides';
 

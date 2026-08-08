@@ -19,12 +19,12 @@ import BundleTabs from './BundleTabs';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { useState } from 'react';
-import type { TokenContrastFailure } from './contrastResults';
+import type { TokenContrastFailure } from './contrastResults.notes';
 
 const A_FAILURE: TokenContrastFailure = {
   ratio: 2,
   threshold: 4.5,
-  partnerLabel: 'Text',
+  noteSubject: 'Text',
 };
 
 const PLACEHOLDER_VALUE = '#abcdef';

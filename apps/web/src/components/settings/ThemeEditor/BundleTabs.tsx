@@ -6,16 +6,16 @@ import {
   type BundleGroup,
   type ThemeVariable,
 } from './useThemeOverrides';
-import type { TokenContrastFailure } from './contrastResults';
+import type { TokenContrastFailure } from './contrastResults.notes';
 
 interface BundleTabsProps {
   /** Current (possibly overridden) values for all editable CSS variables. */
   colorValues: Record<ThemeVariable, string>;
   /**
-   * Worst failing contrast pair keyed by EITHER endpoint (the both-endpoints
-   * `pairsTouchingToken` view). Keying by both endpoints means editing a slot
-   * whose token is a pair's BACKGROUND self-reports on that row, not only on
-   * the far foreground row (C3).
+   * Worst failing contrast pair keyed by every token the measurement READ (the
+   * `pairsTouchingToken` view). Keying that way means editing a slot that is a
+   * pair's BACKGROUND, or a backdrop beneath one, self-reports on that row and
+   * not only on the far foreground row (C3).
    */
   contrastFailures: Map<string, TokenContrastFailure>;
   /** The bundle whose raw slots are shown + edited. */
