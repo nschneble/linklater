@@ -852,4 +852,163 @@ describe('useAuthForm', () => {
       expect(focusSpy.mock.calls.length).toBe(callCountAfterSet);
     });
   });
+
+  // a refused OAuth callback redirects to /login?error=…&provider=…; the API
+  // used to leave the browser on a raw JSON 401 with no way back in
+  describe('OAuth arrival error', () => {
+    const ARRIVAL_PATH =
+      '/login?error=provider_email_unverified&provider=google';
+    const ARRIVAL_MESSAGE =
+      "Google hasn't confirmed this email address. Log in with your email instead.";
+    const ANNOUNCE_DELAY_MS = 1000;
+
+    /** Renders the hook, letting the caller wire refs before effects run. */
+    function renderWithReferences(
+      path: string,
+      assignReferences: (hook: ReturnType<typeof useAuthForm>) => void,
+    ) {
+      return renderHook(
+        () => {
+          const hook = useAuthForm();
+          assignReferences(hook);
+          return hook;
+        },
+        {
+          wrapper: ({ children }) =>
+            MemoryRouter({ children, initialEntries: [path] }),
+        },
+      );
+    }
+
+    it('surfaces the redirect code as the form error', async () => {
+      const { result } = renderAuthFormHook(ARRIVAL_PATH);
+
+      await waitFor(() => {
+        expect(result.current.error).toBe(ARRIVAL_MESSAGE);
+      });
+    });
+
+    it('falls back to provider-agnostic copy when the redirect names no provider', async () => {
+      const { result } = renderAuthFormHook(
+        '/login?error=provider_email_unverified',
+      );
+
+      await waitFor(() => {
+        expect(result.current.error).toBe(
+          "That sign-in didn't confirm this email address. Log in with your email instead.",
+        );
+      });
+    });
+
+    // the mode effect's hasPendingNotice guard can't see this one: a
+    // cross-origin redirect cannot write sessionStorage
+    it('does not auto-focus the email input when the URL carries an error', async () => {
+      const emailInput = document.createElement('input');
+      const focusSpy = vi.spyOn(emailInput, 'focus');
+
+      const { result } = renderWithReferences(ARRIVAL_PATH, (hook) => {
+        if (hook.emailReference.current === null) {
+          hook.emailReference.current = emailInput;
+        }
+      });
+
+      await waitFor(() => {
+        expect(result.current.error).toBe(ARRIVAL_MESSAGE);
+      });
+      expect(focusSpy).not.toHaveBeenCalled();
+    });
+
+    it('does not focus the error alert when the error arrived on the URL', async () => {
+      const errorParagraph = document.createElement('p');
+      const focusSpy = vi.spyOn(errorParagraph, 'focus');
+
+      const { result } = renderWithReferences(ARRIVAL_PATH, (hook) => {
+        if (hook.errorReference.current === null) {
+          hook.errorReference.current = errorParagraph;
+        }
+      });
+
+      await waitFor(() => {
+        expect(result.current.error).toBe(ARRIVAL_MESSAGE);
+      });
+      expect(focusSpy).not.toHaveBeenCalled();
+    });
+
+    it('leaves the Alert without a live region while it holds the arrival error', async () => {
+      const { result } = renderAuthFormHook(ARRIVAL_PATH);
+
+      await waitFor(() => {
+        expect(result.current.error).toBe(ARRIVAL_MESSAGE);
+      });
+      expect(result.current.announceError).toBe(false);
+    });
+
+    it('announces nothing on a clean arrival (negative control)', async () => {
+      const { result } = renderAuthFormHook('/login');
+
+      await act(async () => {});
+
+      expect(result.current.error).toBeNull();
+      expect(result.current.announceError).toBe(true);
+      expect(result.current.errorAnnouncement).toBe('');
+    });
+
+    it('gives the Alert back its live region and its focus on the next submit', async () => {
+      const loginMock = vi
+        .fn()
+        .mockRejectedValue(new Error('Invalid credentials'));
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+
+      const errorParagraph = document.createElement('p');
+      const focusSpy = vi.spyOn(errorParagraph, 'focus');
+      const { result } = renderWithReferences(ARRIVAL_PATH, (hook) => {
+        if (hook.errorReference.current === null) {
+          hook.errorReference.current = errorParagraph;
+        }
+      });
+
+      await waitFor(() => {
+        expect(result.current.error).toBe(ARRIVAL_MESSAGE);
+      });
+
+      act(() => {
+        result.current.setEmail(USER_EMAIL);
+        result.current.setPassword(USER_PASSWORD);
+      });
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        await result.current.handleSubmit(event);
+      });
+
+      expect(result.current.error).toBe('Invalid credentials');
+      expect(result.current.announceError).toBe(true);
+      expect(focusSpy).toHaveBeenCalled();
+    });
+
+    describe('announcement timing', () => {
+      beforeEach(() => {
+        vi.useFakeTimers();
+      });
+
+      afterEach(() => {
+        vi.useRealTimers();
+      });
+
+      it('holds the announcement back past the page-load window, then fires it', async () => {
+        const { result } = renderAuthFormHook(ARRIVAL_PATH);
+
+        await act(async () => {});
+
+        // painted, but silent: a region populated on first paint is skipped
+        expect(result.current.error).toBe(ARRIVAL_MESSAGE);
+        expect(result.current.errorAnnouncement).toBe('');
+
+        await act(async () => {
+          vi.advanceTimersByTime(ANNOUNCE_DELAY_MS);
+        });
+
+        expect(result.current.errorAnnouncement).toBe(ARRIVAL_MESSAGE);
+      });
+    });
+  });
 });

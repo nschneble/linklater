@@ -5,7 +5,8 @@ import type { ReactNode, Ref } from 'react';
  *
  * Renders a `<p>` element. The `role` attribute is set automatically:
  * `'alert'` for errors (announced immediately by screen readers) and
- * `'status'` for success (polite announcement).
+ * `'status'` for success (polite announcement), unless `announce` is
+ * `false`, which leaves the alert visual-only.
  *
  * Always renders a variant-specific icon for color-independent meaning.
  * The `icon` prop overrides the default icon when provided.
@@ -13,6 +14,13 @@ import type { ReactNode, Ref } from 'react';
  * Use directly below the field or form section it relates to.
  */
 interface AlertProps {
+  /**
+   * When `true` (default) the alert owns a live region and announces itself
+   * on the empty → populated transition. Set `false` when the caller already
+   * announces the same message through a separate always-mounted region, so
+   * the two don't race the screen reader with one message.
+   */
+  announce?: boolean;
   children: ReactNode;
   className?: string;
   /**
@@ -59,6 +67,7 @@ const variantRoles: Record<AlertProps['variant'], string> = {
 };
 
 export default function Alert({
+  announce = true,
   children,
   className = '',
   icon,
@@ -75,6 +84,10 @@ export default function Alert({
 
   const resolvedIcon = icon ?? defaultIcons[variant];
 
+  // announce=false: the caller owns the live region, so no role here
+  let role: string | undefined;
+  if (announce) role = variantRoles[variant];
+
   return (
     <p
       id={id}
@@ -82,7 +95,7 @@ export default function Alert({
       inert={inert}
       tabIndex={tabIndex}
       className={`px-3 py-2 border text-xs rounded-lg flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] ${variantClasses[variant]} ${className}`}
-      role={variantRoles[variant]}
+      role={role}
     >
       <i className={`fa-solid ${resolvedIcon} text-xs`} aria-hidden="true" />
       {children}

@@ -31,12 +31,24 @@ function authDocumentTitle(
  * the form transitions to an `MfaView` where the user enters their TOTP or
  * recovery code. The `mfaToken` is a short-lived server-issued token that
  * identifies the pending MFA session – it is not a full JWT.
+ *
+ * The sr-only region below the view is the announcement channel for an
+ * error that arrived on the URL, which is how a refused OAuth callback
+ * lands here. It stays mounted and empty until `useOAuthArrivalError`
+ * fills it, because a live region already populated on first paint is read
+ * as part of the page rather than announced, and this arrival waits on
+ * nothing else. The visible `Alert` paints the same text immediately with
+ * its own live semantics off (`announceError`), so exactly one region
+ * announces. Submit errors keep the opposite split: the `Alert` announces
+ * itself and this region stays empty.
  */
 export default function AuthForm() {
   const {
+    announceError,
     email,
     emailReference,
     error,
+    errorAnnouncement,
     errorReference,
     forgotPasswordSentJustNow,
     handleModeChange,
@@ -102,6 +114,7 @@ export default function AuthForm() {
   } else {
     view = (
       <LoginRegisterView
+        announceError={announceError}
         email={email}
         emailReference={emailReference}
         error={error}
@@ -123,6 +136,16 @@ export default function AuthForm() {
   return (
     <>
       {view}
+      {/* mounted empty, filled a beat later; see the block above */}
+      <span
+        className="sr-only"
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+        data-testid="auth-error-announcement"
+      >
+        {errorAnnouncement}
+      </span>
       <PendingNoticeAnnouncer
         notice={notice?.message ?? null}
         variant={notice?.variant ?? 'success'}

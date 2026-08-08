@@ -13,6 +13,7 @@ import { getErrorMessage } from '../../lib/errors';
 import { useAuth } from '../../auth/AuthContext';
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
+import { useOAuthArrivalError } from './useOAuthArrivalError';
 import { useTransientState } from '../../lib/hooks/useTransientState';
 import type { FormEvent } from 'react';
 
@@ -45,9 +46,22 @@ export function useAuthForm() {
   const [mfaChallenge, setMfaChallenge] = useState<MfaChallenge | null>(null);
   const [mfaCode, setMfaCode] = useState('');
   const [mfaToken, setMfaToken] = useState<string | null>(null);
-  // read in an effect (not render) so aria-live fires on empty->populated
+  // consumed in an effect so its live region sees a text change
   const [notice, setNotice] = useState<FormNotice | null>(null);
   const [password, setPassword] = useState('');
+
+  // a refused OAuth callback redirects here carrying its reason
+  const {
+    announcement: errorAnnouncement,
+    arrived: arrivedWithOAuthError,
+    message: oauthErrorMessage,
+  } = useOAuthArrivalError();
+
+  // true while the Alert holds a redirect-borne error: that message is
+  // announced by errorAnnouncement, so the Alert stays visual-only
+  const [errorFromArrival, setErrorFromArrival] = useState(
+    arrivedWithOAuthError,
+  );
 
   // hold both "sent!" flags for the toast's 5000ms, then auto-release
   useTransientState(magicLinkSentJustNow, false, setMagicLinkSentJustNow, 5000);
@@ -77,8 +91,11 @@ export function useAuthForm() {
     setMagicLinkSentJustNow(false);
     setForgotPasswordSentJustNow(false);
 
-    // skip auto-focus with a notice queued: focus flips SRs to forms mode
-    if (hasPendingNotice()) return;
+    // skip auto-focus with a message inbound: focus flips SRs to
+    // forms mode and swallows the announcement. hasPendingNotice reads
+    // sessionStorage, which a cross-origin OAuth redirect cannot
+    // write, so a URL-borne arrival needs its own answer
+    if (hasPendingNotice() || arrivedWithOAuthError) return;
 
     const emailInputValue = emailReference.current?.value ?? '';
     if (mode !== 'forgot-password' && emailInputValue.length > 0) {
@@ -86,7 +103,13 @@ export function useAuthForm() {
       return;
     }
     emailReference.current?.focus();
-  }, [mode]);
+  }, [mode, arrivedWithOAuthError]);
+
+  // declared after the mode effect, which clears `error` on the same mount
+  // flush: earlier, both writes would batch and the clear would win
+  useEffect(() => {
+    if (oauthErrorMessage !== null) setError(oauthErrorMessage);
+  }, [oauthErrorMessage]);
 
   useEffect(() => {
     const pending = consumePendingNotice();
@@ -100,11 +123,13 @@ export function useAuthForm() {
   }, [mfaChallenge]);
 
   // focus the form error on the empty->populated transition, never on clears
+  // and never on arrival: the Alert sits below both inputs, so focusing it
+  // would send the next Tab past the fields the user still has to fill
   useEffect(() => {
-    if (error) {
+    if (error && !errorFromArrival) {
       errorReference.current?.focus();
     }
-  }, [error]);
+  }, [error, errorFromArrival]);
 
   const handleSubmit = async (formEvent: FormEvent) => {
     formEvent.preventDefault();
@@ -115,6 +140,7 @@ export function useAuthForm() {
     }
 
     setError(null);
+    setErrorFromArrival(false);
     setLoading(true);
 
     try {
@@ -195,9 +221,12 @@ export function useAuthForm() {
   };
 
   return {
+    // an arrival error has a live region already; a second would race it
+    announceError: !errorFromArrival,
     email,
     emailReference,
     error,
+    errorAnnouncement,
     errorReference,
     forgotPasswordSentJustNow,
     handleModeChange,

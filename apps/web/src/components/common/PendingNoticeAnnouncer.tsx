@@ -49,7 +49,10 @@ interface PendingNoticeAnnouncerProps {
  * NVDA.
  *
  * `aria-atomic="true"` so the full message is re-announced as a single
- * unit rather than the diff of the swap. Co-existing with other live
+ * unit rather than the diff of the swap. The mirror carries a fixed
+ * `data-testid` because a host page can hold a second live region of the
+ * same shape (`AuthForm`'s arrival-error channel), and attribute-only
+ * queries cannot tell the two apart. Co-existing with other live
  * regions on the same page is fine: this mirror fires at most once per
  * route mount (`consumePendingNotice` clears sessionStorage), so practical
  * collision is near-zero.
@@ -76,6 +79,7 @@ export default function PendingNoticeAnnouncer({
         role={mirrorRole}
         aria-live={mirrorAriaLive}
         aria-atomic="true"
+        data-testid="pending-notice-announcement"
       >
         {notice ?? ''}
       </span>

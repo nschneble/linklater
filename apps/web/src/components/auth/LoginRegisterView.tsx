@@ -23,6 +23,12 @@ function submitLabel(isMagicLink: boolean, mode: LoginRegisterMode): string {
 }
 
 interface LoginRegisterViewProps {
+  /**
+   * `false` when the error arrived on the URL rather than from a submit:
+   * `AuthForm` announces that one through its own live region, and two
+   * regions holding one message race each other on NVDA.
+   */
+  announceError?: boolean;
   email: string;
   emailReference: RefObject<HTMLInputElement | null>;
   error: string | null;
@@ -46,6 +52,7 @@ interface LoginRegisterViewProps {
 }
 
 export default function LoginRegisterView({
+  announceError = true,
   email,
   emailReference,
   error,
@@ -145,6 +152,7 @@ export default function LoginRegisterView({
         {/* Always mounted so aria-describedby="auth-form-error" is never
             a dangling reference. Empty content renders nothing visible. */}
         <Alert
+          announce={announceError}
           id="auth-form-error"
           ref={errorReference}
           icon="fa-triangle-exclamation"

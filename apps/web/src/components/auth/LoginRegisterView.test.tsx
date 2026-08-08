@@ -32,6 +32,7 @@ vi.mock('react-router', async () => {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 interface Props {
+  announceError?: boolean;
   email?: string;
   error?: string | null;
   loading?: boolean;
@@ -55,6 +56,7 @@ function renderView(props: Props = {}) {
 
   return render(
     <LoginRegisterView
+      announceError={props.announceError ?? true}
       email={props.email ?? ''}
       emailReference={emailReference}
       error={props.error ?? null}
@@ -125,6 +127,15 @@ describe('LoginRegisterView error display', () => {
     // the alert stays mounted but aria-hidden and sr-only
     const errorElement = document.getElementById('auth-form-error');
     expect(errorElement).toBeInTheDocument();
+  });
+
+  // an error that arrived on the URL is announced by AuthForm's own region
+  it('paints the error without a live region when announceError is false', () => {
+    renderView({ announceError: false, error: 'Invalid credentials' });
+    const errorElement = document.getElementById('auth-form-error');
+    expect(errorElement).toHaveTextContent('Invalid credentials');
+    expect(errorElement).not.toHaveAttribute('role');
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 });
 

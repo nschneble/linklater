@@ -15,8 +15,8 @@ jest.mock('../prisma/generated/client', () => ({
 }));
 
 import { Prisma } from '../prisma/generated/client';
+import { ProviderEmailUnverifiedException } from './oauth-sign-in-failure';
 import { Test, TestingModule } from '@nestjs/testing';
-import { UnauthorizedException } from '@nestjs/common';
 
 import { OAuthSignInService } from './oauth-sign-in.service';
 import { UserOAuthService } from '../users/user-oauth.service';
@@ -337,7 +337,7 @@ describe('OAuthSignInService', () => {
           USER_EMAIL,
           false,
         ),
-      ).rejects.toThrow(UnauthorizedException);
+      ).rejects.toThrow(ProviderEmailUnverifiedException);
 
       expect(userOAuthServiceMock.linkOAuthAccount).not.toHaveBeenCalled();
       expect(
@@ -367,7 +367,7 @@ describe('OAuthSignInService', () => {
           USER_EMAIL,
           false,
         ),
-      ).rejects.toThrow(UnauthorizedException);
+      ).rejects.toThrow(ProviderEmailUnverifiedException);
 
       expect(
         usersServiceMock.verifyEmailAndInvalidateStalePassword,
