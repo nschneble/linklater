@@ -26,6 +26,12 @@ interface FormNotice {
   variant: 'success' | 'warning' | 'error';
 }
 
+/**
+ * Effects below run in declaration order and that order is load-bearing:
+ * the mode effect peeks at the pending notice before the effect that
+ * consumes it, and the arrival-error effect follows the mode effect so a
+ * cleared error cannot land on top of the message it should paint.
+ */
 export function useAuthForm() {
   const { login, refreshUser, register } = useAuth();
   const location = useLocation();
@@ -37,24 +43,17 @@ export function useAuthForm() {
   const passwordReference = useRef<HTMLInputElement>(null);
 
   const [email, setEmail] = useState('');
-  // errorFromArrival keeps the Alert visual-only while errorAnnouncement
-  // carries the message. recorded with the write rather than compared by
-  // string, so a submit error repeating the copy still announces
   const { error, errorFromArrival, setError } = useFormError();
   const [loading, setLoading] = useState(false);
-  // holds the button "sent!" for the toast's 5000ms, blocking a re-request
   const [magicLinkSentJustNow, setMagicLinkSentJustNow] = useState(false);
-  // forgot-password version of magicLinkSentJustNow, held for 5000ms
   const [forgotPasswordSentJustNow, setForgotPasswordSentJustNow] =
     useState(false);
   const [mfaChallenge, setMfaChallenge] = useState<MfaChallenge | null>(null);
   const [mfaCode, setMfaCode] = useState('');
   const [mfaToken, setMfaToken] = useState<string | null>(null);
-  // consumed in an effect so its live region sees a text change
   const [notice, setNotice] = useState<FormNotice | null>(null);
   const [password, setPassword] = useState('');
 
-  // a refused OAuth callback redirects here carrying its reason
   const {
     announcement: errorAnnouncement,
     arrived: arrivedWithOAuthError,
@@ -62,7 +61,7 @@ export function useAuthForm() {
     message: oauthErrorMessage,
   } = useOAuthArrivalError();
 
-  // hold both "sent!" flags for the toast's 5000ms, then auto-release
+  // 5000 matches the toast, so the button releases as the toast clears
   useTransientState(magicLinkSentJustNow, false, setMagicLinkSentJustNow, 5000);
   useTransientState(
     forgotPasswordSentJustNow,
@@ -82,7 +81,6 @@ export function useAuthForm() {
     return (location.state as { from?: string })?.from ?? '/unread';
   }
 
-  // must precede the consume effect so the peek sees the notice first
   useEffect(() => {
     setPassword('');
     setError(null);
@@ -90,10 +88,8 @@ export function useAuthForm() {
     setMagicLinkSentJustNow(false);
     setForgotPasswordSentJustNow(false);
 
-    // skip auto-focus with a message inbound: focus flips SRs to
-    // forms mode and swallows the announcement. hasPendingNotice reads
-    // sessionStorage, which a cross-origin OAuth redirect cannot
-    // write, so a URL-borne arrival needs its own answer
+    // auto-focus flips screen readers to forms mode, swallowing any
+    // announcement already inbound
     if (hasPendingNotice() || arrivedWithOAuthError) return;
 
     const emailInputValue = emailReference.current?.value ?? '';
@@ -104,9 +100,6 @@ export function useAuthForm() {
     emailReference.current?.focus();
   }, [mode, arrivedWithOAuthError, setError]);
 
-  // ordered after the mode effect defensively. the two do not collide
-  // today: useFlashQueryParameters defers its read to a mount effect, so
-  // oauthErrorMessage is still null while the mode effect clears `error`
   useEffect(() => {
     if (oauthErrorMessage !== null) setError(oauthErrorMessage, 'arrival');
   }, [oauthErrorMessage, setError]);
@@ -122,9 +115,8 @@ export function useAuthForm() {
     }
   }, [mfaChallenge]);
 
-  // focus the form error on the empty->populated transition, never on clears
-  // and never on arrival: the Alert sits below both inputs, so focusing it
-  // would send the next Tab past the fields the user still has to fill
+  // the Alert sits below both inputs, so focusing an arrival error would
+  // send the next Tab past fields the user still has to fill
   useEffect(() => {
     if (error && !errorFromArrival) {
       errorReference.current?.focus();
@@ -134,14 +126,12 @@ export function useAuthForm() {
   const handleSubmit = async (formEvent: FormEvent) => {
     formEvent.preventDefault();
 
-    // drop a lingering error toast on submit; two assertive regions clash
+    // two assertive regions would clash
     if (notice !== null && notice.variant === 'error') {
       setNotice(null);
     }
 
-    // this submit supersedes the arrival message. useReannounce reads its
-    // message at fire time, so a queued announcement would otherwise fire
-    // the stale text alongside this submit's own error
+    // a queued announcement would fire stale text over this submit's error
     dismissAnnouncement();
 
     setError(null);
@@ -158,7 +148,6 @@ export function useAuthForm() {
           message: 'Magic link sent!',
           variant: 'success',
         });
-        // release loading on success so the button isn't "Working…" mid-toast
         setLoading(false);
         setMagicLinkSentJustNow(true);
         return;
@@ -175,7 +164,6 @@ export function useAuthForm() {
         await register(email, password);
       } else {
         await apiForgotPassword(email);
-        // mirrors magic-link: hold "sent!" for 5000ms, blocking a duplicate reset
         setNotice({
           message: 'Reset link sent!',
           variant: 'success',
@@ -185,7 +173,6 @@ export function useAuthForm() {
         return;
       }
 
-      // login (no MFA) and register land here; forgot-password returned earlier
       navigate(postLoginDestination(), { replace: true });
     } catch (caught: unknown) {
       setError(
@@ -217,9 +204,7 @@ export function useAuthForm() {
   };
 
   const handleModeChange = (newMode: Mode) => {
-    // this navigation supersedes it too: a queued announcement would fire
-    // on the screen the user left for, and a fired one outlives the Alert
-    // the mode change clears
+    // an announcement would follow the user to the screen they left for
     dismissAnnouncement();
 
     const from = (location.state as { from?: string })?.from;
@@ -230,7 +215,7 @@ export function useAuthForm() {
   };
 
   return {
-    // an arrival error has a live region already; a second would race it
+    // an arrival error has a live region already, a second would race it
     announceError: !errorFromArrival,
     email,
     emailReference,
