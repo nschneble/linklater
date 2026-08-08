@@ -223,8 +223,7 @@ export function deriveForeground(
   chroma: number,
 ): string {
   const direction = FG_DIRECTION[mode];
-  // start a stride from the lightest surface so the first sample leans to
-  // contrast
+  // stride from the lightest surface so the first sample leans to contrast
   const anchorLightness = Math.max(...surfaceHexes.map(lightnessOf));
   let lightness = clamp01(anchorLightness + direction * NUDGE_STEP * 4);
 
@@ -479,9 +478,7 @@ function buildAttempt(mode: Mode, rng: Rng): Palette {
     deriveBundle(palette, bundle, bundleBgHex, baseBgHex, mode, rng, bundleHue);
   }
 
-  // D) focus ring LAST, against every now-fixed surface it is drawn on. A
-  // focused input hides its border and paints the ring in its place, so
-  // the fills belong here beside the chrome backgrounds
+  // D) focus ring last; a focused input hides its border
   const focusSurfaces = [
     baseBgHex,
     palette['--mount-bg' as ThemeVariable]!,

@@ -187,8 +187,7 @@ describe('the harness can tell a failing pair from a passing one', () => {
   });
 
   it('would report zero failures if fed hex strings instead of channels', () => {
-    // the trap this harness exists to avoid: hex in, not-a-number out,
-    // and every later comparison against it is false
+    // the trap: hex in, NaN out, so every later comparison is false
     const naive = contrastRatio(
       '#838fa8' as unknown as Rgb,
       '#eaf2f5' as unknown as Rgb,
@@ -205,8 +204,7 @@ describe(`one derivation per seed, ${SWEEP_SEEDS} seeds per mode`, () => {
     it(`${mode} mode clears every input-fill pair`, () => {
       const { perPair, seedsFailingAnyPair } = sweep(mode);
 
-      // soft, so a regression reports the per-pair counts AND the share of
-      // seeds affected rather than stopping at the first of the two
+      // soft so a regression reports both counts, not just the first
       expect.soft(perPair).toEqual(allZero());
       expect.soft(seedsFailingAnyPair).toBe(0);
     });
@@ -218,8 +216,7 @@ describe('the two seeds that shipped a failing palette', () => {
     ['light' as Mode, 1],
     ['dark' as Mode, 2],
   ])('%s seed %i clears every input-fill pair', (mode, seed) => {
-    // the derivation first, then the entry point users press, since a
-    // repair pass would carry the second on its own
+    // derivation first: a repair pass could carry the entry point alone
     expect(failingPairs(derivePaletteOnce(mode, seed))).toEqual([]);
     expect(failingPairs(generateRandomPalette(mode, seed))).toEqual([]);
   });
