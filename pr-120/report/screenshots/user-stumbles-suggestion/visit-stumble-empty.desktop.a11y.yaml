@@ -1,0 +1,7 @@
+- img "A friendly pixel-art ghost"
+- heading "Boo. Your reading list is empty." [level=1]
+- paragraph: How about something from Testing Fixture?
+- paragraph: Testing-UI Determinism
+- paragraph: A frozen sample article used by the testing-ui harness so screenshot diffs only flag genuine UI changes.
+- button "Add and read"
+- button "Back to Linklater"
