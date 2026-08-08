@@ -1,5 +1,6 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Prisma } from '../prisma/index.js';
+import { ProviderEmailUnverifiedException } from './oauth-sign-in-failure.js';
 import { UserOAuthService, UsersService } from '../users/index.js';
 
 /**
@@ -88,13 +89,12 @@ export class OAuthSignInService {
   /**
    * Refuses to adopt an existing account when the provider will not vouch for
    * the email it just handed us. Runs before any write, so a refused sign-in
-   * leaves no half-linked account behind.
+   * leaves no half-linked account behind. `OAuthCallbackGuard` catches the
+   * exception and turns it into a redirect back to the login page.
    */
   private assertProviderVerifiedEmail(providerEmailVerified: boolean): void {
     if (!providerEmailVerified) {
-      throw new UnauthorizedException(
-        'Your provider has not verified this email address.',
-      );
+      throw new ProviderEmailUnverifiedException();
     }
   }
 

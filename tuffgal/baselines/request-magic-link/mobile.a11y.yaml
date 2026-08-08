@@ -11,6 +11,7 @@
     - /placeholder: Leave blank to use a magic link
   - button "Log in with magic link" [disabled]
 - button "I literally have no idea what my password is"
+- alert
 - status:
   - text: Magic link sent!
   - button "Dismiss"

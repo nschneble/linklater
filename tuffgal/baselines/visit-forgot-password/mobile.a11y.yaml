@@ -5,4 +5,5 @@
 - button "Send password reset link"
 - paragraph:
   - button "Back to login"
+- alert
 - status

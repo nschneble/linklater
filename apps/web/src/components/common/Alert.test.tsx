@@ -85,4 +85,35 @@ describe('Alert', () => {
     const { getByRole } = render(<Alert variant="error">Boom</Alert>);
     expect(getByRole('alert')).not.toHaveAttribute('inert');
   });
+
+  // announce=false hands the live region to a caller that owns one already
+  it('drops the role when announce is false', () => {
+    const { container, queryByRole } = render(
+      <Alert variant="error" announce={false}>
+        Boom
+      </Alert>,
+    );
+    expect(queryByRole('alert')).toBeNull();
+    expect(container.querySelector('p')).toHaveTextContent('Boom');
+  });
+
+  it('drops the role on the success variant too', () => {
+    const { queryByRole } = render(
+      <Alert variant="success" announce={false}>
+        OK
+      </Alert>,
+    );
+    expect(queryByRole('status')).toBeNull();
+  });
+
+  it('keeps the paint when announce is false', () => {
+    const { container } = render(
+      <Alert variant="error" announce={false}>
+        Boom
+      </Alert>,
+    );
+    const className = container.querySelector('p')?.className ?? '';
+    expect(className).toContain('bg-[var(--alert-bg)]');
+    expect(container.querySelector('i.fa-circle-exclamation')).toBeTruthy();
+  });
 });

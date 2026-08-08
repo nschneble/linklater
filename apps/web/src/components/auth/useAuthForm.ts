@@ -12,7 +12,9 @@ import {
 import { getErrorMessage } from '../../lib/errors';
 import { useAuth } from '../../auth/AuthContext';
 import { useEffect, useRef, useState } from 'react';
+import { useFormError } from './useFormError';
 import { useLocation, useNavigate } from 'react-router';
+import { useOAuthArrivalError } from './useOAuthArrivalError';
 import { useTransientState } from '../../lib/hooks/useTransientState';
 import type { FormEvent } from 'react';
 
@@ -24,6 +26,12 @@ interface FormNotice {
   variant: 'success' | 'warning' | 'error';
 }
 
+/**
+ * Effects below run in declaration order and that order is load-bearing:
+ * the mode effect peeks at the pending notice before the effect that
+ * consumes it, and the arrival-error effect follows the mode effect so a
+ * cleared error cannot land on top of the message it should paint.
+ */
 export function useAuthForm() {
   const { login, refreshUser, register } = useAuth();
   const location = useLocation();
@@ -35,21 +43,25 @@ export function useAuthForm() {
   const passwordReference = useRef<HTMLInputElement>(null);
 
   const [email, setEmail] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const { error, errorFromArrival, setError } = useFormError();
   const [loading, setLoading] = useState(false);
-  // holds the button "sent!" for the toast's 5000ms, blocking a re-request
   const [magicLinkSentJustNow, setMagicLinkSentJustNow] = useState(false);
-  // forgot-password version of magicLinkSentJustNow, held for 5000ms
   const [forgotPasswordSentJustNow, setForgotPasswordSentJustNow] =
     useState(false);
   const [mfaChallenge, setMfaChallenge] = useState<MfaChallenge | null>(null);
   const [mfaCode, setMfaCode] = useState('');
   const [mfaToken, setMfaToken] = useState<string | null>(null);
-  // read in an effect (not render) so aria-live fires on empty->populated
   const [notice, setNotice] = useState<FormNotice | null>(null);
   const [password, setPassword] = useState('');
 
-  // hold both "sent!" flags for the toast's 5000ms, then auto-release
+  const {
+    announcement: errorAnnouncement,
+    arrived: arrivedWithOAuthError,
+    dismissAnnouncement,
+    message: oauthErrorMessage,
+  } = useOAuthArrivalError();
+
+  // 5000 matches the toast, so the button releases as the toast clears
   useTransientState(magicLinkSentJustNow, false, setMagicLinkSentJustNow, 5000);
   useTransientState(
     forgotPasswordSentJustNow,
@@ -69,7 +81,6 @@ export function useAuthForm() {
     return (location.state as { from?: string })?.from ?? '/unread';
   }
 
-  // must precede the consume effect so the peek sees the notice first
   useEffect(() => {
     setPassword('');
     setError(null);
@@ -77,8 +88,9 @@ export function useAuthForm() {
     setMagicLinkSentJustNow(false);
     setForgotPasswordSentJustNow(false);
 
-    // skip auto-focus with a notice queued: focus flips SRs to forms mode
-    if (hasPendingNotice()) return;
+    // auto-focus flips screen readers to forms mode, swallowing any
+    // announcement already inbound
+    if (hasPendingNotice() || arrivedWithOAuthError) return;
 
     const emailInputValue = emailReference.current?.value ?? '';
     if (mode !== 'forgot-password' && emailInputValue.length > 0) {
@@ -86,7 +98,11 @@ export function useAuthForm() {
       return;
     }
     emailReference.current?.focus();
-  }, [mode]);
+  }, [mode, arrivedWithOAuthError, setError]);
+
+  useEffect(() => {
+    if (oauthErrorMessage !== null) setError(oauthErrorMessage, 'arrival');
+  }, [oauthErrorMessage, setError]);
 
   useEffect(() => {
     const pending = consumePendingNotice();
@@ -99,20 +115,24 @@ export function useAuthForm() {
     }
   }, [mfaChallenge]);
 
-  // focus the form error on the empty->populated transition, never on clears
+  // the Alert sits below both inputs, so focusing an arrival error would
+  // send the next Tab past fields the user still has to fill
   useEffect(() => {
-    if (error) {
+    if (error && !errorFromArrival) {
       errorReference.current?.focus();
     }
-  }, [error]);
+  }, [error, errorFromArrival]);
 
   const handleSubmit = async (formEvent: FormEvent) => {
     formEvent.preventDefault();
 
-    // drop a lingering error toast on submit; two assertive regions clash
+    // two assertive regions would clash
     if (notice !== null && notice.variant === 'error') {
       setNotice(null);
     }
+
+    // a queued announcement would fire stale text over this submit's error
+    dismissAnnouncement();
 
     setError(null);
     setLoading(true);
@@ -128,7 +148,6 @@ export function useAuthForm() {
           message: 'Magic link sent!',
           variant: 'success',
         });
-        // release loading on success so the button isn't "Working…" mid-toast
         setLoading(false);
         setMagicLinkSentJustNow(true);
         return;
@@ -145,7 +164,6 @@ export function useAuthForm() {
         await register(email, password);
       } else {
         await apiForgotPassword(email);
-        // mirrors magic-link: hold "sent!" for 5000ms, blocking a duplicate reset
         setNotice({
           message: 'Reset link sent!',
           variant: 'success',
@@ -155,7 +173,6 @@ export function useAuthForm() {
         return;
       }
 
-      // login (no MFA) and register land here; forgot-password returned earlier
       navigate(postLoginDestination(), { replace: true });
     } catch (caught: unknown) {
       setError(
@@ -187,6 +204,9 @@ export function useAuthForm() {
   };
 
   const handleModeChange = (newMode: Mode) => {
+    // an announcement would follow the user to the screen they left for
+    dismissAnnouncement();
+
     const from = (location.state as { from?: string })?.from;
     let path = '/login';
     if (newMode === 'register') path = '/signup';
@@ -195,9 +215,12 @@ export function useAuthForm() {
   };
 
   return {
+    // an arrival error has a live region already, a second would race it
+    announceError: !errorFromArrival,
     email,
     emailReference,
     error,
+    errorAnnouncement,
     errorReference,
     forgotPasswordSentJustNow,
     handleModeChange,

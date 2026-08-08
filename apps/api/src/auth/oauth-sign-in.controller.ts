@@ -5,6 +5,7 @@ import {
   createOAuthCallbackGuard,
   createOAuthInitiateGuard,
 } from './oauth-csrf.guard.js';
+import { redirectOAuthSignInFailure } from './oauth-sign-in-failure.js';
 import type { AuthRequest } from './auth-request.type.js';
 import type { Response } from 'express';
 
@@ -28,7 +29,7 @@ export class OAuthSignInController {
   @UseGuards(createOAuthCallbackGuard('google'))
   @Get('google/callback')
   async googleCallback(@Req() request: AuthRequest, @Res() response: Response) {
-    await this.completeOAuthLogin(request, response);
+    await this.completeOAuthLogin(request, response, 'google');
   }
 
   @ApiOperation({ summary: 'Initiate Apple Sign In' })
@@ -42,7 +43,7 @@ export class OAuthSignInController {
   @UseGuards(createOAuthCallbackGuard('apple'))
   @Post('apple/callback')
   async appleCallback(@Req() request: AuthRequest, @Res() response: Response) {
-    await this.completeOAuthLogin(request, response);
+    await this.completeOAuthLogin(request, response, 'apple');
   }
 
   /**
@@ -50,15 +51,17 @@ export class OAuthSignInController {
    * user and redirects the browser to the SPA's `/oauth/callback` route with
    * the tokens in the URL fragment (fragments are never sent to servers or
    * logged in Referer headers). When MFA is enabled, redirects to `/login`
-   * with an error code instead, since OAuth callbacks can't show an OTP form.
+   * with a failure code instead, since OAuth callbacks can't show an OTP
+   * form. `provider` rides along so the login page can name it in the copy.
    */
   private async completeOAuthLogin(
     request: AuthRequest,
     response: Response,
+    provider: string,
   ): Promise<void> {
     const result = await this.authService.login(request.user.userId);
     if (!('accessToken' in result)) {
-      response.redirect(`${process.env.APP_URL}/login?error=mfa_required`);
+      redirectOAuthSignInFailure(response, 'mfa_required', provider);
       return;
     }
     response.redirect(
