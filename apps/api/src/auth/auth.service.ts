@@ -19,10 +19,11 @@ import { MagicLinkService } from './magic-link.service.js';
 import { RefreshTokenService } from './refresh-token.service.js';
 import { TotpService } from './totp.service.js';
 import {
+  UserCredentialsService,
   UserMfaService,
   UserOAuthService,
-  UserTokensService,
   UsersService,
+  UserTokensService,
   withoutPasswordHash,
 } from '../users/index.js';
 
@@ -32,6 +33,7 @@ const ACCOUNT_DELETION_TOKEN_TTL_MS = 15 * 60 * 1000;
 export class AuthService {
   constructor(
     private readonly usersService: UsersService,
+    private readonly userCredentialsService: UserCredentialsService,
     private readonly userMfaService: UserMfaService,
     private readonly userOAuthService: UserOAuthService,
     private readonly jwtService: JwtService,
@@ -232,7 +234,7 @@ export class AuthService {
   }
 
   async setFirstPassword(userId: string, password: string): Promise<void> {
-    await this.usersService.setFirstPassword(userId, password);
+    await this.userCredentialsService.setFirstPassword(userId, password);
   }
 
   async markWelcomed(userId: string): Promise<void> {

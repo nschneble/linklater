@@ -1,4 +1,4 @@
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service.js';
 import { Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
 import {
@@ -12,6 +12,13 @@ import type { Response } from 'express';
 /**
  * OAuth sign-in flows (Google, Apple). Kept on the shared `auth` route prefix
  * so provider callback URLs remain stable.
+ *
+ * Every route answers with a redirect, including every refusal:
+ * `OAuthCallbackGuard` sends the browser back to the SPA before it rejects,
+ * and Nest's exception filter finds the headers already sent, so the 302
+ * stands and no error status reaches the client. That is deliberate (a
+ * provider callback is a top-level navigation, and a JSON error body on the
+ * API origin strands the user), which is why no 4xx is documented here.
  */
 @ApiTags('auth')
 @Controller('auth')
@@ -19,6 +26,10 @@ export class OAuthSignInController {
   constructor(private readonly authService: AuthService) {}
 
   @ApiOperation({ summary: 'Initiate Google OAuth sign-in' })
+  @ApiResponse({
+    status: 302,
+    description: "Redirects to Google's sign-in screen.",
+  })
   @UseGuards(createOAuthInitiateGuard('google'))
   @Get('google')
   async googleAuth() {
@@ -26,6 +37,11 @@ export class OAuthSignInController {
   }
 
   @ApiOperation({ summary: 'Google OAuth callback' })
+  @ApiResponse({
+    status: 302,
+    description:
+      'Redirects to the app with the session tokens in the URL fragment, or back to the login page with a failure code when the state cookie, the provider, or an MFA enrolment blocks the sign-in.',
+  })
   @UseGuards(createOAuthCallbackGuard('google'))
   @Get('google/callback')
   async googleCallback(@Req() request: AuthRequest, @Res() response: Response) {
@@ -33,6 +49,10 @@ export class OAuthSignInController {
   }
 
   @ApiOperation({ summary: 'Initiate Apple Sign In' })
+  @ApiResponse({
+    status: 302,
+    description: "Redirects to Apple's sign-in screen.",
+  })
   @UseGuards(createOAuthInitiateGuard('apple'))
   @Get('apple')
   async appleAuth() {
@@ -40,6 +60,11 @@ export class OAuthSignInController {
   }
 
   @ApiOperation({ summary: 'Apple Sign In callback' })
+  @ApiResponse({
+    status: 302,
+    description:
+      'Redirects to the app with the session tokens in the URL fragment, or back to the login page with a failure code when the state cookie, the provider, or an MFA enrolment blocks the sign-in.',
+  })
   @UseGuards(createOAuthCallbackGuard('apple'))
   @Post('apple/callback')
   async appleCallback(@Req() request: AuthRequest, @Res() response: Response) {

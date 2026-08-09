@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '../prisma/index.js';
 import { ProviderEmailUnverifiedException } from './oauth-sign-in-failure.js';
-import { UserOAuthService, UsersService } from '../users/index.js';
+import {
+  UserEmailVerificationService,
+  UserOAuthService,
+  UsersService,
+} from '../users/index.js';
 
 /**
  * Owns the OAuth sign-in identity path: find-or-create the user for a
@@ -17,6 +21,7 @@ import { UserOAuthService, UsersService } from '../users/index.js';
 export class OAuthSignInService {
   constructor(
     private readonly usersService: UsersService,
+    private readonly userEmailVerificationService: UserEmailVerificationService,
     private readonly userOAuthService: UserOAuthService,
   ) {}
 
@@ -109,7 +114,9 @@ export class OAuthSignInService {
     emailVerifiedAt: Date | null;
   }): Promise<{ userId: string; email: string }> {
     if (!user.emailVerifiedAt) {
-      await this.usersService.verifyEmailAndInvalidateStalePassword(user.id);
+      await this.userEmailVerificationService.verifyEmailAndInvalidateStalePassword(
+        user.id,
+      );
     }
     return { userId: user.id, email: user.email };
   }

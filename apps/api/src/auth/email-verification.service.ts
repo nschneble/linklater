@@ -15,9 +15,11 @@ import {
 import { Prisma } from '../prisma/index.js';
 import { TotpService } from './totp.service.js';
 import {
+  UserCredentialsService,
+  UserEmailVerificationService,
   UserMfaService,
-  UserTokensService,
   UsersService,
+  UserTokensService,
 } from '../users/index.js';
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
@@ -27,6 +29,8 @@ const TWENTY_FOUR_HOURS_MS = 24 * ONE_HOUR_MS;
 export class EmailVerificationService {
   constructor(
     private readonly usersService: UsersService,
+    private readonly userCredentialsService: UserCredentialsService,
+    private readonly userEmailVerificationService: UserEmailVerificationService,
     private readonly userMfaService: UserMfaService,
     private readonly userTokensService: UserTokensService,
     private readonly emailQueueService: EmailQueueService,
@@ -128,7 +132,7 @@ export class EmailVerificationService {
     }
 
     const newPasswordHash = await bcrypt.hash(newPassword, 12);
-    await this.usersService.resetPasswordWithToken(
+    await this.userCredentialsService.resetPasswordWithToken(
       user.id,
       newPasswordHash,
       !user.emailVerifiedAt,
@@ -200,7 +204,10 @@ export class EmailVerificationService {
 
     // request-time uniqueness check is racy; map P2002 to a clean 409 here
     try {
-      await this.usersService.confirmPendingEmail(user.id, user.pendingEmail);
+      await this.userEmailVerificationService.confirmPendingEmail(
+        user.id,
+        user.pendingEmail,
+      );
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&

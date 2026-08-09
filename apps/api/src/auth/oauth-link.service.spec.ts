@@ -12,6 +12,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { OAuthLinkService } from './oauth-link.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { UserCredentialsService } from '../users/user-credentials.service';
+import { UserEmailVerificationService } from '../users/user-email-verification.service';
 import { UserOAuthService } from '../users/user-oauth.service';
 import { UsersService } from '../users/users.service';
 
@@ -25,10 +27,16 @@ describe('OAuthLinkService', () => {
 
   const usersServiceMock = {
     findById: jest.fn(),
+  } as unknown as UsersService;
+
+  const userCredentialsServiceMock = {
     getCredentialState: jest.fn(),
     lockUserRow: jest.fn(),
+  } as unknown as UserCredentialsService;
+
+  const userEmailVerificationServiceMock = {
     markEmailVerified: jest.fn(),
-  } as unknown as UsersService;
+  } as unknown as UserEmailVerificationService;
 
   const userOAuthServiceMock = {
     findOAuthAccount: jest.fn(),
@@ -52,6 +60,14 @@ describe('OAuthLinkService', () => {
         OAuthLinkService,
         { provide: PrismaService, useValue: prismaMock },
         { provide: UsersService, useValue: usersServiceMock },
+        {
+          provide: UserCredentialsService,
+          useValue: userCredentialsServiceMock,
+        },
+        {
+          provide: UserEmailVerificationService,
+          useValue: userEmailVerificationServiceMock,
+        },
         { provide: UserOAuthService, useValue: userOAuthServiceMock },
       ],
     }).compile();
@@ -80,7 +96,9 @@ describe('OAuthLinkService', () => {
 
   describe('unlinkOAuthProvider', () => {
     it('unlinks when the account still has a password to fall back on', async () => {
-      (usersServiceMock.getCredentialState as jest.Mock).mockResolvedValue({
+      (
+        userCredentialsServiceMock.getCredentialState as jest.Mock
+      ).mockResolvedValue({
         hasPassword: true,
         oauthProviders: [OAUTH_PROVIDER],
       });
@@ -98,7 +116,9 @@ describe('OAuthLinkService', () => {
     });
 
     it('unlinks a passwordless account when another provider stays linked', async () => {
-      (usersServiceMock.getCredentialState as jest.Mock).mockResolvedValue({
+      (
+        userCredentialsServiceMock.getCredentialState as jest.Mock
+      ).mockResolvedValue({
         hasPassword: false,
         oauthProviders: [OAUTH_PROVIDER, 'apple'],
       });
@@ -116,7 +136,9 @@ describe('OAuthLinkService', () => {
     });
 
     it('rejects and keeps the account linked when unlinking would strand a passwordless user', async () => {
-      (usersServiceMock.getCredentialState as jest.Mock).mockResolvedValue({
+      (
+        userCredentialsServiceMock.getCredentialState as jest.Mock
+      ).mockResolvedValue({
         hasPassword: false,
         oauthProviders: [OAUTH_PROVIDER],
       });
@@ -128,7 +150,9 @@ describe('OAuthLinkService', () => {
     });
 
     it('locks the user row, reads, and deletes inside one shared transaction', async () => {
-      (usersServiceMock.getCredentialState as jest.Mock).mockResolvedValue({
+      (
+        userCredentialsServiceMock.getCredentialState as jest.Mock
+      ).mockResolvedValue({
         hasPassword: true,
         oauthProviders: [OAUTH_PROVIDER],
       });
@@ -147,39 +171,39 @@ describe('OAuthLinkService', () => {
           isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
         },
       );
-      const transaction = (usersServiceMock.lockUserRow as jest.Mock).mock
-        .calls[0][1];
+      const transaction = (userCredentialsServiceMock.lockUserRow as jest.Mock)
+        .mock.calls[0][1];
       // the lock must run before the guard reads state, and every step must
       // share the same transaction client, or the guard is not truly atomic
-      expect(usersServiceMock.lockUserRow).toHaveBeenCalledWith(
+      expect(userCredentialsServiceMock.lockUserRow).toHaveBeenCalledWith(
         USER_ID,
         transaction,
       );
-      expect(usersServiceMock.getCredentialState).toHaveBeenCalledWith(
-        USER_ID,
-        transaction,
-      );
+      expect(
+        userCredentialsServiceMock.getCredentialState,
+      ).toHaveBeenCalledWith(USER_ID, transaction);
       expect(userOAuthServiceMock.unlinkOAuthAccount).toHaveBeenCalledWith(
         USER_ID,
         OAUTH_PROVIDER,
         transaction,
       );
-      const lockOrder = (usersServiceMock.lockUserRow as jest.Mock).mock
-        .invocationCallOrder[0];
-      const readOrder = (usersServiceMock.getCredentialState as jest.Mock).mock
-        .invocationCallOrder[0];
+      const lockOrder = (userCredentialsServiceMock.lockUserRow as jest.Mock)
+        .mock.invocationCallOrder[0];
+      const readOrder = (
+        userCredentialsServiceMock.getCredentialState as jest.Mock
+      ).mock.invocationCallOrder[0];
       expect(lockOrder).toBeLessThan(readOrder);
     });
 
     it('closes the concurrent-unlink race: two unlinks of different providers cannot strand a passwordless account', async () => {
       // shared state stands in for the two OAuth rows the unlinks race over
       let linkedProviders = [OAUTH_PROVIDER, 'apple'];
-      (usersServiceMock.getCredentialState as jest.Mock).mockImplementation(
-        async () => ({
-          hasPassword: false,
-          oauthProviders: [...linkedProviders],
-        }),
-      );
+      (
+        userCredentialsServiceMock.getCredentialState as jest.Mock
+      ).mockImplementation(async () => ({
+        hasPassword: false,
+        oauthProviders: [...linkedProviders],
+      }));
       (userOAuthServiceMock.unlinkOAuthAccount as jest.Mock).mockImplementation(
         async (_userId: string, provider: string) => {
           linkedProviders = linkedProviders.filter(
@@ -194,7 +218,7 @@ describe('OAuthLinkService', () => {
       // both reads see the stale two-provider set, both pass, both delete, and
       // this test fails, which is the point.
       let rowLock = Promise.resolve();
-      (usersServiceMock.lockUserRow as jest.Mock).mockImplementation(
+      (userCredentialsServiceMock.lockUserRow as jest.Mock).mockImplementation(
         async (_userId: string, client: object) => {
           const heldByPrior = rowLock;
           let release!: () => void;
@@ -292,9 +316,9 @@ describe('OAuthLinkService', () => {
       (userOAuthServiceMock.linkOAuthAccount as jest.Mock).mockResolvedValue(
         undefined,
       );
-      (usersServiceMock.markEmailVerified as jest.Mock).mockResolvedValue(
-        undefined,
-      );
+      (
+        userEmailVerificationServiceMock.markEmailVerified as jest.Mock
+      ).mockResolvedValue(undefined);
 
       await service.linkOAuthAccountToUser(
         USER_ID,
@@ -303,7 +327,9 @@ describe('OAuthLinkService', () => {
         USER_EMAIL,
       );
 
-      expect(usersServiceMock.markEmailVerified).toHaveBeenCalledWith(USER_ID);
+      expect(
+        userEmailVerificationServiceMock.markEmailVerified,
+      ).toHaveBeenCalledWith(USER_ID);
     });
 
     it('does NOT mark email verified when the provider email differs from the account email', async () => {
@@ -326,7 +352,9 @@ describe('OAuthLinkService', () => {
         'foreign@example.com',
       );
 
-      expect(usersServiceMock.markEmailVerified).not.toHaveBeenCalled();
+      expect(
+        userEmailVerificationServiceMock.markEmailVerified,
+      ).not.toHaveBeenCalled();
     });
 
     it('does not mark email verified when it is already verified', async () => {
@@ -349,7 +377,9 @@ describe('OAuthLinkService', () => {
         USER_EMAIL,
       );
 
-      expect(usersServiceMock.markEmailVerified).not.toHaveBeenCalled();
+      expect(
+        userEmailVerificationServiceMock.markEmailVerified,
+      ).not.toHaveBeenCalled();
     });
 
     it('is idempotent when the provider is already linked to the same user', async () => {

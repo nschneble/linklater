@@ -24,6 +24,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { EmailQueueService } from '../email/email-queue.service';
 import { EmailVerificationService } from './email-verification.service';
 import { TotpService } from './totp.service';
+import { UserCredentialsService } from '../users/user-credentials.service';
+import { UserEmailVerificationService } from '../users/user-email-verification.service';
 import { UserMfaService } from '../users/user-mfa.service';
 import { UsersService } from '../users/users.service';
 import { UserTokensService } from '../users/user-tokens.service';
@@ -48,12 +50,18 @@ describe('EmailVerificationService', () => {
   let service: EmailVerificationService;
 
   const usersServiceMock = {
-    confirmPendingEmail: jest.fn(),
     findByEmail: jest.fn(),
     findById: jest.fn(),
-    markEmailVerified: jest.fn(),
-    resetPasswordWithToken: jest.fn(),
   } as unknown as UsersService;
+
+  const userCredentialsServiceMock = {
+    resetPasswordWithToken: jest.fn(),
+  } as unknown as UserCredentialsService;
+
+  const userEmailVerificationServiceMock = {
+    confirmPendingEmail: jest.fn(),
+    markEmailVerified: jest.fn(),
+  } as unknown as UserEmailVerificationService;
 
   const userMfaServiceMock = {
     verifyAndConsumeRecoveryCode: jest.fn(),
@@ -84,6 +92,14 @@ describe('EmailVerificationService', () => {
       providers: [
         EmailVerificationService,
         { provide: UsersService, useValue: usersServiceMock },
+        {
+          provide: UserCredentialsService,
+          useValue: userCredentialsServiceMock,
+        },
+        {
+          provide: UserEmailVerificationService,
+          useValue: userEmailVerificationServiceMock,
+        },
         { provide: UserMfaService, useValue: userMfaServiceMock },
         { provide: UserTokensService, useValue: userTokensServiceMock },
         { provide: EmailQueueService, useValue: emailQueueServiceMock },
@@ -231,20 +247,18 @@ describe('EmailVerificationService', () => {
         resetToken: RESET_TOKEN,
         resetTokenExpiresAt: new Date(Date.now() + 3600000),
       });
-      (usersServiceMock.resetPasswordWithToken as jest.Mock).mockResolvedValue(
-        undefined,
-      );
+      (
+        userCredentialsServiceMock.resetPasswordWithToken as jest.Mock
+      ).mockResolvedValue(undefined);
 
       const result = await service.resetPassword(
         RESET_TOKEN,
         'new-password-123',
       );
 
-      expect(usersServiceMock.resetPasswordWithToken).toHaveBeenCalledWith(
-        USER_ID,
-        expect.any(String),
-        expect.any(Boolean),
-      );
+      expect(
+        userCredentialsServiceMock.resetPasswordWithToken,
+      ).toHaveBeenCalledWith(USER_ID, expect.any(String), expect.any(Boolean));
       expect(result).toEqual({ userId: USER_ID });
     });
 
@@ -289,17 +303,15 @@ describe('EmailVerificationService', () => {
         resetToken: RESET_TOKEN,
         resetTokenExpiresAt: new Date(Date.now() + 3600000),
       });
-      (usersServiceMock.resetPasswordWithToken as jest.Mock).mockResolvedValue(
-        undefined,
-      );
+      (
+        userCredentialsServiceMock.resetPasswordWithToken as jest.Mock
+      ).mockResolvedValue(undefined);
 
       await service.resetPassword(RESET_TOKEN, 'new-password-123');
 
-      expect(usersServiceMock.resetPasswordWithToken).toHaveBeenCalledWith(
-        USER_ID,
-        expect.any(String),
-        true,
-      );
+      expect(
+        userCredentialsServiceMock.resetPasswordWithToken,
+      ).toHaveBeenCalledWith(USER_ID, expect.any(String), true);
     });
 
     it('does not call markEmailVerified when the email is already verified', async () => {
@@ -309,13 +321,15 @@ describe('EmailVerificationService', () => {
         resetToken: RESET_TOKEN,
         resetTokenExpiresAt: new Date(Date.now() + 3600000),
       });
-      (usersServiceMock.resetPasswordWithToken as jest.Mock).mockResolvedValue(
-        undefined,
-      );
+      (
+        userCredentialsServiceMock.resetPasswordWithToken as jest.Mock
+      ).mockResolvedValue(undefined);
 
       await service.resetPassword(RESET_TOKEN, 'new-password-123');
 
-      expect(usersServiceMock.markEmailVerified).not.toHaveBeenCalled();
+      expect(
+        userEmailVerificationServiceMock.markEmailVerified,
+      ).not.toHaveBeenCalled();
     });
   });
 
@@ -591,16 +605,15 @@ describe('EmailVerificationService', () => {
         pendingEmailToken: PENDING_EMAIL_TOKEN,
         pendingEmailTokenExpiresAt: new Date(Date.now() + 3600000),
       });
-      (usersServiceMock.confirmPendingEmail as jest.Mock).mockResolvedValue(
-        undefined,
-      );
+      (
+        userEmailVerificationServiceMock.confirmPendingEmail as jest.Mock
+      ).mockResolvedValue(undefined);
 
       await service.confirmEmailChange(PENDING_EMAIL_TOKEN);
 
-      expect(usersServiceMock.confirmPendingEmail).toHaveBeenCalledWith(
-        USER_ID,
-        NEW_EMAIL,
-      );
+      expect(
+        userEmailVerificationServiceMock.confirmPendingEmail,
+      ).toHaveBeenCalledWith(USER_ID, NEW_EMAIL);
     });
 
     it('throws BadRequestException when the token is not found', async () => {
@@ -668,9 +681,9 @@ describe('EmailVerificationService', () => {
         pendingEmailToken: PENDING_EMAIL_TOKEN,
         pendingEmailTokenExpiresAt: new Date(Date.now() + 3600000),
       });
-      (usersServiceMock.confirmPendingEmail as jest.Mock).mockRejectedValue(
-        makeP2002(),
-      );
+      (
+        userEmailVerificationServiceMock.confirmPendingEmail as jest.Mock
+      ).mockRejectedValue(makeP2002());
 
       await expect(
         service.confirmEmailChange(PENDING_EMAIL_TOKEN),

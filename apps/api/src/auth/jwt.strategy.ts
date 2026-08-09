@@ -49,10 +49,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
    * unrevokable (the JWT itself carries no server-side state); bumping
    * `tokenVersion` is the one place that forces an outstanding access token to
    * stop working before its natural 1h expiry (see
-   * `UsersService.verifyEmailAndInvalidateStalePassword`). A token signed
-   * before this check existed carries no `tokenVersion` claim, which is
-   * treated as `0` to match the column's default so already-issued tokens
-   * keep working until they next rotate.
+   * `UserEmailVerificationService.verifyEmailAndInvalidateStalePassword`). A
+   * token signed before this check existed carries no `tokenVersion` claim,
+   * which is treated as `0` to match the column's default so already-issued
+   * tokens keep working until they next rotate.
    *
    * @param payload - The decoded JWT payload.
    * @returns An `AuthUser` object with `userId` and `email`, or `null` to
