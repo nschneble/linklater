@@ -53,6 +53,9 @@ const INPUT_FILL_PAIRS: readonly PairSpec[] = [
 ];
 
 const SWEEP_SEEDS = 2000;
+// see the sibling suite: a seed sweep is not a unit test, and the 5s
+// default leaves no room on a CI runner
+const SWEEP_TIMEOUT_MS = 60_000;
 const MODES: Mode[] = ['light', 'dark'];
 
 /**
@@ -201,13 +204,17 @@ describe('the harness can tell a failing pair from a passing one', () => {
 
 describe(`one derivation per seed, ${SWEEP_SEEDS} seeds per mode`, () => {
   for (const mode of MODES) {
-    it(`${mode} mode clears every input-fill pair`, () => {
-      const { perPair, seedsFailingAnyPair } = sweep(mode);
+    it(
+      `${mode} mode clears every input-fill pair`,
+      () => {
+        const { perPair, seedsFailingAnyPair } = sweep(mode);
 
-      // soft so a regression reports both counts, not just the first
-      expect.soft(perPair).toEqual(allZero());
-      expect.soft(seedsFailingAnyPair).toBe(0);
-    });
+        // soft so a regression reports both counts, not just the first
+        expect.soft(perPair).toEqual(allZero());
+        expect.soft(seedsFailingAnyPair).toBe(0);
+      },
+      SWEEP_TIMEOUT_MS,
+    );
   }
 });
 
