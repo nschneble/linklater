@@ -1,4 +1,4 @@
-import { isTestingUi, assertTestingUiNotInProduction } from './testing-ui.js';
+import { assertTestingUiNotInProduction, isTestingUi } from './testing-ui.js';
 import { jest } from '@jest/globals';
 
 describe('isTestingUi', () => {

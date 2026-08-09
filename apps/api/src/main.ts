@@ -6,15 +6,15 @@ import {
   validateRequiredEnvVars,
 } from './common/index.js';
 import { AppModule } from './app.module.js';
+import { dirname, join } from 'path';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { existsSync, readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
-import { join, dirname } from 'path';
 import { LinksModule } from './links/links.module.js';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import type { Request, Response, NextFunction } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 
 /**
  * Attempts to load local HTTPS certificates for development. In production

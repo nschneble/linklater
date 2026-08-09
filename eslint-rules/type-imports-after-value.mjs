@@ -33,10 +33,16 @@
  *
  * Group detection and comment attachment are shared with
  * `import-identifier-order` via `import-groups.mjs`: both rules rewrite runs of
- * imports, so they have to agree on which text moves with one.
+ * imports, so they have to agree on which text moves with one. That includes
+ * the file-level directives neither rule may move: a group holding one is
+ * reported but not fixed, since the whole-group rewrite would swallow it.
  */
 
-import { forEachImportGroup, makeGetBlock } from './import-groups.mjs';
+import {
+  containsFileLevelDirective,
+  forEachImportGroup,
+  makeGetBlock,
+} from './import-groups.mjs';
 
 /** @type {import('eslint').Rule.RuleModule} */
 const rule = {
@@ -93,6 +99,11 @@ const rule = {
         .join('\n');
       const groupStart = blocks[0].start;
       const groupEnd = blocks[blocks.length - 1].end;
+      const isFixable = !containsFileLevelDirective(
+        sourceCode,
+        groupStart,
+        groupEnd,
+      );
 
       // report each misplaced import; attach the single rewrite fix to the first only
       misplaced.forEach((node, reportIndex) => {
@@ -100,7 +111,7 @@ const rule = {
           node,
           messageId: 'typeBeforeValue',
           fix:
-            reportIndex === 0
+            reportIndex === 0 && isFixable
               ? (fixer) =>
                   fixer.replaceTextRange([groupStart, groupEnd], orderedText)
               : undefined,

@@ -27,8 +27,8 @@ import {
   deriveHighlightTriple,
   forceExtreme,
   oklchHex,
-  type Palette,
   type PairCheck,
+  type Palette,
 } from './randomPalette';
 import { describe, expect, it } from 'vitest';
 import type { Mode } from '../../../theme/constants';

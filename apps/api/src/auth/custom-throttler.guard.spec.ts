@@ -2,8 +2,8 @@ import { CustomThrottlerGuard } from './custom-throttler.guard.js';
 import { jest } from '@jest/globals';
 import { Reflector } from '@nestjs/core';
 import {
-  ThrottleMessage,
   THROTTLE_MESSAGE_KEY,
+  ThrottleMessage,
 } from './throttle-message.decorator.js';
 import type { ExecutionContext } from '@nestjs/common';
 import type { ThrottlerLimitDetail } from '@nestjs/throttler';

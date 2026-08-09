@@ -1,7 +1,7 @@
 import {
   MODE_STORAGE_KEY,
-  THEME_STORAGE_KEY,
   readLocalStorage,
+  THEME_STORAGE_KEY,
 } from './storage';
 import { VALID_BASE_THEME_IDS, type BaseTheme, type Mode } from './constants';
 

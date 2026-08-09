@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { META_INCLUDE } from './links.include.js';
-import { PrismaService, Prisma } from '../prisma/index.js';
+import { Prisma, PrismaService } from '../prisma/index.js';
 
 /** Maximum results per page regardless of what the caller requests. */
 export const MAX_LIMIT = 100;

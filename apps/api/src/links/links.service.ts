@@ -2,8 +2,8 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { META_INCLUDE } from './links.include.js';
 import { METADATA_SEND_OPTIONS } from '../metadata/metadata.constants.js';
-import { PrismaService, Prisma } from '../prisma/index.js';
-import { QueueService, QUEUES } from '../queue/index.js';
+import { Prisma, PrismaService } from '../prisma/index.js';
+import { QUEUES, QueueService } from '../queue/index.js';
 
 /** Minimum fields required to create a link. */
 export interface CreateLinkInput {

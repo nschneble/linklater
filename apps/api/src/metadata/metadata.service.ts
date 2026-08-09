@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { METADATA_WORKER_CONCURRENCY } from './metadata.constants.js';
 import { MetadataFetcherService } from './metadata-fetcher.service.js';
 import { PrismaService } from '../prisma/index.js';
-import { QueueService, QUEUES } from '../queue/index.js';
+import { QUEUES, QueueService } from '../queue/index.js';
 
 /**
  * Fetches and stores Open Graph / Twitter Card metadata for saved links.

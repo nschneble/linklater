@@ -1,6 +1,6 @@
 import { AccountDeletionController } from './account-deletion.controller.js';
 import { AuthModule } from '../auth/auth.module.js';
-import { Module, forwardRef } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { UserCredentialsService } from './user-credentials.service.js';
 import { UserEmailVerificationService } from './user-email-verification.service.js';
 import { UserMfaService } from './user-mfa.service.js';
