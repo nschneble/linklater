@@ -4,7 +4,6 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import {
   ConflictException,
   Controller,
@@ -17,8 +16,10 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
+import { createOAuthLinkCallbackGuard } from './oauth-link.guard.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { OAuthLinkService } from './oauth-link.service.js';
+import { redirectOAuthLinkFailure } from './oauth-link-failure.js';
 import type { AuthRequest } from './auth-request.type.js';
 import type { Response } from 'express';
 
@@ -51,9 +52,10 @@ export class OAuthLinkController {
   @ApiOperation({ summary: 'Google OAuth account linking callback' })
   @ApiResponse({
     status: 302,
-    description: 'Redirects to settings on success or failure.',
+    description:
+      'Redirects to settings on success, or back to settings with a code when the user declines, the provider fails, or the link state has expired.',
   })
-  @UseGuards(AuthGuard('google-link'))
+  @UseGuards(createOAuthLinkCallbackGuard('google-link'))
   @Get('google/link/callback')
   async googleLinkCallback(
     @Req()
@@ -71,16 +73,14 @@ export class OAuthLinkController {
       );
     } catch (error) {
       if (error instanceof ConflictException) {
-        response.redirect(
-          `${process.env.APP_URL}/settings?link_error=already_linked`,
-        );
+        redirectOAuthLinkFailure(response, 'already_linked');
         return;
       }
       // an HTML 500 would surface inside the OAuth popup
       this.logger.error(
         `Unexpected error linking google account for user ${request.user.userId}: ${String(error)}`,
       );
-      response.redirect(`${process.env.APP_URL}/settings?link_error=unknown`);
+      redirectOAuthLinkFailure(response, 'unknown');
       return;
     }
     response.redirect(`${process.env.APP_URL}/settings?linked=google`);
