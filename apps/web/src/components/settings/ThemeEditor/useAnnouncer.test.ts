@@ -20,20 +20,24 @@ afterEach(() => {
 });
 
 describe('useAnnouncer', () => {
-  it('delegates to useReannounce, announcing the message after the 50ms delay', () => {
+  it('delegates to useReannounce, announcing on the 50ms delay exactly', () => {
     const { result, rerender } = renderHook(
       ({ count, message }) => useAnnouncer(count, message),
       { initialProps: { count: 0, message: 'Your theme saved.' } },
     );
 
     rerender({ count: 1, message: 'Your theme saved.' });
-
-    // cleared on the count bump; message lands only after the 50ms delay
     expect(result.current).toBe('');
-    act(() => {
-      vi.advanceTimersByTime(50);
-    });
 
+    // one tick short of the delay: any shorter one would have landed
+    act(() => {
+      vi.advanceTimersByTime(49);
+    });
+    expect(result.current).toBe('');
+
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
     expect(result.current).toBe('Your theme saved.');
   });
 });
