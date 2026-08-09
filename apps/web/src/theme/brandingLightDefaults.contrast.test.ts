@@ -137,6 +137,7 @@ describe('BRANDING_DEFAULTS_LIGHT cross-bundle contrast', () => {
     '--info-bg',
     '--success-bg',
     '--base-input-bg',
+    '--mount-input-bg',
   ];
   for (const surface of focusSurfaces) {
     it(`--focus-ring clears 3:1 against ${surface}`, () => {
