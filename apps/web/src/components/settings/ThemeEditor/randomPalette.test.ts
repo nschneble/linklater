@@ -40,6 +40,9 @@ const CONTRACT_PAIRS = [
 const MODES: Mode[] = ['light', 'dark'];
 const ITERATIONS = 200;
 const DERIVATIONS = 2000;
+// a few thousand derivations is not a unit test; CI runners are slow
+// enough that the 5s default is a coin flip rather than a real bound
+const SWEEP_TIMEOUT_MS = 60_000;
 const HEX_6 = /^#[0-9a-fA-F]{6}$/;
 
 describe('generateRandomPalette: the 60-pair WCAG AA contract', () => {
@@ -92,25 +95,41 @@ describe('generateRandomPalette: the 60-pair WCAG AA contract', () => {
  * input-fill pairs to the contract turned that gate green on its own while
  * more than half of all light draws still failed them. This runs ONE
  * derivation per seed, with nothing behind it to launder the result.
+ *
+ * It collects failures and asserts once rather than asserting per pair.
+ * At this sweep size that is 120k soft assertions, which cost more than
+ * the derivations they check and timed the job out on a CI runner.
  */
 describe('one derivation clears the contract before any repair', () => {
   for (const mode of MODES) {
-    it(`${mode} mode needs no second attempt`, () => {
-      for (let iteration = 0; iteration < DERIVATIONS; iteration += 1) {
-        const seed = iteration + (mode === 'dark' ? 300000 : 2000);
-        const palette = derivePaletteOnce(mode, seed);
+    it(
+      `${mode} mode needs no second attempt`,
+      () => {
+        const failures: string[] = [];
 
-        for (const pair of CONTRACT_PAIRS) {
-          const ratio = computeContrastRatio(
-            palette[pair.foreground as ThemeVariable] ?? '',
-            palette[pair.background as ThemeVariable] ?? '',
-          );
-          expect
-            .soft(ratio ?? 0, `${pair.label} (seed ${seed})`)
-            .toBeGreaterThanOrEqual(pair.threshold);
+        for (let iteration = 0; iteration < DERIVATIONS; iteration += 1) {
+          const seed = iteration + (mode === 'dark' ? 300000 : 2000);
+          const palette = derivePaletteOnce(mode, seed);
+
+          for (const pair of CONTRACT_PAIRS) {
+            const ratio =
+              computeContrastRatio(
+                palette[pair.foreground as ThemeVariable] ?? '',
+                palette[pair.background as ThemeVariable] ?? '',
+              ) ?? 0;
+            if (ratio < pair.threshold) {
+              failures.push(
+                `${pair.label} (seed ${seed}): ${ratio.toFixed(3)} < ${pair.threshold}`,
+              );
+            }
+          }
         }
-      }
-    });
+
+        expect(failures.slice(0, 10)).toEqual([]);
+        expect(failures).toHaveLength(0);
+      },
+      SWEEP_TIMEOUT_MS,
+    );
   }
 });
 
