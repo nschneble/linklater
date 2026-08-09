@@ -1,8 +1,8 @@
 import {
   CVD_BASE_THEME,
+  pickerThemes,
   THEMES,
   VALID_BASE_THEME_IDS,
-  pickerThemes,
   type BaseTheme,
 } from './constants';
 import { describe, expect, it } from 'vitest';

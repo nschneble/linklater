@@ -24,10 +24,10 @@
  */
 
 import {
+  bundleIsFullyDefined,
   BUNDLES,
   BUNDLES_CSS,
   CARD_BUNDLES,
-  bundleIsFullyDefined,
   compositeOverBg,
   contrastRatio,
   describeRatio,

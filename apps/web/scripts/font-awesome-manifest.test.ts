@@ -17,9 +17,9 @@
 
 import { describe, expect, it } from 'vitest';
 import {
-  NON_ICON_UTILITY_PREFIXES,
   loadCatalogs,
   loadManifest,
+  NON_ICON_UTILITY_PREFIXES,
   paths,
   scanRegularNames,
   scanSources,

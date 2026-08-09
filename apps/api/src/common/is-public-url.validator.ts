@@ -2,8 +2,8 @@ import { assertPublicHost, PrivateHostError } from './safe-fetch.js';
 import {
   registerDecorator,
   ValidatorConstraint,
-  type ValidatorConstraintInterface,
   type ValidationOptions,
+  type ValidatorConstraintInterface,
 } from 'class-validator';
 import type { HostResolver } from './safe-fetch.js';
 

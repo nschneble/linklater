@@ -2,9 +2,9 @@ import { createContext, useContext, type ReactNode } from 'react';
 
 import {
   CVD_BASE_THEME,
+  pickerThemes,
   THEMES,
   VALID_BASE_THEME_IDS,
-  pickerThemes,
   type BaseTheme,
   type Mode,
 } from '../constants';

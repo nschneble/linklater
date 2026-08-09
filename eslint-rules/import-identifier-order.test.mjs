@@ -96,6 +96,16 @@ ruleTester.run('import-identifier-order', rule, {
         "import { beta } from 'beta';",
       ].join('\n'),
     },
+    // named specifiers in order, including a default binding that is not one
+    { code: "import Alpha, { beta, gamma } from 'alpha';" },
+    // inside the braces, value specifiers come before type specifiers
+    { code: "import { alpha, zebra, type Beta } from 'alpha';" },
+    // a declaration-level type import has no inline kinds to partition
+    { code: "import type { Alpha, Zebra } from 'alpha';" },
+    // a namespace alias binds no named specifier
+    { code: "import * as zebra from 'zebra';" },
+    // a lone named specifier has no order to get wrong
+    { code: "import { zebra } from 'zebra';" },
   ],
   invalid: [
     // two value imports in the wrong order
@@ -209,6 +219,195 @@ ruleTester.run('import-identifier-order', rule, {
         "import { yak } from 'yak';",
       ].join('\n'),
       errors: 2,
+    },
+    // named specifiers sort inside the braces, under their own message
+    {
+      code: "import { zebra, alpha } from 'alpha';",
+      output: "import { alpha, zebra } from 'alpha';",
+      errors: [{ messageId: 'unsortedSpecifiers' }],
+    },
+    // a renamed specifier sorts under the imported name, not the local one
+    {
+      code: "import { zebra as aardvark, alpha } from 'alpha';",
+      output: "import { alpha, zebra as aardvark } from 'alpha';",
+      errors: [{ messageId: 'unsortedSpecifiers' }],
+    },
+    // the inline type modifier survives the move, and sorts after the values
+    {
+      code: "import { type Beta, alpha, zebra } from 'alpha';",
+      output: "import { alpha, zebra, type Beta } from 'alpha';",
+      errors: [{ messageId: 'unsortedSpecifiers' }],
+    },
+    // type specifiers sort among themselves once partitioned
+    {
+      code: "import { type Zebra, type Alpha } from 'alpha';",
+      output: "import { type Alpha, type Zebra } from 'alpha';",
+      errors: [{ messageId: 'unsortedSpecifiers' }],
+    },
+    // a default binding is not a named specifier, so it does not move
+    {
+      code: "import Zulu, { zebra, alpha } from 'alpha';",
+      output: "import Zulu, { alpha, zebra } from 'alpha';",
+      errors: [{ messageId: 'unsortedSpecifiers' }],
+    },
+    // case is ignored inside the braces too
+    {
+      code: "import { Zebra, alpha } from 'alpha';",
+      output: "import { alpha, Zebra } from 'alpha';",
+      errors: [{ messageId: 'unsortedSpecifiers' }],
+    },
+    // rewriting specifier text in place keeps the author's line breaks and
+    // the trailing comma exactly where they were
+    {
+      code: ['import {', '  zebra,', '  alpha,', "} from 'alpha';"].join('\n'),
+      output: ['import {', '  alpha,', '  zebra,', "} from 'alpha';"].join(
+        '\n',
+      ),
+      errors: [{ messageId: 'unsortedSpecifiers' }],
+    },
+    // a comment among the specifiers describes a position, not a name, so the
+    // violation is reported and the fix withheld rather than stranding it
+    {
+      code: [
+        'import {',
+        '  // explains zebra',
+        '  zebra,',
+        '  alpha,',
+        "} from 'alpha';",
+      ].join('\n'),
+      output: null,
+      errors: [{ messageId: 'unsortedSpecifiers' }],
+    },
+    // a trailing comment beside a specifier withholds the fix for the same reason
+    {
+      code: "import { zebra /* keep */, alpha } from 'alpha';",
+      output: null,
+      errors: [{ messageId: 'unsortedSpecifiers' }],
+    },
+    // the two halves report separately, so lint output says which was tripped.
+    // one pass applies the statement rewrite; the inner fix overlaps it and
+    // lands on the next, which the convergence spec covers
+    {
+      code: [
+        "import { zebra, yak } from 'zebra';",
+        "import { alpha } from 'alpha';",
+      ].join('\n'),
+      output: [
+        "import { alpha } from 'alpha';",
+        "import { zebra, yak } from 'zebra';",
+      ].join('\n'),
+      errors: [
+        { messageId: 'unsortedSpecifiers' },
+        { messageId: 'unsortedImports' },
+      ],
+    },
+  ],
+});
+
+/**
+ * A comment above the first import is normally a note about that import and
+ * travels with it. A file-level directive is not: it governs the file from
+ * where it sits, so moving it changes what it covers. Before the guard, all
+ * five of these were dragged below an import by the autofix.
+ */
+ruleTester.run('import-identifier-order (file-level directives)', rule, {
+  valid: [],
+  invalid: [
+    {
+      code: [
+        '// @vitest-environment jsdom',
+        "import { zebra } from 'zebra';",
+        "import { alpha } from 'alpha';",
+      ].join('\n'),
+      output: [
+        '// @vitest-environment jsdom',
+        "import { alpha } from 'alpha';",
+        "import { zebra } from 'zebra';",
+      ].join('\n'),
+      errors: [{ messageId: 'unsortedImports' }],
+    },
+    {
+      code: [
+        '// @ts-nocheck',
+        "import { zebra } from 'zebra';",
+        "import { alpha } from 'alpha';",
+      ].join('\n'),
+      output: [
+        '// @ts-nocheck',
+        "import { alpha } from 'alpha';",
+        "import { zebra } from 'zebra';",
+      ].join('\n'),
+      errors: [{ messageId: 'unsortedImports' }],
+    },
+    {
+      code: [
+        '/* eslint-disable no-console */',
+        "import { zebra } from 'zebra';",
+        "import { alpha } from 'alpha';",
+      ].join('\n'),
+      output: [
+        '/* eslint-disable no-console */',
+        "import { alpha } from 'alpha';",
+        "import { zebra } from 'zebra';",
+      ].join('\n'),
+      errors: [{ messageId: 'unsortedImports' }],
+    },
+    {
+      code: [
+        '/**',
+        ' * Copyright 2026 Linklater',
+        ' * @license CC0-1.0',
+        ' */',
+        "import { zebra } from 'zebra';",
+        "import { alpha } from 'alpha';",
+      ].join('\n'),
+      output: [
+        '/**',
+        ' * Copyright 2026 Linklater',
+        ' * @license CC0-1.0',
+        ' */',
+        "import { alpha } from 'alpha';",
+        "import { zebra } from 'zebra';",
+      ].join('\n'),
+      errors: [{ messageId: 'unsortedImports' }],
+    },
+    {
+      code: [
+        '#!/usr/bin/env node',
+        "import { zebra } from 'zebra';",
+        "import { alpha } from 'alpha';",
+      ].join('\n'),
+      output: [
+        '#!/usr/bin/env node',
+        "import { alpha } from 'alpha';",
+        "import { zebra } from 'zebra';",
+      ].join('\n'),
+      errors: [{ messageId: 'unsortedImports' }],
+    },
+    // between two imports a directive belongs to no block, so the whole-run
+    // rewrite would delete it: report, withhold the fix
+    {
+      code: [
+        "import { zebra } from 'zebra';",
+        '/* eslint-disable no-console */',
+        "import { alpha } from 'alpha';",
+      ].join('\n'),
+      output: null,
+      errors: [{ messageId: 'unsortedImports' }],
+    },
+    // a line-scoped suppression really does belong to the import below it
+    {
+      code: [
+        '// eslint-disable-next-line no-console',
+        "import { zebra } from 'zebra';",
+        "import { alpha } from 'alpha';",
+      ].join('\n'),
+      output: [
+        "import { alpha } from 'alpha';",
+        '// eslint-disable-next-line no-console',
+        "import { zebra } from 'zebra';",
+      ].join('\n'),
+      errors: [{ messageId: 'unsortedImports' }],
     },
   ],
 });

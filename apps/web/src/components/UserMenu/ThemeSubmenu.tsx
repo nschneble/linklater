@@ -4,8 +4,8 @@ import {
 } from '../../theme/customTheme';
 import {
   CVD_BASE_THEME,
-  THEMES,
   pickerThemes,
+  THEMES,
   useTheme,
 } from '../../theme/ThemeContext';
 import { FOCUS_RING, menuRevealStyle } from '../../lib/styles';

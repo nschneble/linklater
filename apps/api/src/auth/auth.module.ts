@@ -1,5 +1,5 @@
+import { forwardRef, Module, type Provider } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import { Module, forwardRef, type Provider } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
 
 import { AnyAuthGuard } from './any-auth.guard.js';

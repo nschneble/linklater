@@ -16,9 +16,9 @@
 // `subset-fa` chain it without dirtying the working tree on every build.
 
 import {
-  NON_ICON_UTILITY_PREFIXES,
   loadCatalogs,
   loadManifest,
+  NON_ICON_UTILITY_PREFIXES,
   paths,
   scanRegularNames,
   scanSources,

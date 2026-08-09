@@ -1,10 +1,18 @@
 /**
- * Local ESLint rule: sort imports by the first identifier they bind.
+ * Local ESLint rule: sort imports by the first identifier they bind, and
+ * sort the named specifiers inside each one.
  *
  * Encodes the project convention (see `.claude/CLAUDE.md`, React Patterns):
  * "Sort imports alphabetically - within individual imports + across import
  * list", whose worked example orders `StumbleEmptyView`, `stumbleLink`,
  * `useEffect` - by identifier, not by module path.
+ *
+ * The two halves report separately, so lint output says which of the two a
+ * developer tripped. They also settle against each other: sorting the names
+ * inside the braces can change which identifier a statement sorts under, so
+ * ESLint's fix loop applies the inner fix and then re-sorts the statements.
+ * Each half has a single fixed point, and neither depends on the other's
+ * output for its own, so the loop terminates well inside ESLint's pass cap.
  *
  * Rationale for a hand-authored rule: no off-the-shelf plugin can express
  * this. `eslint-plugin-simple-import-sort` and `eslint-plugin-perfectionist`
@@ -12,7 +20,7 @@
  * but its declaration sort is not autofixable, which would leave every
  * offending file to be corrected by hand.
  *
- * Three things are deliberately never reordered:
+ * Four things are deliberately never reordered:
  *
  * - Anything across a blank line or a non-import statement. Those are group
  *   boundaries the author drew (see `import-groups.mjs`).
@@ -21,31 +29,21 @@
  *   as barriers rather than being sorted into place.
  * - Value imports against type imports. That partition belongs to the sibling
  *   `type-imports-after-value` rule; this rule sorts within each run of the
- *   same import kind, so the two converge instead of fighting.
+ *   same import kind, so the two converge instead of fighting. Inside the
+ *   braces the same partition holds, and this rule owns it there.
+ * - A default binding or namespace alias, which is not a named specifier and
+ *   always comes first in the braces-bearing forms that allow one at all.
+ *
+ * A run holding a file-level directive is reported but not fixed, since the
+ * whole-run rewrite would swallow a comment that governs the file.
+ *
+ * Each half lives in its own module. Together they were past the size the
+ * project refactors at, and they share nothing but a comparison, so the
+ * file that says what the rule is no longer also says how it works.
  */
 
-import { forEachImportGroup, makeGetBlock } from './import-groups.mjs';
-
-/**
- * The first identifier an import binds, reading left to right: the default
- * binding, the namespace alias, or the first named specifier. A renamed
- * import (`{ alpha as zulu }`) sorts under `alpha`, the name actually written
- * first. Returns null for a side-effect import, which binds nothing.
- */
-function firstIdentifier(node) {
-  const specifier = node.specifiers[0];
-  if (!specifier) {
-    return null;
-  }
-  if (specifier.type === 'ImportSpecifier') {
-    return specifier.imported?.name ?? specifier.local.name;
-  }
-  return specifier.local.name;
-}
-
-function compareIdentifiers(first, second) {
-  return first.localeCompare(second, 'en', { sensitivity: 'base' });
-}
+import { checkImportStatementOrder } from './import-statement-order.mjs';
+import { checkNamedSpecifierOrder } from './import-specifiers.mjs';
 
 /** @type {import('eslint').Rule.RuleModule} */
 const rule = {
@@ -53,98 +51,25 @@ const rule = {
     type: 'layout',
     docs: {
       description:
-        'Sort imports alphabetically by the first identifier they bind, within each import group.',
+        'Sort imports alphabetically by the first identifier they bind, within each import group, and sort the named specifiers inside each import.',
     },
     fixable: 'code',
     schema: [],
     messages: {
       unsortedImports:
         'Imports must be sorted alphabetically by their first imported identifier. Move `{{identifier}}` above `{{predecessor}}`.',
+      unsortedSpecifiers:
+        'Named imports must be sorted alphabetically, value specifiers before type specifiers. Move `{{identifier}}` above `{{predecessor}}`.',
     },
   },
   create(context) {
-    const sourceCode = context.sourceCode;
-    const getBlock = makeGetBlock(sourceCode);
-
-    /**
-     * Maximal runs of adjacent imports that may be sorted against each other:
-     * same import kind, no side-effect import between them.
-     */
-    const sortableRuns = (group) => {
-      const runs = [];
-      let current = [];
-
-      for (const node of group) {
-        if (firstIdentifier(node) === null) {
-          if (current.length > 0) runs.push(current);
-          current = [];
-          continue;
-        }
-        const previous = current[current.length - 1];
-        if (previous && previous.importKind !== node.importKind) {
-          runs.push(current);
-          current = [];
-        }
-        current.push(node);
-      }
-
-      if (current.length > 0) runs.push(current);
-      return runs;
-    };
-
-    const checkRun = (run) => {
-      if (run.length < 2) {
-        return;
-      }
-
-      const sorted = run
-        .map((node, index) => ({ node, index }))
-        .sort((first, second) => {
-          const order = compareIdentifiers(
-            firstIdentifier(first.node),
-            firstIdentifier(second.node),
-          );
-          // stable: equal identifiers keep their authored order
-          return order === 0 ? first.index - second.index : order;
-        });
-
-      const misplaced = sorted.filter(
-        (entry, position) => entry.index !== position,
-      );
-      if (misplaced.length === 0) {
-        return;
-      }
-
-      const blocks = run.map(getBlock);
-      const orderedText = sorted
-        .map((entry) => blocks[entry.index].text)
-        .join('\n');
-      const runStart = blocks[0].start;
-      const runEnd = blocks[blocks.length - 1].end;
-
-      // one report per run: a swap is a single ordering mistake, and naming
-      // both ends of it says more than flagging each moved line separately
-      const firstWrong = sorted.findIndex(
-        (entry, position) => entry.index !== position,
-      );
-      context.report({
-        node: sorted[firstWrong].node,
-        messageId: 'unsortedImports',
-        data: {
-          identifier: firstIdentifier(sorted[firstWrong].node),
-          predecessor: firstIdentifier(run[firstWrong]),
-        },
-        fix: (fixer) => fixer.replaceTextRange([runStart, runEnd], orderedText),
-      });
-    };
-
     return {
+      ImportDeclaration(node) {
+        checkNamedSpecifierOrder(context, node);
+      },
+
       Program(program) {
-        forEachImportGroup(program, sourceCode, (group) => {
-          for (const run of sortableRuns(group)) {
-            checkRun(run);
-          }
-        });
+        checkImportStatementOrder(context, program);
       },
     };
   },
