@@ -38,7 +38,7 @@
     "@types/pg": "^8.20.4",
     "bcryptjs": "^3.0.3",
     "concurrently": "^10.0.3",
-    "eslint": "^9.39.1",
+    "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",
     "pg": "^8.11.0",
     "prettier": "^3.9.5",
