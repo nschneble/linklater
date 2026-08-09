@@ -208,6 +208,10 @@ import { useEffect, useState } from 'react';
 - Call `jest.clearAllMocks()` in `beforeEach`
 - Back-end: `*.spec.ts` co-located with source
 - Front-end: `*.test.tsx` co-located with source
+- When a module is extracted, its tests move down with it; the parent suite keeps only what it alone can prove (the wiring, the lifecycle, the real component tree)
+- Before trimming a suite, check whether the extracted siblings have tests of their own. If they do not, the parent is sole coverage and its size is earned
+- Every removed test needs a named surviving counterpart. No counterpart, no removal
+- Line-count targets are a symptom, not a goal
 
 ## Accessibility
 
