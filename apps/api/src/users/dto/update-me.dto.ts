@@ -6,8 +6,8 @@ import {
   IsOptional,
   IsString,
   MinLength,
-  ValidatorConstraint,
   registerDecorator,
+  ValidatorConstraint,
 } from 'class-validator';
 import { VALID_MODES, VALID_THEMES } from '../users.constants.js';
 import type {

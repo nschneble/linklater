@@ -21,14 +21,14 @@ import {
   CVD_UPDATED_AT_KEY,
   DYSLEXIC_FONT_KEY,
   DYSLEXIC_FONT_UPDATED_AT_KEY,
+  hasRecentLocalChange,
   MODE_STORAGE_KEY,
   MODE_UPDATED_AT_KEY,
+  persistWithTimestamp,
   PRE_CVD_THEME_KEY,
+  readLocalStorage,
   THEME_STORAGE_KEY,
   THEME_UPDATED_AT_KEY,
-  hasRecentLocalChange,
-  persistWithTimestamp,
-  readLocalStorage,
 } from '../storage';
 import {
   CVD_BASE_THEME,

@@ -1,12 +1,12 @@
 // unit tests for the pure sync logic; disk-behavior coverage lives in
 // font-awesome-manifest.test.ts
 
-import { describe, expect, it } from 'vitest';
 import {
-  SyncError,
   computeNextManifest,
   serializeManifest,
+  SyncError,
 } from './sync-fa-manifest.mjs';
+import { describe, expect, it } from 'vitest';
 import type { Catalogs, Manifest, ScanHit } from './fa-scan';
 
 function hitsFrom(tokens: string[]): Map<string, ScanHit> {

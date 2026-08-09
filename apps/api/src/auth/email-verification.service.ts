@@ -16,8 +16,8 @@ import { Prisma } from '../prisma/index.js';
 import { TotpService } from './totp.service.js';
 import {
   UserMfaService,
-  UserTokensService,
   UsersService,
+  UserTokensService,
 } from '../users/index.js';
 
 const ONE_HOUR_MS = 60 * 60 * 1000;

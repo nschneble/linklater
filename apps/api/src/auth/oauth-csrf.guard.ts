@@ -1,6 +1,6 @@
 import { AuthGuard } from '@nestjs/passport';
 import { consumeOAuthState, issueOAuthState } from './oauth-state-cookie.js';
-import { Injectable, UnauthorizedException, mixin } from '@nestjs/common';
+import { Injectable, mixin, UnauthorizedException } from '@nestjs/common';
 import {
   ProviderEmailUnverifiedException,
   redirectOAuthSignInFailure,

@@ -8,12 +8,12 @@ import {
   Body,
   Controller,
   Delete,
+  forwardRef,
   HttpCode,
   Inject,
   Post,
   Req,
   UseGuards,
-  forwardRef,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 

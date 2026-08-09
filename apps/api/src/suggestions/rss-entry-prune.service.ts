@@ -2,8 +2,8 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/index.js';
 import {
-  QueueService,
   QUEUES,
+  QueueService,
   RECURRING_JOB_RETRY_OPTIONS,
 } from '../queue/index.js';
 

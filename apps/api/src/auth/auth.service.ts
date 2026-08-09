@@ -21,8 +21,8 @@ import { TotpService } from './totp.service.js';
 import {
   UserMfaService,
   UserOAuthService,
-  UserTokensService,
   UsersService,
+  UserTokensService,
   withoutPasswordHash,
 } from '../users/index.js';
 

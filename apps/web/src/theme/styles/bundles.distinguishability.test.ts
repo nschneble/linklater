@@ -45,9 +45,8 @@
 
 import {
   BUNDLES_CSS,
-  CVD_TYPES,
-  STATE_BUNDLES,
   compositeOverBg,
+  CVD_TYPES,
   cvdDeltaE,
   describeRatio,
   extractBlock,
@@ -56,6 +55,7 @@ import {
   parseDeclarations,
   readPageBg,
   resolveFg,
+  STATE_BUNDLES,
 } from './bundles-color-utils';
 import { describe, expect, it } from 'vitest';
 import type { Bundle, Rgb } from './bundles-color-utils';
