@@ -1,0 +1,22 @@
+# Commits listed here are skipped by `git blame`, so a sweep that only
+# reordered or reworded lines stops sitting on top of every line it
+# touched. GitHub reads this file on its own. Locally it takes one
+# setting:
+#
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# Only content-neutral commits belong here. A formatting or prose sweep
+# qualifies; a refactor that moved code does not. Comment every entry,
+# because a bare hash tells a reader nothing.
+
+# Declutter over-explained comments (#91)
+0c1484441de0bf260e6f5cb70e91af559ed336c5
+
+# Enforce identifier-sorted imports with local autofix rule (#109)
+94a24b1d573d1759f01c1f252c02d5582808213e
+
+# Cut the narration on the most over-commented files (#123)
+4a4119d14181803a50c8583f86a2bc847750b321
+
+# Sort the names inside the braces too (#128)
+91544d463c190af6f866389e61909373830b82ec

@@ -1,19 +1,19 @@
 import {
-  ApiTags,
+  ApiBearerAuth,
   ApiOperation,
   ApiResponse,
-  ApiBearerAuth,
+  ApiTags,
 } from '@nestjs/swagger';
 import {
+  Body,
   Controller,
   Delete,
+  forwardRef,
   Get,
   Inject,
   Patch,
-  Body,
   Req,
   UseGuards,
-  forwardRef,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 
@@ -23,6 +23,7 @@ import { DeleteMeDto } from './dto/delete-me.dto.js';
 import { JwtAuthGuard, type AuthRequest } from '../auth/index.js';
 import { ThrottleMessage } from '../auth/throttle-message.decorator.js';
 import { UpdateMeDto } from './dto/update-me.dto.js';
+import { UserSettingsService } from './user-settings.service.js';
 import { UsersService } from './users.service.js';
 
 /**
@@ -36,6 +37,7 @@ import { UsersService } from './users.service.js';
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
+    private readonly userSettingsService: UserSettingsService,
     @Inject(forwardRef(() => AuthService))
     private readonly authService: AuthService,
   ) {}
@@ -79,7 +81,7 @@ export class UsersController {
   })
   @Patch('me')
   async updateMe(@Req() request: AuthRequest, @Body() body: UpdateMeDto) {
-    return this.usersService.updateMe(request.user.userId, body);
+    return this.userSettingsService.updateMe(request.user.userId, body);
   }
 
   /**

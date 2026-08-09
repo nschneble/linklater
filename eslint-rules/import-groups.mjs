@@ -7,9 +7,51 @@
  * moves. If the two answers ever drifted apart, the rules would hand each
  * other different text on every autofix pass and never settle, so the answer
  * lives here once.
+ *
+ * One class of comment is exempt from travelling with an import at all. A
+ * file-level directive governs the file from where it sits, not the import
+ * it happens to sit above, so carrying it along would silently change what
+ * it covers: a hashbang would stop being the first bytes of the file, a
+ * type-checker or test-environment pragma would fall below code and stop
+ * applying, and a suppression block or license header would shift scope.
+ * Such a comment is claimed by no import, and a rule about to rewrite a
+ * span containing one declines to fix rather than swallow it.
  */
 
 export const BLANK_LINE = /\n[ \t]*\n/;
+
+/**
+ * Comment text that governs the file rather than the import below it.
+ *
+ * The line-scoped suppressions are deliberately excluded: those really do
+ * belong to the statement they sit above and must travel with it.
+ */
+const FILE_LEVEL_DIRECTIVE =
+  /^(eslint-(disable|enable)\b(?!-)|eslint-env\b|globals\b|@ts-nocheck\b|@(vitest|jest)-environment\b|@license\b|@preserve\b|SPDX-License-Identifier\b|Copyright\b)/;
+
+export function isFileLevelDirective(comment) {
+  if (comment.type === 'Shebang' || comment.type === 'Hashbang') {
+    return true;
+  }
+  return FILE_LEVEL_DIRECTIVE.test(comment.value.replace(/^[\s*]+/, ''));
+}
+
+/**
+ * True when rewriting `[start, end]` wholesale would move or destroy a
+ * file-level directive. A directive above the first import of a run sits
+ * outside the span and is unaffected; one between two imports is not, and
+ * the caller has to leave that run alone.
+ */
+export function containsFileLevelDirective(sourceCode, start, end) {
+  return sourceCode
+    .getAllComments()
+    .some(
+      (comment) =>
+        comment.range[0] >= start &&
+        comment.range[1] <= end &&
+        isFileLevelDirective(comment),
+    );
+}
 
 /**
  * Builds the "what text belongs to this import" resolver for a source file.
@@ -41,6 +83,9 @@ export function makeGetBlock(sourceCode) {
       if (!startsOwnLine(comment)) {
         break;
       }
+      if (isFileLevelDirective(comment)) {
+        break;
+      }
       start = comment.range[0];
     }
 
@@ -52,6 +97,9 @@ export function makeGetBlock(sourceCode) {
 
       // a newline ends the decl's line; a comment past it leads the next block
       if (between.includes('\n')) {
+        break;
+      }
+      if (isFileLevelDirective(comment)) {
         break;
       }
       end = comment.range[1];

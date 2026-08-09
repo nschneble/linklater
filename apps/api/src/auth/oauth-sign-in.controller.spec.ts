@@ -67,7 +67,7 @@ describe('OAuthSignInController', () => {
       );
     });
 
-    it('redirects to /login?error=mfa_required when MFA is required', async () => {
+    it('redirects to /login with the mfa_required code and the provider when MFA is required', async () => {
       (authServiceMock.login as jest.Mock).mockResolvedValue({
         mfaToken: 'mfa-tok',
         mfaMethod: 'totp',
@@ -77,7 +77,7 @@ describe('OAuthSignInController', () => {
       await controller.googleCallback(makeRequest(), response);
 
       expect(response.redirect).toHaveBeenCalledWith(
-        'https://app.example.com/login?error=mfa_required',
+        'https://app.example.com/login?error=mfa_required&provider=google',
       );
     });
   });
@@ -101,7 +101,7 @@ describe('OAuthSignInController', () => {
       );
     });
 
-    it('redirects to /login?error=mfa_required when login returns an MFA challenge', async () => {
+    it('redirects to /login with the mfa_required code and the provider when login returns an MFA challenge', async () => {
       (authServiceMock.login as jest.Mock).mockResolvedValue({
         mfaToken: 'mfa-tok',
         mfaMethod: 'totp',
@@ -111,7 +111,7 @@ describe('OAuthSignInController', () => {
       await controller.appleCallback(makeRequest(), response);
 
       expect(response.redirect).toHaveBeenCalledWith(
-        'https://app.example.com/login?error=mfa_required',
+        'https://app.example.com/login?error=mfa_required&provider=apple',
       );
     });
   });

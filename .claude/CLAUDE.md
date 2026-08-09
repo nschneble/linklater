@@ -128,6 +128,9 @@ Use [Test Driven Development](https://martinfowler.com/bliki/TestDrivenDevelopme
   - Extract common code when used 3+ times
 - No god files
   - Refactor files over 100 lines of code (comments + blank lines don't count)
+- Comments inside a function body are single-line, enforced by `local/no-comment-block-in-body`
+  - Longer context belongs in the file or section overview, or in a well-named symbol
+  - `apps/{api,web}/eslint-suppressions.json` pins pre-existing runs; prune entries as you sweep them, never add to them
 - No premature optimization
   - 1-2s homepage load fine
   - Worry when load time scales exponentially with link count
@@ -183,8 +186,8 @@ Use [Test Driven Development](https://martinfowler.com/bliki/TestDrivenDevelopme
 - Contexts: `createContext(undefined)` with custom hook that throws outside provider
 - Form state sequence: clear error → set loading → attempt action → handle result
 - Extract errors: `error instanceof Error ? error.message : 'Something went wrong'`
-- Sort imports alphabetically by the **first identifier each import binds**, case-insensitively: the default binding, the namespace alias, or the first named specifier. A renamed import (`{ alpha as zulu }`) sorts under `alpha`, the name written first. Sort within individual imports too, and put `import {}` before `import type {}`.
-- Enforced by `local/import-identifier-order` (autofixable, `npm run lint -- --fix`). It never reorders three things: anything across a blank line or a non-import statement (group boundaries you drew), side-effect imports like `import './polyfill'` (evaluation order is observable, so they act as barriers), and value imports against type imports (that partition is `local/type-imports-after-value`'s job).
+- Sort imports alphabetically by the **first identifier each import binds**, case-insensitively: the default binding, the namespace alias, or the first named specifier. A renamed import (`{ alpha as zulu }`) sorts under `alpha`, the name written first. The names inside the braces sort the same way, with value specifiers ahead of `type` ones, and `import {}` comes before `import type {}`.
+- Enforced by `local/import-identifier-order` (autofixable). Pass `--fix` per workspace, e.g. `npm run lint --workspace @linklater/web -- --fix`; the root script chains two commands with `&&`, so a trailing `--fix` lands on npm rather than on eslint and is silently dropped. It never reorders four things: anything across a blank line or a non-import statement (group boundaries you drew), side-effect imports like `import './polyfill'` (evaluation order is observable, so they act as barriers), whole value imports against whole type imports (that partition is `local/type-imports-after-value`'s job, though inside the braces this rule owns it), and a default binding or namespace alias, which is not a named specifier. It reports without fixing rather than move a file-level directive (an `eslint-disable` block, `@ts-nocheck`, a test-environment pragma, a license header, a hashbang) or strand a comment sitting among the named specifiers.
 
 ```typescript
 // Example of poor import organization

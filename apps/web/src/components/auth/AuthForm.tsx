@@ -7,10 +7,8 @@ import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import type { MfaChallenge, Mode } from './useAuthForm';
 
 /**
- * The page title for each auth flow. An MFA challenge takes precedence over
- * `mode` because the MFA view renders on top of the login flow, matching the
- * render precedence below (WCAG 2.4.2 Page Titled). The "Linklater – X"
- * en-dash separator matches the app-wide title convention.
+ * An MFA challenge outranks the mode because its view renders on top of
+ * the login flow, and the title must name what is on screen (WCAG 2.4.2).
  */
 function authDocumentTitle(
   mode: Mode,
@@ -23,20 +21,22 @@ function authDocumentTitle(
 }
 
 /**
- * Top-level authentication form. Drives login, register, forgot-password, and
- * MFA challenge flows from a single component by deriving `mode` from the
- * current URL pathname (`/login`, `/signup`, `/forgot-password`).
+ * Top-level authentication form: login, register, forgot-password and the
+ * MFA challenge, chosen by route.
  *
- * After a successful credential check, if the server returns a `mfaToken`
- * the form transitions to an `MfaView` where the user enters their TOTP or
- * recovery code. The `mfaToken` is a short-lived server-issued token that
- * identifies the pending MFA session – it is not a full JWT.
+ * The sr-only live region is the announcement channel for an error that
+ * arrived on the URL, which is how a refused OAuth callback lands here.
+ * The visible Alert paints the same text with its own live semantics off,
+ * so exactly one region announces it; submit errors take the opposite
+ * split.
  */
 export default function AuthForm() {
   const {
+    announceError,
     email,
     emailReference,
     error,
+    errorAnnouncement,
     errorReference,
     forgotPasswordSentJustNow,
     handleModeChange,
@@ -102,6 +102,7 @@ export default function AuthForm() {
   } else {
     view = (
       <LoginRegisterView
+        announceError={announceError}
         email={email}
         emailReference={emailReference}
         error={error}
@@ -123,6 +124,15 @@ export default function AuthForm() {
   return (
     <>
       {view}
+      <span
+        className="sr-only"
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+        data-testid="auth-error-announcement"
+      >
+        {errorAnnouncement}
+      </span>
       <PendingNoticeAnnouncer
         notice={notice?.message ?? null}
         variant={notice?.variant ?? 'success'}

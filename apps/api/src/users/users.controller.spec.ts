@@ -5,6 +5,7 @@ import { CustomThrottlerGuard } from '../auth/custom-throttler.guard';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersController } from './users.controller';
+import { UserSettingsService } from './user-settings.service';
 import { UsersService } from './users.service';
 
 const USER_EMAIL = 'email@addy.com';
@@ -15,8 +16,11 @@ describe('UsersController', () => {
 
   const usersServiceMock = {
     findById: jest.fn(),
-    updateMe: jest.fn(),
   } as unknown as UsersService;
+
+  const userSettingsServiceMock = {
+    updateMe: jest.fn(),
+  } as unknown as UserSettingsService;
 
   const authServiceMock = {
     deleteAccount: jest.fn(),
@@ -29,6 +33,7 @@ describe('UsersController', () => {
       controllers: [UsersController],
       providers: [
         { provide: UsersService, useValue: usersServiceMock },
+        { provide: UserSettingsService, useValue: userSettingsServiceMock },
         { provide: AuthService, useValue: authServiceMock },
       ],
     })
@@ -56,33 +61,33 @@ describe('UsersController', () => {
     expect(result).toBe(user);
   });
 
-  it('updateMe delegates to UsersService.updateMe with userId from request', async () => {
+  it('updateMe delegates to UserSettingsService.updateMe with userId from request', async () => {
     const updated = { email: USER_EMAIL, id: USER_ID };
-    (usersServiceMock.updateMe as jest.Mock).mockResolvedValue(updated);
+    (userSettingsServiceMock.updateMe as jest.Mock).mockResolvedValue(updated);
 
     const result = await controller.updateMe(makeRequest(), {
       email: USER_EMAIL,
     } as never);
 
-    expect(usersServiceMock.updateMe).toHaveBeenCalledWith(USER_ID, {
+    expect(userSettingsServiceMock.updateMe).toHaveBeenCalledWith(USER_ID, {
       email: USER_EMAIL,
     });
     expect(result).toBe(updated);
   });
 
-  it('updateMe forwards a customTheme body to UsersService.updateMe verbatim', async () => {
+  it('updateMe forwards a customTheme body to UserSettingsService.updateMe verbatim', async () => {
     const customTheme = {
       dark: { '--mount-border': '#102030' },
       light: { '--mount-border': '#fefefe' },
     };
     const updated = { customTheme, email: USER_EMAIL, id: USER_ID };
-    (usersServiceMock.updateMe as jest.Mock).mockResolvedValue(updated);
+    (userSettingsServiceMock.updateMe as jest.Mock).mockResolvedValue(updated);
 
     const result = await controller.updateMe(makeRequest(), {
       customTheme,
     } as never);
 
-    expect(usersServiceMock.updateMe).toHaveBeenCalledWith(USER_ID, {
+    expect(userSettingsServiceMock.updateMe).toHaveBeenCalledWith(USER_ID, {
       customTheme,
     });
     expect(result).toBe(updated);

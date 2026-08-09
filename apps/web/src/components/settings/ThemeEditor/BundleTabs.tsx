@@ -6,16 +6,16 @@ import {
   type BundleGroup,
   type ThemeVariable,
 } from './useThemeOverrides';
-import type { TokenContrastFailure } from './contrastResults';
+import type { TokenContrastFailure } from './contrastResults.notes';
 
 interface BundleTabsProps {
   /** Current (possibly overridden) values for all editable CSS variables. */
   colorValues: Record<ThemeVariable, string>;
   /**
-   * Worst failing contrast pair keyed by EITHER endpoint (the both-endpoints
-   * `pairsTouchingToken` view). Keying by both endpoints means editing a slot
-   * whose token is a pair's BACKGROUND self-reports on that row, not only on
-   * the far foreground row (C3).
+   * Worst failing contrast pair keyed by every token the measurement READ (the
+   * `pairsTouchingToken` view). Keying that way means editing a slot that is a
+   * pair's BACKGROUND, or a backdrop beneath one, self-reports on that row and
+   * not only on the far foreground row (C3).
    */
   contrastFailures: Map<string, TokenContrastFailure>;
   /** The bundle whose raw slots are shown + edited. */
@@ -43,13 +43,13 @@ const PANEL_ID = 'bundle-panel';
  * Bundle selector + slot panel for the Theme Editor's Colors region. The
  * selector is a WAI-ARIA tablist with AUTOMATIC activation + roving tabindex:
  * choosing a bundle (click or arrow key) immediately shows ONLY that bundle's
- * raw slots (7-10, sourced from `VAR_GROUPS`) in the active mode — no "show all
+ * raw slots (7-10, sourced from `VAR_GROUPS`) in the active mode: no "show all
  * colors" drawer, no human knobs.
  *
  * One physical tabpanel whose contents swap (not 7 mounted); it carries a FIXED
  * `id` that every tab's `aria-controls` points at, while its `aria-labelledby`
  * tracks the ACTIVE bundle so AT always lands on the right panel. The panel is
- * NOT a tab stop — it always contains focusable slot rows, so making it
+ * NOT a tab stop: it always contains focusable slot rows, so making it
  * focusable would add a redundant inert stop (APG). The active tab reads as a
  * FILLED pill (inverted `--mount-text` bg / `--mount-bg` label) and is
  * distinguished by MORE than color (SC 1.4.1): a `fa-circle-dot` second channel
@@ -57,7 +57,7 @@ const PANEL_ID = 'bundle-panel';
  *
  * Two glyphs on distinct SHAPES carry two distinct meanings: `fa-circle-dot` =
  * SELECTED (active tab only), `fa-triangle-exclamation` = the bundle has a
- * failing contrast pair (any tab, active or idle). They coexist — an active tab
+ * failing contrast pair (any tab, active or idle). They coexist: an active tab
  * with a failure shows the dot AND the triangle, so replacing one never erodes
  * the other's channel. Sighted users triage from the triangle; AT gets the same
  * from an `sr-only` "has contrast errors" suffix on the tab's accessible name
@@ -68,8 +68,7 @@ const PANEL_ID = 'bundle-panel';
  *
  * Arrow keys move selection with NO wrap (matching the APG tablist no-wrap
  * pattern); Home/End jump to the first/last bundle. Focus STAYS on the
- * activated tab — Tab descends
- * into the slot rows from there.
+ * activated tab; Tab descends into the slot rows from there.
  */
 export default function BundleTabs({
   colorValues,

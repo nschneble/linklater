@@ -20,13 +20,13 @@
 import { BRANDING_DEFAULTS_LIGHT } from './brandingDefaults';
 import {
   CARD_BUNDLES,
-  CVD_TYPES,
-  STATE_BUNDLES,
   contrastRatio,
+  CVD_TYPES,
+  cvdDeltaE,
   luminanceRatio,
   parseColor,
   resolveFg,
-  cvdDeltaE,
+  STATE_BUNDLES,
 } from './styles/bundles-color-utils';
 import { CUSTOM_TOKEN_KEYS } from './customTheme';
 import { describe, expect, it } from 'vitest';
@@ -137,6 +137,7 @@ describe('BRANDING_DEFAULTS_LIGHT cross-bundle contrast', () => {
     '--info-bg',
     '--success-bg',
     '--base-input-bg',
+    '--mount-input-bg',
   ];
   for (const surface of focusSurfaces) {
     it(`--focus-ring clears 3:1 against ${surface}`, () => {

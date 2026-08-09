@@ -11,6 +11,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { EmailQueueService } from '../email/email-queue.service';
 import { MagicLinkService } from './magic-link.service';
 import { sha256Hex } from '../common/index';
+import { UserEmailVerificationService } from '../users/user-email-verification.service';
 import { UsersService } from '../users/users.service';
 import { UserTokensService } from '../users/user-tokens.service';
 
@@ -34,9 +35,12 @@ describe('MagicLinkService', () => {
   const usersServiceMock = {
     createWithoutPassword: jest.fn(),
     findByEmail: jest.fn(),
+  } as unknown as UsersService;
+
+  const userEmailVerificationServiceMock = {
     markEmailVerified: jest.fn(),
     verifyEmailAndInvalidateStalePassword: jest.fn(),
-  } as unknown as UsersService;
+  } as unknown as UserEmailVerificationService;
 
   const userTokensServiceMock = {
     consumeMagicLinkToken: jest.fn(),
@@ -53,6 +57,10 @@ describe('MagicLinkService', () => {
       providers: [
         MagicLinkService,
         { provide: UsersService, useValue: usersServiceMock },
+        {
+          provide: UserEmailVerificationService,
+          useValue: userEmailVerificationServiceMock,
+        },
         { provide: UserTokensService, useValue: userTokensServiceMock },
         { provide: EmailQueueService, useValue: emailQueueServiceMock },
       ],
@@ -245,15 +253,17 @@ describe('MagicLinkService', () => {
         userTokensServiceMock.consumeMagicLinkToken as jest.Mock
       ).mockResolvedValue(true);
       (
-        usersServiceMock.verifyEmailAndInvalidateStalePassword as jest.Mock
+        userEmailVerificationServiceMock.verifyEmailAndInvalidateStalePassword as jest.Mock
       ).mockResolvedValue(undefined);
 
       await service.verifyToken(RAW_TOKEN);
 
       expect(
-        usersServiceMock.verifyEmailAndInvalidateStalePassword,
+        userEmailVerificationServiceMock.verifyEmailAndInvalidateStalePassword,
       ).toHaveBeenCalledWith(USER_ID);
-      expect(usersServiceMock.markEmailVerified).not.toHaveBeenCalled();
+      expect(
+        userEmailVerificationServiceMock.markEmailVerified,
+      ).not.toHaveBeenCalled();
     });
 
     it('does not invalidate the password when the email is already verified', async () => {
@@ -274,7 +284,7 @@ describe('MagicLinkService', () => {
       await service.verifyToken(RAW_TOKEN);
 
       expect(
-        usersServiceMock.verifyEmailAndInvalidateStalePassword,
+        userEmailVerificationServiceMock.verifyEmailAndInvalidateStalePassword,
       ).not.toHaveBeenCalled();
     });
   });

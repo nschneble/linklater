@@ -4,14 +4,14 @@ import { MOCK_GLYPHS } from './mockGlyphs';
  * The static page toolbar in the app mock (base surface), mirroring the real
  * `LinksToolbar` structure: the page title, then a row pairing the Unread /
  * Read tab pills (left) with the Stumble + Add link actions (right), then a
- * full-width search field below. Decorative only — the "search field" is a
+ * full-width search field below. Decorative only: the "search field" is a
  * styled <div> (never an <input>, and with no leading icon or shortcut glyph),
  * the actions and pills are <span>s with no handlers and no focusable
  * descendants. Renders BOTH a static selected pill (Unread) and an unselected
  * pill (Read) so both tab styles can be checked at once. The pills mirror the
  * real `SlidingTabBar` (surface=base lifts to mount): a `--mount-bg` container,
  * the selected pill a `--mount-text` fill with a `--mount-bg` label, the idle
- * pill `--mount-alt-text` — so the mock reads like the real Unread/Read switcher
+ * pill `--mount-alt-text`, so the mock reads like the real Unread/Read switcher
  * and the editor's own bundle tabs, not a one-off. The Add link span
  * mirrors the real base-surface `PrimaryButton` (base-highlight fill) and the
  * Stumble span mirrors the real base-surface elevated `IconButton` (mount-bg

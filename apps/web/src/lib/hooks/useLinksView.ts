@@ -61,9 +61,7 @@ export function useLinksView({
     if (showShortcuts) onCloseUserMenu?.();
   }, [showShortcuts, onCloseUserMenu]);
 
-  // reset the clear-read flag on filter change; without it, navigating away
-  // mid clear-read leaves cards stuck `pointer-events-none` and the clear
-  // control disabled (transient WCAG 2.1.1 operability regression)
+  // a stuck flag leaves cards and the clear control unusable (WCAG 2.1.1)
   useEffect(() => {
     setIsClearingRead(false);
   }, [filter]);
@@ -71,10 +69,6 @@ export function useLinksView({
   const { search, debouncedSearch, setSearch } = useSearchDebounce(filter);
   const linksResult = useLinks(filter, debouncedSearch);
 
-  // report the save-link dialog's open state so AppShell can `inert` its own
-  // chrome outside the dialog's subtree. The unmount cleanup resets `false`
-  // because AppShell swaps views via a ternary; without it, navigating away
-  // with the dialog open would leave that chrome permanently inert
   useEffect(() => {
     onLinkFormOpenChange?.(linksResult.showLinkForm);
     return () => onLinkFormOpenChange?.(false);
@@ -93,9 +87,7 @@ export function useLinksView({
   });
 
   useKeyboardShortcuts({
-    // gated by the device-local preference so a user who disables shortcuts
-    // gets no single-key handlers (WCAG 2.1.4). Named keys (arrows, Enter,
-    // Escape) stay live regardless, exempt from 2.1.4
+    // WCAG 2.1.4 covers single-key shortcuts; named keys stay live
     singleKeyShortcutsEnabled: shortcutsEnabled,
     isShortcutsModalOpen: showShortcuts,
     onShowUnread: () => navigate('/unread'),

@@ -102,10 +102,19 @@ export const VAR_GROUPS: BundleGroup[] = BUNDLES.map((bundle) => ({
  * type="color">` (which only supports 6-digit hex without alpha). Alpha
  * tokens - typically dark-mode state bundle bgs like `rgb(76 5 25 / 0.4)` -
  * keep the text input enabled but disable the color picker.
+ *
+ * Both hex alpha lengths answer here. The shorthand doubles each digit
+ * into the long form, so it carries alpha just the same, and a row that
+ * read it as opaque left the picker live on a value the picker cannot
+ * hold: activating it would have written an unrelated color over the
+ * token, under a swatch already painting that same unrelated color.
  */
 export function isAlphaValue(value: string): boolean {
   const trimmed = value.trim();
-  return /^rgba?\(/i.test(trimmed) || /^#[0-9a-fA-F]{8}$/.test(trimmed);
+  return (
+    /^rgba?\(/i.test(trimmed) ||
+    /^#(?:[0-9a-fA-F]{4}|[0-9a-fA-F]{8})$/.test(trimmed)
+  );
 }
 
 export interface UseThemeOverridesResult {

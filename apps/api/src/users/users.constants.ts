@@ -1,18 +1,8 @@
-/**
- * All valid theme identifiers accepted by the API. Each theme corresponds to
- * a Richard Linklater film. Adding a new theme requires updating this list,
- * the front-end `THEMES` array and `BaseTheme` union in
- * `apps/web/src/theme/constants.ts`, and adding the matching CSS variable
- * definitions in `apps/web/src/theme/styles/`.
- *
- * The off-book `branding` theme (branding.css) is deliberately absent here by
- * design - accepting it would let a client persist a user-invisible theme and
- * break its invisibility contract. See THEMES.md Section 7.
- *
- * Unlike `branding`, the `custom` theme IS user-selectable: it is the
- * per-user editable theme whose palette lives in the `customTheme` JSON
- * column rather than a CSS file.
- */
+// branding is deliberately absent: accepting it would let a client
+// persist a theme the user can never see (THEMES.md section 7). custom
+// belongs here because its palette lives per-user in the database rather
+// than a stylesheet. adding one means touching the front-end theme
+// constants and stylesheets too
 export const VALID_THEMES = [
   'apollo-10-1-2',
   'before-midnight',
@@ -27,9 +17,4 @@ export const VALID_THEMES = [
   'school-of-rock',
 ] as const;
 
-/**
- * The two supported color modes. `light` renders a pale background with dark
- * text; `dark` renders a dark background with light text. The initial mode
- * on first visit is determined by the OS `prefers-color-scheme` media query.
- */
 export const VALID_MODES = ['light', 'dark'] as const;

@@ -15,10 +15,11 @@ jest.mock('../prisma/generated/client', () => ({
 }));
 
 import { Prisma } from '../prisma/generated/client';
+import { ProviderEmailUnverifiedException } from './oauth-sign-in-failure';
 import { Test, TestingModule } from '@nestjs/testing';
-import { UnauthorizedException } from '@nestjs/common';
 
 import { OAuthSignInService } from './oauth-sign-in.service';
+import { UserEmailVerificationService } from '../users/user-email-verification.service';
 import { UserOAuthService } from '../users/user-oauth.service';
 import { UsersService } from '../users/users.service';
 
@@ -41,9 +42,12 @@ describe('OAuthSignInService', () => {
 
   const usersServiceMock = {
     findByEmail: jest.fn(),
+  } as unknown as UsersService;
+
+  const userEmailVerificationServiceMock = {
     markEmailVerified: jest.fn(),
     verifyEmailAndInvalidateStalePassword: jest.fn(),
-  } as unknown as UsersService;
+  } as unknown as UserEmailVerificationService;
 
   const userOAuthServiceMock = {
     createOAuthUserAndLink: jest.fn(),
@@ -57,6 +61,10 @@ describe('OAuthSignInService', () => {
       providers: [
         OAuthSignInService,
         { provide: UsersService, useValue: usersServiceMock },
+        {
+          provide: UserEmailVerificationService,
+          useValue: userEmailVerificationServiceMock,
+        },
         { provide: UserOAuthService, useValue: userOAuthServiceMock },
       ],
     }).compile();
@@ -150,7 +158,7 @@ describe('OAuthSignInService', () => {
       expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
       // already-verified account: password survives linking a second provider
       expect(
-        usersServiceMock.verifyEmailAndInvalidateStalePassword,
+        userEmailVerificationServiceMock.verifyEmailAndInvalidateStalePassword,
       ).not.toHaveBeenCalled();
     });
 
@@ -167,7 +175,7 @@ describe('OAuthSignInService', () => {
         undefined,
       );
       (
-        usersServiceMock.verifyEmailAndInvalidateStalePassword as jest.Mock
+        userEmailVerificationServiceMock.verifyEmailAndInvalidateStalePassword as jest.Mock
       ).mockResolvedValue(undefined);
 
       await service.findOrCreateOAuthUser(
@@ -178,9 +186,11 @@ describe('OAuthSignInService', () => {
       );
 
       expect(
-        usersServiceMock.verifyEmailAndInvalidateStalePassword,
+        userEmailVerificationServiceMock.verifyEmailAndInvalidateStalePassword,
       ).toHaveBeenCalledWith(USER_ID);
-      expect(usersServiceMock.markEmailVerified).not.toHaveBeenCalled();
+      expect(
+        userEmailVerificationServiceMock.markEmailVerified,
+      ).not.toHaveBeenCalled();
     });
 
     it('creates a new user and OAuth account atomically when no match exists', async () => {
@@ -258,7 +268,7 @@ describe('OAuthSignInService', () => {
 
       expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
       expect(
-        usersServiceMock.verifyEmailAndInvalidateStalePassword,
+        userEmailVerificationServiceMock.verifyEmailAndInvalidateStalePassword,
       ).not.toHaveBeenCalled();
     });
 
@@ -277,7 +287,7 @@ describe('OAuthSignInService', () => {
         userOAuthServiceMock.createOAuthUserAndLink as jest.Mock
       ).mockRejectedValue(makeP2002());
       (
-        usersServiceMock.verifyEmailAndInvalidateStalePassword as jest.Mock
+        userEmailVerificationServiceMock.verifyEmailAndInvalidateStalePassword as jest.Mock
       ).mockResolvedValue(undefined);
 
       const result = await service.findOrCreateOAuthUser(
@@ -289,7 +299,7 @@ describe('OAuthSignInService', () => {
 
       expect(result).toEqual({ userId: USER_ID, email: USER_EMAIL });
       expect(
-        usersServiceMock.verifyEmailAndInvalidateStalePassword,
+        userEmailVerificationServiceMock.verifyEmailAndInvalidateStalePassword,
       ).toHaveBeenCalledWith(USER_ID);
     });
 
@@ -337,11 +347,11 @@ describe('OAuthSignInService', () => {
           USER_EMAIL,
           false,
         ),
-      ).rejects.toThrow(UnauthorizedException);
+      ).rejects.toThrow(ProviderEmailUnverifiedException);
 
       expect(userOAuthServiceMock.linkOAuthAccount).not.toHaveBeenCalled();
       expect(
-        usersServiceMock.verifyEmailAndInvalidateStalePassword,
+        userEmailVerificationServiceMock.verifyEmailAndInvalidateStalePassword,
       ).not.toHaveBeenCalled();
     });
 
@@ -367,10 +377,10 @@ describe('OAuthSignInService', () => {
           USER_EMAIL,
           false,
         ),
-      ).rejects.toThrow(UnauthorizedException);
+      ).rejects.toThrow(ProviderEmailUnverifiedException);
 
       expect(
-        usersServiceMock.verifyEmailAndInvalidateStalePassword,
+        userEmailVerificationServiceMock.verifyEmailAndInvalidateStalePassword,
       ).not.toHaveBeenCalled();
     });
 

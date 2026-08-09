@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { EmailQueueService } from '../email/index.js';
 import { expiresInMs, generateHexToken, sha256Hex } from '../common/index.js';
+import { UserEmailVerificationService } from '../users/user-email-verification.service.js';
 import { UsersService } from '../users/users.service.js';
 import { UserTokensService } from '../users/user-tokens.service.js';
 
@@ -16,6 +17,7 @@ const FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
 export class MagicLinkService {
   constructor(
     private readonly usersService: UsersService,
+    private readonly userEmailVerificationService: UserEmailVerificationService,
     private readonly userTokensService: UserTokensService,
     private readonly emailQueueService: EmailQueueService,
   ) {}
@@ -76,7 +78,9 @@ export class MagicLinkService {
     }
     if (!user.emailVerifiedAt) {
       // invalidate any attacker-pre-set password (account-pre-hijacking)
-      await this.usersService.verifyEmailAndInvalidateStalePassword(user.id);
+      await this.userEmailVerificationService.verifyEmailAndInvalidateStalePassword(
+        user.id,
+      );
     }
     return user;
   }

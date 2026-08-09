@@ -35,7 +35,7 @@ export interface UseThemeAutoSaveResult {
  * Drives the Theme Editor's auto-save. Replaces the old explicit Save button:
  * every edit schedules a debounced persist, and only the terminal outcome of
  * the settled burst is announced (intermediate "saving" states stay silent so
- * assistive tech is not barraged on every keystroke — a11y brief B1/B2).
+ * assistive tech is not barraged on every keystroke; a11y brief B1/B2).
  *
  * Saves are serialized (see `flush`): overlapping saves can't race, so the user
  * hears one settled outcome for the final state and never a spurious failure.

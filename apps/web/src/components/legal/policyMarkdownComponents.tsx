@@ -89,6 +89,7 @@ export function makePolicyMarkdownComponents({
       <div
         role="region"
         aria-label={tableLabel}
+        // SC 2.1.1: sole scroll stop, no focusable descendants below
         // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
         tabIndex={0}
         className="my-6 overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)]"
@@ -99,10 +100,7 @@ export function makePolicyMarkdownComponents({
         </table>
       </div>
     );
-    // scope is destructured OUT of the spread so prop order cannot decide it:
-    // `rehypeRowHeaders` sets scope='row', everything else defaults to a
-    // column header. The matching variants keep the visual tied to the same
-    // attribute that carries the semantics, so the two cannot drift.
+    // destructured out of the spread so prop order cannot decide scope
     components.th = ({ scope = 'col', ...properties }) => (
       <th
         scope={scope}

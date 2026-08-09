@@ -332,9 +332,9 @@ describe('LinksView – cross-route pending notice surface', () => {
       </MemoryRouter>,
     );
 
-    // scope past the toast region (same sr-only shape) to the pending mirror
+    // several regions share this sr-only shape; take the pending-notice one
     const liveRegions = document.querySelectorAll(
-      'span.sr-only[aria-live="polite"][aria-atomic="true"]:not([data-testid])',
+      'span.sr-only[data-testid="pending-notice-announcement"]',
     );
     expect(liveRegions.length).toBe(1);
     expect(liveRegions[0]?.textContent).toBe('');
@@ -352,7 +352,7 @@ describe('LinksView – cross-route pending notice surface', () => {
     );
 
     const liveRegionsAfter = document.querySelectorAll(
-      'span.sr-only[aria-live="polite"][aria-atomic="true"]:not([data-testid])',
+      'span.sr-only[data-testid="pending-notice-announcement"]',
     );
     expect(liveRegionsAfter[0]?.textContent).toBe(
       'Your account has been deleted.',

@@ -1,9 +1,9 @@
-import { BadRequestException } from '@nestjs/common';
 import {
+  assertValidCustomTheme,
   CUSTOM_THEME_TOKEN_KEYS,
   MAX_CUSTOM_THEME_BYTES,
-  assertValidCustomTheme,
 } from './custom-theme.js';
+import { BadRequestException } from '@nestjs/common';
 
 describe('assertValidCustomTheme', () => {
   it('accepts a palette of known token keys in both modes', () => {

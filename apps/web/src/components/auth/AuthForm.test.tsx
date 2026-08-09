@@ -34,6 +34,9 @@ import { useAuthForm } from './useAuthForm';
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 interface MakeHookOverrides {
+  announceError?: boolean;
+  error?: string | null;
+  errorAnnouncement?: string;
   mode?: Mode;
   mfaChallenge?: MfaChallenge | null;
   notice?: { message: string; variant: 'success' | 'error' } | null;
@@ -53,9 +56,11 @@ function makeHookResult(
     createRef<HTMLInputElement | null>() as RefObject<HTMLInputElement | null>;
 
   return {
+    announceError: overrides.announceError ?? true,
     email: '',
     emailReference,
-    error: null,
+    error: overrides.error ?? null,
+    errorAnnouncement: overrides.errorAnnouncement ?? '',
     errorReference,
     forgotPasswordSentJustNow: false,
     handleModeChange: vi.fn(),
@@ -133,10 +138,8 @@ describe('AuthForm – pending-notice surface', () => {
       </MemoryRouter>,
     );
 
-    const initialMirror = document.querySelector(
-      'span.sr-only[aria-live="polite"][aria-atomic="true"]',
-    );
-    expect(initialMirror?.textContent).toBe('');
+    const initialMirror = screen.getByTestId('pending-notice-announcement');
+    expect(initialMirror.textContent).toBe('');
 
     vi.mocked(useAuthForm).mockReturnValue(
       makeHookResult({
@@ -152,10 +155,8 @@ describe('AuthForm – pending-notice surface', () => {
       </MemoryRouter>,
     );
 
-    const updatedMirror = document.querySelector(
-      'span.sr-only[aria-live="polite"][aria-atomic="true"]',
-    );
-    expect(updatedMirror?.textContent).toBe('Your email has been verified.');
+    const updatedMirror = screen.getByTestId('pending-notice-announcement');
+    expect(updatedMirror.textContent).toBe('Your email has been verified.');
   });
 
   it('routes an error-variant notice into the alert/assertive mirror shape', () => {
@@ -171,11 +172,10 @@ describe('AuthForm – pending-notice surface', () => {
     renderAuthForm();
 
     // mirror goes assertive on variant='error' to not race the toast on SR
-    const mirror = document.querySelector(
-      'span.sr-only[role="alert"][aria-live="assertive"][aria-atomic="true"]',
-    );
-    expect(mirror).toBeInTheDocument();
-    expect(mirror?.textContent).toBe('Verification link expired.');
+    const mirror = screen.getByTestId('pending-notice-announcement');
+    expect(mirror).toHaveAttribute('role', 'alert');
+    expect(mirror).toHaveAttribute('aria-live', 'assertive');
+    expect(mirror.textContent).toBe('Verification link expired.');
   });
 
   it('passes a setNotice-clearing onDismiss to the announcer', () => {
@@ -195,6 +195,71 @@ describe('AuthForm – pending-notice surface', () => {
     // dismiss wiring verified indirectly: assert the button is reachable
     const dismiss = screen.getByRole('button', { name: 'Dismiss' });
     expect(dismiss).toBeInTheDocument();
+  });
+});
+
+// an OAuth refusal redirects to /login with its reason on the URL: the copy
+// paints at once, and one live region announces it a beat later
+describe('AuthForm – OAuth arrival-error surface', () => {
+  const ARRIVAL_MESSAGE =
+    "Google hasn't confirmed this email address. Log in with your email instead.";
+
+  it('keeps the announcement region mounted and empty before the announcement fires', () => {
+    vi.mocked(useAuthForm).mockReturnValue(
+      makeHookResult({
+        announceError: false,
+        error: ARRIVAL_MESSAGE,
+        errorAnnouncement: '',
+      }),
+    );
+
+    renderAuthForm();
+
+    // mounted empty so the swap is an empty -> populated change SRs announce
+    const region = screen.getByTestId('auth-error-announcement');
+    expect(region).toHaveAttribute('role', 'alert');
+    expect(region).toHaveAttribute('aria-live', 'assertive');
+    expect(region.textContent).toBe('');
+  });
+
+  it('announces the arrival error through exactly one live region', () => {
+    vi.mocked(useAuthForm).mockReturnValue(
+      makeHookResult({
+        announceError: false,
+        error: ARRIVAL_MESSAGE,
+        errorAnnouncement: ARRIVAL_MESSAGE,
+      }),
+    );
+
+    renderAuthForm();
+
+    expect(screen.getByTestId('auth-error-announcement').textContent).toBe(
+      ARRIVAL_MESSAGE,
+    );
+
+    // the visible copy is painted but silent, so nothing races the region
+    const painted = screen.getByText(ARRIVAL_MESSAGE, { selector: 'p' });
+    expect(painted).toHaveAttribute('id', 'auth-form-error');
+    expect(painted).not.toHaveAttribute('role');
+
+    const liveRegions = screen.getAllByRole('alert');
+    expect(liveRegions).toHaveLength(1);
+    expect(liveRegions[0]).toHaveAttribute(
+      'data-testid',
+      'auth-error-announcement',
+    );
+  });
+
+  it('leaves the form Alert announcing submit errors itself', () => {
+    vi.mocked(useAuthForm).mockReturnValue(
+      makeHookResult({ error: 'Invalid credentials' }),
+    );
+
+    renderAuthForm();
+
+    const painted = screen.getByText('Invalid credentials', { selector: 'p' });
+    expect(painted).toHaveAttribute('role', 'alert');
+    expect(screen.getByTestId('auth-error-announcement').textContent).toBe('');
   });
 });
 

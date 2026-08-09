@@ -11,6 +11,7 @@
     - /placeholder: Leave blank to use a magic link
   - button "Log in with magic link"
 - button "I literally have no idea what my password is"
+- alert
 - alert:
   - text: We couldn't sign you in. Please try again.
   - button "Dismiss"

@@ -14,8 +14,8 @@ interface MockMenuRowProps {
 /**
  * One decorative menu row: the plain <li> shell shared by every simple menu item
  * (Your links, Settings, Switch mode, Craft theme, Log out). Purely
- * presentational — NO role, NO aria-current/selected, NO handlers, and the icon
- * stays aria-hidden — so the whole mock stays a single aria-hidden decoration.
+ * presentational: NO role, NO aria-current/selected, NO handlers, and the icon
+ * stays aria-hidden, so the whole mock stays a single aria-hidden decoration.
  * The two state rows pass `className`/`iconClassName` to preview the active + the
  * hover paint statically.
  */
@@ -36,7 +36,7 @@ function MockMenuRow({
 /**
  * The static "open" user menu in the app mock (orbit surface), mirroring the
  * real `UserMenu`: a "Logged in as" header, a nav group (Your links, Settings,
- * Switch mode, Craft your theme), a Theme submenu row, then Log out — separated
+ * Switch mode, Craft your theme), a Theme submenu row, then Log out, separated
  * by the same bottom-border section dividers the real menu uses. Decorative
  * only: plain <div>/<ul>/<li> for layout, NO role="menu"/"menuitem", no
  * aria-haspopup/aria-expanded, no focusable rows; the Theme row + chevron only

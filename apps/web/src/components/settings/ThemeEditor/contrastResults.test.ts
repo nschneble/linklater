@@ -1,24 +1,30 @@
 /*
  * Tests for the live contrast math behind the Theme Editor's contract checker.
  *
- * `computeContrastRatio` is the WCAG 2.1 ratio used to flag failing pairs;
- * `pairsForBundle` is the per-bundle contract pair set. A superset assertion
- * mechanizes that the runtime pair set can never drift below the static
- * `bundles.contrast.test.ts` contract (the two sources must agree).
+ * `pairsForBundle` is the per-bundle contract pair set, and a superset
+ * assertion mechanizes that the runtime pair set can never drift below the
+ * static `bundles.contrast.test.ts` contract (the two sources must agree). The
+ * checker itself measures with `evaluatePair`, covered in
+ * `contrastResults.evaluate.test.ts`; `computeContrastRatio` appears here only
+ * as the flat two-endpoint model, to count the pairs of the shipped seed that
+ * lie beyond it.
  */
 
+import { BRANDING_DEFAULTS } from '../../../theme/brandingDefaults';
 import { BUNDLES, EDITABLE_VARS, VAR_GROUPS } from './useThemeOverrides';
-import {
-  computeContrastRatio,
-  focusRingPairs,
-  pairsForBundle,
-  pairsTouchingToken,
-  resolveContrastStatus,
-  useContrastResults,
-} from './contrastResults';
+import { computeContrastRatio } from './randomPalette';
 import { describe, expect, it } from 'vitest';
+import { evaluatePair } from './contrastResults.evaluate';
+import {
+  focusRingPairs,
+  INPUT_FILL_BUNDLES,
+  pairsForBundle,
+} from './contrastResults.pairs';
+import { pairsTouchingToken } from './contrastResults.notes';
 import { renderHook } from '@testing-library/react';
-import type { ContrastPair, ContrastResults } from './contrastResults';
+import { resolveContrastStatus, useContrastResults } from './contrastResults';
+import type { ContrastPair } from './contrastResults.pairs';
+import type { ContrastResults } from './contrastResults';
 
 /** Every contract pair the live checker evaluates: per-bundle plus focus ring. */
 function allContractPairs(): ContrastPair[] {
@@ -122,42 +128,186 @@ describe('an unmeasurable pair is never rolled up as passing', () => {
     expect(resolveContrastStatus(result.current)).toBe('pass');
   });
 
-  it('refuses to claim conformance when a translucent background hid pairs', () => {
-    // the shipped dark seed shape: --mount-bg carries alpha, so every pair
-    // touching it resolves to null. Those used to be skipped outright, and
-    // the editor told a screen reader user the palette met minimum contrast.
+  it('measures a translucent card instead of skipping it', () => {
+    // the shipped dark seed shape, whose pairs used to resolve to null and be
+    // skipped, letting the editor claim conformance over them; composited
+    // over an opaque page they are ordinary measurable colors
     const palette = { ...passingPalette(), '--mount-bg': '#ffffff0d' };
 
     const { result } = renderHook(() => useContrastResults(palette));
 
-    expect(result.current.totalFailures).toBe(0);
+    expect(result.current.totalUnverified).toBe(0);
+    expect(resolveContrastStatus(result.current)).toBe('pass');
+  });
+
+  it('catches a translucent card that composites into a failure', () => {
+    // near-transparent black over a white page lands close to white, so black
+    // text still passes but a near-white highlight no longer clears 3:1
+    const palette = {
+      ...passingPalette(),
+      '--mount-bg': '#0000000d',
+      '--mount-highlight': '#f0f0f0',
+    };
+
+    const { result } = renderHook(() => useContrastResults(palette));
+
+    expect(result.current.totalFailures).toBeGreaterThan(0);
+    expect(resolveContrastStatus(result.current)).toBe('fail');
+  });
+
+  it('still refuses to claim conformance when the page itself is translucent', () => {
+    // --base-bg is the root of every chain, so there is nothing behind it to
+    // composite against and no honest number to report
+    const palette = { ...passingPalette(), '--base-bg': '#ffffff0d' };
+
+    const { result } = renderHook(() => useContrastResults(palette));
+
     expect(result.current.totalUnverified).toBeGreaterThan(0);
     expect(resolveContrastStatus(result.current)).toBe('uncheckable');
   });
+
+  it('measures every pair of the shipped dark seed', () => {
+    const seed = BRANDING_DEFAULTS as Record<string, string>;
+    // five translucent backgrounds put 21 pairs beyond a two-endpoint ratio
+    const beyondTwoEndpoints = allContractPairs().filter(
+      (pair) =>
+        computeContrastRatio(
+          seed[pair.foreground] ?? '',
+          seed[pair.background] ?? '',
+        ) === null,
+    );
+    expect(beyondTwoEndpoints).toHaveLength(21);
+
+    const { result } = renderHook(() => useContrastResults(seed));
+
+    expect(result.current.totalUnverified).toBe(0);
+    // the verdict the title row announces for the shipped seed, pinned
+    // so a change to the seed or the roll-up has to be argued for
+    expect(resolveContrastStatus(result.current)).toBe('pass');
+  });
+
+  /*
+   * A value the parser cannot read must reach the user as "we could not tell",
+   * never as conformance. Both of these used to roll up as PASSING: the first
+   * produced a not-a-number ratio, which no later comparison is true about, and
+   * the second produced 457:1, a confident number past the 21:1 ceiling of the
+   * formula. Both then rendered the same announcement as a clean palette.
+   */
+  it.each(['#zzzzzz', 'rgb(999, 999, 999)'])(
+    'reports %s as unmeasurable rather than as conforming',
+    (unreadable) => {
+      const palette = { ...BRANDING_DEFAULTS, '--base-text': unreadable };
+
+      const { result } = renderHook(() => useContrastResults(palette));
+
+      expect(result.current.totalUnverified).toBeGreaterThan(0);
+      expect(resolveContrastStatus(result.current)).toBe('uncheckable');
+    },
+  );
 });
 
-describe('computeContrastRatio', () => {
-  it('returns 21 for black on white', () => {
-    expect(computeContrastRatio('#000000', '#ffffff')).toBeCloseTo(21, 5);
-    expect(computeContrastRatio('#fff', '#000')).toBeCloseTo(21, 5);
+/**
+ * The multi-site apparatus, exercised where the sites actually disagree.
+ *
+ * `passingPalette` sets every `-bg` slot to `#ffffff`, which is exactly the
+ * case compositing short-circuits: every chain collapses to one number and
+ * worst-of has nothing to choose between. A palette with translucent card
+ * backgrounds is the only shape that puts a real number on each site.
+ */
+describe('worst-of scoring across the sites a surface renders in', () => {
+  // a 50% white card over a black page: #808080 on the page, #c0c0c0 in a card
+  const divergent = {
+    ...passingPalette(),
+    '--base-bg': '#000000',
+    '--mount-bg': '#ffffff80',
+    '--mount-text': '#000000',
+  };
+
+  it('reports the worse of two sites that measure differently', () => {
+    const resolve = (token: string) => divergent[token] ?? '';
+    const evaluation = evaluatePair('--mount-text', '--mount-bg', resolve);
+
+    expect(evaluation.ratio).toBeCloseTo(5.317, 3);
+    expect(evaluation.backdrop).toEqual(['--base-bg']);
   });
 
-  it('expands 3-digit hex before computing', () => {
-    expect(computeContrastRatio('#abc', '#aabbcc')).toBeCloseTo(1, 5);
-  });
+  it('surfaces the failure on the backdrop row, not just the two endpoints', () => {
+    // editing --base-bg moves this pair, so --base-bg has to carry the note
+    const failing = { ...divergent, '--mount-text': '#6a6a6a' };
+    const { result } = renderHook(() => useContrastResults(failing));
 
-  it('accepts hex with or without the leading #', () => {
-    expect(computeContrastRatio('000000', 'ffffff')).toBeCloseTo(21, 5);
+    const touching = pairsTouchingToken(result.current);
+    expect(touching.has('--base-bg')).toBe(true);
   });
+});
 
-  it('returns null for an invalid hex string', () => {
-    expect(computeContrastRatio('not-a-color', '#ffffff')).toBeNull();
-    expect(computeContrastRatio('#12', '#ffffff')).toBeNull();
-  });
+/**
+ * C1, restated for compositing.
+ *
+ * The old invariant was "an edit to token X can only change pairs X is an
+ * ENDPOINT of", which held only because nothing else was ever read. Once a
+ * backdrop participates, editing `--base-bg` moves `--mount-text / --mount-bg`,
+ * a pair that names neither.
+ *
+ * The general property is: the ratio of a pair is a pure function of the
+ * tokens the computation actually CONSUMED, so an edit to X can only move
+ * pairs where X is in `reads(p)`. The word doing the work is "actually":
+ * compositing short-circuits on the first opaque backdrop, so on an opaque
+ * palette `reads(p)` is exactly the two endpoints and keying is unchanged.
+ *
+ * SCOPE, so this is not read as more than it is. It is differential, not
+ * structural: it perturbs each token to one value and checks that everything
+ * which moved had declared it. A dependency that happens to leave the ratio
+ * unchanged at THIS perturbation is invisible to it, which is why `reads` is
+ * the union over every site rather than the winning site's set. That union is
+ * what makes the property true by construction, and this test is the
+ * regression guard on it, not its proof.
+ */
+describe('C1 differential: only pairs that READ a token move when it changes', () => {
+  const allPairs = allContractPairs();
 
-  it('returns null for rgba / alpha values (composite math not done here)', () => {
-    expect(computeContrastRatio('rgb(0 0 0 / 0.5)', '#ffffff')).toBeNull();
-    expect(computeContrastRatio('#00000080', '#ffffff')).toBeNull();
+  // a translucent card, so backdrops genuinely participate; on an all-opaque
+  // palette this test would pass vacuously
+  const palette = { ...passingPalette(), '--mount-bg': '#ffffff26' };
+
+  function evaluateAll(values: Record<string, string>) {
+    const resolve = (token: string) => values[token] ?? '';
+    return allPairs.map((pair) =>
+      evaluatePair(pair.foreground, pair.background, resolve),
+    );
+  }
+
+  it.each(EDITABLE_VARS.map((variable) => [variable]))(
+    'editing %s moves only pairs that read it',
+    (variable) => {
+      const baseline = evaluateAll(palette);
+      // a value far from the original, so any real dependency shows up
+      const perturbed = evaluateAll({ ...palette, [variable]: '#ff00ff' });
+
+      const movedWithoutReading = baseline.flatMap((before, index) => {
+        if (before.ratio === perturbed[index].ratio) return [];
+        if (before.reads.has(variable)) return [];
+        return [allPairs[index].label];
+      });
+
+      expect(movedWithoutReading).toEqual([]);
+    },
+  );
+
+  it('reads exactly the two endpoints when nothing is translucent', () => {
+    const opaque = passingPalette();
+    const resolve = (token: string) => opaque[token] ?? '';
+
+    for (const pair of allPairs) {
+      const evaluation = evaluatePair(
+        pair.foreground,
+        pair.background,
+        resolve,
+      );
+      expect([...evaluation.reads].sort()).toEqual(
+        [pair.foreground, pair.background].sort(),
+      );
+    }
   });
 });
 
@@ -183,17 +333,28 @@ describe('pairsForBundle', () => {
 });
 
 // mirrors the static bundles.contrast.test.ts contract; keep the two in sync
-const STATIC_CONTRACT: ReadonlyArray<{
+interface StaticPair {
   fg: string;
   bg: string;
   threshold: number;
-}> = [
+}
+
+const STATIC_CONTRACT: ReadonlyArray<StaticPair> = [
   { fg: 'text', bg: 'bg', threshold: 4.5 },
   { fg: 'alt-text', bg: 'bg', threshold: 4.5 },
   { fg: 'border', bg: 'bg', threshold: 3 },
   { fg: 'highlight', bg: 'bg', threshold: 3 },
   { fg: 'highlight-fg', bg: 'highlight', threshold: 4.5 },
   { fg: 'highlight-fg', bg: 'highlight-hover', threshold: 4.5 },
+];
+
+// the input rows of that same static contract, on the bundles that host
+// a form input. Their absence here is how the runtime set came to check
+// fewer pairs than the stylesheets are held to
+const STATIC_INPUT_CONTRACT: ReadonlyArray<StaticPair> = [
+  { fg: 'text', bg: 'input-bg', threshold: 4.5 },
+  { fg: 'alt-text', bg: 'input-bg', threshold: 4.5 },
+  { fg: 'border', bg: 'input-bg', threshold: 3 },
 ];
 
 describe('pairsTouchingToken keys failures by BOTH endpoints', () => {
@@ -254,8 +415,45 @@ describe('pairsTouchingToken keys failures by BOTH endpoints', () => {
 
     const touching = pairsTouchingToken(results);
     // the `--mount-bg` row shows the severe pair; same-bundle partner = bare slot name
-    expect(touching.get('--mount-bg')?.partnerLabel).toBe('Text');
+    expect(touching.get('--mount-bg')?.noteSubject).toBe('Text contrast');
     expect(touching.get('--mount-bg')?.ratio).toBe(1.5);
+  });
+
+  it('names BOTH endpoints on a row that is only a backdrop', () => {
+    // the note used to name one endpoint on a row that pairs with neither,
+    // so the page background read as though it paired with the card text
+    const cardText = makePair({
+      label: 'text / bg',
+      foreground: '--mount-text',
+      background: '--mount-bg',
+      criterion: '1.4.3',
+      threshold: 4.5,
+    });
+    const results: ContrastResults = {
+      groups: [
+        {
+          bundle: 'mount',
+          label: 'mount',
+          pairs: [
+            {
+              pair: cardText,
+              ratio: 1.4,
+              reads: new Set(['--mount-text', '--mount-bg', '--base-bg']),
+            },
+          ],
+        },
+      ],
+    } as unknown as ContrastResults;
+
+    const touching = pairsTouchingToken(results);
+    // both names hang off the noun rather than stacking in front of it
+    expect(touching.get('--base-bg')?.noteSubject).toBe(
+      'Contrast between mount text and mount background',
+    );
+    // the endpoints keep the shorter phrasing, each implying the other
+    expect(touching.get('--mount-text')?.noteSubject).toBe(
+      'Background contrast',
+    );
   });
 
   it('bundle-qualifies a partner that lives in a different bundle', () => {
@@ -278,10 +476,12 @@ describe('pairsTouchingToken keys failures by BOTH endpoints', () => {
     } as unknown as ContrastResults;
 
     const touching = pairsTouchingToken(results);
-    expect(touching.get('--mount-border')?.partnerLabel).toBe(
-      'Base background',
+    expect(touching.get('--mount-border')?.noteSubject).toBe(
+      'Base background contrast',
     );
-    expect(touching.get('--base-bg')?.partnerLabel).toBe('Mount border');
+    expect(touching.get('--base-bg')?.noteSubject).toBe(
+      'Mount border contrast',
+    );
   });
 
   it('makes no entry for passing or unverified pairs', () => {
@@ -344,7 +544,10 @@ describe('runtime pair set ⊇ static bundles.contrast.test.ts contract', () => 
   for (const bundle of BUNDLES) {
     it(`covers every static contract pair for ${bundle}`, () => {
       const runtimePairs = pairsForBundle(bundle);
-      for (const contract of STATIC_CONTRACT) {
+      const expected = INPUT_FILL_BUNDLES.includes(bundle)
+        ? [...STATIC_CONTRACT, ...STATIC_INPUT_CONTRACT]
+        : STATIC_CONTRACT;
+      for (const contract of expected) {
         const match = runtimePairs.find(
           (pair) =>
             pair.foreground === `--${bundle}-${contract.fg}` &&

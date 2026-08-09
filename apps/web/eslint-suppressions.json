@@ -1,0 +1,127 @@
+{
+  "src/auth/AuthContext/useAuthState.test.ts": {
+    "local/no-comment-block-in-body": {
+      "count": 1
+    }
+  },
+  "src/components/api-docs/ApiDocsView.test.tsx": {
+    "local/no-comment-block-in-body": {
+      "count": 3
+    }
+  },
+  "src/components/auth/AuthForm.oauthArrival.test.tsx": {
+    "local/no-comment-block-in-body": {
+      "count": 4
+    }
+  },
+  "src/components/auth/authFlashMessages.test.ts": {
+    "local/no-comment-block-in-body": {
+      "count": 1
+    }
+  },
+  "src/components/auth/useAuthForm.test.ts": {
+    "local/no-comment-block-in-body": {
+      "count": 6
+    }
+  },
+  "src/components/common/ActionGuard.test.tsx": {
+    "local/no-comment-block-in-body": {
+      "count": 2
+    }
+  },
+  "src/components/legal/rehypeRowHeaders.test.tsx": {
+    "local/no-comment-block-in-body": {
+      "count": 2
+    }
+  },
+  "src/components/privacy/PrivacyPolicyPage.test.tsx": {
+    "local/no-comment-block-in-body": {
+      "count": 1
+    }
+  },
+  "src/components/settings/SettingsView.test.tsx": {
+    "local/no-comment-block-in-body": {
+      "count": 1
+    }
+  },
+  "src/components/settings/ThemeEditor/ColorRow.test.tsx": {
+    "local/no-comment-block-in-body": {
+      "count": 4
+    }
+  },
+  "src/components/settings/ThemeEditor/contrastResults.backdrops.test.ts": {
+    "local/no-comment-block-in-body": {
+      "count": 2
+    }
+  },
+  "src/components/settings/ThemeEditor/contrastResults.evaluate.test.ts": {
+    "local/no-comment-block-in-body": {
+      "count": 2
+    }
+  },
+  "src/components/settings/ThemeEditor/contrastResults.test.ts": {
+    "local/no-comment-block-in-body": {
+      "count": 6
+    }
+  },
+  "src/components/settings/ThemeEditor/hexColor.test.ts": {
+    "local/no-comment-block-in-body": {
+      "count": 1
+    }
+  },
+  "src/components/settings/ThemeEditor/index.test.tsx": {
+    "local/no-comment-block-in-body": {
+      "count": 12
+    }
+  },
+  "src/lib/hooks/useLinksData.test.ts": {
+    "local/no-comment-block-in-body": {
+      "count": 5
+    }
+  },
+  "src/lib/hooks/useLinksFetch.trailingItem.test.ts": {
+    "local/no-comment-block-in-body": {
+      "count": 1
+    }
+  },
+  "src/lib/hooks/usePendingMetadataPolling.loop.batch.test.ts": {
+    "local/no-comment-block-in-body": {
+      "count": 1
+    }
+  },
+  "src/lib/hooks/usePendingMetadataPolling.loop.test.ts": {
+    "local/no-comment-block-in-body": {
+      "count": 1
+    }
+  },
+  "src/lib/hooks/useToastAnnouncement.test.ts": {
+    "local/no-comment-block-in-body": {
+      "count": 6
+    }
+  },
+  "src/routes/Unauthenticated.test.tsx": {
+    "local/no-comment-block-in-body": {
+      "count": 1
+    }
+  },
+  "src/theme/colorMath.test.ts": {
+    "local/no-comment-block-in-body": {
+      "count": 1
+    }
+  },
+  "src/theme/styles/bundles-color-utils.test.ts": {
+    "local/no-comment-block-in-body": {
+      "count": 1
+    }
+  },
+  "src/theme/styles/bundles.contrast.test.ts": {
+    "local/no-comment-block-in-body": {
+      "count": 3
+    }
+  },
+  "src/theme/styles/bundles.distinguishability.test.ts": {
+    "local/no-comment-block-in-body": {
+      "count": 1
+    }
+  }
+}

@@ -133,8 +133,8 @@ export class UserTokensService {
   /**
    * Stores the pending new email address along with the hash of its
    * verification token and its expiry. The user's primary email is unchanged
-   * until `UsersService.confirmPendingEmail` is called. The raw token is
-   * sent via email; only its SHA-256 hash is persisted.
+   * until `UserEmailVerificationService.confirmPendingEmail` is called. The
+   * raw token is sent via email; only its SHA-256 hash is persisted.
    */
   async updatePendingEmail(
     id: string,

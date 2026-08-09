@@ -4,14 +4,14 @@ import ComponentShowcase from './ComponentShowcase';
 import { generateRandomPalette } from './randomPalette';
 import IconButton from '../../common/IconButton';
 import ModeToggle, { modeTabId } from './ModeToggle';
+import { pairsTouchingToken } from './contrastResults.notes';
+import RandomizeButton from './RandomizeButton';
+import { readThemeTokens } from './themeProbe';
 import {
-  pairsTouchingToken,
   resolveContrastStatus,
   useContrastResults,
   type ContrastStatus,
 } from './contrastResults';
-import RandomizeButton from './RandomizeButton';
-import { readThemeTokens } from './themeProbe';
 import { THEMES, type Mode } from '../../../theme/constants';
 import Toast from '../../common/Toast';
 import { useAnnouncer } from './useAnnouncer';
@@ -57,7 +57,7 @@ const COPY_REDUNDANT_HINT_ID = 'theme-editor-copy-redundant-hint';
  *
  * The editor NEVER changes the global site theme. The custom palette is
  * previewed by scoping it (as inline custom properties via `contentThemeStyle`)
- * to the decorative app mock in the live-preview column ALONE — so the Colors
+ * to the decorative app mock in the live-preview column ALONE, so the Colors
  * card the user edits with stays painted in the always-readable app theme, and
  * leaving the editor can't strand the whole app on custom.
  *
@@ -66,14 +66,14 @@ const COPY_REDUNDANT_HINT_ID = 'theme-editor-copy-redundant-hint';
  * user's current theme; the FIRST edit snapshots that (post-edit) palette as the
  * initial custom palette, enables custom, and persists it (localStorage + `PATCH
  * /users/me`), after which edits AUTOMATIC-debounced-save. There is no path back
- * to the prior theme by design — copying the active film theme overwrites the
+ * to the prior theme by design: copying the active film theme overwrites the
  * custom palette, which is the surviving recovery from an unreadable one.
  * Engage + copy are announced through the editor's single polite live
  * region ("Your theme is on and saved." / "{label} palette applied and saved.").
  *
  * The editor's color mode is LOCAL (`editorMode`): the Light/Dark toggle in the
  * header toolbar swaps which mode's palette the content shows + edits, decoupled
- * from the global site mode — so previewing the dark palette never flips the
+ * from the global site mode, so previewing the dark palette never flips the
  * whole app. There is no on-page theme switcher.
  *
  * The toolbar mirrors the "Your links" toolbar: the Light/Dark toggle leads on
@@ -82,12 +82,12 @@ const COPY_REDUNDANT_HINT_ID = 'theme-editor-copy-redundant-hint';
  * theme; it stays visible even once custom is on (so it can overwrite a
  * customized palette). The title row carries a NON-interactive status
  * icon (check / triangle) summarizing whether the live palette clears the
- * contrast contract — a roll-up of the per-slot row failures, never an
+ * contrast contract: a roll-up of the per-slot row failures, never an
  * auto-announced one.
  *
  * The Light/Dark toggle (the shared SlidingTabBar), Randomize, and Copy (shared
  * elevated IconButtons) all read as ordinary app chrome painted from bundle
- * tokens — the same controls the "Your links" toolbar uses — so they look and
+ * tokens, the same controls the "Your links" toolbar uses, so they look and
  * behave identically to the rest of the app and degrade with the active theme
  * like all other chrome. (Recovery from a saved-but-unreadable custom theme is a
  * tracked follow-up: there is currently no guaranteed-legible global escape.)
@@ -236,7 +236,7 @@ export default function ThemeEditor() {
   return (
     <div className="max-w-5xl mx-auto">
       {/* Header: title + intro. The title row mirrors the "Your links" page
-          (LinksView) — a single h1 on the left, a right-aligned glyph in the
+          (LinksView): a single h1 on the left, a right-aligned glyph in the
           slot LinksView uses for its keyboard-shortcuts button. Here that glyph
           is a NON-interactive contrast-status icon (a11y brief R-A7). */}
       <div className="mb-6">
@@ -251,7 +251,7 @@ export default function ThemeEditor() {
               picker drag must not spam announcements (R-A3). Distinct glyphs
               carry the meaning without color (R-A5). It paints --success-text /
               --warn-text on the page --base-bg, both ≥4.5:1 across every theme
-              (R-A6) — no fixed escape hatch, it degrades with the palette like
+              (R-A6): no fixed escape hatch, it degrades with the palette like
               the inline failure text (accepted, it is supplementary). */}
           <i
             role="img"
@@ -266,7 +266,7 @@ export default function ThemeEditor() {
       </div>
 
       {/* The editor's single polite live region. Mounted UNCONDITIONALLY (not
-          gated on custom being on) and visually hidden — each settled save /
+          gated on custom being on) and visually hidden: each settled save /
           engage announces here exactly once via the clear-then-set re-trigger
           (a11y brief §1). */}
       <p role="status" aria-live="polite" className="sr-only">
@@ -281,7 +281,7 @@ export default function ThemeEditor() {
 
           The strip is a SIBLING ABOVE the preview-scoped content div, so the
           mode toggle, Randomize, and copy have NO ancestor carrying the
-          injected custom palette (`style={contentThemeStyle}`) — the preview can
+          injected custom palette (`style={contentThemeStyle}`); the preview can
           go custom without dragging the toolbar with it. The mode toggle (shared
           SlidingTabBar) + Randomize/copy (shared elevated IconButtons) paint
           from bundle tokens like the rest of the chrome. Randomize fills the
@@ -302,11 +302,12 @@ export default function ThemeEditor() {
               same control the "Your links" toolbar uses for Stumble), so it reads
               as ordinary chrome and paints from bundle tokens.
 
-              When the copy would change nothing — custom is OFF (the editor
-              already previews this exact theme) or the custom theme is ITSELF
-              active — the button is INERT via `aria-disabled` (NOT the native
-              `disabled` attribute, which would drop it from the tab order and
-              announce no reason). aria-disabled keeps it focusable, so
+              When the copy would change nothing, because custom is OFF (the
+              editor already previews this exact theme) or the custom theme
+              is ITSELF active, the button is INERT via `aria-disabled` (NOT
+              the native `disabled` attribute, which would drop it from the
+              tab order and announce no reason). aria-disabled keeps it
+              focusable, so
               `aria-describedby` can tell an AT user WHY it's unavailable, and the
               click is a no-op guard in the handler. Styling is driven off the
               attribute (`aria-disabled:` variants), never a JS ternary. The
@@ -333,12 +334,12 @@ export default function ThemeEditor() {
 
       {/* Editing content. The swatches ALWAYS render now (seeded as a live
           mirror of the current theme); the first edit is what goes custom, and
-          turning custom off only swaps the previewed palette — it never unmounts
+          turning custom off only swaps the previewed palette; it never unmounts
           these controls, so keyboard focus is never stranded.
 
           PREVIEW-SCOPE INVERSION (PRD point 9): the custom palette is NO LONGER
           scoped to this whole two-column row. The LEFT Colors card renders in the
-          APP THEME (a contrast win — its chrome + focus ring now resolve from the
+          APP THEME (a contrast win: its chrome + focus ring now resolve from the
           always-readable global theme, never a hostile custom palette), while
           ONLY the decorative mock inside ComponentShowcase carries
           `contentThemeStyle`. The header + toolbar stay outside any scope, so the
@@ -405,7 +406,7 @@ interface ToastView {
  * `useToast` hook holds only a message string), per a11y brief B1.
  *
  * Auto-save SUCCESS (incl. copy/undo) is announced by the editor's polite live
- * region — only the assertive FAILURE paths route here.
+ * region: only the assertive FAILURE paths route here.
  */
 export function resolveToast(message: string | null): ToastView | null {
   if (message === null) return null;

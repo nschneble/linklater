@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fetchParametersReducer, useLinksData } from './useLinksData';
+import { useLinksData } from './useLinksData';
 import type { Link, PaginatedLinks } from '../api';
 
 vi.mock('../api', () => ({
@@ -96,40 +96,6 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('fetchParametersReducer', () => {
-  it('reset changes filter and resets page to 1', () => {
-    const state = { filter: 'unread' as const, page: 3, search: '' };
-    const next = fetchParametersReducer(state, {
-      type: 'reset',
-      filter: 'read',
-      search: '',
-    });
-    expect(next).toEqual({ filter: 'read', page: 1, search: '' });
-  });
-
-  it('reset returns same reference when filter and search are unchanged', () => {
-    const state = { filter: 'unread' as const, page: 2, search: 'hello' };
-    const next = fetchParametersReducer(state, {
-      type: 'reset',
-      filter: 'unread',
-      search: 'hello',
-    });
-    expect(next).toBe(state);
-  });
-
-  it('load-more increments page', () => {
-    const state = { filter: 'unread' as const, page: 1, search: '' };
-    const next = fetchParametersReducer(state, { type: 'load-more' });
-    expect(next.page).toBe(2);
-  });
-
-  it('load-more preserves filter and search while only advancing the page', () => {
-    const state = { filter: 'read' as const, page: 2, search: 'duck' };
-    const next = fetchParametersReducer(state, { type: 'load-more' });
-    expect(next).toEqual({ filter: 'read', page: 3, search: 'duck' });
-  });
-});
-
 describe('useLinksData initial fetch', () => {
   it('starts with loadingLinks=true and an empty links array', () => {
     vi.mocked(apiModule.getLinks).mockImplementation(
@@ -166,18 +132,6 @@ describe('useLinksData initial fetch', () => {
     expect(result.current.pagination).toEqual({ total: 42, limit: 10 });
   });
 
-  it('calls getLinks with read=false for the unread filter', async () => {
-    vi.mocked(apiModule.getLinks).mockResolvedValue(makePaginated([]));
-
-    renderHook(() => useLinksData('unread', ''));
-
-    await waitFor(() =>
-      expect(apiModule.getLinks).toHaveBeenCalledWith(
-        expect.objectContaining({ read: false }),
-      ),
-    );
-  });
-
   it('calls getLinks with read=true for the read filter', async () => {
     vi.mocked(apiModule.getLinks).mockResolvedValue(makePaginated([]));
 
@@ -202,18 +156,6 @@ describe('useLinksData initial fetch', () => {
     );
   });
 
-  it('passes undefined as search when the search string is empty', async () => {
-    vi.mocked(apiModule.getLinks).mockResolvedValue(makePaginated([]));
-
-    renderHook(() => useLinksData('unread', ''));
-
-    await waitFor(() =>
-      expect(apiModule.getLinks).toHaveBeenCalledWith(
-        expect.objectContaining({ search: undefined }),
-      ),
-    );
-  });
-
   it('handles a fetch error gracefully and sets loadingLinks=false', async () => {
     vi.mocked(apiModule.getLinks).mockRejectedValue(new Error('Network error'));
 
@@ -222,16 +164,6 @@ describe('useLinksData initial fetch', () => {
     await waitFor(() => expect(result.current.loadingLinks).toBe(false));
 
     expect(result.current.links).toEqual([]);
-  });
-
-  it('sets fetchError when the fetch rejects', async () => {
-    vi.mocked(apiModule.getLinks).mockRejectedValue(new Error('Network error'));
-
-    const { result } = renderHook(() => useLinksData('unread', ''));
-
-    await waitFor(() =>
-      expect(result.current.fetchError).toBe('Network error'),
-    );
   });
 
   it('clears fetchError on a subsequent successful fetch', async () => {

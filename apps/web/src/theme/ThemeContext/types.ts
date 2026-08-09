@@ -2,120 +2,40 @@ import type { BaseTheme, Mode } from '../constants';
 import type { CustomTheme } from '../customTheme';
 
 /**
- * The shape of the value provided by `ThemeContext`. All theme-related
- * state and actions are accessed through this interface via `useTheme`.
+ * Theme state and actions, reached through `useTheme`.
+ *
+ * Every setter here persists with a timestamp, and every `applyServer`
+ * counterpart drops a server value that lost to a newer local one. Both
+ * halves of that race live in `theme/storage.ts`.
  */
 export interface ThemeContextValue {
-  /** The currently active base theme. */
   baseTheme: BaseTheme;
-  /** The current color mode. */
   mode: Mode;
-  /**
-   * Sets the base theme from a user action. Persists to `localStorage`
-   * with a timestamp so a subsequent server sync cannot overwrite a very
-   * recent change.
-   *
-   * If CVD mode is currently on and the user picks a non-Apollo theme,
-   * CVD mode is automatically cleared.
-   */
+  /** Moving off the CVD base theme also turns CVD mode off. */
   setBaseTheme: (theme: BaseTheme) => void;
   /**
-   * Transiently previews a base theme WITHOUT persisting it: no
-   * `localStorage` write and no change to the committed `baseTheme`. Only the
-   * painted `data-theme` and custom-token injection follow the preview, so
-   * consumers (e.g. the editor's auto-save) keep reading the real selection.
-   * The Theme Editor's copy-palette picker uses this to paint the page in a
-   * film theme while an option is active, passing `null` to revert.
+   * Paints a theme without committing it, so consumers keep reading the
+   * real selection. Pass `null` to revert.
    */
   setPreviewTheme: (theme: BaseTheme | null) => void;
-  /**
-   * Sets the color mode from a user action. Persists to `localStorage`
-   * with a timestamp so a subsequent server sync cannot overwrite a very
-   * recent change.
-   */
   setMode: (mode: Mode) => void;
-  /**
-   * Toggles between `'light'` and `'dark'`. Writes a timestamp like
-   * `setMode`.
-   */
   toggleMode: () => void;
-  /**
-   * Applies the server-stored theme preference. Skips the update if the
-   * user changed the theme locally within the last 30 seconds as a race
-   * condition guard for optimistic updates that may not have reached the
-   * server before a reload.
-   */
   applyServerTheme: (theme: BaseTheme) => void;
-  /**
-   * Applies the server-stored mode preference. Skips the update if the
-   * user changed the mode locally within the last 30 seconds.
-   */
   applyServerMode: (mode: Mode) => void;
-  /**
-   * Enables CVD mode: saves the current theme as the pre-CVD theme,
-   * switches to Apollo 10½, and sets `data-cvd="on"` on the document root.
-   * Returns the resolved theme (`'apollo-10-1-2'`) so callers can include
-   * it in server PATCH payloads.
-   */
+  /** Returns the resolved theme for the caller to send to the server. */
   enableCvdMode: () => BaseTheme;
-  /**
-   * Disables CVD mode: restores the pre-CVD theme (or `'scanner-darkly'`
-   * if none was saved or the stored value is invalid), removes `data-cvd`,
-   * and clears the related `localStorage` keys. Returns the restored theme
-   * so callers can include it in server PATCH payloads.
-   */
+  /** Returns the restored theme for the caller to send to the server. */
   disableCvdMode: () => BaseTheme;
-  /** Whether CVD mode is currently active. */
   isCvdMode: boolean;
-  /**
-   * Enables the OpenDyslexic font override: sets `data-dyslexic-font="on"` on
-   * the document root and persists the preference to `localStorage` with a
-   * timestamp. Independent of the active color theme, so enabling it does not
-   * switch themes; unlike `enableCvdMode`, it returns nothing.
-   */
   enableDyslexicFont: () => void;
-  /**
-   * Disables the OpenDyslexic font override: removes `data-dyslexic-font` from
-   * the document root and records the change in `localStorage`. Returns
-   * nothing for the same reason as `enableDyslexicFont`.
-   */
   disableDyslexicFont: () => void;
-  /** Whether the OpenDyslexic font override is currently active. */
   isDyslexicFont: boolean;
-  /**
-   * The user's editable Custom theme (`{ dark, light }` token maps), or
-   * `null` when the user has never saved one. Its tokens are injected onto
-   * `document.documentElement` as inline CSS custom properties while the
-   * `'custom'` base theme is active.
-   */
+  /** Inlined onto the document root while the custom theme is active. */
   customTheme: CustomTheme | null;
-  /**
-   * Sets the Custom theme from a user action (the Theme Editor's Save).
-   * Persists to `localStorage` with a timestamp so a subsequent
-   * server sync cannot overwrite a very recent change.
-   */
   setCustomTheme: (customTheme: CustomTheme) => void;
-  /**
-   * Applies the server-stored Custom theme. Skips the update if the user
-   * saved a Custom theme locally within the last 30 seconds, mirroring the
-   * race-condition guard used by `applyServerTheme`.
-   */
   applyServerCustomTheme: (customTheme: CustomTheme | null) => void;
-  /**
-   * Whether the user has opted the Custom theme into the theme picker. The
-   * Custom theme is always reachable from the Theme Editor; this flag only
-   * controls whether the picker menus list it.
-   */
+  /** Opt-in for the picker menus only; the editor always reaches it. */
   customThemeEnabled: boolean;
-  /**
-   * Sets the Custom-theme picker opt-in from a user action (the Theme
-   * Editor's toggle). Persists to `localStorage` with a timestamp so a
-   * subsequent server sync cannot overwrite a very recent change.
-   */
   setCustomThemeEnabled: (enabled: boolean) => void;
-  /**
-   * Applies the server-stored Custom-theme picker opt-in. Skips the update
-   * if the user toggled it locally within the last 30 seconds.
-   */
   applyServerCustomThemeEnabled: (enabled: boolean) => void;
 }
