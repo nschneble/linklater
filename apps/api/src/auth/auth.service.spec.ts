@@ -11,6 +11,7 @@ import { EmailVerificationService } from './email-verification.service';
 import { MagicLinkService } from './magic-link.service';
 import { RefreshTokenService } from './refresh-token.service';
 import { TotpService } from './totp.service';
+import { UserCredentialsService } from '../users/user-credentials.service';
 import { UserMfaService } from '../users/user-mfa.service';
 import { UserOAuthService } from '../users/user-oauth.service';
 import { UsersService } from '../users/users.service';
@@ -35,8 +36,11 @@ describe('AuthService', () => {
     findById: jest.fn(),
     findByIdWithPasswordHash: jest.fn(),
     markWelcomed: jest.fn(),
-    setFirstPassword: jest.fn(),
   } as unknown as UsersService;
+
+  const userCredentialsServiceMock = {
+    setFirstPassword: jest.fn(),
+  } as unknown as UserCredentialsService;
 
   const userMfaServiceMock = {
     clearMfaNonce: jest.fn(),
@@ -94,6 +98,10 @@ describe('AuthService', () => {
       providers: [
         AuthService,
         { provide: UsersService, useValue: usersServiceMock },
+        {
+          provide: UserCredentialsService,
+          useValue: userCredentialsServiceMock,
+        },
         { provide: UserMfaService, useValue: userMfaServiceMock },
         { provide: UserOAuthService, useValue: userOAuthServiceMock },
         { provide: JwtService, useValue: jwtServiceMock },
@@ -1045,14 +1053,14 @@ describe('AuthService', () => {
   });
 
   describe('setFirstPassword', () => {
-    it('delegates to usersService.setFirstPassword', async () => {
-      (usersServiceMock.setFirstPassword as jest.Mock).mockResolvedValue(
-        undefined,
-      );
+    it('delegates to userCredentialsService.setFirstPassword', async () => {
+      (
+        userCredentialsServiceMock.setFirstPassword as jest.Mock
+      ).mockResolvedValue(undefined);
 
       await service.setFirstPassword(USER_ID, NEW_PASSWORD);
 
-      expect(usersServiceMock.setFirstPassword).toHaveBeenCalledWith(
+      expect(userCredentialsServiceMock.setFirstPassword).toHaveBeenCalledWith(
         USER_ID,
         NEW_PASSWORD,
       );

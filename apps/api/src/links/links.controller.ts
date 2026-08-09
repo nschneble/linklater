@@ -22,6 +22,7 @@ import { Throttle } from '@nestjs/throttler';
 
 import { AllowsBookmarkletToken } from '../auth/token-scope.decorator.js';
 import { AnyAuthGuard, type AuthRequest } from '../auth/index.js';
+import { ApiForbidden } from '../auth/api-forbidden.decorator.js';
 import { ApiUnauthorized } from '../auth/api-unauthorized.decorator.js';
 import { CustomThrottlerGuard } from '../auth/custom-throttler.guard.js';
 import { LinksQueryService } from './links-query.service.js';
@@ -85,6 +86,7 @@ export class LinksController {
     description: 'Too many links saved in a short window. Try again shortly.',
   })
   @ApiUnauthorized()
+  @ApiForbidden()
   @AllowsBookmarkletToken()
   @UseGuards(CustomThrottlerGuard)
   // 60/min ceiling on outbound metadata-fetch amplification
@@ -139,6 +141,7 @@ export class LinksController {
     type: PaginatedLinksResponseDto,
   })
   @ApiUnauthorized()
+  @ApiForbidden()
   @Get()
   async findAll(
     @Req() request: AuthRequest,
@@ -171,6 +174,7 @@ export class LinksController {
     type: RandomLinkResponseDto,
   })
   @ApiUnauthorized()
+  @ApiForbidden()
   @Get('random')
   async random(
     @Req() request: AuthRequest,
@@ -200,6 +204,7 @@ export class LinksController {
     type: StumbleResponseDto,
   })
   @ApiUnauthorized()
+  @ApiForbidden()
   @HttpCode(200)
   @Post('stumble')
   async stumble(@Req() request: AuthRequest) {
@@ -220,6 +225,7 @@ export class LinksController {
     type: LinkResponseDto,
   })
   @ApiUnauthorized()
+  @ApiForbidden()
   @ApiResponse({ status: 404, description: 'Link not found for this user.' })
   @Get(':id')
   async findOne(@Req() request: AuthRequest, @Param('id') id: string) {
@@ -239,6 +245,7 @@ export class LinksController {
     type: LinkResponseDto,
   })
   @ApiUnauthorized()
+  @ApiForbidden()
   @ApiResponse({ status: 404, description: 'Link not found for this user.' })
   @HttpCode(200)
   @Post(':id/read')
@@ -259,6 +266,7 @@ export class LinksController {
     type: LinkResponseDto,
   })
   @ApiUnauthorized()
+  @ApiForbidden()
   @ApiResponse({ status: 404, description: 'Link not found for this user.' })
   @HttpCode(200)
   @Post(':id/unread')
@@ -282,6 +290,7 @@ export class LinksController {
     type: BulkDeleteResultDto,
   })
   @ApiUnauthorized()
+  @ApiForbidden()
   @Delete('read')
   async removeAllRead(@Req() request: AuthRequest) {
     const userId = request.user.userId;
@@ -300,6 +309,7 @@ export class LinksController {
     type: DeleteResultDto,
   })
   @ApiUnauthorized()
+  @ApiForbidden()
   @ApiResponse({ status: 404, description: 'Link not found for this user.' })
   @Delete(':id')
   async remove(@Req() request: AuthRequest, @Param('id') id: string) {

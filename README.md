@@ -213,6 +213,21 @@ CSS escape hatches (`:focus`, `:has-text()`) for behavioral assertions.
 Reference: [npmjs.com/package/tuffgal](https://www.npmjs.com/package/tuffgal)
 · [github.com/nschneble/tuffgal](https://github.com/nschneble/tuffgal)
 
+### Git blame
+
+Formatting sweeps (import reordering, comment declutters) touch hundreds of files without changing what the code does, which buries the commit that actually wrote each line. `.git-blame-ignore-revs` at the repo root lists those sweeps so blame skips them.
+
+GitHub's blame view reads the file on its own. Locally it takes one setting, once per clone:
+
+```bash
+# cd /path/to/your/repo
+git config blame.ignoreRevsFile .git-blame-ignore-revs
+```
+
+CI needs no configuration. Nothing in the pipeline runs `git blame`.
+
+Add a commit only when it changes no behavior at all, and give every entry a comment naming it. A line-permutation sweep is provable by comparing the sorted lines of each changed file before and after; a comment-only sweep is provable by compiling both sides with comments stripped and diffing the emit.
+
 ### Font Awesome
 
 Font Awesome Free is self-hosted under `public/assets/fontawesome/`. The

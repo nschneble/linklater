@@ -6,13 +6,20 @@ import {
 import { generateLinkState } from './oauth-link-state.js';
 import { Prisma, PrismaService } from '../prisma/index.js';
 import { requireEnv } from '../common/index.js';
-import { UserOAuthService, UsersService } from '../users/index.js';
+import {
+  UserCredentialsService,
+  UserEmailVerificationService,
+  UserOAuthService,
+  UsersService,
+} from '../users/index.js';
 
 @Injectable()
 export class OAuthLinkService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly usersService: UsersService,
+    private readonly userCredentialsService: UserCredentialsService,
+    private readonly userEmailVerificationService: UserEmailVerificationService,
     private readonly userOAuthService: UserOAuthService,
   ) {}
 
@@ -63,9 +70,12 @@ export class OAuthLinkService {
   async unlinkOAuthProvider(userId: string, provider: string): Promise<void> {
     await this.prisma.$transaction(
       async (transaction) => {
-        await this.usersService.lockUserRow(userId, transaction);
+        await this.userCredentialsService.lockUserRow(userId, transaction);
         const { hasPassword, oauthProviders } =
-          await this.usersService.getCredentialState(userId, transaction);
+          await this.userCredentialsService.getCredentialState(
+            userId,
+            transaction,
+          );
         const remainingProviders = oauthProviders.filter(
           (linked) => linked !== provider,
         );
@@ -110,7 +120,7 @@ export class OAuthLinkService {
 
     // a foreign provider email is no proof of ownership; keep this guard
     if (!user.emailVerifiedAt && providerEmail === user.email) {
-      await this.usersService.markEmailVerified(userId);
+      await this.userEmailVerificationService.markEmailVerified(userId);
     }
   }
 }

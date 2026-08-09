@@ -89,6 +89,7 @@ export function makePolicyMarkdownComponents({
       <div
         role="region"
         aria-label={tableLabel}
+        // SC 2.1.1: sole scroll stop, no focusable descendants below
         // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
         tabIndex={0}
         className="my-6 overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)]"
