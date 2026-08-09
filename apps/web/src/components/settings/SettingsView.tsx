@@ -6,7 +6,7 @@ import DangerZone from './DangerZone';
 import DyslexicFontToggle from './DyslexicFontToggle';
 import IdPsSection from './IdPsSection';
 import KeyboardShortcutsToggle from './KeyboardShortcutsToggle';
-import { LINK_ERROR_MESSAGES, LINKED_MESSAGES } from './oauthFlashMessages';
+import { linkedMessage, linkErrorMessage } from './oauthFlashMessages';
 import MultiFactorSection from './MultiFactorSection';
 import { setActiveSettingsSection } from './settingsScroll';
 import SettingsGroup from './SettingsGroup';
@@ -35,12 +35,8 @@ function readOAuthFlashMessages(
     return null;
   }
   return {
-    toastMessage: provider
-      ? (LINKED_MESSAGES[provider] ?? 'Account connected.')
-      : null,
-    linkError: errorCode
-      ? (LINK_ERROR_MESSAGES[errorCode] ?? 'Failed to connect account.')
-      : null,
+    toastMessage: provider ? linkedMessage(provider) : null,
+    linkError: errorCode ? linkErrorMessage(errorCode) : null,
   };
 }
 
