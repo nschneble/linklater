@@ -69,7 +69,7 @@ export default function App() {
     return (
       <div
         role="status"
-        className="flex items-center justify-center min-h-screen bg-[var(--base-bg)] text-[var(--base-text)] select-none"
+        className="flex items-center justify-center min-h-svh bg-[var(--base-bg)] text-[var(--base-text)] select-none"
       >
         <div className="text-[var(--base-alt-text)] text-sm animate-pulse">
           Defrosting Linklater in the microwave…

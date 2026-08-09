@@ -67,7 +67,7 @@ export default function ConfirmAccountDeletionPage() {
     <main
       id="main-content"
       tabIndex={-1}
-      className="flex items-center justify-center min-h-screen bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none"
+      className="flex items-center justify-center min-h-svh bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none"
     >
       <p role="status" aria-live="polite" className="sr-only">
         Verifying your deletion link…

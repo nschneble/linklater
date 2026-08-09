@@ -122,7 +122,7 @@ export default function TokenVerificationPage({
   ]);
 
   return (
-    <main className="flex items-center justify-center min-h-screen bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none">
+    <main className="flex items-center justify-center min-h-svh bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none">
       <p role="status" aria-live="polite" className="sr-only">
         {verifyingText}
       </p>

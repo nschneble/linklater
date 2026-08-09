@@ -30,7 +30,7 @@ function CommonRoute({ label }: { label: string }) {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center min-h-screen bg-[var(--base-bg)] text-[var(--base-text)] select-none">
+        <div className="flex items-center justify-center min-h-svh bg-[var(--base-bg)] text-[var(--base-text)] select-none">
           <p role="status" aria-live="polite" className="sr-only">
             Loading {label}…
           </p>

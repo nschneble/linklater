@@ -77,7 +77,7 @@ export default function StumblePage() {
 
   if (state === 'error') {
     return (
-      <main className="flex flex-col items-center justify-center min-h-screen max-w-md mx-auto px-4 bg-[var(--base-bg)] text-[var(--base-text)] text-center gap-4">
+      <main className="flex flex-col items-center justify-center min-h-svh max-w-md mx-auto px-4 bg-[var(--base-bg)] text-[var(--base-text)] text-center gap-4">
         <Alert variant="error" icon="fa-triangle-exclamation">
           We couldn't open that link. It may have been saved with an unsupported
           address.
@@ -96,7 +96,7 @@ export default function StumblePage() {
   }
 
   return (
-    <main className="flex items-center justify-center min-h-screen bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none">
+    <main className="flex items-center justify-center min-h-svh bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none">
       <p role="status" aria-live="polite" className="sr-only">
         Finding a random link…
       </p>

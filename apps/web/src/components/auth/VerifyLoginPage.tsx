@@ -169,7 +169,7 @@ export default function VerifyLoginPage() {
 
   // bare spinner, no card chrome that would flash before the redirect fires
   return (
-    <main className="flex items-center justify-center min-h-screen bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none">
+    <main className="flex items-center justify-center min-h-svh bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none">
       <p role="status" aria-live="polite" className="sr-only">
         Verifying your login link…
       </p>
