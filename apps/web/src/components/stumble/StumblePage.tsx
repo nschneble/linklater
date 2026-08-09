@@ -77,7 +77,7 @@ export default function StumblePage() {
 
   if (state === 'error') {
     return (
-      <main className="flex flex-col items-center justify-center min-h-svh max-w-md mx-auto px-4 bg-[var(--base-bg)] text-[var(--base-text)] text-center gap-4">
+      <main className="flex flex-col items-center justify-center max-w-md min-h-svh mx-auto px-4 bg-[var(--base-bg)] text-[var(--base-text)] text-center gap-4">
         <Alert variant="error" icon="fa-triangle-exclamation">
           We couldn't open that link. It may have been saved with an unsupported
           address.

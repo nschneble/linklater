@@ -74,7 +74,7 @@ export default class ErrorBoundary extends Component<
         return this.props.fallback;
       }
       return (
-        <div className="flex flex-col items-center justify-center min-h-screen px-4 bg-[var(--base-bg)] text-[var(--base-text)] text-center select-none">
+        <div className="flex flex-col items-center justify-center min-h-svh px-4 bg-[var(--base-bg)] text-[var(--base-text)] text-center select-none">
           <i
             className="fa-solid fa-bug text-4xl text-[var(--base-subtle-text)] mb-4"
             aria-hidden="true"

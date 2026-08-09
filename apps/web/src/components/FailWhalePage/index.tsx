@@ -46,7 +46,7 @@ export default function FailWhalePage() {
       </a>
       <main
         id="main-content"
-        className="flex flex-col items-center justify-center min-h-screen max-w-md mx-auto px-4 text-center"
+        className="flex flex-col items-center justify-center max-w-md min-h-svh mx-auto px-4 text-center"
       >
         <pre
           aria-hidden="true"
