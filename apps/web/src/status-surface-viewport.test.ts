@@ -21,11 +21,13 @@
  *   1. The compile check runs both utilities through the project's real
  *      Tailwind and reads the emitted declarations, so neither one can
  *      pass on the strength of its class name alone.
- *   2. The surface pin counts the utilities in each source file, holding
+ *   2. The surface pin counts both utilities in each listed file, holding
  *      the swap in place against a later edit.
- *   3. A scan of the source tree holds the pinned set closed, so a file
- *      that picks up `min-h-svh` without being listed, or a listed file
- *      that quietly loses it, fails the suite.
+ *   3. Two scans of the source tree hold the pinned set closed in both
+ *      units, so a file that picks up either utility without being
+ *      listed, or a listed file that quietly loses one, fails the suite.
+ *      The large-viewport half is what keeps a newly written surface from
+ *      reaching `main` on `min-h-screen` unremarked.
  *   4. None of them measures geometry. Headless browsers have no
  *      retracting chrome, so `vh`, `svh`, `lvh` and `dvh` all resolve
  *      identically there and no automated check can observe the defect.
@@ -35,11 +37,14 @@
 import { compile } from 'tailwindcss';
 import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
-import { dirname, relative, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { readdirSync, readFileSync } from 'node:fs';
-
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+import { dirname, resolve } from 'node:path';
+import {
+  filesUsing,
+  readSource,
+  SURFACES,
+  surfacesUsing,
+} from './status-surface-viewport.pins';
+import { readFileSync } from 'node:fs';
 
 const requireFromHere = createRequire(import.meta.url);
 
@@ -86,10 +91,15 @@ function countOccurrences(source: string, needle: string): number {
  * a viewport floor, so a centring utility together with `min-h-*`. The
  * centring is what makes the unit observable at all.
  *
- * The gradient auth-card wrappers are the exception to that rule. They
- * do centre, but the gradient must not be shrunk, so their fix is
- * top-alignment plus padding rather than a shorter wrapper, and they
- * stay on `min-h-screen`. Pinned in routes/Unauthenticated.test.tsx.
+ * The gradient auth-card wrappers centre too, and four of the five are
+ * untreated: they floor on the large viewport with nothing standing in
+ * for the swap. Only routes/Unauthenticated.tsx carries a mitigation,
+ * top-aligning with padding below `sm` so a short card cannot lose its
+ * head, and that one is pinned in routes/Unauthenticated.test.tsx. The
+ * two wrappers in ResetPasswordPage and the two in
+ * ExtensionAuthorizePage have neither. Their unit is left to the owner
+ * rather than swept: a shorter wrapper changes how far the gradient
+ * runs, which is a visual call and not a mechanical one.
  *
  * A `min-h-*` that centres nothing also stays on `min-h-screen`, and the
  * reason is narrow: with nothing centred the unit is unobservable, so
@@ -100,85 +110,11 @@ function countOccurrences(source: string, needle: string): number {
  * covers AppShell, LandingPage, PolicyDocumentPage, ApiDocsView and the
  * outer wrapper in FailWhalePage.
  *
- * `largeViewport` is how much `min-h-screen` the file should still hold,
- * which pins the two files that deliberately carry both units.
- * ResetPasswordPage keeps its two gradient wrappers and FailWhalePage
- * keeps its outer one, so a later sweep cannot quietly take them too.
+ * Both counts are pinned per file, which is what holds the two files
+ * deliberately carrying both units. ResetPasswordPage keeps its two
+ * gradient wrappers and FailWhalePage keeps its outer one, so a later
+ * sweep cannot quietly take them either.
  */
-const SURFACES = [
-  { relativePath: 'src/App.tsx', smallViewport: 1, largeViewport: 0 },
-  { relativePath: 'src/routes/Common.tsx', smallViewport: 1, largeViewport: 0 },
-  {
-    relativePath: 'src/components/verify/TokenVerificationPage.tsx',
-    smallViewport: 1,
-    largeViewport: 0,
-  },
-  {
-    relativePath: 'src/components/auth/VerifyLoginPage.tsx',
-    smallViewport: 1,
-    largeViewport: 0,
-  },
-  {
-    relativePath: 'src/components/auth/ResetPasswordPage.tsx',
-    smallViewport: 1,
-    largeViewport: 2,
-  },
-  {
-    relativePath: 'src/components/auth/OAuthCallbackPage.tsx',
-    smallViewport: 1,
-    largeViewport: 0,
-  },
-  {
-    relativePath: 'src/components/auth/ConfirmAccountDeletionPage.tsx',
-    smallViewport: 1,
-    largeViewport: 0,
-  },
-  {
-    relativePath: 'src/components/stumble/StumblePage.tsx',
-    smallViewport: 2,
-    largeViewport: 0,
-  },
-  {
-    relativePath: 'src/components/stumble/StumbleEmptyView.tsx',
-    smallViewport: 1,
-    largeViewport: 0,
-  },
-  {
-    relativePath: 'src/components/errors/ErrorBoundary.tsx',
-    smallViewport: 1,
-    largeViewport: 0,
-  },
-  {
-    relativePath: 'src/components/errors/NotFoundView.tsx',
-    smallViewport: 1,
-    largeViewport: 0,
-  },
-  {
-    relativePath: 'src/components/FailWhalePage/index.tsx',
-    smallViewport: 1,
-    largeViewport: 1,
-  },
-] as const;
-
-const THIS_FILE = 'src/status-surface-viewport.test.ts';
-
-/**
- * Every file under `src` holding `min-h-svh`, this one aside: it carries
- * the literal to assert on rather than to lay out anything.
- */
-function filesUsingSmallViewport(): string[] {
-  return readdirSync(resolve(ROOT, 'src'), {
-    recursive: true,
-    withFileTypes: true,
-  })
-    .filter((entry) => entry.isFile())
-    .map((entry) => relative(ROOT, resolve(entry.parentPath, entry.name)))
-    .filter((path) => path !== THIS_FILE)
-    .filter((path) =>
-      readFileSync(resolve(ROOT, path), 'utf8').includes('min-h-svh'),
-    )
-    .sort();
-}
 
 describe('viewport units the status surfaces compile to', () => {
   it('emits 100svh for min-h-svh and 100vh for min-h-screen', async () => {
@@ -189,20 +125,22 @@ describe('viewport units the status surfaces compile to', () => {
   });
 });
 
-describe('full-screen status surfaces floor on the small viewport', () => {
+describe('the pinned surfaces are the only viewport-floored files', () => {
   it('lists every file under src that uses min-h-svh, and no others', () => {
-    const listed = SURFACES.map((surface) => surface.relativePath).sort();
-
-    expect(filesUsingSmallViewport()).toEqual(listed);
+    expect(filesUsing('min-h-svh')).toEqual(surfacesUsing('svh'));
   });
 
-  it.each(SURFACES)(
-    '$relativePath uses min-h-svh $smallViewport time(s)',
-    ({ relativePath, smallViewport, largeViewport }) => {
-      const source = readFileSync(resolve(ROOT, relativePath), 'utf8');
+  it('lists every file under src that uses min-h-screen, and no others', () => {
+    expect(filesUsing('min-h-screen')).toEqual(surfacesUsing('screen'));
+  });
 
-      expect(countOccurrences(source, 'min-h-svh')).toBe(smallViewport);
-      expect(countOccurrences(source, 'min-h-screen')).toBe(largeViewport);
+  it.each(Object.entries(SURFACES))(
+    '%s holds the pinned count of each floor',
+    (relativePath, counts) => {
+      const source = readSource(relativePath);
+
+      expect(countOccurrences(source, 'min-h-svh')).toBe(counts.svh);
+      expect(countOccurrences(source, 'min-h-screen')).toBe(counts.screen);
     },
   );
 });
