@@ -33,12 +33,10 @@
   //
   // bundles-color-utils.ts is a test-only shared helper (imports node:fs
   // for parsing bundles.css). Excluded for the same reason — it never
-  // ships in the bundle. status-surface-viewport.utils.ts is the same
-  // shape: it walks the source tree with node:fs for its own suite.
+  // ships in the bundle.
   "exclude": [
     "src/**/*.test.ts",
     "src/**/*.test.tsx",
-    "src/status-surface-viewport.utils.ts",
     "src/theme/styles/bundles-color-utils.ts",
   ],
   "include": ["src"]
