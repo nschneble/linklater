@@ -16,34 +16,51 @@
  * preference cannot suppress it. These surfaces never scroll, so the
  * stable unit is the correct one.
  *
- * Three things are proved below, and a fourth deliberately is not:
+ * Four things are proved below, and a fifth deliberately is not:
  *
  *   1. The compile check runs both utilities through the project's real
  *      Tailwind and reads the emitted declarations, so neither one can
  *      pass on the strength of its class name alone.
- *   2. The surface pin counts both utilities in each listed file, holding
- *      the swap in place against a later edit.
- *   3. Two scans of the source tree hold the pinned set closed in both
- *      units, so a file that picks up either utility without being
- *      listed, or a listed file that quietly loses one, fails the suite.
- *      The large-viewport half is what keeps a newly written surface from
- *      reaching `main` on `min-h-screen` unremarked.
- *   4. None of them measures geometry. Headless browsers have no
+ *   2. The group pin holds the defect itself, one occurrence at a time.
+ *      Every floored box in the tree is sorted by whether it centres and
+ *      by which viewport it floors on, and each of the four groups is
+ *      matched against the box it is supposed to hold. A box that changes
+ *      either half of that pairing lands in a group that does not expect
+ *      it, which is what catches a surface reaching for a unit nobody
+ *      listed, a wrapper picking up centring while keeping the floor it
+ *      has, and two boxes in one file trading floors.
+ *   3. Two whole-file scans count the same floors a second way, reading
+ *      raw text rather than parsed class attributes. That is what still
+ *      sees a floor hoisted into a constant, where the group pin, which
+ *      only ever looks inside a class attribute, sees nothing.
+ *   4. An absence scan bans the sibling spellings of the same floor.
+ *      Every scan here matches a whole class, so a banned exact height is
+ *      never read out of the legal floor it is a suffix of, and the ban
+ *      reaches floors alone: the links dropdown caps its own scrolling
+ *      height against the dynamic viewport, and has to keep doing so.
+ *   5. None of them measures geometry. Headless browsers have no
  *      retracting chrome, so `vh`, `svh`, `lvh` and `dvh` all resolve
  *      identically there and no automated check can observe the defect.
  *      The centring is confirmable only on a real iOS device.
+ *
+ * Every scan skips test files, which carry these utilities as assertion
+ * literals rather than to lay anything out and never reach a browser.
  */
 
+import {
+  CENTRED_LARGE_VIEWPORT_FLOORS,
+  CENTRED_SMALL_VIEWPORT_FLOORS,
+  flooredBoxes,
+  floorOccurrences,
+  PINNED_LARGE_FLOOR,
+  PINNED_SMALL_FLOOR,
+  SIBLING_FLOOR_UTILITIES,
+  UNCENTRED_LARGE_VIEWPORT_FLOORS,
+} from './status-surface-viewport.utils';
 import { compile } from 'tailwindcss';
 import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
 import { dirname, resolve } from 'node:path';
-import {
-  filesUsing,
-  readSource,
-  SURFACES,
-  surfacesUsing,
-} from './status-surface-viewport.pins';
 import { readFileSync } from 'node:fs';
 
 const requireFromHere = createRequire(import.meta.url);
@@ -82,10 +99,6 @@ function declaredMinHeight(css: string, utility: string): string | null {
   return match === null ? null : match[1].trim();
 }
 
-function countOccurrences(source: string, needle: string): number {
-  return source.split(needle).length - 1;
-}
-
 /*
  * The swap applies to a box that vertically centres its content against
  * a viewport floor, so a centring utility together with `min-h-*`. The
@@ -109,11 +122,6 @@ function countOccurrences(source: string, needle: string): number {
  * full viewport whatever the document height turns out to be. That
  * covers AppShell, LandingPage, PolicyDocumentPage, ApiDocsView and the
  * outer wrapper in FailWhalePage.
- *
- * Both counts are pinned per file, which is what holds the two files
- * deliberately carrying both units. ResetPasswordPage keeps its two
- * gradient wrappers and FailWhalePage keeps its outer one, so a later
- * sweep cannot quietly take them either.
  */
 
 describe('viewport units the status surfaces compile to', () => {
@@ -125,22 +133,47 @@ describe('viewport units the status surfaces compile to', () => {
   });
 });
 
-describe('the pinned surfaces are the only viewport-floored files', () => {
-  it('lists every file under src that uses min-h-svh, and no others', () => {
-    expect(filesUsing('min-h-svh')).toEqual(surfacesUsing('svh'));
+describe('every floored box sits in the group that expects it', () => {
+  it('centres against the small viewport in exactly the pinned places', () => {
+    expect(flooredBoxes('centred-small')).toEqual(
+      [...CENTRED_SMALL_VIEWPORT_FLOORS].sort(),
+    );
   });
 
-  it('lists every file under src that uses min-h-screen, and no others', () => {
-    expect(filesUsing('min-h-screen')).toEqual(surfacesUsing('screen'));
+  it('centres against a larger viewport only in the gradient wrappers', () => {
+    expect(flooredBoxes('centred-large')).toEqual(
+      [...CENTRED_LARGE_VIEWPORT_FLOORS].sort(),
+    );
   });
 
-  it.each(Object.entries(SURFACES))(
-    '%s holds the pinned count of each floor',
-    (relativePath, counts) => {
-      const source = readSource(relativePath);
+  it('paints a larger viewport under exactly the boxes that centre none', () => {
+    expect(flooredBoxes('uncentred-large')).toEqual(
+      [...UNCENTRED_LARGE_VIEWPORT_FLOORS].sort(),
+    );
+  });
 
-      expect(countOccurrences(source, 'min-h-svh')).toBe(counts.svh);
-      expect(countOccurrences(source, 'min-h-screen')).toBe(counts.screen);
-    },
-  );
+  it('never spends the small viewport on a box that centres nothing', () => {
+    expect(flooredBoxes('uncentred-small')).toEqual([]);
+  });
+});
+
+describe('the tables account for every floor written under src', () => {
+  it('finds no min-h-svh the groups above have not already claimed', () => {
+    expect(floorOccurrences(PINNED_SMALL_FLOOR)).toEqual(
+      [...CENTRED_SMALL_VIEWPORT_FLOORS].sort(),
+    );
+  });
+
+  it('finds no min-h-screen the groups above have not already claimed', () => {
+    expect(floorOccurrences(PINNED_LARGE_FLOOR)).toEqual(
+      [
+        ...CENTRED_LARGE_VIEWPORT_FLOORS,
+        ...UNCENTRED_LARGE_VIEWPORT_FLOORS,
+      ].sort(),
+    );
+  });
+
+  it.each(SIBLING_FLOOR_UTILITIES)('no source file floors on %s', (utility) => {
+    expect(floorOccurrences(utility)).toEqual([]);
+  });
 });
