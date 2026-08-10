@@ -22,7 +22,7 @@ export default function NotFoundView() {
     <main
       ref={mainReference}
       tabIndex={-1}
-      className="flex flex-col items-center justify-center min-h-screen px-4 bg-[var(--base-bg)] text-[var(--base-text)] text-center focus:outline-none select-none"
+      className="flex flex-col items-center justify-center min-h-svh px-4 bg-[var(--base-bg)] text-[var(--base-text)] text-center focus:outline-none select-none"
     >
       <i
         className="fa-solid fa-person-digging text-4xl text-[var(--base-subtle-text)] mb-4"

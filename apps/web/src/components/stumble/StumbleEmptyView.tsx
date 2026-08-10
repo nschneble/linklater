@@ -18,7 +18,7 @@ export default function StumbleEmptyView() {
   const navigate = useNavigate();
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen px-4 py-12 bg-[var(--base-bg)] text-[var(--base-text)] text-center select-none">
+    <div className="flex flex-col items-center justify-center min-h-svh px-4 py-12 bg-[var(--base-bg)] text-[var(--base-text)] text-center select-none">
       <div className="mb-8">
         <PixelArtGhost />
       </div>
