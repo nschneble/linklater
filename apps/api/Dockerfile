@@ -33,10 +33,6 @@ COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
 
-# patch-package patches must exist before `npm ci` runs the postinstall hook,
-# or the install completes with the patches silently unapplied.
-COPY patches ./patches
-
 # Workspace-aware install of every dependency (dev deps included: the Nest CLI
 # and Prisma CLI are needed to build). `--ignore-scripts` is deliberately NOT
 # used because Prisma's postinstall is required.
@@ -75,9 +71,9 @@ RUN npm run typecheck && npm run build
 # prod for zero runtime benefit if node_modules were copied whole from builder.
 #
 # Scripts run (NOT --ignore-scripts) on purpose: @prisma/engines' postinstall
-# places the native schema engine that `prisma migrate deploy` needs, and the
-# root patch-package postinstall applies patches/. Same manifests + patches as
-# the builder, so the install is lockfile-identical minus the dev dependencies.
+# places the native schema engine that `prisma migrate deploy` needs. Same
+# manifests as the builder, so the install is lockfile-identical minus the dev
+# dependencies.
 FROM node:22-slim AS proddeps
 
 WORKDIR /app
@@ -97,7 +93,6 @@ RUN apt-get update \
 COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
-COPY patches ./patches
 
 RUN npm ci --omit=dev
 

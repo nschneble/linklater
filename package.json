@@ -17,7 +17,6 @@
     "generate:email-palette": "node scripts/generate-email-palette.mjs",
     "lint": "npm run lint --workspace @linklater/api && npm run lint --workspace @linklater/web",
     "lint:migrations": "squawk 'apps/api/prisma/migrations/**/*.sql'",
-    "postinstall": "patch-package",
     "test": "node scripts/run-tests.mjs",
     "test:cov": "npm run test:cov --workspace @linklater/api && npm run test:cov --workspace @linklater/web",
     "tuffgal": "tuffgal run",
@@ -28,9 +27,6 @@
   "workspaces": [
     "apps/*"
   ],
-  "dependencies": {
-    "patch-package": "^8.0.1"
-  },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@swc/cli": "^0.8.1",
@@ -48,7 +44,6 @@
   },
   "overrides": {
     "@hono/node-server": "^2.0.5",
-    "brace-expansion": "5.0.8",
     "@nestjs/swagger": {
       "js-yaml": "^5.2.2"
     },
