@@ -88,6 +88,29 @@ Use [Test Driven Development](https://martinfowler.com/bliki/TestDrivenDevelopme
 2. **GREEN:** Write minimal code to pass test
 3. **REFACTOR:** Improve structure, keep tests green
 
+### When no layer can observe the change
+
+Some changes are correct and invisible to every harness here. Viewport
+units (`svh`/`lvh`/`dvh`) collapse to one number in headless Chromium and
+in Tuffgal, neither of which has browser chrome to retract. jsdom computes
+no layout at all. Print styles, `forced-colors`, and anything keyed to real
+device chrome are the same shape.
+
+For these, RED is unavailable. Ship the change and state the unverified
+claim plainly in the PR body, naming what would confirm it — a real device,
+a specific browser.
+
+**No manufacturing a test that can fail in place of one that can prove.** A
+scan over source text asserts the code says what it says, not that it does
+what it should. Completeness has no fixed point: every review turns up
+another spelling it misses, so it earns review waves without converging.
+That is a code-review concern wearing a test costume.
+
+Anti-regression tripwires over source (`chrome-token-migration.test.ts`)
+stay legal. They pin a finished migration against reintroduction, which is
+a bounded set. The line is whether the test stands in for proof the change
+works.
+
 ## Core Conventions
 
 - Organize code into modules
