@@ -65,6 +65,7 @@
     "fsevents@2.3.2": true,
     "fsevents@2.3.3": true,
     "prisma@7.9.1": true,
-    "unrs-resolver@1.12.2": true
+    "unrs-resolver@1.12.2": true,
+    "@swc/core@1.15.47": true
   }
 }
