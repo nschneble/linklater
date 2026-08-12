@@ -23,12 +23,18 @@ const REFRESH_TOKEN_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 
 /**
  * Why a `refresh` call was turned away. Recorded in the server log so a
- * reported sign-out can be matched against what the server actually saw,
- * and deliberately never returned to the caller: telling one of these apart
- * from another hands an attacker an oracle for probing token validity.
+ * reported sign-out can be matched against what the server saw around the
+ * same time, and deliberately never returned to the caller: telling one of
+ * these apart from another hands an attacker an oracle for probing token
+ * validity. The line carries no account, so the match is by time window,
+ * and only on a deployment quiet enough for that window to name one
+ * request.
  *
  * - `unknown-token`: no row matched the presented hash. Covers a token that
- *   was never issued, one already rotated away, and one wiped and replaced.
+ *   was never issued, one already rotated away, one wiped and replaced, and
+ *   one revoked outright by `revokeAllRefreshTokens` (signing out
+ *   everywhere, a password change, account deletion), which leaves no
+ *   replacement behind.
  * - `expired`: the row existed and its window had lapsed, so the session was
  *   genuinely idle for longer than `REFRESH_TOKEN_TTL_MS`.
  * - `rotation-race`: a concurrent request rotated the row between the read
@@ -36,7 +42,10 @@ const REFRESH_TOKEN_TTL_MS = 14 * 24 * 60 * 60 * 1000;
  *   anything wrong.
  *
  * A client whose storage was cleared has no token to present and never
- * reaches this service, so the absence of any line is that case's signature.
+ * reaches this service. That rules the three arms above out, but it does
+ * not rule the case in: a refresh that succeeded, one never attempted, a
+ * request that died earlier, and a user who never signed in all leave the
+ * same nothing behind.
  */
 type RefreshRejectionReason = 'expired' | 'rotation-race' | 'unknown-token';
 

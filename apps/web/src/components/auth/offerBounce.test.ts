@@ -100,6 +100,9 @@ describe('an offer that is still standing behind the arrival', () => {
   });
 });
 
+// a second run of the gate meets the same guard as another flow's message
+// does, since the guard never asks whose the queued one is; the pin is
+// `leaves an error-variant notice alone rather than demoting it` below
 describe('a message another flow already queued', () => {
   it('leaves an error-variant notice alone rather than demoting it', () => {
     setPendingNotice('login-link-invalid');

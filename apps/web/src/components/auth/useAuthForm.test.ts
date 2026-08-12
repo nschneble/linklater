@@ -42,6 +42,7 @@ import * as pendingNoticeModule from '../../lib/pendingNotice';
 import * as standingOfferModule from './standingSessionOffer';
 import { useAuth } from '../../auth/AuthContext';
 import { useAuthForm } from './useAuthForm';
+import type { NoticeEntry } from '../../lib/pendingNotice';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -71,10 +72,26 @@ function makeAuthContext(
 }
 
 /** Renders useAuthForm inside a MemoryRouter at the given path. */
-function renderAuthFormHook(initialPath = '/login') {
+function renderAuthFormHook(initialPath = '/login', reactStrictMode = false) {
   return renderHook(() => useAuthForm(), {
+    reactStrictMode,
     wrapper: ({ children }) =>
       MemoryRouter({ children, initialEntries: [initialPath] }),
+  });
+}
+
+/**
+ * Stubs the store's one-shot read: the entry once, `null` after. A stub
+ * that answers the same entry every time models a store this app does not
+ * have, and hands the second of StrictMode's two effect passes a clean
+ * answer no real mount would get.
+ */
+function queueOnce(entry: NoticeEntry) {
+  let unread = true;
+  vi.mocked(pendingNoticeModule.consumePendingNotice).mockImplementation(() => {
+    if (!unread) return null;
+    unread = false;
+    return entry;
   });
 }
 
@@ -151,15 +168,15 @@ describe('useAuthForm', () => {
       expect(result.current.notice).toBeNull();
     });
 
+    // StrictMode, because the app mounts in it and runs effects twice
     it('survives the mount that consumed it and goes on a mode change', async () => {
-      vi.mocked(pendingNoticeModule.consumePendingNotice).mockReturnValue({
+      queueOnce({
         message: "We couldn't get you back into that session",
         variant: 'warning',
         standing: true,
       });
-      const { result } = renderAuthFormHook('/login');
+      const { result } = renderAuthFormHook('/login', true);
 
-      // the mode effect clears before the consume effect populates
       await waitFor(() => expect(result.current.notice).not.toBeNull());
 
       await act(async () => {

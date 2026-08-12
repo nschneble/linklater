@@ -12,15 +12,23 @@ const SIGNED_TOKEN = 'signed-token';
 const USER_EMAIL = 'email@addy.com';
 const USER_ID = 'user-1';
 
-const warnedLines = () =>
-  (Logger.prototype.warn as unknown as jest.Mock).mock.calls.map((call) =>
-    String(call[0] as unknown),
-  );
+const warnedCalls = () =>
+  (Logger.prototype.warn as unknown as jest.Mock).mock.calls as unknown[][];
 
+// every argument, not only the message: Nest prints each optional param on
+// a line of its own, so whatever a caller attaches beside the message
+// reaches stdout exactly as the message does
+const warnedLines = () =>
+  warnedCalls().map((call) => call.map(String).join(' '));
+
+// the message alone, because a reason code is a claim about what was said,
+// and Nest's own second parameter is a context label a caller is entitled
+// to pass without changing which reason was reported
 const rejectionReasonsLogged = () =>
-  warnedLines()
-    .filter((line) => line.startsWith(REJECTION_PREFIX))
-    .map((line) => line.slice(REJECTION_PREFIX.length));
+  warnedCalls()
+    .map((call) => String(call[0]))
+    .filter((message) => message.startsWith(REJECTION_PREFIX))
+    .map((message) => message.slice(REJECTION_PREFIX.length));
 
 describe('RefreshTokenService', () => {
   let service: RefreshTokenService;
@@ -171,31 +179,6 @@ describe('RefreshTokenService', () => {
       expect(prismaServiceMock.refreshToken.create).not.toHaveBeenCalled();
     });
 
-    it('throws UnauthorizedException when the refresh token is not found', async () => {
-      (
-        prismaServiceMock.refreshToken.findUnique as jest.Mock
-      ).mockResolvedValue(null);
-
-      await expect(service.refresh(RAW_REFRESH_TOKEN)).rejects.toThrow(
-        UnauthorizedException,
-      );
-    });
-
-    it('throws UnauthorizedException when the refresh token is expired', async () => {
-      (
-        prismaServiceMock.refreshToken.findUnique as jest.Mock
-      ).mockResolvedValue({
-        id: 'rt-1',
-        userId: USER_ID,
-        expiresAt: new Date(Date.now() - 1000),
-        user: { id: USER_ID, email: USER_EMAIL, tokenVersion: 0 },
-      });
-
-      await expect(service.refresh(RAW_REFRESH_TOKEN)).rejects.toThrow(
-        UnauthorizedException,
-      );
-    });
-
     it('propagates failure from the create half of the rotation so prisma rolls back the delete', async () => {
       (
         prismaServiceMock.refreshToken.findUnique as jest.Mock
@@ -308,6 +291,7 @@ describe('RefreshTokenService', () => {
         expect(warnedLines()).toEqual([]);
       });
 
+      // the only pin the missing-row and lapsed-row arms have
       it('answers every arm with a response a caller cannot tell apart', async () => {
         arrangeUnknownToken();
         const unknownToken = await rejectionOfRefresh();

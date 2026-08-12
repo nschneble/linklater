@@ -33,12 +33,18 @@ type FormNotice = NoticeEntry;
 /**
  * Effects below run in declaration order and that order is load-bearing:
  * the mode effect peeks for a pending notice before the effect that
- * consumes it, and drops the notice it holds before that same effect
- * puts one there, so a mount keeps what it consumed and only a later
- * mode change clears it. The arrival-error effect follows the mode
- * effect so a cleared error cannot land on top of the message it should
- * paint. What the peek finds is queued a commit earlier, by whichever
- * flow sent the user here.
+ * consumes it, so the peek still finds the entry that is about to be
+ * taken. The arrival-error effect follows the mode effect so a cleared
+ * error cannot land on top of the message it should paint. What the peek
+ * finds is queued a commit earlier, by whichever flow sent the user here.
+ *
+ * The mode effect keeps its own record of the mode it last saw, because
+ * the effect running is not the same event as the mode changing. React
+ * double-invokes it in development, and the store the message came from
+ * is one-shot, so a clear on every run takes away every announcement this
+ * screen was sent (`AuthForm.strictMode.test.tsx`). `handleModeChange` is
+ * no home for the clear either: back and forward between the auth routes
+ * change the mode without passing through it.
  *
  * The email `takeCarriedEmail` hands back was typed into a form this
  * user was moved off of, so putting it back is WCAG 3.3.7 Redundant
@@ -55,6 +61,7 @@ export function useAuthForm() {
   const errorReference = useRef<HTMLParagraphElement>(null);
   const mfaInputReference = useRef<HTMLInputElement>(null);
   const passwordReference = useRef<HTMLInputElement>(null);
+  const previousMode = useRef<Mode | null>(null);
 
   const [email, setEmail] = useState('');
   const { error, errorFromArrival, setError } = useFormError();
@@ -106,13 +113,17 @@ export function useAuthForm() {
   }, [email]);
 
   useEffect(() => {
+    const modeChanged =
+      previousMode.current !== null && previousMode.current !== mode;
+    previousMode.current = mode;
+
     setPassword('');
     setError(null);
     setLoading(false);
     setMagicLinkSentJustNow(false);
     setForgotPasswordSentJustNow(false);
     // a standing one would otherwise outlive the screen it describes
-    setNotice(null);
+    if (modeChanged) setNotice(null);
 
     const hasInboundAnnouncement =
       hasPendingNotice() || arrivedWithOAuthError || hasStandingSessionOffer();

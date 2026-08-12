@@ -10,8 +10,8 @@ import { useEffect, useState } from 'react';
  * as part of page load and skipped. Deferring guarantees the region
  * transitions empty → populated, which all major SRs announce reliably.
  *
- * Returns `{ notice, variant, dismiss }` (flat shape so consumers can spread
- * straight into `<PendingNoticeAnnouncer>` props):
+ * Returns `{ notice, variant, standing, dismiss }` (flat shape so consumers
+ * can spread straight into `<PendingNoticeAnnouncer>` props):
  * - `notice`: the human-readable message, or `null`.
  * - `variant`: `'success'` (default when no notice is queued), `'warning'`,
  *   or `'error'`. When `notice` is `null` the variant is inert; the
