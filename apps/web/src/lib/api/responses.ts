@@ -1,9 +1,11 @@
 /**
- * The error type every API call rejects with, and the two readers that
- * turn a `Response` into a value or into one of these. Both tolerate a
+ * The two readers that turn a `Response` into a value or into an error, and
+ * the error type every API call rejects with. Both readers tolerate a
  * non-JSON body: servers and proxies answer with HTML often enough that a
  * parse failure has to surface as a status-carrying error rather than a
- * `SyntaxError` from somewhere in the client.
+ * `SyntaxError` from somewhere in the client. A proxy or captive portal
+ * answering 200 with a login page is the case that makes the success
+ * reader throw rather than return nothing.
  */
 
 export class ApiError extends Error {

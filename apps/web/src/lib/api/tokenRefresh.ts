@@ -1,16 +1,20 @@
 /**
  * Renewal of an expired access token, and the single question a rejected
- * renewal has to answer: is this session over, or did another tab simply
- * get to the rotation first? Only the first warrants clearing the tokens,
- * and treating the second as the first is a logout the user never asked
- * for.
+ * renewal has to answer: is this session over, or did another tab get to
+ * the rotation first? Only the first warrants clearing the tokens, and
+ * treating the second as the first is a logout the user never asked for.
  *
- * A rotation another tab performed leaves both its tokens in the store, so
- * the second case needs no second network leg: reporting success is enough
- * for `apiFetch` to retry against the successor it finds there. The token
- * being spent is read once, up front, because a re-read taken later could
- * land after that rotation and leave the guard comparing against a value
- * this request never sent.
+ * The second case needs no second network leg here: reporting success is
+ * enough for `apiFetch` to retry with whatever access token the store now
+ * serves. That token may still be the expired one, because the sibling's
+ * two writes are not atomic (see `setStoredToken`) and its access token
+ * can still be in flight. The retry then 401s and the caller sees that
+ * error, which is the right outcome: one leg was spent finding out, the
+ * session was never cleared, and the next request renews normally.
+ *
+ * The token being spent is read once, up front, because a re-read taken
+ * later could land after that rotation and leave the guard comparing
+ * against a value this request never sent.
  */
 
 import {

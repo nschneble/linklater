@@ -63,7 +63,8 @@ const MAX_POLLS_PER_TICK = 3;
  * other request error and the next tick schedules normally. The signal bounds
  * the poll request itself; a 401 that sends apiFetch through a token refresh
  * runs that refresh leg on the refresh's own deadline (see REFRESH_DEADLINE_MS
- * in the api core), so that leg is bounded too, just not by this signal.
+ * in the api token-refresh module), so that leg is bounded too, just not by
+ * this signal.
  *
  * The value sits above any healthy round-trip (a slow mobile connection
  * included, so a working-but-slow poll is not falsely aborted and left to

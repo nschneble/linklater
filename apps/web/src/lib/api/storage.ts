@@ -9,8 +9,8 @@
  * private-browsing and ITP states), and there the persisted copy is older
  * than what this tab holds. Every refused change is recorded against what
  * the store held at the time, so a later read can tell a store that has
- * not moved since (memory is newer) from one another tab has since
- * written (the store is newer).
+ * not moved since (memory is newer) from one a sibling has written since
+ * (the store is newer).
  *
  * A read answering `null` means absent, unreadable, or removed by another
  * tab. None of those is proof the session ended, so the token this tab
@@ -30,8 +30,7 @@ const REFRESH_TOKEN_KEY = 'linklater_refresh_token';
 
 /**
  * Keys whose in-memory copy this tab could not persist, each mapped to
- * what the store held when it refused. Recording the value, not just the
- * key, is what lets a later read date the store's copy.
+ * what the store held when it refused.
  */
 const refusedWrites = new Map<string, string | null>();
 
@@ -50,7 +49,10 @@ function safeRead(key: string): string | null {
 
 /**
  * Safely writes to `localStorage`, recording a refusal against what the
- * store held at the time.
+ * store held at the time. Clearing the record on a landed write is what
+ * keeps the map's own claim true; no read can observe it either way, since
+ * a landed write leaves the two copies equal and the comparison in
+ * `isPersistedAuthoritative` answers the same with the record or without.
  */
 function safeWrite(key: string, value: string): void {
   if (typeof window === 'undefined') return;
@@ -160,13 +162,17 @@ export function clearStoredToken(): void {
  * a read taken after storage becomes unreadable still answers with the
  * rotated pair rather than the one read at boot. The `storage` event never
  * fires in the tab that wrote, so this only ever carries another tab's
- * work, which is newer than a write of this tab's that storage refused.
+ * work, but not necessarily work newer than this tab's: the event is
+ * delivered as a queued task, so a sibling's write can arrive after a
+ * rotation this tab performed in the gap. An outstanding refusal is
+ * therefore left standing, and the value comparison below decides which
+ * copy is newer, exactly as a read taken before the event would.
+ *
  * The store is re-read rather than trusting the event payload, so the rule
  * that a `null` never evicts a live token lives in a single place.
  */
 function handleTokenStorageEvent(event: StorageEvent): void {
   if (event.key !== TOKEN_KEY && event.key !== REFRESH_TOKEN_KEY) return;
-  refusedWrites.delete(event.key);
   cachedToken = readPersisted(TOKEN_KEY, cachedToken);
   cachedRefreshToken = readPersisted(REFRESH_TOKEN_KEY, cachedRefreshToken);
 }

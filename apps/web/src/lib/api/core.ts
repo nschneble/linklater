@@ -6,7 +6,7 @@ export {
 } from './storage';
 
 import { API_BASE_URL, getStoredToken } from './storage';
-import { ApiError, parseError, parseResponse } from './errors';
+import { ApiError, parseError, parseResponse } from './responses';
 import { attemptTokenRefresh } from './tokenRefresh';
 
 /**

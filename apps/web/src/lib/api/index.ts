@@ -32,11 +32,10 @@ export {
   apiFetch,
   apiFetchRequired,
   clearStoredToken,
-  getStoredToken,
   getStoredRefreshToken,
+  getStoredToken,
   setStoredToken,
 } from './core';
-export { ApiError } from './errors';
 export type { PaginatedLinks, Link, LinkMeta } from './links';
 export {
   createLink,
@@ -49,6 +48,7 @@ export {
   stumbleLink,
   unreadLink,
 } from './links';
+export { ApiError } from './responses';
 export type { Suggestion, SuggestionsResponse } from './suggestions';
 export { getSuggestions } from './suggestions';
 export type { ApiToken, BookmarkletToken, CreatedApiToken } from './tokens';

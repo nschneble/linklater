@@ -5,9 +5,13 @@ const REFRESH_TOKEN_KEY = 'linklater_refresh_token';
 
 /**
  * Verifies that a token pair rotated in one tab reaches every other tab of
- * the same origin. The `storage` event never fires in the tab that wrote, so
- * the other tab is simulated here by writing to the real
- * `window.localStorage` and dispatching a `StorageEvent` by hand.
+ * the same origin. `test/setup.ts` replaces `window.localStorage` with a
+ * hand-rolled store that fires no events, so the other tab is simulated
+ * here by writing to that store and dispatching a `StorageEvent` by hand.
+ *
+ * The browser delivers that event as a queued task, which is why the write
+ * and the dispatch are separable below: a sibling's write can be delivered
+ * after work this tab did in the gap.
  *
  * The module is re-imported per test so its cache starts clean; the listener
  * each import registers is torn down in `afterEach`.
@@ -27,7 +31,20 @@ describe('storage.ts cross-tab token sync', () => {
     } else {
       window.localStorage.setItem(key, value);
     }
+    deliverStorageEvent(key, value);
+  }
+
+  function deliverStorageEvent(key: string, value: string | null): void {
     window.dispatchEvent(new StorageEvent('storage', { key, newValue: value }));
+  }
+
+  function refuseWrites(): void {
+    vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => {
+      throw new Error('QuotaExceededError');
+    });
+    vi.spyOn(window.localStorage, 'removeItem').mockImplementation(() => {
+      throw new Error('QuotaExceededError');
+    });
   }
 
   function breakStorageReads(): void {
@@ -69,6 +86,44 @@ describe('storage.ts cross-tab token sync', () => {
     writeInAnotherTab(TOKEN_KEY, 'sibling-access');
 
     expect(module.getStoredToken()).toBe('sibling-access');
+  });
+
+  it('keeps the token this tab holds when a sibling event arrives late', async () => {
+    const module = await loadStorageModule();
+    // the sibling's write lands first; its event is still queued
+    window.localStorage.setItem(TOKEN_KEY, 'sibling-access');
+    refuseWrites();
+    module.setStoredToken('my-access');
+
+    vi.restoreAllMocks();
+    deliverStorageEvent(TOKEN_KEY, 'sibling-access');
+
+    expect(module.getStoredToken()).toBe('my-access');
+  });
+
+  it('reads no supersession from a sibling event that arrives late', async () => {
+    const module = await loadStorageModule();
+    window.localStorage.setItem(REFRESH_TOKEN_KEY, 'sibling-refresh');
+    refuseWrites();
+    module.setStoredToken('my-access', 'my-refresh');
+
+    vi.restoreAllMocks();
+    deliverStorageEvent(REFRESH_TOKEN_KEY, 'sibling-refresh');
+
+    // this tab never rotated to the sibling's token, so nothing superseded
+    expect(module.isRefreshTokenSuperseded('my-refresh')).toBe(false);
+  });
+
+  it('leaves a refused logout cleared when a late event carries the same value', async () => {
+    window.localStorage.setItem(TOKEN_KEY, 'live-access');
+    const module = await loadStorageModule();
+    refuseWrites();
+    module.clearStoredToken();
+
+    vi.restoreAllMocks();
+    deliverStorageEvent(TOKEN_KEY, 'live-access');
+
+    expect(module.getStoredToken()).toBeNull();
   });
 
   it('keeps the in-memory pair when another tab removes the tokens', async () => {
