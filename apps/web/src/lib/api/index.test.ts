@@ -420,6 +420,53 @@ describe('apiFetch', () => {
     expect(getStoredRefreshToken()).toBe('fresh-refresh');
   });
 
+  it('refreshes with the token another tab rotated, not the stale cached one', async () => {
+    setStoredToken('expired-jwt', 'spent-refresh');
+    // the other tab rotated and persisted a successor before this 401
+    localStorage.setItem('linklater_refresh_token', 'rotated-refresh');
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: () =>
+          Promise.resolve(
+            JSON.stringify({
+              accessToken: 'fresh-jwt',
+              refreshToken: 'fresh-refresh',
+            }),
+          ),
+        json: () =>
+          Promise.resolve({
+            accessToken: 'fresh-jwt',
+            refreshToken: 'fresh-refresh',
+          }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: () => Promise.resolve(JSON.stringify({ id: 'retried' })),
+      });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    await expect(apiFetch<{ id: string }>('/test')).resolves.toEqual({
+      id: 'retried',
+    });
+
+    const [, refreshOptions] = fetchMock.mock.calls[1] as [string, RequestInit];
+    expect(JSON.parse(refreshOptions.body as string)).toEqual({
+      refreshToken: 'rotated-refresh',
+    });
+    expect(getStoredToken()).toBe('fresh-jwt');
+  });
+
   it('does not retry when no refresh token is stored', async () => {
     setStoredToken('expired-jwt');
     const fetchMock = vi.fn().mockResolvedValue({

@@ -42,47 +42,83 @@ function safeRemove(key: string): void {
   }
 }
 
-let storedToken: string | null = safeRead(TOKEN_KEY);
-let storedRefreshToken: string | null = safeRead(REFRESH_TOKEN_KEY);
+let cachedToken: string | null = safeRead(TOKEN_KEY);
+let cachedRefreshToken: string | null = safeRead(REFRESH_TOKEN_KEY);
+
+/**
+ * Reads the persisted copy, falling back to the in-memory one. A `null`
+ * read means absent, unreadable, or removed by another tab – never proof
+ * the session ended, so the token this tab holds survives it. Reading
+ * through is what lets a rotation performed in one tab reach the others:
+ * the in-memory copy alone would go stale the moment a sibling tab renewed
+ * the pair, and the stale refresh token is already spent server-side.
+ */
+function readPersisted(key: string, cached: string | null): string | null {
+  const persisted = safeRead(key);
+  if (persisted === null) return cached;
+  return persisted;
+}
 
 export function getStoredToken(): string | null {
-  return storedToken;
+  return readPersisted(TOKEN_KEY, cachedToken);
 }
 
 export function getStoredRefreshToken(): string | null {
-  return storedRefreshToken;
+  return readPersisted(REFRESH_TOKEN_KEY, cachedRefreshToken);
 }
 
 export function setStoredToken(
   accessToken: string,
   refreshToken?: string,
 ): void {
-  storedToken = accessToken;
+  cachedToken = accessToken;
   safeWrite(TOKEN_KEY, accessToken);
 
   if (refreshToken !== undefined) {
-    storedRefreshToken = refreshToken;
+    cachedRefreshToken = refreshToken;
     safeWrite(REFRESH_TOKEN_KEY, refreshToken);
   }
 }
 
 export function clearStoredToken(): void {
-  storedToken = null;
-  storedRefreshToken = null;
+  cachedToken = null;
+  cachedRefreshToken = null;
   safeRemove(TOKEN_KEY);
   safeRemove(REFRESH_TOKEN_KEY);
 }
 
 /**
- * Resets the module-level token singletons to `null` without touching
- * `localStorage`. Use in test `beforeEach` to prevent stale state from
- * one test leaking into the next – each test that calls `setStoredToken`
- * gets a clean slate.
- *
- * Not exported from the public API barrel (`lib/api/index.ts`) – this is
- * a test-only helper.
+ * Pulls a sibling tab's rotation into the in-memory copy as it happens, so
+ * a read taken after storage becomes unreadable still answers with the
+ * rotated pair rather than the one read at boot. The `storage` event never
+ * fires in the tab that wrote, so this only ever carries another tab's
+ * work. The store is re-read rather than trusting the event payload: one
+ * source of truth, and the rule that a `null` never evicts a live token
+ * then lives in a single place.
  */
-export function resetStorageForTesting(): void {
-  storedToken = null;
-  storedRefreshToken = null;
+function handleTokenStorageEvent(event: StorageEvent): void {
+  if (event.key !== TOKEN_KEY && event.key !== REFRESH_TOKEN_KEY) return;
+  cachedToken = readPersisted(TOKEN_KEY, cachedToken);
+  cachedRefreshToken = readPersisted(REFRESH_TOKEN_KEY, cachedRefreshToken);
+}
+
+let crossTabSyncStarted = false;
+
+function startCrossTabTokenSync(): void {
+  if (typeof window === 'undefined' || crossTabSyncStarted) return;
+  window.addEventListener('storage', handleTokenStorageEvent);
+  crossTabSyncStarted = true;
+}
+
+startCrossTabTokenSync();
+
+/**
+ * Detaches the cross-tab listener. The app never stops syncing while it
+ * runs; this exists so a suite that re-imports the module does not leave a
+ * listener behind on the shared `window`.
+ */
+export function stopCrossTabTokenSync(): void {
+  if (typeof window === 'undefined') return;
+  window.removeEventListener('storage', handleTokenStorageEvent);
+  crossTabSyncStarted = false;
 }
