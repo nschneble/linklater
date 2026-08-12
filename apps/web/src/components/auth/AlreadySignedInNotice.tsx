@@ -14,9 +14,9 @@
  * demanded again (WCAG 3.3.7 Redundant Entry). The password is worse: it
  * was never submitted, so no password manager holds a copy.
  *
- * The notice is inert until the link is followed. Keying the swap to the
- * next keystroke or to submit would convert an N/A into a plain 3.2.2 On
- * Input failure.
+ * The notice is inert until the link is followed. WCAG 3.2.2 On Input
+ * does not apply to it. Keying the swap to the next keystroke or to
+ * submit would make it apply, and fail.
  *
  * Nothing here moves focus either, because preserving the caret where the
  * user left it is the entire point.
@@ -56,13 +56,18 @@
  * by.
  *
  * The bounce is not left to cost the form. Following the link hands the
- * typed email to `carriedEmail.ts`, and the login form the auth gate
- * lands on puts it back and says why it is being asked again. The
- * password cannot travel and does not.
+ * typed email to `carriedEmail.ts` and the login form the auth gate lands
+ * on puts it back. Nothing here claims the link failed, because from here
+ * it has not yet been tried; the gate says why the form reappeared, once
+ * it has watched the offer come back (`offerBounce.ts`). The password
+ * cannot travel and does not.
  *
  * One string feeds both channels so they cannot drift, and only the
- * sr-only region carries live semantics; a role on the painted copy would
- * put two regions on one message and have it read twice.
+ * sr-only region reaches the accessibility tree at all. The painted copy
+ * is hidden from it rather than merely left without a role: two copies of
+ * one sentence are read back to back by a linear reader whether or not
+ * the second one announces itself. The link is not hidden, since it is
+ * the only route to the action.
  */
 
 import { carryTypedEmail } from './carriedEmail';
@@ -109,7 +114,7 @@ export default function AlreadySignedInNotice() {
     <>
       {signedInElsewhere && (
         <div className="flex flex-col items-center gap-3 w-full max-w-md mx-auto mb-4 p-4 bg-[var(--mount-bg)] border-shadow text-[var(--mount-text)] text-sm rounded-2xl select-none">
-          <p>
+          <p aria-hidden="true">
             <i className="fa-solid fa-circle-info mr-1.5" aria-hidden="true" />
             {ALREADY_SIGNED_IN_MESSAGE}
           </p>

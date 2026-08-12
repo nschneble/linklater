@@ -15,18 +15,21 @@
  * only email ever written to storage belongs to a user who just asked to
  * leave the page.
  *
- * The stored value doubles as the record that the offer was taken, which
- * is why an empty box is written as `''` rather than skipped: the arrival
- * has to announce whether or not anything was typed.
+ * `sessionStorage` rather than `localStorage`, because an address in
+ * `localStorage` would reach every tab of the browser and outlive the
+ * one visit it was typed during, and neither is true of the value: it
+ * belongs to the document the link opens and to nothing else.
  *
- * A link that WORKS leaves the value unread, since a tab that lands in
- * the app mounts no login form. It is then picked up by whatever bounce
- * comes next in that tab, and both things it does there are still true:
- * the user really was returned to the form, and the email really is
- * theirs.
+ * What is stored is the email and only the email. A click is not a
+ * bounce, and this value is not evidence of one: the common case is a
+ * link that works, which leaves the value unread in a tab that mounted no
+ * login form. Whether the navigation FAILED is the auth gate's
+ * observation, and `offerBounce.ts` is where the gate records it. A
+ * successful arrival drops the value (`useAuthState` adopts a user), so
+ * nothing armed here outlives the offer it belongs to.
  */
 
-// distinct key name so a deploy-straddling session cannot misread an older shape
+// distinct key so a deploy-straddling session cannot misread an old shape
 const CARRIED_EMAIL_KEY = 'linklater_carried_email';
 
 let typedEmail = '';
@@ -45,6 +48,20 @@ export function carryTypedEmail(): void {
   }
 }
 
+/**
+ * Whether this document load began by following the offer. An empty box
+ * is carried as `''` rather than skipped, so presence and not truthiness
+ * is the question.
+ */
+export function hasCarriedEmail(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.sessionStorage.getItem(CARRIED_EMAIL_KEY) !== null;
+  } catch {
+    return false;
+  }
+}
+
 /** Reads and clears in one step, so a reload cannot re-announce. */
 export function takeCarriedEmail(): string | null {
   if (typeof window === 'undefined') return null;
@@ -54,5 +71,15 @@ export function takeCarriedEmail(): string | null {
     return carried;
   } catch {
     return null;
+  }
+}
+
+/** Forgets a carry the arrival proved was never needed. */
+export function dropCarriedEmail(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.removeItem(CARRIED_EMAIL_KEY);
+  } catch {
+    // best-effort: an unreachable store holds nothing to forget
   }
 }

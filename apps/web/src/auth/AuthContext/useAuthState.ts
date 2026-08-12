@@ -9,6 +9,7 @@ import {
   resendVerificationEmail as apiResendVerificationEmail,
   setStoredToken,
 } from '../../lib/api';
+import { dropCarriedEmail } from '../../components/auth/carriedEmail';
 import {
   forgetRenderedIdentity,
   noteRenderedIdentity,
@@ -47,6 +48,8 @@ export function useAuthState(): AuthContextValue {
   const adoptUser = useCallback((me: MeResponse) => {
     const nextUser = mapMeToUser(me);
     noteRenderedIdentity(nextUser.userId);
+    // an offer that reached here landed, so its carry is spent
+    dropCarriedEmail();
     setUser(nextUser);
   }, []);
 

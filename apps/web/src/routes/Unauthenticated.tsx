@@ -1,7 +1,9 @@
 import AlreadySignedInNotice from '../components/auth/AlreadySignedInNotice';
+import { announceOfferBounce } from '../components/auth/offerBounce';
 import AuthForm from '../components/auth/AuthForm';
 import LandingPage from '../components/LandingPage';
 import { Navigate, Route, useLocation } from 'react-router';
+import { useEffect } from 'react';
 
 /**
  * Pins branding at the surface so it survives auth-gate/hydration edges.
@@ -26,8 +28,19 @@ export function AuthFormWrapper() {
   );
 }
 
+/**
+ * The auth gate: reached only once a load has come back with no user, on
+ * a path that needs one. That makes it the only place that can tell a
+ * followed offer from a landed one, which is why it and not the notice
+ * arms the arrival's explanation (`offerBounce.ts`).
+ *
+ * The queue lands a whole commit before the login form mounts: React
+ * flushes a commit's passive effects as a unit, so this one runs after
+ * `Navigate` asks for the move and before the render it schedules.
+ */
 function UnauthenticatedRedirect() {
   const location = useLocation();
+  useEffect(announceOfferBounce, []);
   return <Navigate to="/login" state={{ from: location.pathname }} replace />;
 }
 

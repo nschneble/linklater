@@ -23,6 +23,12 @@ import { useEffect, useState } from 'react';
  * The sessionStorage entry is cleared inside this hook the moment the
  * deferred read fires, so any sibling consumer mounting later in the
  * same session will receive `null`; first mount wins.
+ *
+ * The entry's `standing` flag is not carried through, because no notice
+ * that sets it can reach a consumer of this hook: the one that does is
+ * queued by the auth gate, which routes to the login form, and that form
+ * holds the entry itself rather than reading it here. A second standing
+ * entry would need this shape widened along with it.
  */
 export function usePendingNotice(): {
   notice: string | null;

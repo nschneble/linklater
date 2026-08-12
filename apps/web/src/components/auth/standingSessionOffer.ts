@@ -20,8 +20,9 @@ import { readRenderedIdentity } from '../../auth/AuthContext/renderedIdentity';
  * silent, and an expired one is evidence of a session that has ended:
  * the arm this feeds is a boot whose profile fetch failed without a 401,
  * which is exactly what an expired token behind a network blip looks
- * like. Announcing there sends the user through a bounce that costs the
- * form. Expiry is necessary and not sufficient, since a revocation
+ * like. Announcing there offers a way back that cannot be taken, and
+ * spends a document load to say so. Expiry is necessary and not
+ * sufficient, since a revocation
  * (a `tokenVersion` bump) leaves `exp` sitting in the future, and a
  * token carrying no readable expiry is dated by nothing here.
  */

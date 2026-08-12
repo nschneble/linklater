@@ -27,6 +27,7 @@ vi.mock('../../lib/api', () => ({
 }));
 
 import * as apiModule from '../../lib/api';
+import { hasCarriedEmail } from '../../components/auth/carriedEmail';
 import { readRenderedIdentity } from './renderedIdentity';
 import { restoreLocation, standOnPath } from '../../../test/locationMock';
 import { useAuthState } from './useAuthState';
@@ -514,6 +515,36 @@ describe('recording who this tab is rendering', () => {
     });
 
     expect(readRenderedIdentity()).toBeNull();
+  });
+});
+
+describe('an offer whose link landed', () => {
+  /**
+   * The email is handed across the offer's document load in case the load
+   * bounces. Rendering a user is the proof it did not, and the value has
+   * to go then: left behind it prefills a form the user reaches later by
+   * signing out, and arms an explanation for a bounce that never happened.
+   */
+  it('drops the carried email once a user is rendered', async () => {
+    sessionStorage.setItem('linklater_carried_email', 'half-typed@test.com');
+    vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());
+
+    const { result } = renderHook(() => useAuthState());
+    await waitFor(() => expect(result.current.user).not.toBeNull());
+
+    expect(hasCarriedEmail()).toBe(false);
+  });
+
+  it('leaves it alone while the boot is still failing to render anyone', async () => {
+    sessionStorage.setItem('linklater_carried_email', 'half-typed@test.com');
+    vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
+    vi.mocked(apiModule.getMe).mockRejectedValue(new Error('network'));
+
+    const { result } = renderHook(() => useAuthState());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(hasCarriedEmail()).toBe(true);
   });
 });
 

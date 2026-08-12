@@ -62,6 +62,11 @@ function decodePathname(pathname: string): string {
  * emailed link opened as `/Reset-Password` or `/reset%2Dpassword` renders
  * the form and gets replaced mid-entry, spending the single-use token
  * with it (Postel's law).
+ *
+ * It over-recognizes in one spot, and in the same safe direction:
+ * `toLowerCase` folds the Kelvin sign to an ASCII `k` while the router's
+ * unflagged `i` regex does not, so `/oauth/callbacK` reads as a table
+ * entry here and matches no route there.
  */
 export function normalizePathname(pathname: string): string {
   const withoutTrailingSlash = decodePathname(pathname)

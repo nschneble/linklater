@@ -10,10 +10,11 @@
  * The sessionStorage key is shared - whichever entry point mounts first
  * consumes the notice and clears the key, so the other won't double-fire.
  *
- * One entry, `session-unavailable`, is queued by the same mount that
- * consumes it: `useAuthForm` recognizes an auth-gate bounce on arrival and
- * writes here anyway, so the copy and the ARIA shape come from this table
- * like every other message, and its own focus bail sees a notice pending.
+ * One entry, `session-unavailable`, is queued by the auth gate itself
+ * (`components/auth/offerBounce.ts`) rather than by a flow the user
+ * asked for, one commit before the login form it explains mounts. It
+ * goes through this table like every other message so the copy and the
+ * ARIA shape have one home, and so the form's focus bail sees it pending.
  *
  * Uses `sessionStorage` (not `localStorage`) because the signal should not
  * survive across tabs or persist beyond the current browser session, and
@@ -52,6 +53,14 @@ export type PendingNotice =
 export interface NoticeEntry {
   message: string;
   variant: 'success' | 'warning' | 'error';
+  /**
+   * Whether the message is the arriving page's own account of itself
+   * rather than a report on something the user just did. Those cannot
+   * ride a dismiss timer (WCAG 2.2.1 Timing Adjustable): the page will
+   * still be there, unexplained, after the timer runs out. The surfacing
+   * UI paints them in the flow instead of in a toast.
+   */
+  standing?: boolean;
 }
 
 // error copies inline the recovery hint (WCAG 3.3.3) when it's behind auth
@@ -92,10 +101,13 @@ const NOTICE_CATALOG: Record<PendingNotice, NoticeEntry> = {
     variant: 'success',
   },
   // names what the attempt did, not what the server did: a bounce off the
-  // auth gate reads the same whether the session ended or the network blipped
+  // auth gate reads the same whether the session ended or the network
+  // blipped. No instruction to log in, for the reason the two
+  // please-sign-in entries above dropped theirs: the form is right there
   'session-unavailable': {
-    message: "We couldn't reopen that session, so please sign in again",
+    message: "We couldn't get you back into that session",
     variant: 'warning',
+    standing: true,
   },
   'deletion-link-invalid': {
     message: 'Account deletion link has expired',
@@ -119,6 +131,16 @@ const NOTICE_CATALOG: Record<PendingNotice, NoticeEntry> = {
     variant: 'error',
   },
 };
+
+/**
+ * The catalog's own census. A test that enumerates the notice keys has to
+ * hand-write them, because the union erases at runtime and `tsconfig.app`
+ * excludes test files from the typecheck that would have caught the list
+ * going stale. This is what such a list can be compared against.
+ */
+export function pendingNoticeKeys(): PendingNotice[] {
+  return Object.keys(NOTICE_CATALOG) as PendingNotice[];
+}
 
 /** Safely writes a notice. No-op when sessionStorage is unavailable. */
 export function setPendingNotice(notice: PendingNotice): void {

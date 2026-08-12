@@ -13,6 +13,7 @@
  *   - The Toast is omitted when notice is null
  *   - The Toast paints with the right variant when notice is non-null
  *   - The mirror is the ONLY live region; the toast announces nothing
+ *   - `standing` swaps the toast for an in-flow panel that never times out
  */
 
 import { describe, expect, it, vi } from 'vitest';
@@ -184,5 +185,95 @@ describe('PendingNoticeAnnouncer null notice', () => {
     );
     expect(mirror).toBeInTheDocument();
     expect(mirror?.textContent).toBe('');
+  });
+});
+
+describe('PendingNoticeAnnouncer standing notice', () => {
+  const REASON = "We couldn't get you back into that session";
+
+  function renderStanding(standing: boolean) {
+    return render(
+      <PendingNoticeAnnouncer
+        notice={REASON}
+        variant="warning"
+        onDismiss={vi.fn()}
+        standing={standing}
+      />,
+    );
+  }
+
+  it('paints in the flow rather than fixed to the viewport bottom', () => {
+    const { container } = renderStanding(true);
+
+    const panel = container.querySelector('.fa-circle-info')?.closest('div');
+    expect(panel).not.toBeNull();
+    expect(panel?.className).not.toContain('fixed');
+    expect(panel?.className).not.toContain('z-50');
+  });
+
+  it('offers no dismiss control, since nothing takes the message away', () => {
+    renderStanding(true);
+
+    expect(screen.queryByRole('button', { name: /dismiss/i })).toBeNull();
+  });
+
+  it('stays on screen past every timer the toast would have run', () => {
+    vi.useFakeTimers();
+    try {
+      renderStanding(true);
+
+      vi.advanceTimersByTime(60_000);
+
+      expect(screen.getAllByText(REASON).length).toBeGreaterThan(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('keeps the sr-only mirror as the only live region', () => {
+    const { container } = renderStanding(true);
+
+    expect(container.querySelectorAll('[aria-live]')).toHaveLength(1);
+    const painted = screen
+      .getAllByText(REASON)
+      .find((element) => element.closest('.sr-only') === null);
+    expect(painted).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it('rides the toast when the notice is not standing', () => {
+    const { container } = renderStanding(false);
+
+    expect(container.querySelector('.fa-circle-info')).toBeNull();
+    expect(
+      container.querySelector('.fa-triangle-exclamation')?.closest('div')
+        ?.className,
+    ).toContain('fixed');
+  });
+
+  it('rides the toast when nothing says either way', () => {
+    const { container } = render(
+      <PendingNoticeAnnouncer
+        notice={REASON}
+        variant="warning"
+        onDismiss={vi.fn()}
+      />,
+    );
+
+    expect(container.querySelector('.fa-circle-info')).toBeNull();
+    expect(container.querySelector('.fa-triangle-exclamation')).not.toBeNull();
+  });
+
+  it('paints nothing at all when there is no notice to stand', () => {
+    const { container } = render(
+      <PendingNoticeAnnouncer
+        notice={null}
+        variant="warning"
+        onDismiss={vi.fn()}
+        standing
+      />,
+    );
+
+    expect(container.querySelector('.fa-circle-info')).toBeNull();
+    expect(container.querySelector('[aria-live]')?.textContent).toBe('');
   });
 });

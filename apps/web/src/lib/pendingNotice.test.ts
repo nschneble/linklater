@@ -2,9 +2,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   consumePendingNotice,
   hasPendingNotice,
+  pendingNoticeKeys,
   setPendingNotice,
   type PendingNotice,
 } from './pendingNotice';
+import { withRefusedStorage } from '../../test/refusedStorage';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -153,31 +155,17 @@ describe('setPendingNotice / consumePendingNotice', () => {
   });
 
   it('does not throw when sessionStorage rejects writes', () => {
-    const originalSetItem = window.sessionStorage.setItem.bind(
-      window.sessionStorage,
-    );
-    window.sessionStorage.setItem = () => {
-      throw new DOMException('QuotaExceededError');
-    };
-    try {
+    withRefusedStorage('setItem', () => {
       expect(() => setPendingNotice('account-deleted')).not.toThrow();
-    } finally {
-      window.sessionStorage.setItem = originalSetItem;
-    }
+    });
+    expect(hasPendingNotice()).toBe(false);
   });
 
   it('returns null and does not throw when sessionStorage rejects reads', () => {
-    const originalGetItem = window.sessionStorage.getItem.bind(
-      window.sessionStorage,
-    );
-    window.sessionStorage.getItem = () => {
-      throw new DOMException('SecurityError');
-    };
-    try {
+    setPendingNotice('account-deleted');
+    withRefusedStorage('getItem', () => {
       expect(consumePendingNotice()).toBeNull();
-    } finally {
-      window.sessionStorage.getItem = originalGetItem;
-    }
+    });
   });
 
   it('returns null when stored value is unknown (forward-compat guard)', () => {
@@ -215,21 +203,13 @@ describe('hasPendingNotice', () => {
   });
 
   it('returns false and does not throw when sessionStorage rejects reads', () => {
-    const originalGetItem = window.sessionStorage.getItem.bind(
-      window.sessionStorage,
-    );
-    window.sessionStorage.getItem = () => {
-      throw new DOMException('SecurityError');
-    };
-    try {
+    setPendingNotice('account-deleted');
+    withRefusedStorage('getItem', () => {
       expect(hasPendingNotice()).toBe(false);
-    } finally {
-      window.sessionStorage.getItem = originalGetItem;
-    }
+    });
   });
 });
 
-// drift guard: every PendingNotice key must round-trip the catalog or ship silently dropped
 describe('catalog drift guard', () => {
   // the union erases at runtime, so a keyed object stands in as its census
   const ALL_KEYS = Object.keys({
@@ -248,6 +228,11 @@ describe('catalog drift guard', () => {
     'login-link-invalid': true,
     'oauth-failed': true,
   } satisfies Record<PendingNotice, true>) as PendingNotice[];
+
+  // `satisfies` cannot hold the census above to the catalog from here
+  it('names every key the catalog carries, and no key it does not', () => {
+    expect([...ALL_KEYS].sort()).toEqual([...pendingNoticeKeys()].sort());
+  });
 
   for (const key of ALL_KEYS) {
     it(`'${key}' has both a non-empty message and a valid variant`, () => {

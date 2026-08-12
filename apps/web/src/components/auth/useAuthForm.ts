@@ -2,7 +2,6 @@ import { capitalizeFirst } from '../../lib/strings';
 import {
   consumePendingNotice,
   hasPendingNotice,
-  setPendingNotice,
 } from '../../lib/pendingNotice';
 import {
   forgotPassword as apiForgotPassword,
@@ -20,21 +19,21 @@ import { useLocation, useNavigate } from 'react-router';
 import { useOAuthArrivalError } from './useOAuthArrivalError';
 import { useTransientState } from '../../lib/hooks/useTransientState';
 import type { FormEvent } from 'react';
+import type { NoticeEntry } from '../../lib/pendingNotice';
 
 export type Mode = 'login' | 'register' | 'forgot-password';
 export type MfaChallenge = 'totp' | 'recovery';
 
-interface FormNotice {
-  message: string;
-  variant: 'success' | 'warning' | 'error';
-}
+// the catalog's shape, since a consumed entry is set here whole
+type FormNotice = NoticeEntry;
 
 /**
  * Effects below run in declaration order and that order is load-bearing:
- * the bounce effect queues a notice before the mode effect peeks for one,
- * the mode effect peeks before the effect that consumes it, and the
- * arrival-error effect follows the mode effect so a cleared error cannot
- * land on top of the message it should paint.
+ * the mode effect peeks for a pending notice before the effect that
+ * consumes it, and the arrival-error effect follows the mode effect so a
+ * cleared error cannot land on top of the message it should paint. What
+ * the peek finds is queued a commit earlier, by whichever flow sent the
+ * user here.
  */
 export function useAuthForm() {
   const { login, refreshUser, register } = useAuth();
@@ -86,17 +85,16 @@ export function useAuthForm() {
   }
 
   /**
-   * This form mounts only where the app has no authenticated user, so an
-   * email waiting to be picked up is an offer that bounced off the auth
-   * gate. Putting it back is WCAG 3.3.7 Redundant Entry; saying why is
-   * the other half, since the bounce is a document load that otherwise
-   * arrives as a blank form and no explanation.
+   * An email waiting to be picked up was typed into a form this user was
+   * moved off of, so putting it back is WCAG 3.3.7 Redundant Entry. It is
+   * not evidence of how the move ended, and nothing is announced from
+   * here: the auth gate saw whether the offer landed, and queues the
+   * explanation itself (`offerBounce.ts`).
    */
   useEffect(() => {
     const carriedEmail = takeCarriedEmail();
     if (carriedEmail === null) return;
     setEmail(carriedEmail);
-    setPendingNotice('session-unavailable');
   }, []);
 
   useEffect(() => {

@@ -15,11 +15,17 @@
  * survived, so a handler that threw on entry cannot pass them by doing
  * nothing at all.
  *
- * The other half of the claim is what happens when the offer IS followed
- * and the session behind it has gone: the document load is played by
- * unmounting this tree and standing a fresh one up, which is the only
- * shape in which a value that survived storage can be told apart from one
- * that merely survived a re-render.
+ * The other half of the claim is what happens when the offer IS followed:
+ * the document load is played by unmounting this tree and standing a
+ * fresh one up at the destination, through the real route table, so the
+ * auth gate that decides whether anything is announced is the one making
+ * the decision. Rendering `AuthFormWrapper` straight would skip it.
+ *
+ * That remount tells storage from module memory only in the browser. Both
+ * trees here share one module registry, so a module-scope variable would
+ * survive the fake load intact; `components/auth/carriedEmail.test.ts`
+ * separates the two by asking the reader for a value the module never
+ * wrote.
  *
  * The route table is pinned separately in
  * `Unauthenticated.routes.test.tsx`, which needs `AuthForm` stubbed and so
@@ -36,12 +42,14 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { AuthFormWrapper } from './Unauthenticated';
+import { AuthFormWrapper, unauthenticatedRoutes } from './Unauthenticated';
 import { clearStoredToken, getStoredToken } from '../lib/api';
+import { commonRoutes } from './Common';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { JwtService } from '@nestjs/jwt';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, Routes } from 'react-router';
 import { restoreLocation, standOnPath } from '../../test/locationMock';
+import { setPendingNotice } from '../lib/pendingNotice';
 
 vi.mock('../auth/AuthContext', () => ({
   useAuth: vi.fn(),
@@ -60,11 +68,12 @@ import { useAuth } from '../auth/AuthContext';
 
 const ACTION = 'Go to your links';
 const ANNOUNCEMENT = 'already-signed-in-announcement';
-const BOUNCE_MESSAGE =
-  "We couldn't reopen that session, so please sign in again";
+const BOUNCE_MESSAGE = "We couldn't get you back into that session";
+const CARRIED_EMAIL_KEY = 'linklater_carried_email';
 const MESSAGE = "You're already signed in.";
 const PENDING_ANNOUNCEMENT = 'pending-notice-announcement';
 const RENDERED_IDENTITY_KEY = 'linklater_rendered_identity';
+const SESSION_DESTINATION = '/unread';
 const TOKEN_KEY = 'linklater_token';
 
 let assignMock: ReturnType<typeof vi.fn>;
@@ -124,6 +133,22 @@ function renderLoginScreen() {
   );
 }
 
+/**
+ * A document load starting where the offer's link points. The real route
+ * table decides what renders, so the auth gate's catch-all runs and the
+ * login form is reached the way a bounced arrival reaches it.
+ */
+function renderArrivalAt(path: string) {
+  return render(
+    <MemoryRouter initialEntries={[path]}>
+      <Routes>
+        {commonRoutes()}
+        {unauthenticatedRoutes()}
+      </Routes>
+    </MemoryRouter>,
+  );
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   sessionStorage.clear();
@@ -133,6 +158,7 @@ beforeEach(() => {
   assignMock = standOnPath();
   vi.mocked(useAuth).mockReturnValue({
     login: vi.fn(),
+    logout: vi.fn(),
     refreshUser: vi.fn(),
     register: vi.fn(),
   } as unknown as ReturnType<typeof useAuth>);
@@ -184,6 +210,18 @@ describe('a sibling tab signs in', () => {
     // both channels, one string: they cannot drift apart
     expect(screen.getAllByText(MESSAGE)).toHaveLength(2);
     expect(visibleNotice()).toBeInTheDocument();
+  });
+
+  it('keeps the painted copy out of the reading order the region owns', () => {
+    renderLoginScreen();
+    siblingSignedInAs('user-2');
+    fireStorageEvent();
+
+    // in the tree twice is heard twice, back to back, by a linear reader
+    expect(visibleNotice()).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.getByRole('link', { name: ACTION })).not.toHaveAttribute(
+      'aria-hidden',
+    );
   });
 
   it('offers an action rather than taking it', () => {
@@ -349,6 +387,48 @@ describe('the sibling signs back out', () => {
   });
 });
 
+describe('the tree the bounce replaces', () => {
+  /**
+   * A bounce unmounts this tree and mounts a replacement, so a listener
+   * left behind accumulates one per bounce and reaches for state that is
+   * gone. React makes that write a silent no-op, which is why the removal
+   * itself is what gets asserted: there is no rendered consequence to
+   * read, and asserting one would pass with the cleanup deleted.
+   */
+  it('stops listening for siblings when it goes away', () => {
+    const added: EventListenerOrEventListenerObject[] = [];
+    const removed: EventListenerOrEventListenerObject[] = [];
+    const reallyAdd = window.addEventListener.bind(window);
+    const reallyRemove = window.removeEventListener.bind(window);
+    const addSpy = vi
+      .spyOn(window, 'addEventListener')
+      .mockImplementation((type, listener, options) => {
+        if (type === 'storage') added.push(listener);
+        reallyAdd(type, listener, options);
+      });
+    const removeSpy = vi
+      .spyOn(window, 'removeEventListener')
+      .mockImplementation((type, listener, options) => {
+        if (type === 'storage') removed.push(listener);
+        reallyRemove(type, listener, options);
+      });
+
+    try {
+      const standing = renderLoginScreen();
+      expect(added.length).toBeGreaterThan(0);
+
+      standing.unmount();
+
+      for (const listener of added) {
+        expect(removed).toContain(listener);
+      }
+    } finally {
+      addSpy.mockRestore();
+      removeSpy.mockRestore();
+    }
+  });
+});
+
 describe('an offer already on screen', () => {
   it('stays up when a later event carries a token that has run out', () => {
     renderLoginScreen();
@@ -415,20 +495,6 @@ describe('a boot that kept its token and failed its profile fetch', () => {
 });
 
 describe('the offer is taken and the session turns out to be gone', () => {
-  /**
-   * The link is a full document load, so the bounce is played the way the
-   * browser plays it: this tree goes away and the auth gate stands a new
-   * one up. The token is cleared in between, which is what a 401 on the
-   * way in does.
-   */
-  function bounceBackToLogin(standing: ReturnType<typeof renderLoginScreen>) {
-    fireEvent.click(screen.getByRole('link', { name: ACTION }));
-    standing.unmount();
-    localStorage.clear();
-    clearStoredToken();
-    return renderLoginScreen();
-  }
-
   function typeInto(field: RegExp, value: string) {
     fireEvent.change(screen.getByLabelText(field), { target: { value } });
   }
@@ -441,6 +507,35 @@ describe('the offer is taken and the session turns out to be gone', () => {
     return standing;
   }
 
+  /** The link is followed and the document it opened goes away with it. */
+  function followTheOffer(standing: ReturnType<typeof renderLoginScreen>) {
+    fireEvent.click(screen.getByRole('link', { name: ACTION }));
+    standing.unmount();
+  }
+
+  /**
+   * A bounce whose way in came back 401: the token is cleared, which is
+   * what `core` does on that status, so nothing is left to offer twice.
+   */
+  function bounceBackToLogin(standing: ReturnType<typeof renderLoginScreen>) {
+    followTheOffer(standing);
+    localStorage.clear();
+    clearStoredToken();
+    return renderArrivalAt(SESSION_DESTINATION);
+  }
+
+  /**
+   * The other arm: a profile fetch that failed without a 401 leaves the
+   * token where it was, so the tab it lands on still meets the offer's
+   * own conditions.
+   */
+  function bounceWithTheTokenIntact(
+    standing: ReturnType<typeof renderLoginScreen>,
+  ) {
+    followTheOffer(standing);
+    return renderArrivalAt(SESSION_DESTINATION);
+  }
+
   it('hands the typed email back rather than demanding it again', () => {
     const standing = offerIsUp();
     typeInto(/email/i, 'half-typed@example.com');
@@ -450,17 +545,6 @@ describe('the offer is taken and the session turns out to be gone', () => {
     expect(screen.getByLabelText(/email/i)).toHaveValue(
       'half-typed@example.com',
     );
-  });
-
-  it('says why the form is being asked for a second time', () => {
-    const standing = offerIsUp();
-
-    bounceBackToLogin(standing);
-
-    expect(screen.getByTestId(PENDING_ANNOUNCEMENT).textContent).toBe(
-      BOUNCE_MESSAGE,
-    );
-    expect(screen.getAllByText(BOUNCE_MESSAGE).length).toBeGreaterThan(0);
   });
 
   it('announces into a form nothing has focused', () => {
@@ -483,14 +567,47 @@ describe('the offer is taken and the session turns out to be gone', () => {
     );
   });
 
-  it('leaves the password behind, which no document should be storing', () => {
+  it('paints the reason in the flow, not only into a card that times out', () => {
     const standing = offerIsUp();
-    typeInto(/email/i, 'half-typed@example.com');
-    typeInto(/password/i, 'still-typing');
 
     bounceBackToLogin(standing);
 
-    expect(screen.getByLabelText(/password/i)).toHaveValue('');
+    const painted = screen
+      .getAllByText(BOUNCE_MESSAGE)
+      .find((element) => element.closest('.sr-only') === null);
+    expect(painted).toBeDefined();
+    expect(painted?.closest('div')?.className).not.toContain('fixed');
+  });
+
+  it('leaves the reason standing rather than dismissing it on a timer', () => {
+    vi.useFakeTimers();
+    try {
+      const standing = offerIsUp();
+
+      bounceBackToLogin(standing);
+      vi.advanceTimersByTime(60_000);
+
+      expect(screen.getByTestId(PENDING_ANNOUNCEMENT).textContent).toBe(
+        BOUNCE_MESSAGE,
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('leaves the password behind, which no document should be storing', () => {
+    offerIsUp();
+    typeInto(/email/i, 'half-typed@example.com');
+    typeInto(/password/i, 'still-typing');
+
+    fireEvent.click(screen.getByRole('link', { name: ACTION }));
+
+    // the property, not one field: the email is the only thing that leaves
+    expect(
+      Object.keys(sessionStorage).filter(
+        (key) => key !== RENDERED_IDENTITY_KEY,
+      ),
+    ).toEqual([CARRIED_EMAIL_KEY]);
   });
 
   it('speaks once, so reloading the form it landed on says nothing', () => {
@@ -513,9 +630,82 @@ describe('the offer is taken and the session turns out to be gone', () => {
     standing.unmount();
     localStorage.clear();
     clearStoredToken();
-    renderLoginScreen();
+    renderArrivalAt(SESSION_DESTINATION);
 
     expect(screen.getByLabelText(/email/i)).toHaveValue('');
+    expect(screen.getByTestId(PENDING_ANNOUNCEMENT).textContent).toBe('');
+  });
+
+  it('does not overwrite a message another flow queued on its way here', () => {
+    const standing = offerIsUp();
+    // an expired login link is assertive, and this warning is not
+    setPendingNotice('login-link-invalid');
+
+    bounceBackToLogin(standing);
+
+    const mirror = screen.getByTestId(PENDING_ANNOUNCEMENT);
+    expect(mirror.textContent).toBe('Login link has expired');
+    expect(mirror).toHaveAttribute('role', 'alert');
+    expect(mirror).toHaveAttribute('aria-live', 'assertive');
+  });
+
+  it('still hands the email back while that other message is speaking', () => {
+    const standing = offerIsUp();
+    typeInto(/email/i, 'half-typed@example.com');
+    setPendingNotice('account-deleted');
+
+    bounceBackToLogin(standing);
+
+    expect(screen.getByTestId(PENDING_ANNOUNCEMENT).textContent).toBe(
+      'Your account has been deleted.',
+    );
+    expect(screen.getByLabelText(/email/i)).toHaveValue(
+      'half-typed@example.com',
+    );
+  });
+
+  it('speaks once when the token survived, not twice contradicting itself', () => {
+    const standing = offerIsUp();
+
+    bounceWithTheTokenIntact(standing);
+
+    // the offer is up again on the same evidence; only it gets to speak
+    expect(screen.getByTestId(ANNOUNCEMENT).textContent).toBe(MESSAGE);
+    expect(screen.getByTestId(PENDING_ANNOUNCEMENT).textContent).toBe('');
+    expect(screen.queryAllByText(BOUNCE_MESSAGE)).toEqual([]);
+  });
+
+  it('hands the email back on that arm too', () => {
+    const standing = offerIsUp();
+    typeInto(/email/i, 'half-typed@example.com');
+
+    bounceWithTheTokenIntact(standing);
+
+    expect(screen.getByLabelText(/email/i)).toHaveValue(
+      'half-typed@example.com',
+    );
+  });
+});
+
+describe('a login form reached without passing the auth gate', () => {
+  function theOfferWasFollowedEarlier() {
+    sessionStorage.setItem(CARRIED_EMAIL_KEY, 'half-typed@example.com');
+  }
+
+  it('says nothing about a bounce when the user asked to leave', () => {
+    theOfferWasFollowedEarlier();
+
+    renderArrivalAt('/logout');
+
+    expect(screen.getByTestId(PENDING_ANNOUNCEMENT).textContent).toBe('');
+    expect(screen.queryAllByText(BOUNCE_MESSAGE)).toEqual([]);
+  });
+
+  it('says nothing when the form is opened directly', () => {
+    theOfferWasFollowedEarlier();
+
+    renderArrivalAt('/login');
+
     expect(screen.getByTestId(PENDING_ANNOUNCEMENT).textContent).toBe('');
   });
 });

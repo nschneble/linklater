@@ -256,6 +256,7 @@ const PAINTERS: ReadonlyArray<readonly [string, string, string]> = [
   ['components/common/IconButton.tsx', 'mount orbit alert', 'alert'],
   ['components/common/IconListButton.tsx', 'mount orbit', ''],
   ['components/common/Modal.tsx', 'orbit', ''],
+  ['components/common/PendingNoticeAnnouncer.tsx', 'mount', ''],
   ['components/common/PrimaryButton.tsx', '', 'base mount orbit'],
   ['components/common/SlidingTabBar.tsx', 'mount orbit', ''],
   ['components/common/StatusBadge.tsx', 'warn info success', ''],

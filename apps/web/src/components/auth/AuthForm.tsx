@@ -29,6 +29,10 @@ function authDocumentTitle(
  * The visible Alert paints the same text with its own live semantics off,
  * so exactly one region announces it; submit errors take the opposite
  * split.
+ *
+ * The pending notice comes first because a standing one paints in the
+ * flow, and a message explaining why this form is on screen has to be
+ * reachable before the form it explains.
  */
 export default function AuthForm() {
   const {
@@ -123,6 +127,12 @@ export default function AuthForm() {
 
   return (
     <>
+      <PendingNoticeAnnouncer
+        notice={notice?.message ?? null}
+        variant={notice?.variant ?? 'success'}
+        onDismiss={() => setNotice(null)}
+        standing={notice?.standing ?? false}
+      />
       {view}
       <span
         className="sr-only"
@@ -133,11 +143,6 @@ export default function AuthForm() {
       >
         {errorAnnouncement}
       </span>
-      <PendingNoticeAnnouncer
-        notice={notice?.message ?? null}
-        variant={notice?.variant ?? 'success'}
-        onDismiss={() => setNotice(null)}
-      />
     </>
   );
 }
