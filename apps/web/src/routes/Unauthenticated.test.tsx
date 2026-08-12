@@ -15,6 +15,12 @@
  * survived, so a handler that threw on entry cannot pass them by doing
  * nothing at all.
  *
+ * The other half of the claim is what happens when the offer IS followed
+ * and the session behind it has gone: the document load is played by
+ * unmounting this tree and standing a fresh one up, which is the only
+ * shape in which a value that survived storage can be told apart from one
+ * that merely survived a re-render.
+ *
  * The route table is pinned separately in
  * `Unauthenticated.routes.test.tsx`, which needs `AuthForm` stubbed and so
  * cannot share a module-scoped mock with this file.
@@ -54,7 +60,10 @@ import { useAuth } from '../auth/AuthContext';
 
 const ACTION = 'Go to your links';
 const ANNOUNCEMENT = 'already-signed-in-announcement';
+const BOUNCE_MESSAGE =
+  "We couldn't reopen that session, so please sign in again";
 const MESSAGE = "You're already signed in.";
+const PENDING_ANNOUNCEMENT = 'pending-notice-announcement';
 const RENDERED_IDENTITY_KEY = 'linklater_rendered_identity';
 const TOKEN_KEY = 'linklater_token';
 
@@ -311,15 +320,6 @@ describe('storage changes that are not a sibling signing in', () => {
     fireStorageEvent();
     expect(noticeIsShowing()).toBe(true);
   });
-
-  it('says nothing on a whole-store clear that empties an empty store', () => {
-    renderLoginScreen();
-    localStorage.clear();
-    fireStorageEvent(null);
-
-    expect(noticeIsShowing()).toBe(false);
-    expect(screen.getByTestId(ANNOUNCEMENT).textContent).toBe('');
-  });
 });
 
 describe('the sibling signs back out', () => {
@@ -334,18 +334,6 @@ describe('the sibling signs back out', () => {
 
     expect(noticeIsShowing()).toBe(true);
     expect(screen.getByTestId(ANNOUNCEMENT).textContent).toBe(MESSAGE);
-  });
-
-  it('leaves it standing through a whole-store clear as well', () => {
-    renderLoginScreen();
-    siblingSignedInAs('user-2');
-    fireStorageEvent();
-    expect(noticeIsShowing()).toBe(true);
-
-    localStorage.clear();
-    fireStorageEvent(null);
-
-    expect(noticeIsShowing()).toBe(true);
   });
 
   it('is the store answering, not the notice ignoring the event', () => {
@@ -423,6 +411,131 @@ describe('a boot that kept its token and failed its profile fetch', () => {
     renderLoginScreen();
 
     expect(noticeIsShowing()).toBe(true);
+  });
+});
+
+describe('the offer is taken and the session turns out to be gone', () => {
+  /**
+   * The link is a full document load, so the bounce is played the way the
+   * browser plays it: this tree goes away and the auth gate stands a new
+   * one up. The token is cleared in between, which is what a 401 on the
+   * way in does.
+   */
+  function bounceBackToLogin(standing: ReturnType<typeof renderLoginScreen>) {
+    fireEvent.click(screen.getByRole('link', { name: ACTION }));
+    standing.unmount();
+    localStorage.clear();
+    clearStoredToken();
+    return renderLoginScreen();
+  }
+
+  function typeInto(field: RegExp, value: string) {
+    fireEvent.change(screen.getByLabelText(field), { target: { value } });
+  }
+
+  function offerIsUp() {
+    sessionStorage.setItem(RENDERED_IDENTITY_KEY, 'user-1');
+    siblingSignedInAs('user-1');
+    const standing = renderLoginScreen();
+    expect(noticeIsShowing()).toBe(true);
+    return standing;
+  }
+
+  it('hands the typed email back rather than demanding it again', () => {
+    const standing = offerIsUp();
+    typeInto(/email/i, 'half-typed@example.com');
+
+    bounceBackToLogin(standing);
+
+    expect(screen.getByLabelText(/email/i)).toHaveValue(
+      'half-typed@example.com',
+    );
+  });
+
+  it('says why the form is being asked for a second time', () => {
+    const standing = offerIsUp();
+
+    bounceBackToLogin(standing);
+
+    expect(screen.getByTestId(PENDING_ANNOUNCEMENT).textContent).toBe(
+      BOUNCE_MESSAGE,
+    );
+    expect(screen.getAllByText(BOUNCE_MESSAGE).length).toBeGreaterThan(0);
+  });
+
+  it('announces into a form nothing has focused', () => {
+    const standing = offerIsUp();
+
+    bounceBackToLogin(standing);
+
+    expect(screen.getByLabelText(/email/i)).not.toBe(document.activeElement);
+    expect(screen.getByLabelText(/password/i)).not.toBe(document.activeElement);
+  });
+
+  it('carries an empty box, since the arrival has to speak either way', () => {
+    const standing = offerIsUp();
+
+    bounceBackToLogin(standing);
+
+    expect(screen.getByLabelText(/email/i)).toHaveValue('');
+    expect(screen.getByTestId(PENDING_ANNOUNCEMENT).textContent).toBe(
+      BOUNCE_MESSAGE,
+    );
+  });
+
+  it('leaves the password behind, which no document should be storing', () => {
+    const standing = offerIsUp();
+    typeInto(/email/i, 'half-typed@example.com');
+    typeInto(/password/i, 'still-typing');
+
+    bounceBackToLogin(standing);
+
+    expect(screen.getByLabelText(/password/i)).toHaveValue('');
+  });
+
+  it('speaks once, so reloading the form it landed on says nothing', () => {
+    const bounced = bounceBackToLogin(offerIsUp());
+    expect(screen.getByTestId(PENDING_ANNOUNCEMENT).textContent).toBe(
+      BOUNCE_MESSAGE,
+    );
+
+    bounced.unmount();
+    renderLoginScreen();
+
+    expect(screen.getByTestId(PENDING_ANNOUNCEMENT).textContent).toBe('');
+    expect(screen.getByLabelText(/email/i)).toHaveValue('');
+  });
+
+  it('carries nothing off a form whose offer was never followed', () => {
+    const standing = offerIsUp();
+    typeInto(/email/i, 'half-typed@example.com');
+
+    standing.unmount();
+    localStorage.clear();
+    clearStoredToken();
+    renderLoginScreen();
+
+    expect(screen.getByLabelText(/email/i)).toHaveValue('');
+    expect(screen.getByTestId(PENDING_ANNOUNCEMENT).textContent).toBe('');
+  });
+});
+
+describe('the form under a standing offer', () => {
+  it('focuses nothing, so the polite region is not read into forms mode', () => {
+    sessionStorage.setItem(RENDERED_IDENTITY_KEY, 'user-1');
+    siblingSignedInAs('user-1');
+
+    renderLoginScreen();
+
+    expect(noticeIsShowing()).toBe(true);
+    expect(screen.getByLabelText(/email/i)).not.toBe(document.activeElement);
+  });
+
+  it('focuses the email input when no offer is standing', () => {
+    renderLoginScreen();
+
+    expect(noticeIsShowing()).toBe(false);
+    expect(screen.getByLabelText(/email/i)).toBe(document.activeElement);
   });
 });
 

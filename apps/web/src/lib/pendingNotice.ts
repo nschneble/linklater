@@ -10,6 +10,11 @@
  * The sessionStorage key is shared - whichever entry point mounts first
  * consumes the notice and clears the key, so the other won't double-fire.
  *
+ * One entry, `session-unavailable`, is queued by the same mount that
+ * consumes it: `useAuthForm` recognizes an auth-gate bounce on arrival and
+ * writes here anyway, so the copy and the ARIA shape come from this table
+ * like every other message, and its own focus bail sees a notice pending.
+ *
  * Uses `sessionStorage` (not `localStorage`) because the signal should not
  * survive across tabs or persist beyond the current browser session, and
  * (not `location.state`) because the implicit catch-all redirect from
@@ -37,6 +42,7 @@ export type PendingNotice =
   | 'email-change-verified'
   | 'email-change-verified-please-sign-in'
   | 'password-reset-success'
+  | 'session-unavailable'
   | 'deletion-link-invalid'
   | 'verification-link-invalid'
   | 'email-change-link-invalid'
@@ -84,6 +90,12 @@ const NOTICE_CATALOG: Record<PendingNotice, NoticeEntry> = {
   'password-reset-success': {
     message: 'Your password has been updated',
     variant: 'success',
+  },
+  // names what the attempt did, not what the server did: a bounce off the
+  // auth gate reads the same whether the session ended or the network blipped
+  'session-unavailable': {
+    message: "We couldn't reopen that session, so please sign in again",
+    variant: 'warning',
   },
   'deletion-link-invalid': {
     message: 'Account deletion link has expired',

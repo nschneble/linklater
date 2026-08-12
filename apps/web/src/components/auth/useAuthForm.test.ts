@@ -27,12 +27,19 @@ vi.mock('../../auth/AuthContext', () => ({
 vi.mock('../../lib/pendingNotice', () => ({
   consumePendingNotice: vi.fn().mockReturnValue(null),
   hasPendingNotice: vi.fn().mockReturnValue(false),
+  setPendingNotice: vi.fn(),
+}));
+
+// the predicate is a storage read; its own suite covers what it reads
+vi.mock('./standingSessionOffer', () => ({
+  hasStandingSessionOffer: vi.fn().mockReturnValue(false),
 }));
 
 // ─── Imports after mocks ─────────────────────────────────────────────────────
 
 import * as apiModule from '../../lib/api';
 import * as pendingNoticeModule from '../../lib/pendingNotice';
+import * as standingOfferModule from './standingSessionOffer';
 import { useAuth } from '../../auth/AuthContext';
 import { useAuthForm } from './useAuthForm';
 
@@ -78,6 +85,8 @@ beforeEach(() => {
   vi.mocked(useAuth).mockReturnValue(makeAuthContext());
   vi.mocked(pendingNoticeModule.consumePendingNotice).mockReturnValue(null);
   vi.mocked(pendingNoticeModule.hasPendingNotice).mockReturnValue(false);
+  vi.mocked(standingOfferModule.hasStandingSessionOffer).mockReturnValue(false);
+  sessionStorage.clear();
 });
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
@@ -762,6 +771,34 @@ describe('useAuthForm', () => {
 
       expect(emailFocusSpy).not.toHaveBeenCalled();
       expect(passwordFocusSpy).not.toHaveBeenCalled();
+    });
+
+    // the notice above this form is the bail's third announcement source
+    it('does not auto-focus the email input while a session offer is standing', async () => {
+      vi.mocked(standingOfferModule.hasStandingSessionOffer).mockReturnValue(
+        true,
+      );
+
+      const emailInput = document.createElement('input');
+      const focusSpy = vi.spyOn(emailInput, 'focus');
+
+      renderHook(
+        () => {
+          const hook = useAuthForm();
+          if (hook.emailReference.current === null) {
+            hook.emailReference.current = emailInput;
+          }
+          return hook;
+        },
+        {
+          wrapper: ({ children }) =>
+            MemoryRouter({ children, initialEntries: ['/login'] }),
+        },
+      );
+
+      await act(async () => {});
+
+      expect(focusSpy).not.toHaveBeenCalled();
     });
 
     // C4: negative control for FLAG-2 - no pending notice, so focus must fire, proving the guard is gated not just absent

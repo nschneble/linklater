@@ -34,6 +34,10 @@
  */
 
 import { getStoredToken, readTokenClaims } from '../../lib/api';
+import {
+  normalizePathname,
+  rendersRegardlessOfAuth,
+} from './authAgnosticPaths';
 import { noteRenderedIdentity, readRenderedIdentity } from './renderedIdentity';
 import { setPendingNotice } from '../../lib/pendingNotice';
 import { useEffect, useRef } from 'react';
@@ -48,52 +52,6 @@ const VISIBILITY_REFRESH_MIN_INTERVAL_MS = 2000;
  * anywhere else strands the message until some later, unrelated arrival.
  */
 const SWITCHED_ACCOUNT_DESTINATION = '/unread';
-
-/**
- * Every path `routes/Common.tsx` declares, which is every path that
- * renders without consulting auth state. Whole-table rather than the
- * subset holding a form or a single-use token: missing a form costs
- * input nobody can retype, while protecting a static document costs a
- * tab that goes on rendering the previous account until the next
- * navigation, the deferred announcement included. That second cost is
- * not nothing, and `ExtensionAuthorizePage` is where it shows: it names
- * the account it is about to grant on, and it would name the one that
- * left. The grant is bearer-guarded, so it still lands on the account
- * the token belongs to rather than the one on screen.
- * Exported so `authAgnosticPaths.test.ts` can fail when the two drift.
- */
-export const AUTH_AGNOSTIC_PATHS = new Set([
-  '/account/confirm-deletion',
-  '/docs',
-  '/extension/authorize',
-  '/failwhale',
-  '/logout',
-  '/oauth/callback',
-  '/privacy',
-  '/reset-password',
-  '/terms',
-  '/verify-email',
-  '/verify-email-change',
-  '/verify-login',
-]);
-
-/**
- * The address bar's spelling of a path, reduced to the one the table is
- * written in. The router matches case-insensitively and ignores trailing
- * slashes, so a raw string compare recognizes fewer pages than actually
- * render, and it fails in the direction that costs the most: an emailed
- * link opened as `/Reset-Password` renders the form and gets replaced
- * mid-entry, spending the single-use token with it (Postel's law).
- */
-function normalizePathname(pathname: string): string {
-  const withoutTrailingSlash = pathname.toLowerCase().replace(/\/+$/, '');
-  if (withoutTrailingSlash === '') return '/';
-  return withoutTrailingSlash;
-}
-
-function rendersRegardlessOfAuth(): boolean {
-  return AUTH_AGNOSTIC_PATHS.has(normalizePathname(window.location.pathname));
-}
 
 function standingOnDestination(): boolean {
   return (

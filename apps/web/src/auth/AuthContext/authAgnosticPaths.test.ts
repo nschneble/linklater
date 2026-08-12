@@ -2,14 +2,14 @@
  * Pins the guard's list of paths that render without consulting auth
  * state against the route table those paths come from.
  *
- * The guard cannot import `routes/Common.tsx` without dragging every page
+ * The table cannot import `routes/Common.tsx` without dragging every page
  * component into an auth hook, so it restates the paths. A restatement
  * that nothing checks goes stale the first time a route is added, and it
  * goes stale silently in the direction that hurts: a new form route
  * missing from the list is one the guard will replace mid-entry.
  */
 
-import { AUTH_AGNOSTIC_PATHS } from './useIdentityGuard';
+import { AUTH_AGNOSTIC_PATHS } from './authAgnosticPaths';
 import { commonRoutes } from '../../routes/Common';
 import { describe, expect, it } from 'vitest';
 

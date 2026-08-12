@@ -231,22 +231,23 @@ describe('hasPendingNotice', () => {
 
 // drift guard: every PendingNotice key must round-trip the catalog or ship silently dropped
 describe('catalog drift guard', () => {
-  // TypeScript erases the union at runtime, so enumerate; a new member trips the compiler
-  const ALL_KEYS: readonly PendingNotice[] = [
-    'account-deleted',
-    'account-switched',
-    'already-logged-in',
-    'email-verified',
-    'email-verified-please-sign-in',
-    'email-change-verified',
-    'email-change-verified-please-sign-in',
-    'password-reset-success',
-    'deletion-link-invalid',
-    'verification-link-invalid',
-    'email-change-link-invalid',
-    'login-link-invalid',
-    'oauth-failed',
-  ];
+  // the union erases at runtime, so a keyed object stands in as its census
+  const ALL_KEYS = Object.keys({
+    'account-deleted': true,
+    'account-switched': true,
+    'already-logged-in': true,
+    'email-verified': true,
+    'email-verified-please-sign-in': true,
+    'email-change-verified': true,
+    'email-change-verified-please-sign-in': true,
+    'password-reset-success': true,
+    'session-unavailable': true,
+    'deletion-link-invalid': true,
+    'verification-link-invalid': true,
+    'email-change-link-invalid': true,
+    'login-link-invalid': true,
+    'oauth-failed': true,
+  } satisfies Record<PendingNotice, true>) as PendingNotice[];
 
   for (const key of ALL_KEYS) {
     it(`'${key}' has both a non-empty message and a valid variant`, () => {

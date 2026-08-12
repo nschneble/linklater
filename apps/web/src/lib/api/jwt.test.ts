@@ -70,6 +70,16 @@ describe('readTokenClaims – well-formed tokens', () => {
       'usér-Ø-日',
     );
   });
+
+  it('decodes a segment spelled in base64url, which is the only spelling', () => {
+    // chosen for its bytes: the payload needs both substitutions present
+    const subject = 'userÿ😀';
+    const segment = makeToken({ subject }).split('.')[1] ?? '';
+
+    expect(segment).toContain('-');
+    expect(segment).toContain('_');
+    expect(readTokenClaims(makeToken({ subject }))?.subject).toBe(subject);
+  });
 });
 
 describe('readTokenClaims – which claim the subject comes from', () => {

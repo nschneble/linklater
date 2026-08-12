@@ -31,14 +31,9 @@
  * `primaryActionClasses`), and a plain one rather than a router `Link`,
  * since the point is a full document load under the new identity.
  *
- * The mount-time read is gated on this tab having rendered somebody
- * before, because `logout` clears the token only once the revoke round
- * trip returns, so the login form appears while a live token is still in
- * storage. `logout` forgets the rendered identity first, which is what
- * separates a deliberate sign-out (no prior identity) from a boot that
- * failed on its own (sessionStorage survived the reload). The cost is a
- * tab that has never rendered anyone, which gets no offer until a sibling
- * writes.
+ * What the mount-time read asks, and why it is gated on this tab having
+ * rendered somebody before, belongs to `standingSessionOffer.ts`, which
+ * `useAuthForm` reads the same answer out of.
  *
  * The `storage` arm is filtered to the token keys. A dozen other keys are
  * written cross-tab (theme, mode, CVD, dyslexic font, shortcuts, and a
@@ -51,8 +46,8 @@
  * empty read is not proof the session ended, and so the token store
  * answers with the copy it already holds (`lib/api/storage.ts`). What
  * that leaves is a stale offer whose link bounces off the auth gate
- * back to this form, taking the typed fields with it, which is the
- * other half of why nothing here follows the link unasked.
+ * back to this form, which is the other half of why nothing here follows
+ * the link unasked.
  *
  * Raising it is therefore one-way. The one thing that can turn the check
  * over afterwards is the clock, and an offer that vanished while it was
@@ -60,18 +55,23 @@
  * evidence is what the announcement is gated on, not what it is held up
  * by.
  *
+ * The bounce is not left to cost the form. Following the link hands the
+ * typed email to `carriedEmail.ts`, and the login form the auth gate
+ * lands on puts it back and says why it is being asked again. The
+ * password cannot travel and does not.
+ *
  * One string feeds both channels so they cannot drift, and only the
  * sr-only region carries live semantics; a role on the painted copy would
  * put two regions on one message and have it read twice.
  */
 
+import { carryTypedEmail } from './carriedEmail';
 import {
-  getStoredToken,
-  isTokenStorageEvent,
-  readTokenClaims,
-} from '../../lib/api';
+  hasStandingSessionOffer,
+  storedTokenHasLiveOwner,
+} from './standingSessionOffer';
+import { isTokenStorageEvent } from '../../lib/api';
 import { primaryActionClasses } from '../common/PrimaryButton';
-import { readRenderedIdentity } from '../../auth/AuthContext/renderedIdentity';
 import { useEffect, useState } from 'react';
 
 const ALREADY_SIGNED_IN_MESSAGE = "You're already signed in.";
@@ -79,30 +79,11 @@ const ALREADY_SIGNED_IN_MESSAGE = "You're already signed in.";
 /** The one destination, for the reason `useIdentityGuard` gives. */
 const SESSION_DESTINATION = '/unread';
 
-/**
- * Whether storage holds a token somebody is identifiable from that has
- * not run out. A token nobody can be identified from is not evidence
- * anyone signed in, which is also how an opaque `ltk_` API token stays
- * silent, and an expired one is evidence of a session that has ended:
- * the arm this feeds is a boot whose profile fetch failed without a 401,
- * which is exactly what an expired token behind a network blip looks
- * like. Announcing there sends the user through a bounce that costs the
- * form. Expiry is necessary and not sufficient, since a revocation
- * (a `tokenVersion` bump) leaves `exp` sitting in the future, and a
- * token carrying no readable expiry is dated by nothing here.
- */
-function storedTokenHasLiveOwner(): boolean {
-  const claims = readTokenClaims(getStoredToken());
-  if (claims?.subject == null) return false;
-  if (claims.exp === null) return true;
-  return claims.exp * 1000 > Date.now();
-}
-
 function useSignedInElsewhere(): boolean {
   const [signedInElsewhere, setSignedInElsewhere] = useState(false);
 
   useEffect(() => {
-    if (readRenderedIdentity() !== null && storedTokenHasLiveOwner()) {
+    if (hasStandingSessionOffer()) {
       setSignedInElsewhere(true);
     }
 
@@ -132,7 +113,11 @@ export default function AlreadySignedInNotice() {
             <i className="fa-solid fa-circle-info mr-1.5" aria-hidden="true" />
             {ALREADY_SIGNED_IN_MESSAGE}
           </p>
-          <a className={primaryActionClasses()} href={SESSION_DESTINATION}>
+          <a
+            className={primaryActionClasses()}
+            href={SESSION_DESTINATION}
+            onClick={carryTypedEmail}
+          >
             Go to your links
           </a>
         </div>

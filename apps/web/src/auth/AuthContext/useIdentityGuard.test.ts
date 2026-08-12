@@ -177,7 +177,11 @@ describe('a different user owns the token', () => {
 });
 
 describe('the 2s refetch throttle', () => {
+  // the window is read off Date.now, so the gap has to be stated not timed
+  const WINDOW_OPENED_AT = 1_700_000_000_000;
+
   it('suppresses a second refetch inside the window', () => {
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(WINDOW_OPENED_AT);
     storedTokenBelongsTo('jwt', 'user-1');
     const refreshUser = vi.fn().mockResolvedValue(undefined);
 
@@ -185,9 +189,25 @@ describe('the 2s refetch throttle', () => {
       useIdentityGuard(userRef(makeRenderedUser('user-1')), refreshUser),
     );
     goVisible();
+    clock.mockReturnValue(WINDOW_OPENED_AT + 1999);
     goVisible();
 
     expect(refreshUser).toHaveBeenCalledTimes(1);
+  });
+
+  it('lets the next refetch through once the window has run out', () => {
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(WINDOW_OPENED_AT);
+    storedTokenBelongsTo('jwt', 'user-1');
+    const refreshUser = vi.fn().mockResolvedValue(undefined);
+
+    renderHook(() =>
+      useIdentityGuard(userRef(makeRenderedUser('user-1')), refreshUser),
+    );
+    goVisible();
+    clock.mockReturnValue(WINDOW_OPENED_AT + 2001);
+    goVisible();
+
+    expect(refreshUser).toHaveBeenCalledTimes(2);
   });
 
   it('detects a switch inside the window it would suppress a refetch in', () => {
@@ -262,6 +282,9 @@ describe('a route that renders regardless of auth state', () => {
     '/Reset-Password',
     '/RESET-PASSWORD',
     '/reset-password//',
+    '/reset%2Dpassword',
+    '/Reset%2DPassword',
+    '/%72eset-password',
   ])('keeps the document at %s, which renders the same form', (pathname) => {
     standOn(pathname);
     storedTokenBelongsTo('other-jwt', 'user-2');
@@ -273,6 +296,22 @@ describe('a route that renders regardless of auth state', () => {
 
     expect(assignMock).not.toHaveBeenCalled();
   });
+
+  // the router refuses each of these too, so the move is the agreeing answer
+  it.each(['/reset-password%2F', '/reset-password%E0%A4%A'])(
+    'still takes the move at %s, which the router will not match either',
+    (pathname) => {
+      standOn(pathname);
+      storedTokenBelongsTo('other-jwt', 'user-2');
+
+      renderHook(() =>
+        useIdentityGuard(userRef(makeRenderedUser('user-1')), vi.fn()),
+      );
+      goVisible();
+
+      expect(assignMock).toHaveBeenCalledWith('/unread');
+    },
+  );
 
   it('still takes the move on a path the table only reads like', () => {
     // the guard recognizes spellings of a path, never paths around one

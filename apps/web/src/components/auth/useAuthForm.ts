@@ -2,6 +2,7 @@ import { capitalizeFirst } from '../../lib/strings';
 import {
   consumePendingNotice,
   hasPendingNotice,
+  setPendingNotice,
 } from '../../lib/pendingNotice';
 import {
   forgotPassword as apiForgotPassword,
@@ -10,6 +11,8 @@ import {
   verifyOtp,
 } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
+import { hasStandingSessionOffer } from './standingSessionOffer';
+import { noteTypedEmail, takeCarriedEmail } from './carriedEmail';
 import { useAuth } from '../../auth/AuthContext';
 import { useEffect, useRef, useState } from 'react';
 import { useFormError } from './useFormError';
@@ -28,9 +31,10 @@ interface FormNotice {
 
 /**
  * Effects below run in declaration order and that order is load-bearing:
- * the mode effect peeks at the pending notice before the effect that
- * consumes it, and the arrival-error effect follows the mode effect so a
- * cleared error cannot land on top of the message it should paint.
+ * the bounce effect queues a notice before the mode effect peeks for one,
+ * the mode effect peeks before the effect that consumes it, and the
+ * arrival-error effect follows the mode effect so a cleared error cannot
+ * land on top of the message it should paint.
  */
 export function useAuthForm() {
   const { login, refreshUser, register } = useAuth();
@@ -81,6 +85,24 @@ export function useAuthForm() {
     return (location.state as { from?: string })?.from ?? '/unread';
   }
 
+  /**
+   * This form mounts only where the app has no authenticated user, so an
+   * email waiting to be picked up is an offer that bounced off the auth
+   * gate. Putting it back is WCAG 3.3.7 Redundant Entry; saying why is
+   * the other half, since the bounce is a document load that otherwise
+   * arrives as a blank form and no explanation.
+   */
+  useEffect(() => {
+    const carriedEmail = takeCarriedEmail();
+    if (carriedEmail === null) return;
+    setEmail(carriedEmail);
+    setPendingNotice('session-unavailable');
+  }, []);
+
+  useEffect(() => {
+    noteTypedEmail(email);
+  }, [email]);
+
   useEffect(() => {
     setPassword('');
     setError(null);
@@ -88,7 +110,8 @@ export function useAuthForm() {
     setMagicLinkSentJustNow(false);
     setForgotPasswordSentJustNow(false);
 
-    const hasInboundAnnouncement = hasPendingNotice() || arrivedWithOAuthError;
+    const hasInboundAnnouncement =
+      hasPendingNotice() || arrivedWithOAuthError || hasStandingSessionOffer();
     // auto-focus would flip a screen reader into forms mode, muting it
     if (hasInboundAnnouncement) return;
 

@@ -11,7 +11,8 @@
  */
 
 import { act, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { restoreLocation, standOnPath } from '../../../test/locationMock';
 import SuggestionCallout from './SuggestionCallout';
 
 // ─── Module mocks ─────────────────────────────────────────────────────────────
@@ -58,6 +59,10 @@ beforeEach(() => {
   vi.clearAllMocks();
   // window.open noop spy so click handlers don't error in jsdom
   vi.spyOn(window, 'open').mockReturnValue(null);
+});
+
+afterEach(() => {
+  restoreLocation();
 });
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -192,13 +197,7 @@ describe('SuggestionCallout inNewTab refetch after Add-and-Read', () => {
   });
 
   it('does NOT refetch in same-tab mode (inNewTab=false)', async () => {
-    // window.location.assign is sealed in jsdom; spy so nav doesn't throw
-    const assignMock = vi.fn();
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      writable: true,
-      value: { ...window.location, assign: assignMock },
-    });
+    const assignMock = standOnPath();
 
     vi.mocked(apiModule.getSuggestions).mockResolvedValue({
       sourceName: 'Wikipedia',

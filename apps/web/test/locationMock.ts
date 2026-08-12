@@ -3,12 +3,15 @@
  *
  * jsdom seals the real one and throws on `assign`, so anything asserting
  * that a document was replaced has to redefine the property over a spy.
- * Four suites needed the same eight lines to do it, and two of them held
- * two copies.
+ * Four suites import this. `assign` is the only method it spies, which is
+ * why a fifth (`StumblePage.test.tsx`) still keeps a copy of its own: it
+ * watches `replace`.
  *
- * The original is captured on first use rather than at import, so a suite
- * that installs its mock inside `beforeEach` cannot end up saving an
- * earlier mock as the thing it restores.
+ * What gets restored is whatever `window.location` held the first time
+ * `standOnPath` ran, so that first call has to come before anything else
+ * in the file redefines the property by hand. Deferring the capture buys
+ * no safety over taking it at import, where a hoisted declaration is
+ * already ahead of every test body.
  */
 
 import { vi } from 'vitest';

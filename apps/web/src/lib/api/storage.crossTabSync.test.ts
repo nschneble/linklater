@@ -200,7 +200,7 @@ describe('storage.ts cross-tab token sync', () => {
       expect(await ask(REFRESH_TOKEN_KEY)).toBe(true);
     });
 
-    it('accepts a whole-store clear, which takes the pair with it', async () => {
+    it('accepts a whole-store clear, which names no key at all', async () => {
       expect(await ask(null)).toBe(true);
     });
 
