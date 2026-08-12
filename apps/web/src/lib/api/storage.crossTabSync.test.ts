@@ -44,56 +44,56 @@ describe('storage.ts cross-tab token sync', () => {
   });
 
   it('refreshes the cached pair when another tab reports a storage event', async () => {
-    const module_ = await loadStorageModule();
-    module_.setStoredToken('boot-access', 'boot-refresh');
+    const module = await loadStorageModule();
+    module.setStoredToken('boot-access', 'boot-refresh');
 
     writeInAnotherTab(TOKEN_KEY, 'rotated-access');
     writeInAnotherTab(REFRESH_TOKEN_KEY, 'rotated-refresh');
     // reads now fail, so only a cache the listener refreshed can answer
     breakStorageReads();
 
-    expect(module_.getStoredToken()).toBe('rotated-access');
-    expect(module_.getStoredRefreshToken()).toBe('rotated-refresh');
+    expect(module.getStoredToken()).toBe('rotated-access');
+    expect(module.getStoredRefreshToken()).toBe('rotated-refresh');
   });
 
   it('lets another tab supersede a write this tab could not persist', async () => {
     window.localStorage.setItem(TOKEN_KEY, 'stale-access');
-    const module_ = await loadStorageModule();
+    const module = await loadStorageModule();
     vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => {
       throw new Error('QuotaExceededError');
     });
-    module_.setStoredToken('unpersisted-access');
+    module.setStoredToken('unpersisted-access');
 
     // the other tab's write does land, and is newer than this tab's
     vi.restoreAllMocks();
     writeInAnotherTab(TOKEN_KEY, 'sibling-access');
 
-    expect(module_.getStoredToken()).toBe('sibling-access');
+    expect(module.getStoredToken()).toBe('sibling-access');
   });
 
   it('keeps the in-memory pair when another tab removes the tokens', async () => {
-    const module_ = await loadStorageModule();
-    module_.setStoredToken('live-access', 'live-refresh');
+    const module = await loadStorageModule();
+    module.setStoredToken('live-access', 'live-refresh');
 
     writeInAnotherTab(TOKEN_KEY, null);
     writeInAnotherTab(REFRESH_TOKEN_KEY, null);
 
     // a removal elsewhere is not proof this session ended
-    expect(module_.getStoredToken()).toBe('live-access');
-    expect(module_.getStoredRefreshToken()).toBe('live-refresh');
+    expect(module.getStoredToken()).toBe('live-access');
+    expect(module.getStoredRefreshToken()).toBe('live-refresh');
   });
 
   it('keeps the in-memory pair when another tab clears all storage', async () => {
-    const module_ = await loadStorageModule();
-    module_.setStoredToken('live-access', 'live-refresh');
+    const module = await loadStorageModule();
+    module.setStoredToken('live-access', 'live-refresh');
 
     window.localStorage.clear();
     window.dispatchEvent(
       new StorageEvent('storage', { key: null, newValue: null }),
     );
 
-    expect(module_.getStoredToken()).toBe('live-access');
-    expect(module_.getStoredRefreshToken()).toBe('live-refresh');
+    expect(module.getStoredToken()).toBe('live-access');
+    expect(module.getStoredRefreshToken()).toBe('live-refresh');
   });
 
   it('ignores a storage event for an unrelated key', async () => {
@@ -119,13 +119,13 @@ describe('storage.ts cross-tab token sync', () => {
   });
 
   it('stops refreshing the cache once the sync is torn down', async () => {
-    const module_ = await loadStorageModule();
-    module_.setStoredToken('boot-access', 'boot-refresh');
+    const module = await loadStorageModule();
+    module.setStoredToken('boot-access', 'boot-refresh');
 
-    module_.stopCrossTabTokenSync();
+    module.stopCrossTabTokenSync();
     writeInAnotherTab(TOKEN_KEY, 'rotated-access');
     breakStorageReads();
 
-    expect(module_.getStoredToken()).toBe('boot-access');
+    expect(module.getStoredToken()).toBe('boot-access');
   });
 });

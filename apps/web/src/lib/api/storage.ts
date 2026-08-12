@@ -1,3 +1,22 @@
+/**
+ * The API base URL, and the token store behind the API client along with
+ * the precedence rule between the two copies it keeps: one in
+ * `localStorage`, one in memory.
+ *
+ * The persisted copy normally wins, which is what carries a rotation
+ * performed in another tab into this one. A store can serve reads while
+ * refusing writes, though (quota exhaustion does it, and so do some Safari
+ * private-browsing and ITP states), and there the persisted copy is older
+ * than what this tab holds. Every refused change is recorded against what
+ * the store held at the time, so a later read can tell a store that has
+ * not moved since (memory is newer) from one another tab has since
+ * written (the store is newer).
+ *
+ * A read answering `null` means absent, unreadable, or removed by another
+ * tab. None of those is proof the session ended, so the token this tab
+ * holds survives it.
+ */
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string;
 
 if (!API_BASE_URL) {
@@ -10,12 +29,11 @@ const TOKEN_KEY = 'linklater_token';
 const REFRESH_TOKEN_KEY = 'linklater_refresh_token';
 
 /**
- * Keys whose in-memory copy this tab could not persist. A store can serve
- * reads while refusing writes – quota exhaustion does it, and so do some
- * Safari private-browsing and ITP states – and there whatever is still in
- * storage is older than what this tab holds, not newer.
+ * Keys whose in-memory copy this tab could not persist, each mapped to
+ * what the store held when it refused. Recording the value, not just the
+ * key, is what lets a later read date the store's copy.
  */
-const unpersistedKeys = new Set<string>();
+const refusedWrites = new Map<string, string | null>();
 
 /**
  * Safely reads from `localStorage`. Returns `null` in SSR environments or
@@ -31,33 +49,33 @@ function safeRead(key: string): string | null {
 }
 
 /**
- * Safely writes to `localStorage`, recording whether the store took the
- * value. A refused write leaves the in-memory copy as the only current one,
- * so the key is marked and read back from memory until a write lands or
- * another tab supersedes it.
+ * Safely writes to `localStorage`, recording a refusal against what the
+ * store held at the time.
  */
 function safeWrite(key: string, value: string): void {
   if (typeof window === 'undefined') return;
   try {
     window.localStorage.setItem(key, value);
-    unpersistedKeys.delete(key);
+    refusedWrites.delete(key);
   } catch {
-    unpersistedKeys.add(key);
+    refusedWrites.set(key, safeRead(key));
   }
 }
 
 /**
- * Safely removes from `localStorage`, recording whether the store took the
- * removal. A refused removal is marked so the cleared token cannot come
- * back from storage on the next read – a logout has to stick.
+ * Safely removes from `localStorage`, recording a refusal the same way a
+ * write does. The stake differs: an unrecorded refusal here would let the
+ * next read resurrect the token this tab just cleared, so a logout sticks
+ * for as long as the tab lives (a reload reads the store afresh and finds
+ * the removal never landed).
  */
 function safeRemove(key: string): void {
   if (typeof window === 'undefined') return;
   try {
     window.localStorage.removeItem(key);
-    unpersistedKeys.delete(key);
+    refusedWrites.delete(key);
   } catch {
-    unpersistedKeys.add(key);
+    refusedWrites.set(key, safeRead(key));
   }
 }
 
@@ -65,22 +83,25 @@ let cachedToken: string | null = safeRead(TOKEN_KEY);
 let cachedRefreshToken: string | null = safeRead(REFRESH_TOKEN_KEY);
 
 /**
- * Resolves a token to the newest copy this tab knows of.
+ * Whether the store's copy of `key` is the newest one this tab knows of.
  *
- * A key this tab wrote or cleared without reaching storage answers from
- * memory: the store still holds the value from before that change, so
- * preferring it would discard a fresh rotation, or resurrect a token that
- * was already cleared. Otherwise the persisted copy wins, and that is what
- * carries a rotation performed in another tab into this one – the in-memory
- * copy alone would go stale the moment a sibling renewed the pair, leaving
- * this tab to send a refresh token that is already spent server-side. A
- * `null` read means absent, unreadable, or removed by another tab – never
- * proof the session ended, so the token this tab holds survives it.
+ * With a refusal outstanding, the store having moved off the value it
+ * refused against is the evidence another tab wrote it, and the only
+ * evidence available before the `storage` event arrives.
  */
+function isPersistedAuthoritative(
+  key: string,
+  persisted: string | null,
+): boolean {
+  if (persisted === null) return false;
+  if (!refusedWrites.has(key)) return true;
+  return persisted !== refusedWrites.get(key);
+}
+
+// resolves a token to the newest copy this tab knows of
 function readPersisted(key: string, cached: string | null): string | null {
-  if (unpersistedKeys.has(key)) return cached;
   const persisted = safeRead(key);
-  if (persisted === null) return cached;
+  if (!isPersistedAuthoritative(key, persisted)) return cached;
   return persisted;
 }
 
@@ -93,12 +114,26 @@ export function getStoredRefreshToken(): string | null {
 }
 
 /**
- * Persists the pair, refresh token first. The two writes are not atomic, so
- * another tab can read between them, and the order decides how bad that
- * torn read is: (old access, new refresh) leaves it an access token good
- * for the rest of its hour, while the reverse order leaves it holding a
- * refresh token this tab has already spent, so its next renewal 401s into
- * the logout this sync exists to prevent.
+ * Whether this tab now knows a refresh token other than the one just
+ * spent. A 401 on a token another tab has already replaced proves that
+ * token spent, not that the session ended, so the successor is worth
+ * trying. Asked through the same precedence rule the token was read
+ * through, since a successor can arrive by either route: persisted by the
+ * other tab, or carried into memory by the `storage` event. Nothing at all
+ * is not a successor, so `null` reads as no.
+ */
+export function isRefreshTokenSuperseded(spentToken: string): boolean {
+  const current = getStoredRefreshToken();
+  return current !== null && current !== spentToken;
+}
+
+/**
+ * Persists the pair, refresh token first. The two writes are not atomic,
+ * so another tab can read between them, and the order decides how bad
+ * that torn read is: (old access, new refresh) leaves it an access token
+ * good for the rest of its hour, while the reverse order leaves it
+ * holding a refresh token this tab has already spent, so its next renewal
+ * 401s into the logout this sync exists to prevent.
  */
 export function setStoredToken(
   accessToken: string,
@@ -125,14 +160,13 @@ export function clearStoredToken(): void {
  * a read taken after storage becomes unreadable still answers with the
  * rotated pair rather than the one read at boot. The `storage` event never
  * fires in the tab that wrote, so this only ever carries another tab's
- * work – and that work is newer than a write of this tab's that storage
- * refused, which is why the event key stops being memory-authoritative
- * here. The store is re-read rather than trusting the event payload, so the
- * rule that a `null` never evicts a live token lives in a single place.
+ * work, which is newer than a write of this tab's that storage refused.
+ * The store is re-read rather than trusting the event payload, so the rule
+ * that a `null` never evicts a live token lives in a single place.
  */
 function handleTokenStorageEvent(event: StorageEvent): void {
   if (event.key !== TOKEN_KEY && event.key !== REFRESH_TOKEN_KEY) return;
-  unpersistedKeys.delete(event.key);
+  refusedWrites.delete(event.key);
   cachedToken = readPersisted(TOKEN_KEY, cachedToken);
   cachedRefreshToken = readPersisted(REFRESH_TOKEN_KEY, cachedRefreshToken);
 }
@@ -147,8 +181,8 @@ startCrossTabTokenSync();
 /**
  * Exists for suites that re-import this module: without it each import
  * leaves another listener on the shared `window`. The app never stops
- * syncing while it runs, which is why this is absent from the `core.ts` and
- * `index.ts` barrels.
+ * syncing while it runs, which is why this is absent from the `core.ts`
+ * and `index.ts` barrels.
  */
 export function stopCrossTabTokenSync(): void {
   if (typeof window === 'undefined') return;

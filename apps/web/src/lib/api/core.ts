@@ -5,126 +5,9 @@ export {
   setStoredToken,
 } from './storage';
 
-import {
-  API_BASE_URL,
-  clearStoredToken,
-  getStoredRefreshToken,
-  getStoredToken,
-  setStoredToken,
-} from './storage';
-
-export class ApiError extends Error {
-  status: number;
-
-  constructor(message: string, status: number) {
-    super(message);
-    this.name = 'ApiError';
-    this.status = status;
-  }
-}
-
-async function parseResponse<T>(response: Response): Promise<T | undefined> {
-  const text = await response.text();
-  if (!text) return undefined;
-  try {
-    return JSON.parse(text) as T;
-  } catch {
-    throw new ApiError(
-      `Server returned non-JSON response: ${text.slice(0, 100)}`,
-      0,
-    );
-  }
-}
-
-async function parseError(response: Response): Promise<ApiError> {
-  const text = await response.text();
-  let message = text || `Request failed with ${response.status}`;
-  try {
-    const body = JSON.parse(text) as { message?: string };
-    if (body.message) message = body.message;
-  } catch {
-    // body is not JSON, use the raw text as the error message
-  }
-  return new ApiError(message, response.status);
-}
-
-let inFlightRefresh: Promise<boolean> | null = null;
-
-/**
- * Deadline for the token-refresh fetch. apiFetch imposes no timeout of its own,
- * and every 401'd caller awaits this single shared refresh, so a refresh hung
- * on a dead network (a mid-request socket stall) would hold every awaiter open
- * until the browser's socket-level timeout, which can run to minutes. Callers
- * that carry their own per-request deadline still could not escape it: the
- * metadata poller's deadline bounds its poll but explicitly does not cover the
- * refresh leg it triggers. Bounding the refresh here is the only place that
- * leg gets a limit.
- *
- * An abort rejects the fetch exactly as an unreachable server would, so a
- * timed-out refresh follows the same catch below as any network failure: this
- * request fails, but the stored tokens survive because a refresh that never
- * answered has not proven the session dead. Held at 10s to match the poller's
- * per-request deadline: comfortably above a healthy round-trip on a slow
- * connection, well under the socket timeout it stands in for.
- * AbortSignal.timeout is deliberately avoided; its internal timer is not
- * driven by the test suite's fake timers.
- */
-const REFRESH_DEADLINE_MS = 10_000;
-
-async function performTokenRefresh(): Promise<boolean> {
-  if (!getStoredRefreshToken()) {
-    // no refresh token: the rejected access token is dead for good, so clear it
-    clearStoredToken();
-    return false;
-  }
-
-  // not wired to a caller's signal: one abort must not kill the shared refresh
-  const deadlineController = new AbortController();
-  const deadlineTimeoutId = setTimeout(
-    () => deadlineController.abort(),
-    REFRESH_DEADLINE_MS,
-  );
-
-  try {
-    const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken: getStoredRefreshToken() }),
-      signal: deadlineController.signal,
-    });
-
-    if (!response.ok) {
-      // only a 401/403 proves the token spent; other statuses are transient
-      if (response.status === 401 || response.status === 403) {
-        clearStoredToken();
-      }
-      return false;
-    }
-
-    const data = (await response.json()) as {
-      accessToken: string;
-      refreshToken: string;
-    };
-    setStoredToken(data.accessToken, data.refreshToken);
-    return true;
-  } catch {
-    // network failure/abort reached no verdict, so keep tokens for retry
-    return false;
-  } finally {
-    clearTimeout(deadlineTimeoutId);
-  }
-}
-
-// dedup concurrent refreshes so N parallel 401s share one refresh call
-async function attemptTokenRefresh(): Promise<boolean> {
-  if (inFlightRefresh) return inFlightRefresh;
-  inFlightRefresh = performTokenRefresh().finally(() => {
-    inFlightRefresh = null;
-  });
-  return inFlightRefresh;
-}
-
-// untyped callers get void, typed get T; an empty typed body is `undefined` at runtime
+import { API_BASE_URL, getStoredToken } from './storage';
+import { ApiError, parseError, parseResponse } from './errors';
+import { attemptTokenRefresh } from './tokenRefresh';
 
 /**
  * Controls the Authorization header on an `apiFetch` call:
@@ -152,6 +35,8 @@ export async function apiFetchRequired<T>(
   return data;
 }
 
+// untyped callers get void, typed get T; an empty typed body is
+// `undefined` at runtime
 export async function apiFetch(
   path: string,
   options?: RequestInit,
@@ -192,8 +77,9 @@ export async function apiFetch<T>(
       authContext === true &&
       path !== '/auth/refresh'
     ) {
-      const refreshed = await attemptTokenRefresh();
-      if (refreshed) {
+      // true also when another tab's rotation left a newer token to use
+      const canRetry = await attemptTokenRefresh();
+      if (canRetry) {
         const retryHeaders = {
           ...headers,
           Authorization: `Bearer ${getStoredToken()}`,

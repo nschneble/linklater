@@ -467,6 +467,223 @@ describe('apiFetch', () => {
     expect(getStoredToken()).toBe('fresh-jwt');
   });
 
+  it('keeps the session when another tab rotates the pair mid-refresh', async () => {
+    setStoredToken('expired-jwt', 'my-refresh');
+
+    let protectedCallCount = 0;
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+
+      if (url.includes('/auth/refresh')) {
+        // lands mid-flight, so no storage event precedes the 401
+        localStorage.setItem('linklater_token', 'sibling-jwt');
+        localStorage.setItem('linklater_refresh_token', 'sibling-refresh');
+        return Promise.resolve({
+          ok: false,
+          status: 401,
+          text: () =>
+            Promise.resolve(JSON.stringify({ message: 'Invalid refresh' })),
+        });
+      }
+
+      protectedCallCount += 1;
+      if (protectedCallCount === 1) {
+        return Promise.resolve({
+          ok: false,
+          status: 401,
+          text: () =>
+            Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        text: () => Promise.resolve(JSON.stringify({ id: 'retried' })),
+      });
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const result = await apiFetch<{ id: string }>('/test').catch(
+      (caught: unknown) => caught,
+    );
+
+    // a 401 on a token the sibling replaced says that token is spent
+    expect(getStoredRefreshToken()).toBe('sibling-refresh');
+    expect(getStoredToken()).toBe('sibling-jwt');
+    expect(result).toEqual({ id: 'retried' });
+
+    const [, retryOptions] = fetchMock.mock.calls[2] as [string, RequestInit];
+    expect((retryOptions.headers as Record<string, string>).Authorization).toBe(
+      'Bearer sibling-jwt',
+    );
+  });
+
+  it('keeps the session when a sibling rotates over a write this tab could not persist', async () => {
+    localStorage.setItem('linklater_token', 'older-jwt');
+    localStorage.setItem('linklater_refresh_token', 'older-refresh');
+    const setItemSpy = vi
+      .spyOn(window.localStorage, 'setItem')
+      .mockImplementation(() => {
+        throw new Error('QuotaExceededError');
+      });
+    setStoredToken('my-jwt', 'my-refresh');
+    // quota frees up, but the store still holds the refused pair
+    setItemSpy.mockRestore();
+
+    let protectedCallCount = 0;
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+
+      if (url.includes('/auth/refresh')) {
+        localStorage.setItem('linklater_token', 'sibling-jwt');
+        localStorage.setItem('linklater_refresh_token', 'sibling-refresh');
+        return Promise.resolve({
+          ok: false,
+          status: 401,
+          text: () =>
+            Promise.resolve(JSON.stringify({ message: 'Invalid refresh' })),
+        });
+      }
+
+      protectedCallCount += 1;
+      if (protectedCallCount === 1) {
+        return Promise.resolve({
+          ok: false,
+          status: 401,
+          text: () =>
+            Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        text: () => Promise.resolve(JSON.stringify({ id: 'retried' })),
+      });
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const result = await apiFetch<{ id: string }>('/test').catch(
+      (caught: unknown) => caught,
+    );
+
+    // the unpersisted pair is what got spent, not the older stored one
+    const [, refreshOptions] = fetchMock.mock.calls[1] as [string, RequestInit];
+    expect(JSON.parse(refreshOptions.body as string)).toEqual({
+      refreshToken: 'my-refresh',
+    });
+    expect(getStoredRefreshToken()).toBe('sibling-refresh');
+    expect(result).toEqual({ id: 'retried' });
+  });
+
+  it('does not retry when this tab logs out while the refresh is in flight', async () => {
+    setStoredToken('expired-jwt', 'my-refresh');
+
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+
+      if (url.includes('/auth/refresh')) {
+        clearStoredToken();
+        return Promise.resolve({
+          ok: false,
+          status: 401,
+          text: () =>
+            Promise.resolve(JSON.stringify({ message: 'Invalid refresh' })),
+        });
+      }
+      return Promise.resolve({
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+      });
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    await expect(apiFetch('/test')).rejects.toBeInstanceOf(ApiError);
+
+    // an empty store is no successor, so nothing is worth retrying against
+    expect(fetchMock.mock.calls).toHaveLength(2);
+    expect(getStoredToken()).toBeNull();
+  });
+
+  it('logs out when a 401 finds only the pair this tab could not persist', async () => {
+    localStorage.setItem('linklater_refresh_token', 'older-refresh');
+    vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => {
+      throw new Error('QuotaExceededError');
+    });
+    // the store goes on serving the pair this rotation replaced
+    setStoredToken('my-jwt', 'my-refresh');
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Invalid refresh' })),
+      });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const error = await apiFetch('/test').catch((caught: unknown) => caught);
+
+    // a store older than memory is no successor, so the session has ended
+    expect(getStoredRefreshToken()).toBeNull();
+    expect(getStoredToken()).toBeNull();
+    expect(fetchMock.mock.calls).toHaveLength(2);
+    expect((error as ApiError).status).toBe(401);
+  });
+
+  it('logs out when a sibling removed the refresh token and the server rejects it', async () => {
+    setStoredToken('expired-jwt', 'cached-refresh');
+    // this tab keeps its copy; a removal elsewhere is not proof of an end
+    localStorage.removeItem('linklater_refresh_token');
+    window.dispatchEvent(
+      new StorageEvent('storage', {
+        key: 'linklater_refresh_token',
+        newValue: null,
+      }),
+    );
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Invalid refresh' })),
+      });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const error = await apiFetch('/test').catch((caught: unknown) => caught);
+
+    // the cached copy was spent against the server, not assumed dead
+    expect(fetchMock.mock.calls).toHaveLength(2);
+    const [refreshUrl, refreshOptions] = fetchMock.mock.calls[1] as [
+      string,
+      RequestInit,
+    ];
+    expect(refreshUrl).toContain('/auth/refresh');
+    expect(JSON.parse(refreshOptions.body as string)).toEqual({
+      refreshToken: 'cached-refresh',
+    });
+    // the server rejected it and no successor is stored: session over
+    expect(getStoredToken()).toBeNull();
+    expect(getStoredRefreshToken()).toBeNull();
+    expect((error as ApiError).status).toBe(401);
+  });
+
   it('does not retry when no refresh token is stored', async () => {
     setStoredToken('expired-jwt');
     const fetchMock = vi.fn().mockResolvedValue({
@@ -687,7 +904,7 @@ describe('apiFetch token-refresh deadline', () => {
 
     // attach the reject handler before advancing so the abort isn't unhandled
     const caught = apiFetch('/test').catch((error: unknown) => error);
-    // nothing resolves the refresh until REFRESH_DEADLINE_MS (10s) in core.ts
+    // nothing resolves the refresh until REFRESH_DEADLINE_MS (10s)
     await vi.advanceTimersByTimeAsync(10_000);
 
     const error = await caught;

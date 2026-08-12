@@ -29,7 +29,6 @@ export {
   verifyTotpSetup,
 } from './auth';
 export {
-  ApiError,
   apiFetch,
   apiFetchRequired,
   clearStoredToken,
@@ -37,6 +36,7 @@ export {
   getStoredRefreshToken,
   setStoredToken,
 } from './core';
+export { ApiError } from './errors';
 export type { PaginatedLinks, Link, LinkMeta } from './links';
 export {
   createLink,
