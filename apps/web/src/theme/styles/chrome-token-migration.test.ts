@@ -24,6 +24,7 @@ const MIGRATED_FILES = [
   'src/components/LandingPage/FeaturesSection.tsx',
   'src/components/LandingPage/FooterSection.tsx',
   'src/components/LandingPage/HeroSection.tsx',
+  'src/components/auth/AlreadySignedInNotice.tsx',
   'src/components/auth/AuthCard.tsx',
   'src/components/auth/AuthForm.tsx',
   'src/components/auth/ForgotPasswordView.tsx',

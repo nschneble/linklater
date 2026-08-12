@@ -42,6 +42,23 @@ const fillByHost: Record<Surface, string> = {
     'bg-[var(--orbit-highlight)] disabled:bg-[var(--orbit-highlight)] hover:bg-[var(--orbit-highlight-hover)] text-[var(--orbit-highlight-fg)]',
 };
 
+/**
+ * The paint alone, for the one affordance a `<button>` cannot carry: a
+ * navigation. An anchor keeps middle-click, ctrl-click, open-in-new-tab and
+ * the context menu, and announces as a link rather than a button, so a
+ * caller whose action is a document load renders an `<a>` and borrows this
+ * rather than restating a class list that would then drift.
+ *
+ * `stateClasses` is the disabled tier, which only the button has and which
+ * belongs between the radius and the transition per the ordering rules.
+ */
+export function primaryActionClasses(
+  surface: Surface = 'mount',
+  stateClasses = '',
+): string {
+  return `inline-flex items-center justify-center gap-1.5 pl-3.5 pr-4 py-2 ${fillByHost[surface]} border-shadow hover:border-shadow text-xs font-semibold ${FOCUS_RING} rounded-full ${stateClasses} transition duration-200 active:scale-[0.96] disabled:active:scale-100 cursor-pointer`;
+}
+
 export default function PrimaryButton({
   children,
   className = '',
@@ -60,7 +77,7 @@ export default function PrimaryButton({
 
   return (
     <button
-      className={`inline-flex items-center justify-center gap-1.5 pl-3.5 pr-4 py-2 ${fillByHost[surface]} border-shadow hover:border-shadow text-xs font-semibold ${FOCUS_RING} rounded-full ${disabledClasses} transition duration-200 active:scale-[0.96] disabled:active:scale-100 cursor-pointer ${visibilityClasses} ${className}`}
+      className={`${primaryActionClasses(surface, disabledClasses)} ${visibilityClasses} ${className}`}
       type={type}
       data-surface={surface}
       // disabled + aria-hidden hide from AT; disabled already blocks focus

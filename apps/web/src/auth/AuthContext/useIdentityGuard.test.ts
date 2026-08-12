@@ -46,12 +46,20 @@ function userRef(user: User | null) {
 function storedTokenBelongsTo(token: string | null, subject: string | null) {
   vi.mocked(apiModule.getStoredToken).mockReturnValue(token);
   vi.mocked(apiModule.readTokenClaims).mockReturnValue(
-    token === null ? null : { exp: null, sub: subject },
+    token === null ? null : { exp: null, subject },
   );
 }
 
 function goVisible() {
   document.dispatchEvent(new Event('visibilitychange'));
+}
+
+function standOn(pathname: string) {
+  Object.defineProperty(window, 'location', {
+    configurable: true,
+    value: { ...realLocation, assign: assignMock, pathname },
+    writable: true,
+  });
 }
 
 beforeEach(() => {
@@ -236,6 +244,58 @@ describe('a tab rendering nobody', () => {
   });
 });
 
+describe('a route that renders regardless of auth state', () => {
+  it('keeps the document, so a half-typed new password survives', () => {
+    standOn('/reset-password');
+    storedTokenBelongsTo('other-jwt', 'user-2');
+
+    renderHook(() =>
+      useIdentityGuard(userRef(makeRenderedUser('user-1')), vi.fn()),
+    );
+    goVisible();
+
+    expect(assignMock).not.toHaveBeenCalled();
+  });
+
+  it('queues nothing, since a notice it cannot deliver would fire later', () => {
+    standOn('/reset-password');
+    storedTokenBelongsTo('other-jwt', 'user-2');
+
+    renderHook(() =>
+      useIdentityGuard(userRef(makeRenderedUser('user-1')), vi.fn()),
+    );
+    goVisible();
+
+    expect(consumePendingNotice()).toBeNull();
+  });
+
+  it('still takes the move on a route the login gate does protect', () => {
+    // the same mismatch, one path over: the guard is off, not broken
+    standOn('/settings');
+    storedTokenBelongsTo('other-jwt', 'user-2');
+
+    renderHook(() =>
+      useIdentityGuard(userRef(makeRenderedUser('user-1')), vi.fn()),
+    );
+    goVisible();
+
+    expect(assignMock).toHaveBeenCalledWith('/unread');
+  });
+
+  it('spares a cold boot off an emailed link the bounce that spends it', () => {
+    standOn('/reset-password');
+    vi.mocked(apiModule.readTokenClaims).mockReturnValue({
+      exp: null,
+      subject: 'user-2',
+    });
+    noteRenderedIdentity('user-1');
+
+    expect(reconcileColdBootIdentity('jwt')).toBe(false);
+    expect(assignMock).not.toHaveBeenCalled();
+    expect(consumePendingNotice()).toBeNull();
+  });
+});
+
 describe('inputs the guard refuses to act on', () => {
   it('does nothing while the tab is hidden', () => {
     storedTokenBelongsTo('other-jwt', 'user-2');
@@ -297,7 +357,7 @@ describe('reconcileColdBootIdentity', () => {
   it('answers false when the booting token belongs to the last rendered user', () => {
     vi.mocked(apiModule.readTokenClaims).mockReturnValue({
       exp: null,
-      sub: 'user-1',
+      subject: 'user-1',
     });
     noteRenderedIdentity('user-1');
 
@@ -308,7 +368,7 @@ describe('reconcileColdBootIdentity', () => {
   it('answers false for a tab with no prior identity, which is an ordinary boot', () => {
     vi.mocked(apiModule.readTokenClaims).mockReturnValue({
       exp: null,
-      sub: 'user-2',
+      subject: 'user-2',
     });
 
     expect(reconcileColdBootIdentity('jwt')).toBe(false);
@@ -327,7 +387,7 @@ describe('reconcileColdBootIdentity', () => {
   it('announces in place at the destination without a second page load', () => {
     vi.mocked(apiModule.readTokenClaims).mockReturnValue({
       exp: null,
-      sub: 'user-2',
+      subject: 'user-2',
     });
     noteRenderedIdentity('user-1');
 
@@ -345,7 +405,7 @@ describe('reconcileColdBootIdentity', () => {
     });
     vi.mocked(apiModule.readTokenClaims).mockReturnValue({
       exp: null,
-      sub: 'user-2',
+      subject: 'user-2',
     });
     noteRenderedIdentity('user-1');
 

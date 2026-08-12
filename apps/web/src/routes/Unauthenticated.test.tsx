@@ -6,10 +6,22 @@
  * half-filled form alone, and only a form whose state is genuinely
  * component-local can prove that; a mocked hook would hold the email in
  * the test instead of in the component that is supposed to lose it.
+ *
+ * `window.location.assign` is spied in `beforeEach` rather than inside the
+ * one test that reads it. Installed per-test it proves nothing about the
+ * rest: a notice that took the move automatically would leave every
+ * preservation test below green, because a jsdom navigation changes no
+ * DOM. Those tests also confirm the notice appeared before asserting what
+ * survived, so a handler that threw on entry cannot pass them by doing
+ * nothing at all.
+ *
+ * The route table is pinned separately in
+ * `Unauthenticated.routes.test.tsx`, which needs `AuthForm` stubbed and so
+ * cannot share a module-scoped mock with this file.
  */
 
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthFormWrapper } from './Unauthenticated';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 
@@ -17,7 +29,9 @@ vi.mock('../auth/AuthContext', () => ({
   useAuth: vi.fn(),
 }));
 
-vi.mock('../lib/api', () => ({
+// the real key filter, so the ignored-key cases exercise what ships
+vi.mock('../lib/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../lib/api')>()),
   forgotPassword: vi.fn(),
   getStoredToken: vi.fn(),
   readTokenClaims: vi.fn(),
@@ -29,26 +43,41 @@ vi.mock('../lib/api', () => ({
 import * as apiModule from '../lib/api';
 import { useAuth } from '../auth/AuthContext';
 
+const ACTION = 'Go to your links';
 const ANNOUNCEMENT = 'already-signed-in-announcement';
+const MESSAGE = "You're already signed in.";
+const RENDERED_IDENTITY_KEY = 'linklater_rendered_identity';
+
+const realLocation = window.location;
+let assignMock: ReturnType<typeof vi.fn>;
 
 function siblingSignedInAs(subject: string | null) {
   vi.mocked(apiModule.getStoredToken).mockReturnValue('sibling-jwt');
   vi.mocked(apiModule.readTokenClaims).mockReturnValue(
-    subject === null ? null : { exp: null, sub: subject },
+    subject === null ? null : { exp: null, subject },
   );
 }
 
-function fireStorageEvent() {
-  fireEvent(window, new StorageEvent('storage', { key: 'linklater_token' }));
+function siblingSignedOut() {
+  vi.mocked(apiModule.getStoredToken).mockReturnValue(null);
+  vi.mocked(apiModule.readTokenClaims).mockReturnValue(null);
+}
+
+function fireStorageEvent(key: string | null = 'linklater_token') {
+  fireEvent(window, new StorageEvent('storage', { key }));
 }
 
 /** The painted copy of the message, as opposed to the sr-only mirror. */
 function visibleNotice(): HTMLElement {
   const painted = screen
-    .getAllByText("You're signed in on another tab.")
+    .getAllByText(MESSAGE)
     .find((element) => element.closest('.sr-only') === null);
   if (!painted) throw new Error('no visible notice rendered');
   return painted;
+}
+
+function noticeIsShowing(): boolean {
+  return screen.queryByRole('link', { name: ACTION }) !== null;
 }
 
 function renderLoginScreen() {
@@ -62,6 +91,12 @@ function renderLoginScreen() {
 beforeEach(() => {
   vi.clearAllMocks();
   sessionStorage.clear();
+  assignMock = vi.fn();
+  Object.defineProperty(window, 'location', {
+    configurable: true,
+    value: { ...realLocation, assign: assignMock },
+    writable: true,
+  });
   vi.mocked(useAuth).mockReturnValue({
     login: vi.fn(),
     refreshUser: vi.fn(),
@@ -69,6 +104,14 @@ beforeEach(() => {
   } as unknown as ReturnType<typeof useAuth>);
   vi.mocked(apiModule.getStoredToken).mockReturnValue(null);
   vi.mocked(apiModule.readTokenClaims).mockReturnValue(null);
+});
+
+afterEach(() => {
+  Object.defineProperty(window, 'location', {
+    configurable: true,
+    value: realLocation,
+    writable: true,
+  });
 });
 
 describe('the live region before anything happens', () => {
@@ -90,9 +133,9 @@ describe('the live region before anything happens', () => {
     expect(region).toHaveAttribute('aria-atomic', 'true');
   });
 
-  it('shows no notice while nobody is signed in elsewhere', () => {
+  it('shows no notice while nobody is signed in anywhere', () => {
     renderLoginScreen();
-    expect(screen.queryByRole('button', { name: 'Go to my links' })).toBeNull();
+    expect(noticeIsShowing()).toBe(false);
   });
 });
 
@@ -102,9 +145,7 @@ describe('a sibling tab signs in', () => {
     siblingSignedInAs('user-2');
     fireStorageEvent();
 
-    expect(screen.getByTestId(ANNOUNCEMENT).textContent).toBe(
-      "You're signed in on another tab.",
-    );
+    expect(screen.getByTestId(ANNOUNCEMENT).textContent).toBe(MESSAGE);
   });
 
   it('surfaces a visible notice carrying the same words as the region', () => {
@@ -113,9 +154,7 @@ describe('a sibling tab signs in', () => {
     fireStorageEvent();
 
     // both channels, one string: they cannot drift apart
-    expect(
-      screen.getAllByText("You're signed in on another tab."),
-    ).toHaveLength(2);
+    expect(screen.getAllByText(MESSAGE)).toHaveLength(2);
     expect(visibleNotice()).toBeInTheDocument();
   });
 
@@ -124,9 +163,8 @@ describe('a sibling tab signs in', () => {
     siblingSignedInAs('user-2');
     fireStorageEvent();
 
-    expect(
-      screen.getByRole('button', { name: 'Go to my links' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: ACTION })).toBeInTheDocument();
+    expect(assignMock).not.toHaveBeenCalled();
   });
 
   it('leaves the typed email in place (WCAG 3.3.7 Redundant Entry)', () => {
@@ -137,6 +175,8 @@ describe('a sibling tab signs in', () => {
     siblingSignedInAs('user-2');
     fireStorageEvent();
 
+    expect(noticeIsShowing()).toBe(true);
+    expect(assignMock).not.toHaveBeenCalled();
     expect(screen.getByLabelText(/email/i)).toHaveValue(
       'half-typed@example.com',
     );
@@ -150,6 +190,8 @@ describe('a sibling tab signs in', () => {
     siblingSignedInAs('user-2');
     fireStorageEvent();
 
+    expect(noticeIsShowing()).toBe(true);
+    expect(assignMock).not.toHaveBeenCalled();
     expect(screen.getByLabelText(/password/i)).toHaveValue('still-typing');
   });
 
@@ -158,6 +200,8 @@ describe('a sibling tab signs in', () => {
     siblingSignedInAs('user-2');
     fireStorageEvent();
 
+    expect(noticeIsShowing()).toBe(true);
+    expect(assignMock).not.toHaveBeenCalled();
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
   });
@@ -170,6 +214,7 @@ describe('a sibling tab signs in', () => {
     siblingSignedInAs('user-2');
     fireStorageEvent();
 
+    expect(noticeIsShowing()).toBe(true);
     expect(document.activeElement).toBe(password);
   });
 
@@ -192,9 +237,7 @@ describe('a sibling tab signs in', () => {
 
       vi.advanceTimersByTime(60_000);
 
-      expect(
-        screen.getByRole('button', { name: 'Go to my links' }),
-      ).toBeInTheDocument();
+      expect(noticeIsShowing()).toBe(true);
     } finally {
       vi.useRealTimers();
     }
@@ -202,48 +245,118 @@ describe('a sibling tab signs in', () => {
 });
 
 describe('storage changes that are not a sibling signing in', () => {
+  // each proves the listener still live: a throwing handler cannot pass
   it('ignores a storage event that leaves no token behind', () => {
     renderLoginScreen();
-    vi.mocked(apiModule.getStoredToken).mockReturnValue(null);
+    siblingSignedOut();
     fireStorageEvent();
-
     expect(screen.getByTestId(ANNOUNCEMENT).textContent).toBe('');
+
+    siblingSignedInAs('user-2');
+    fireStorageEvent();
+    expect(screen.getByTestId(ANNOUNCEMENT).textContent).toBe(MESSAGE);
   });
 
   it('ignores a token whose owner cannot be read', () => {
     renderLoginScreen();
     siblingSignedInAs(null);
     fireStorageEvent();
-
     expect(screen.getByTestId(ANNOUNCEMENT).textContent).toBe('');
-    expect(screen.queryByRole('button', { name: 'Go to my links' })).toBeNull();
+    expect(noticeIsShowing()).toBe(false);
+
+    siblingSignedInAs('user-2');
+    fireStorageEvent();
+    expect(noticeIsShowing()).toBe(true);
+  });
+
+  it('ignores a theme write, which carries no news about anyone signing in', () => {
+    renderLoginScreen();
+    // a sibling toggling dark mode writes this key and a timestamp beside it
+    siblingSignedInAs('user-2');
+    fireStorageEvent('linklater_theme');
+    expect(screen.getByTestId(ANNOUNCEMENT).textContent).toBe('');
+    expect(noticeIsShowing()).toBe(false);
+
+    fireStorageEvent();
+    expect(noticeIsShowing()).toBe(true);
+  });
+
+  it('reads a whole-store clear, which takes the token with it', () => {
+    renderLoginScreen();
+    siblingSignedInAs('user-2');
+    fireStorageEvent();
+    expect(noticeIsShowing()).toBe(true);
+
+    siblingSignedOut();
+    fireStorageEvent(null);
+    expect(noticeIsShowing()).toBe(false);
   });
 });
 
-describe('activating the notice', () => {
-  it('replaces the document, so the app boots fresh under the new identity', () => {
-    const realLocation = window.location;
-    const assignMock = vi.fn();
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: { ...realLocation, assign: assignMock },
-      writable: true,
-    });
+describe('the sibling signs back out', () => {
+  it('retracts the offer rather than leaving a link the gate bounces', () => {
+    renderLoginScreen();
+    siblingSignedInAs('user-2');
+    fireStorageEvent();
+    expect(noticeIsShowing()).toBe(true);
 
-    try {
-      renderLoginScreen();
-      siblingSignedInAs('user-2');
-      fireStorageEvent();
+    siblingSignedOut();
+    fireStorageEvent();
 
-      fireEvent.click(screen.getByRole('button', { name: 'Go to my links' }));
+    expect(noticeIsShowing()).toBe(false);
+    expect(screen.getByTestId(ANNOUNCEMENT).textContent).toBe('');
+  });
+});
 
-      expect(assignMock).toHaveBeenCalledWith('/unread');
-    } finally {
-      Object.defineProperty(window, 'location', {
-        configurable: true,
-        value: realLocation,
-        writable: true,
-      });
-    }
+describe('a boot that kept its token and failed its profile fetch', () => {
+  it('offers the way back, which no storage event was ever going to', () => {
+    sessionStorage.setItem(RENDERED_IDENTITY_KEY, 'user-1');
+    siblingSignedInAs('user-1');
+
+    renderLoginScreen();
+
+    expect(noticeIsShowing()).toBe(true);
+    expect(screen.getByTestId(ANNOUNCEMENT).textContent).toBe(MESSAGE);
+  });
+
+  it('says nothing when this tab rendered nobody, which a sign-out looks like', () => {
+    // logout forgets the identity, then clears the token a round trip later
+    siblingSignedInAs('user-1');
+
+    renderLoginScreen();
+
+    expect(noticeIsShowing()).toBe(false);
+    expect(screen.getByTestId(ANNOUNCEMENT).textContent).toBe('');
+  });
+
+  it('says nothing when the token is gone, prior identity or not', () => {
+    sessionStorage.setItem(RENDERED_IDENTITY_KEY, 'user-1');
+    siblingSignedOut();
+
+    renderLoginScreen();
+
+    expect(noticeIsShowing()).toBe(false);
+  });
+});
+
+describe('the action', () => {
+  it('is a link, so it announces as one and keeps the browser gestures', () => {
+    renderLoginScreen();
+    siblingSignedInAs('user-2');
+    fireStorageEvent();
+
+    expect(screen.getByRole('link', { name: ACTION })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: ACTION })).toBeNull();
+  });
+
+  it('points at the one destination the pending notice is consumed on', () => {
+    renderLoginScreen();
+    siblingSignedInAs('user-2');
+    fireStorageEvent();
+
+    expect(screen.getByRole('link', { name: ACTION })).toHaveAttribute(
+      'href',
+      '/unread',
+    );
   });
 });

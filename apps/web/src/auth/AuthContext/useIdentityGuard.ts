@@ -19,6 +19,14 @@
  * (WCAG 3.3.7); that case belongs to `AlreadySignedInNotice`, which offers
  * the move instead of taking it.
  *
+ * Rendering nobody is not the only place that reasoning holds, though.
+ * `routes/Common.tsx` renders regardless of auth state, so a signed-in
+ * user sits on `/reset-password` with a new password half typed and a
+ * single-use token in the query string. Replacing that document costs
+ * both, and the reset link cannot be reissued without another email
+ * (WCAG 3.3.7, 2.4.3, 3.2.5). Those routes get the same offer-don't-take
+ * treatment, on both the visibility arm and the cold boot.
+ *
  * Recording the new subject is part of announcing it, never a separate
  * step: every path here ends in a document that re-runs this comparison,
  * and one that announced without recording would read the same mismatch
@@ -40,6 +48,33 @@ const VISIBILITY_REFRESH_MIN_INTERVAL_MS = 2000;
  * anywhere else strands the message until some later, unrelated arrival.
  */
 const SWITCHED_ACCOUNT_DESTINATION = '/unread';
+
+/**
+ * Every path `routes/Common.tsx` declares, which is every path that
+ * renders without consulting auth state. Whole-table rather than the
+ * subset holding a form or a single-use token, because the cost of
+ * protecting a static document is an announcement deferred to the next
+ * navigation, while the cost of missing a form is unrecoverable.
+ * Exported so `authAgnosticPaths.test.ts` can fail when the two drift.
+ */
+export const AUTH_AGNOSTIC_PATHS = new Set([
+  '/account/confirm-deletion',
+  '/docs',
+  '/extension/authorize',
+  '/failwhale',
+  '/logout',
+  '/oauth/callback',
+  '/privacy',
+  '/reset-password',
+  '/terms',
+  '/verify-email',
+  '/verify-email-change',
+  '/verify-login',
+]);
+
+function rendersRegardlessOfAuth(): boolean {
+  return AUTH_AGNOSTIC_PATHS.has(window.location.pathname);
+}
 
 /** Queues the announcement and takes ownership of the new subject. */
 function announceSwitchTo(subject: string): void {
@@ -64,11 +99,14 @@ function rehydrateAs(subject: string): void {
  * the caller can abandon the boot it was about to run.
  */
 export function reconcileColdBootIdentity(token: string): boolean {
-  const subject = readTokenClaims(token)?.sub ?? null;
+  const subject = readTokenClaims(token)?.subject ?? null;
   const priorIdentity = readRenderedIdentity();
   if (subject === null || priorIdentity === null || subject === priorIdentity) {
     return false;
   }
+
+  // a boot off an emailed link would spend the link on the bounce
+  if (rendersRegardlessOfAuth()) return false;
 
   // already at the destination: announce in place, no second page load
   if (window.location.pathname === SWITCHED_ACCOUNT_DESTINATION) {
@@ -96,8 +134,10 @@ export function useIdentityGuard(
       const renderedUser = userReference.current;
       if (renderedUser === null) return;
 
-      const subject = readTokenClaims(token)?.sub ?? null;
+      const subject = readTokenClaims(token)?.subject ?? null;
       if (subject !== null && subject !== renderedUser.userId) {
+        // a form here holds typed input this tab would destroy taking it
+        if (rendersRegardlessOfAuth()) return;
         rehydrateAs(subject);
         return;
       }

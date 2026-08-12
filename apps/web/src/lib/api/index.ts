@@ -34,6 +34,7 @@ export {
   clearStoredToken,
   getStoredRefreshToken,
   getStoredToken,
+  isTokenStorageEvent,
   setStoredToken,
 } from './core';
 export type { TokenClaims } from './jwt';

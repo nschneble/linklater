@@ -183,4 +183,33 @@ describe('storage.ts cross-tab token sync', () => {
 
     expect(module.getStoredToken()).toBe('boot-access');
   });
+
+  // exported so callers can tell a sign-in from a theme write
+  describe('isTokenStorageEvent', () => {
+    function ask(key: string | null): Promise<boolean> {
+      return loadStorageModule().then((module) =>
+        module.isTokenStorageEvent(new StorageEvent('storage', { key })),
+      );
+    }
+
+    it('accepts the access token key', async () => {
+      expect(await ask(TOKEN_KEY)).toBe(true);
+    });
+
+    it('accepts the refresh token key', async () => {
+      expect(await ask(REFRESH_TOKEN_KEY)).toBe(true);
+    });
+
+    it('accepts a whole-store clear, which takes the pair with it', async () => {
+      expect(await ask(null)).toBe(true);
+    });
+
+    it('rejects a theme write, which a sibling makes on every toggle', async () => {
+      expect(await ask('linklater_theme')).toBe(false);
+    });
+
+    it('rejects a key that merely starts the same', async () => {
+      expect(await ask('linklater_token_updated_at')).toBe(false);
+    });
+  });
 });

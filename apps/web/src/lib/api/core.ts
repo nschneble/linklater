@@ -2,6 +2,7 @@ export {
   clearStoredToken,
   getStoredRefreshToken,
   getStoredToken,
+  isTokenStorageEvent,
   setStoredToken,
 } from './storage';
 

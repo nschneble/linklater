@@ -5,7 +5,11 @@
  * claim, so most cases here are malformed input paired with the shape the
  * caller is entitled to see. The two claims it exposes are pinned both
  * present and absent, because a caller branching on `null` needs the
- * absent case to actually be `null` rather than `undefined` or `NaN`.
+ * absent case to be `null` itself rather than `undefined` or `NaN`.
+ *
+ * Payloads here are assembled by hand, which is what makes them useless
+ * for proving the reader looks at the claim the server signs. That is
+ * `jwt.serverContract.test.ts`'s job.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -36,7 +40,9 @@ function makeToken(payload: unknown): string {
 
 describe('readTokenClaims – well-formed tokens', () => {
   it('reads the subject off the payload', () => {
-    expect(readTokenClaims(makeToken({ sub: 'user-1' }))?.sub).toBe('user-1');
+    expect(readTokenClaims(makeToken({ subject: 'user-1' }))?.subject).toBe(
+      'user-1',
+    );
   });
 
   it('reads the expiry off the payload', () => {
@@ -46,33 +52,53 @@ describe('readTokenClaims – well-formed tokens', () => {
   });
 
   it('reads both claims off one payload', () => {
-    expect(readTokenClaims(makeToken({ exp: 42, sub: 'user-9' }))).toEqual({
+    expect(readTokenClaims(makeToken({ exp: 42, subject: 'user-9' }))).toEqual({
       exp: 42,
-      sub: 'user-9',
+      subject: 'user-9',
     });
   });
 
   it('survives a padding-free segment, which is how JWTs are emitted', () => {
     // 'a' repeated until the base64 needs padding the encoder then strips
-    const token = makeToken({ sub: 'aaa' });
+    const token = makeToken({ subject: 'aaa' });
     expect(token.split('.')[1]).not.toContain('=');
-    expect(readTokenClaims(token)?.sub).toBe('aaa');
+    expect(readTokenClaims(token)?.subject).toBe('aaa');
   });
 
   it('decodes a multi-byte subject rather than mangling it', () => {
-    expect(readTokenClaims(makeToken({ sub: 'usér-Ø-日' }))?.sub).toBe(
+    expect(readTokenClaims(makeToken({ subject: 'usér-Ø-日' }))?.subject).toBe(
       'usér-Ø-日',
     );
   });
 });
 
+describe('readTokenClaims – which claim the subject comes from', () => {
+  it('reads a standard `sub`, so a later issuer emitting one needs no change', () => {
+    expect(readTokenClaims(makeToken({ sub: 'user-1' }))?.subject).toBe(
+      'user-1',
+    );
+  });
+
+  it('prefers `subject`, the claim this API signs, when both are present', () => {
+    const token = makeToken({ sub: 'standard', subject: 'signed' });
+    expect(readTokenClaims(token)?.subject).toBe('signed');
+  });
+
+  it('falls back to `sub` when `subject` is present but not a string', () => {
+    // a mistyped preferred claim must not suppress a usable standard one
+    const token = makeToken({ sub: 'usable', subject: 12345 });
+    expect(readTokenClaims(token)?.subject).toBe('usable');
+  });
+});
+
 describe('readTokenClaims – claims that are present but unusable', () => {
   it('answers null for a subject the server sent as a number', () => {
-    expect(readTokenClaims(makeToken({ sub: 12345 }))?.sub).toBeNull();
+    expect(readTokenClaims(makeToken({ subject: 12345 }))?.subject).toBeNull();
   });
 
   it('answers null for a subject the server sent as an object', () => {
-    expect(readTokenClaims(makeToken({ sub: { id: 'x' } }))?.sub).toBeNull();
+    const token = makeToken({ subject: { id: 'x' } });
+    expect(readTokenClaims(token)?.subject).toBeNull();
   });
 
   it('answers null for an expiry sent as a numeric string', () => {
@@ -92,10 +118,10 @@ describe('readTokenClaims – claims that are present but unusable', () => {
     expect(claims?.exp).toBeNull();
   });
 
-  it('answers null for each claim the payload simply omits', () => {
+  it('answers null for each claim the payload omits', () => {
     expect(readTokenClaims(makeToken({ iat: 1 }))).toEqual({
       exp: null,
-      sub: null,
+      subject: null,
     });
   });
 });
@@ -119,7 +145,7 @@ describe('readTokenClaims – garbage in, null out', () => {
   });
 
   it('answers null for an array payload rather than reading its indices', () => {
-    // an array passes a naive typeof check, and ['x'] would read as sub '0'
+    // an array passes a naive typeof check, and its indices read as keys
     expect(readTokenClaims(makeToken(['user-1']))).toBeNull();
   });
 

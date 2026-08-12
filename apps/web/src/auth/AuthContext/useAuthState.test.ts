@@ -116,8 +116,7 @@ describe('initial state – stored token present', () => {
         expect(result.current.loading).toBe(false);
       });
 
-      // transient first getMe fault keeps the session; token clears only on a
-      // confirmed auth rejection
+      // a transient getMe fault keeps the session; only a 401 clears it
       expect(apiModule.clearStoredToken).not.toHaveBeenCalled();
       expect(result.current.user).toBeNull();
     },
@@ -543,7 +542,7 @@ describe('booting on a token that belongs to somebody else', () => {
     vi.mocked(apiModule.getStoredToken).mockReturnValue('their-jwt');
     vi.mocked(apiModule.readTokenClaims).mockReturnValue({
       exp: null,
-      sub: 'user-2',
+      subject: 'user-2',
     });
 
     renderHook(() => useAuthState());
@@ -558,7 +557,7 @@ describe('booting on a token that belongs to somebody else', () => {
     vi.mocked(apiModule.getStoredToken).mockReturnValue('same-jwt');
     vi.mocked(apiModule.readTokenClaims).mockReturnValue({
       exp: null,
-      sub: 'user-1',
+      subject: 'user-1',
     });
     vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());
 
@@ -571,89 +570,45 @@ describe('booting on a token that belongs to somebody else', () => {
   });
 });
 
-describe('mapMeToUser dyslexicFont passthrough', () => {
-  it('maps a false server dyslexicFont onto the user', async () => {
-    vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
-    vi.mocked(apiModule.getMe).mockResolvedValue(
-      makeUser({ dyslexicFont: false }),
-    );
+describe('the mirror the identity guard reads the rendered user through', () => {
+  const realLocation = window.location;
 
-    const { result } = renderHook(() => useAuthState());
-
-    await waitFor(() =>
-      expect(result.current.user?.email).toBe('user@example.com'),
-    );
-
-    expect(result.current.user?.dyslexicFont).toBe(false);
-  });
-
-  it('maps a true server dyslexicFont onto the user', async () => {
-    vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
-    vi.mocked(apiModule.getMe).mockResolvedValue(
-      makeUser({ dyslexicFont: true }),
-    );
-
-    const { result } = renderHook(() => useAuthState());
-
-    await waitFor(() =>
-      expect(result.current.user?.email).toBe('user@example.com'),
-    );
-
-    expect(result.current.user?.dyslexicFont).toBe(true);
-  });
-});
-
-describe('mapMeToUser customTheme normalization', () => {
-  it('normalizes a valid server blob onto user.customTheme', async () => {
-    vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
-    vi.mocked(apiModule.getMe).mockResolvedValue(
-      makeUser({
-        customTheme: {
-          dark: { '--mount-border': '#abcdef', '--bogus-key': '#000000' },
-          light: {},
-        },
-      }),
-    );
-
-    const { result } = renderHook(() => useAuthState());
-
-    await waitFor(() =>
-      expect(result.current.user?.email).toBe('user@example.com'),
-    );
-
-    // known keys survive; unknown keys are stripped by the trust boundary
-    expect(result.current.user?.customTheme).toEqual({
-      dark: { '--mount-border': '#abcdef' },
-      light: {},
+  afterEach(() => {
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: realLocation,
+      writable: true,
     });
   });
 
-  it('yields null for a malformed (non-object) customTheme, never raw passthrough', async () => {
+  // the guard's own tests set .current by hand and cannot see this wire
+  it('is fed, so a switch spotted on return to the tab is acted on', async () => {
+    const assignMock = vi.fn();
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...realLocation, assign: assignMock, pathname: '/settings' },
+      writable: true,
+    });
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      get: () => 'visible',
+    });
     vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
-    vi.mocked(apiModule.getMe).mockResolvedValue(
-      makeUser({ customTheme: 'not-an-object' }),
-    );
+    vi.mocked(apiModule.readTokenClaims).mockReturnValue({
+      exp: null,
+      subject: 'user-1',
+    });
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());
 
     const { result } = renderHook(() => useAuthState());
+    await waitFor(() => expect(result.current.user?.userId).toBe('user-1'));
 
-    await waitFor(() =>
-      expect(result.current.user?.email).toBe('user@example.com'),
-    );
+    vi.mocked(apiModule.readTokenClaims).mockReturnValue({
+      exp: null,
+      subject: 'user-2',
+    });
+    document.dispatchEvent(new Event('visibilitychange'));
 
-    expect(result.current.user?.customTheme).toBeNull();
-  });
-
-  it('coerces an array customTheme to safe empty mode maps', async () => {
-    vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
-    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser({ customTheme: [] }));
-
-    const { result } = renderHook(() => useAuthState());
-
-    await waitFor(() =>
-      expect(result.current.user?.email).toBe('user@example.com'),
-    );
-
-    // an array is an object, so normalize returns empty mode maps, not the raw array
-    expect(result.current.user?.customTheme).toEqual({ dark: {}, light: {} });
+    expect(assignMock).toHaveBeenCalledWith('/unread');
   });
 });

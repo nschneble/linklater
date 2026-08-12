@@ -18,8 +18,11 @@
 
 /** Unverified claims. Absent, mistyped, or unreadable each read `null`. */
 export interface TokenClaims {
-  /** The subject: the user id the issuing server put on the token. */
-  sub: string | null;
+  /**
+   * The user id the issuing server put on the token. Named for the claim
+   * this API signs, not for the standard one it does not.
+   */
+  subject: string | null;
   /** Expiry in seconds since the epoch, as the JWT spec defines it. */
   exp: number | null;
 }
@@ -37,6 +40,23 @@ function decodeBase64UrlSegment(segment: string): string | null {
     // atob rejects anything outside the alphabet; a bad token is not an error
     return null;
   }
+}
+
+/**
+ * The API signs the user id under `subject`, never under `sub`. See
+ * `apps/api/src/auth/refresh-token.service.ts` `issueTokenPair`, and the
+ * payload interface in `apps/api/src/auth/jwt.strategy.ts` that names the
+ * same field. A standard `sub` is still read, so an issuer that later
+ * emits one needs no change here. Each candidate has to BE a string
+ * rather than merely be present, or a mistyped `subject` would suppress a
+ * usable `sub`.
+ */
+function readSubject(claims: Record<string, unknown>): string | null {
+  for (const key of ['subject', 'sub']) {
+    const value = claims[key];
+    if (typeof value === 'string') return value;
+  }
+  return null;
 }
 
 export function readTokenClaims(
@@ -62,11 +82,10 @@ export function readTokenClaims(
     return null;
 
   const claims = payload as Record<string, unknown>;
-  const subject = claims['sub'];
   const expiry = claims['exp'];
 
   return {
-    sub: typeof subject === 'string' ? subject : null,
+    subject: readSubject(claims),
     // a non-finite expiry wins every comparison a caller could write
     exp: typeof expiry === 'number' && Number.isFinite(expiry) ? expiry : null,
   };

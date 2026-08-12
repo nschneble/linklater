@@ -158,6 +158,23 @@ export function clearStoredToken(): void {
 }
 
 /**
+ * Whether a `storage` event carries a change to the token pair, as opposed
+ * to one of the dozen other keys this app keeps beside them (theme, mode,
+ * CVD, dyslexic font, keyboard shortcuts, and a paired timestamp for
+ * several of those). Exported because anything listening for a sibling's
+ * sign-in has the same question and no other way to ask it.
+ *
+ * A `null` key is a whole-store `clear()`, which takes the pair with it.
+ */
+export function isTokenStorageEvent(event: StorageEvent): boolean {
+  return (
+    event.key === null ||
+    event.key === TOKEN_KEY ||
+    event.key === REFRESH_TOKEN_KEY
+  );
+}
+
+/**
  * Pulls a sibling tab's rotation into the in-memory copy as it happens, so
  * a read taken after storage becomes unreadable still answers with the
  * rotated pair rather than the one read at boot. The `storage` event never
@@ -172,7 +189,7 @@ export function clearStoredToken(): void {
  * that a `null` never evicts a live token lives in a single place.
  */
 function handleTokenStorageEvent(event: StorageEvent): void {
-  if (event.key !== TOKEN_KEY && event.key !== REFRESH_TOKEN_KEY) return;
+  if (!isTokenStorageEvent(event)) return;
   cachedToken = readPersisted(TOKEN_KEY, cachedToken);
   cachedRefreshToken = readPersisted(REFRESH_TOKEN_KEY, cachedRefreshToken);
 }
