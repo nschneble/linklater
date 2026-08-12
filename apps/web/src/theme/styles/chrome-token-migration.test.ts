@@ -38,6 +38,7 @@ const MIGRATED_FILES = [
   'src/components/common/IconListButton.tsx',
   'src/components/common/LinkButton.tsx',
   'src/components/common/Modal.tsx',
+  'src/components/common/PendingNoticeAnnouncer.tsx',
   'src/components/common/SlidingTabBar.tsx',
   'src/components/common/TabButton.tsx',
   'src/components/common/ThemeRowContent.tsx',

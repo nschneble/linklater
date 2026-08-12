@@ -23,7 +23,7 @@
  *
  * That remount tells storage from module memory only in the browser. Both
  * trees here share one module registry, so a module-scope variable would
- * survive the fake load intact; `components/auth/carriedEmail.test.ts`
+ * survive the fake load intact; `auth/AuthContext/carriedEmail.test.ts`
  * separates the two by asking the reader for a value the module never
  * wrote.
  *
@@ -39,13 +39,19 @@
  * sibling is therefore played the way the browser plays one, by writing
  * `localStorage` directly and delivering the `storage` event the writing
  * tab never sees.
+ *
+ * The whole-store clear (a `storage` event with a null key) is the store's
+ * claim rather than this shell's, and moved down to
+ * `lib/api/storage.crossTabSync.test.ts`, where `keeps the in-memory pair
+ * when another tab clears all storage` is the surviving counterpart to the
+ * two tests this file used to spend on it.
  */
 
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthFormWrapper, unauthenticatedRoutes } from './Unauthenticated';
 import { clearStoredToken, getStoredToken } from '../lib/api';
 import { commonRoutes } from './Common';
-import { fireEvent, render, screen } from '@testing-library/react';
 import { JwtService } from '@nestjs/jwt';
 import { MemoryRouter, Routes } from 'react-router';
 import { restoreLocation, standOnPath } from '../../test/locationMock';
@@ -579,13 +585,16 @@ describe('the offer is taken and the session turns out to be gone', () => {
     expect(painted?.closest('div')?.className).not.toContain('fixed');
   });
 
-  it('leaves the reason standing rather than dismissing it on a timer', () => {
+  it('leaves the reason standing rather than dismissing it on a timer', async () => {
     vi.useFakeTimers();
     try {
       const standing = offerIsUp();
 
       bounceBackToLogin(standing);
-      vi.advanceTimersByTime(60_000);
+      // a toast dismissal is a state update, and act is what flushes one
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(60_000);
+      });
 
       expect(screen.getByTestId(PENDING_ANNOUNCEMENT).textContent).toBe(
         BOUNCE_MESSAGE,

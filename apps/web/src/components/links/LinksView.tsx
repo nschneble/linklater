@@ -265,6 +265,7 @@ export default function LinksView({
         notice={pendingNotice.notice}
         variant={pendingNotice.variant}
         onDismiss={pendingNotice.dismiss}
+        standing={pendingNotice.standing}
       />
     </>
   );

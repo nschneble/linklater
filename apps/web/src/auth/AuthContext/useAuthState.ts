@@ -9,7 +9,7 @@ import {
   resendVerificationEmail as apiResendVerificationEmail,
   setStoredToken,
 } from '../../lib/api';
-import { dropCarriedEmail } from '../../components/auth/carriedEmail';
+import { dropCarriedEmail } from './carriedEmail';
 import {
   forgetRenderedIdentity,
   noteRenderedIdentity,

@@ -15,6 +15,11 @@
  * only email ever written to storage belongs to a user who just asked to
  * leave the page.
  *
+ * It sits here rather than beside either half for the reason
+ * `renderedIdentity.ts` does: a per-tab store both a component and the
+ * auth state read is owned by neither, and the dependency between the
+ * two directories already runs this way.
+ *
  * `sessionStorage` rather than `localStorage`, because an address in
  * `localStorage` would reach every tab of the browser and outlive the
  * one visit it was typed during, and neither is true of the value: it
@@ -24,9 +29,9 @@
  * bounce, and this value is not evidence of one: the common case is a
  * link that works, which leaves the value unread in a tab that mounted no
  * login form. Whether the navigation FAILED is the auth gate's
- * observation, and `offerBounce.ts` is where the gate records it. A
- * successful arrival drops the value (`useAuthState` adopts a user), so
- * nothing armed here outlives the offer it belongs to.
+ * observation, and `components/auth/offerBounce.ts` is where the gate
+ * records it. A successful arrival drops the value (`useAuthState`
+ * adopts a user), so nothing armed here outlives the offer it belongs to.
  */
 
 // distinct key so a deploy-straddling session cannot misread an old shape

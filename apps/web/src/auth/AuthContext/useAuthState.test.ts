@@ -27,7 +27,7 @@ vi.mock('../../lib/api', () => ({
 }));
 
 import * as apiModule from '../../lib/api';
-import { hasCarriedEmail } from '../../components/auth/carriedEmail';
+import { hasCarriedEmail } from './carriedEmail';
 import { readRenderedIdentity } from './renderedIdentity';
 import { restoreLocation, standOnPath } from '../../../test/locationMock';
 import { useAuthState } from './useAuthState';

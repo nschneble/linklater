@@ -14,11 +14,17 @@
  *   - The Toast paints with the right variant when notice is non-null
  *   - The mirror is the ONLY live region; the toast announces nothing
  *   - `standing` swaps the toast for an in-flow panel that never times out
+ *   - without it the toast still takes the message away on its own timer
+ *
+ * The two timer cases render through a host that drops the notice when
+ * asked. A fixed prop keeps the toast mounted through its own dismissal,
+ * so the standing case passes whether or not anything is standing.
  */
 
+import { act, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import PendingNoticeAnnouncer from './PendingNoticeAnnouncer';
-import { render, screen } from '@testing-library/react';
+import { useState } from 'react';
 
 describe('PendingNoticeAnnouncer mirror – success variant', () => {
   it('renders the sr-only mirror with role="status" and aria-live="polite" when variant is success', () => {
@@ -217,14 +223,57 @@ describe('PendingNoticeAnnouncer standing notice', () => {
     expect(screen.queryByRole('button', { name: /dismiss/i })).toBeNull();
   });
 
-  it('stays on screen past every timer the toast would have run', () => {
+  /**
+   * A host that takes the message away when asked, which is what the real
+   * ones do. Rendering a fixed prop instead leaves the toast on screen
+   * through its own dismissal and reports that as survival.
+   */
+  function StatefulHost({ standing }: { standing: boolean }) {
+    const [notice, setNotice] = useState<string | null>(REASON);
+
+    return (
+      <PendingNoticeAnnouncer
+        notice={notice}
+        variant="warning"
+        onDismiss={() => setNotice(null)}
+        standing={standing}
+      />
+    );
+  }
+
+  /** The painted copy, as opposed to the always-mounted sr-only mirror. */
+  function paintedReason() {
+    return screen
+      .queryAllByText(REASON)
+      .find((element) => element.closest('.sr-only') === null);
+  }
+
+  it('stays on screen past every timer the toast would have run', async () => {
     vi.useFakeTimers();
     try {
-      renderStanding(true);
+      render(<StatefulHost standing={true} />);
 
-      vi.advanceTimersByTime(60_000);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(60_000);
+      });
 
-      expect(screen.getAllByText(REASON).length).toBeGreaterThan(0);
+      expect(paintedReason()).toBeDefined();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('lets the toast take a notice that is not standing away', async () => {
+    vi.useFakeTimers();
+    try {
+      render(<StatefulHost standing={false} />);
+      expect(paintedReason()).toBeDefined();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(60_000);
+      });
+
+      expect(paintedReason()).toBeUndefined();
     } finally {
       vi.useRealTimers();
     }

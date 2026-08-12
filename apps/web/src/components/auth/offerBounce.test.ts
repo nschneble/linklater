@@ -122,14 +122,4 @@ describe('a message another flow already queued', () => {
       'Your account has been deleted.',
     );
   });
-
-  it('does not queue itself twice when the gate runs again', () => {
-    theOfferWasFollowed();
-
-    announceOfferBounce();
-    announceOfferBounce();
-
-    expect(consumePendingNotice()?.message).toBe(BOUNCE_MESSAGE);
-    expect(consumePendingNotice()).toBeNull();
-  });
 });

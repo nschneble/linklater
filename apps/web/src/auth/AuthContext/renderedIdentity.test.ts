@@ -4,22 +4,24 @@
  * The storage choice is load-bearing rather than incidental, so it is
  * asserted directly: a record kept in `localStorage` would be shared with
  * every sibling tab and could never disagree with the token they wrote.
+ *
+ * The refusal cases go through `withRefusedStorage`, and each one first
+ * puts the store into a state the refusal must hide. A patch that fails
+ * to take answers from the real store, which is indistinguishable from a
+ * working refusal until something is there to be found.
  */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import {
   forgetRenderedIdentity,
   noteRenderedIdentity,
   readRenderedIdentity,
 } from './renderedIdentity';
+import { withRefusedStorage } from '../../../test/refusedStorage';
 
 beforeEach(() => {
   sessionStorage.clear();
   localStorage.clear();
-});
-
-afterEach(() => {
-  vi.restoreAllMocks();
 });
 
 describe('renderedIdentity round trip', () => {
@@ -69,23 +71,28 @@ describe('renderedIdentity storage choice', () => {
 
 describe('renderedIdentity under blocked storage', () => {
   it('answers null instead of throwing when the read is refused', () => {
-    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
-      throw new Error('SecurityError');
+    noteRenderedIdentity('user-1');
+
+    withRefusedStorage('getItem', () => {
+      expect(readRenderedIdentity()).toBeNull();
     });
-    expect(readRenderedIdentity()).toBeNull();
   });
 
   it('swallows a refused write', () => {
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-      throw new Error('QuotaExceededError');
+    withRefusedStorage('setItem', () => {
+      expect(() => noteRenderedIdentity('user-1')).not.toThrow();
     });
-    expect(() => noteRenderedIdentity('user-1')).not.toThrow();
+
+    expect(readRenderedIdentity()).toBeNull();
   });
 
   it('swallows a refused removal', () => {
-    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
-      throw new Error('SecurityError');
+    noteRenderedIdentity('user-1');
+
+    withRefusedStorage('removeItem', () => {
+      expect(() => forgetRenderedIdentity()).not.toThrow();
     });
-    expect(() => forgetRenderedIdentity()).not.toThrow();
+
+    expect(readRenderedIdentity()).toBe('user-1');
   });
 });

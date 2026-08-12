@@ -126,6 +126,14 @@ describe('a store that refuses', () => {
   });
 });
 
+/*
+ * What this pins is the outcome, not the `typeof window` guard that also
+ * produces it. Each function wraps its access in a `try`, and a missing
+ * `window` throws inside that `try`, so deleting all four guards changes
+ * nothing any of these assertions can see. They are kept because every
+ * sibling store here carries them and a reader comparing the four files
+ * should find one shape, not because a test could tell them apart.
+ */
 describe('a render with no document at all', () => {
   // the auth context imports this, and a server render reaches that
   afterEach(() => {

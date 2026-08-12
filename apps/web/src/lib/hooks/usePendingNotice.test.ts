@@ -53,6 +53,30 @@ describe('usePendingNotice', () => {
     expect(result.current.variant).toBe('success');
   });
 
+  it('carries the standing flag through to the surfacing UI', async () => {
+    vi.mocked(pendingNoticeModule.consumePendingNotice).mockReturnValue({
+      message: "We couldn't get you back into that session",
+      variant: 'warning',
+      standing: true,
+    });
+    const { result } = renderHook(() => usePendingNotice());
+    await waitFor(() => {
+      expect(result.current.standing).toBe(true);
+    });
+  });
+
+  it('reads an entry that omits the flag as not standing', async () => {
+    vi.mocked(pendingNoticeModule.consumePendingNotice).mockReturnValue({
+      message: 'Your account has been deleted.',
+      variant: 'success',
+    });
+    const { result } = renderHook(() => usePendingNotice());
+    await waitFor(() => {
+      expect(result.current.notice).not.toBeNull();
+    });
+    expect(result.current.standing).toBe(false);
+  });
+
   it('calls consumePendingNotice exactly once across re-renders', async () => {
     vi.mocked(pendingNoticeModule.consumePendingNotice).mockReturnValue({
       message: 'Your account has been deleted.',

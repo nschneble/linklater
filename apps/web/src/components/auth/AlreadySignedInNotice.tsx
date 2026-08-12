@@ -70,7 +70,7 @@
  * the only route to the action.
  */
 
-import { carryTypedEmail } from './carriedEmail';
+import { carryTypedEmail } from '../../auth/AuthContext/carriedEmail';
 import {
   hasStandingSessionOffer,
   storedTokenHasLiveOwner,

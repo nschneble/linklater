@@ -150,6 +150,24 @@ describe('useAuthForm', () => {
       await act(async () => {});
       expect(result.current.notice).toBeNull();
     });
+
+    it('survives the mount that consumed it and goes on a mode change', async () => {
+      vi.mocked(pendingNoticeModule.consumePendingNotice).mockReturnValue({
+        message: "We couldn't get you back into that session",
+        variant: 'warning',
+        standing: true,
+      });
+      const { result } = renderAuthFormHook('/login');
+
+      // the mode effect clears before the consume effect populates
+      await waitFor(() => expect(result.current.notice).not.toBeNull());
+
+      await act(async () => {
+        result.current.handleModeChange('register');
+      });
+
+      expect(result.current.notice).toBeNull();
+    });
   });
 
   describe('handleSubmit – 9 branches', () => {

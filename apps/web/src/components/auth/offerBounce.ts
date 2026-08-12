@@ -27,7 +27,7 @@
  * 3.3.1 Error Identification).
  */
 
-import { hasCarriedEmail } from './carriedEmail';
+import { hasCarriedEmail } from '../../auth/AuthContext/carriedEmail';
 import { hasPendingNotice, setPendingNotice } from '../../lib/pendingNotice';
 import { hasStandingSessionOffer } from './standingSessionOffer';
 

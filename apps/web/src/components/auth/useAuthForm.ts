@@ -11,7 +11,10 @@ import {
 } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
 import { hasStandingSessionOffer } from './standingSessionOffer';
-import { noteTypedEmail, takeCarriedEmail } from './carriedEmail';
+import {
+  noteTypedEmail,
+  takeCarriedEmail,
+} from '../../auth/AuthContext/carriedEmail';
 import { useAuth } from '../../auth/AuthContext';
 import { useEffect, useRef, useState } from 'react';
 import { useFormError } from './useFormError';
@@ -30,10 +33,18 @@ type FormNotice = NoticeEntry;
 /**
  * Effects below run in declaration order and that order is load-bearing:
  * the mode effect peeks for a pending notice before the effect that
- * consumes it, and the arrival-error effect follows the mode effect so a
- * cleared error cannot land on top of the message it should paint. What
- * the peek finds is queued a commit earlier, by whichever flow sent the
- * user here.
+ * consumes it, and drops the notice it holds before that same effect
+ * puts one there, so a mount keeps what it consumed and only a later
+ * mode change clears it. The arrival-error effect follows the mode
+ * effect so a cleared error cannot land on top of the message it should
+ * paint. What the peek finds is queued a commit earlier, by whichever
+ * flow sent the user here.
+ *
+ * The email `takeCarriedEmail` hands back was typed into a form this
+ * user was moved off of, so putting it back is WCAG 3.3.7 Redundant
+ * Entry. It is not evidence of how the move ended, and nothing is
+ * announced from there: the auth gate saw whether the offer landed, and
+ * queues the explanation itself (`offerBounce.ts`).
  */
 export function useAuthForm() {
   const { login, refreshUser, register } = useAuth();
@@ -84,13 +95,6 @@ export function useAuthForm() {
     return (location.state as { from?: string })?.from ?? '/unread';
   }
 
-  /**
-   * An email waiting to be picked up was typed into a form this user was
-   * moved off of, so putting it back is WCAG 3.3.7 Redundant Entry. It is
-   * not evidence of how the move ended, and nothing is announced from
-   * here: the auth gate saw whether the offer landed, and queues the
-   * explanation itself (`offerBounce.ts`).
-   */
   useEffect(() => {
     const carriedEmail = takeCarriedEmail();
     if (carriedEmail === null) return;
@@ -107,6 +111,8 @@ export function useAuthForm() {
     setLoading(false);
     setMagicLinkSentJustNow(false);
     setForgotPasswordSentJustNow(false);
+    // a standing one would otherwise outlive the screen it describes
+    setNotice(null);
 
     const hasInboundAnnouncement =
       hasPendingNotice() || arrivedWithOAuthError || hasStandingSessionOffer();
