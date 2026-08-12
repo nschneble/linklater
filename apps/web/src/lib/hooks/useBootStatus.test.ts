@@ -6,6 +6,12 @@
  * and a boot whose loading flag never clears never fabricates completion.
  * Between them sits the dwell, which stops the threshold from relocating
  * the flash instead of removing it.
+ *
+ * The second silence needs its clock advanced in more than one step. A
+ * handover scheduled by a timer fires inside whichever advance is
+ * running, but one scheduled by an effect re-running on the phase change
+ * only registers as `act` exits, by which time a single advance has
+ * already closed its window and nothing is left to catch it.
  */
 
 import { act, renderHook } from '@testing-library/react';
@@ -123,7 +129,9 @@ describe('useBootStatus', () => {
   it('never fabricates completion while loading stays true', () => {
     const { result } = renderBoot();
 
-    advance(BOOT_THRESHOLD_MS + BOOT_DWELL_MS + BOOT_READY_DELAY_MS + 10_000);
+    advance(BOOT_THRESHOLD_MS);
+    // second advance: an effect-scheduled handover is invisible to one
+    advance(BOOT_DWELL_MS + BOOT_READY_DELAY_MS + 10_000);
 
     expect(result.current.phase).toBe('interstitial');
     expect(result.current.announcement).toBe('Loading Linklater…');

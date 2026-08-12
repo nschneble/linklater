@@ -105,6 +105,17 @@ describe('App boot', () => {
     expect(screen.queryByTestId('routes')).toBeNull();
   });
 
+  it('shows no routes while loading is still true, however long it runs', () => {
+    render(<App />);
+
+    advance(BOOT_THRESHOLD_MS);
+    // second advance: an effect-scheduled handover is invisible to one
+    advance(BOOT_DWELL_MS + 10_000);
+
+    expect(screen.getByText(BOOT_MESSAGE)).toBeInTheDocument();
+    expect(screen.queryByTestId('routes')).toBeNull();
+  });
+
   it('keeps the same region node when the app takes over', () => {
     const { container, rerender } = render(<App />);
     const before = region(container);
