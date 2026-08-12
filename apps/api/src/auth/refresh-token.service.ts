@@ -1,5 +1,5 @@
 import { expiresInMs, generateHexToken, sha256Hex } from '../common/index.js';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service.js';
 
@@ -7,12 +7,38 @@ import { PrismaService } from '../prisma/prisma.service.js';
  * Absolute lifetime of a single refresh token. The refresh token lives in the
  * browser's localStorage (a deliberate bearer-token design), so an XSS-stolen
  * token is usable until it expires. Rotation (see `refresh`) resets this clock
- * on every use, making expiry a *sliding* window: an actively-used session
- * never logs out, while a stolen-but-idle token (or a session abandoned for
- * longer than this window) becomes worthless. 14 days keeps the theft window
- * short without nagging anyone who returns at least every couple of weeks.
+ * on every use, making expiry a *sliding* window: a session used at least once
+ * per window never runs the clock out, while a stolen-but-idle token (or a
+ * session abandoned for longer than this window) becomes worthless. 14 days
+ * keeps the theft window short without nagging anyone who returns every couple
+ * of weeks.
+ *
+ * The window is a promise about the token, not about the session. A client
+ * that loses its stored copy is signed out however much of the window is
+ * left: WebKit deletes all script-writable storage, localStorage included,
+ * after seven days of browser use without a first-party interaction, and iOS
+ * can evict under storage pressure. Neither is reachable from here.
  */
 const REFRESH_TOKEN_TTL_MS = 14 * 24 * 60 * 60 * 1000;
+
+/**
+ * Why a `refresh` call was turned away. Recorded in the server log so a
+ * reported sign-out can be matched against what the server actually saw,
+ * and deliberately never returned to the caller: telling one of these apart
+ * from another hands an attacker an oracle for probing token validity.
+ *
+ * - `unknown-token`: no row matched the presented hash. Covers a token that
+ *   was never issued, one already rotated away, and one wiped and replaced.
+ * - `expired`: the row existed and its window had lapsed, so the session was
+ *   genuinely idle for longer than `REFRESH_TOKEN_TTL_MS`.
+ * - `rotation-race`: a concurrent request rotated the row between the read
+ *   and the delete, so this caller lost a race rather than presenting
+ *   anything wrong.
+ *
+ * A client whose storage was cleared has no token to present and never
+ * reaches this service, so the absence of any line is that case's signature.
+ */
+type RefreshRejectionReason = 'expired' | 'rotation-race' | 'unknown-token';
 
 /**
  * Owns all refresh-token persistence: issuance, atomic rotation, and bulk
@@ -23,6 +49,8 @@ const REFRESH_TOKEN_TTL_MS = 14 * 24 * 60 * 60 * 1000;
  */
 @Injectable()
 export class RefreshTokenService {
+  private readonly logger = new Logger(RefreshTokenService.name);
+
   constructor(
     private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
@@ -55,15 +83,18 @@ export class RefreshTokenService {
         include: { user: true },
       });
 
-      if (!stored || stored.expiresAt < new Date()) {
-        throw new UnauthorizedException('Invalid or expired refresh token');
+      if (!stored) {
+        this.rejectRefresh('unknown-token');
+      }
+      if (stored.expiresAt < new Date()) {
+        this.rejectRefresh('expired');
       }
 
       const { count } = await transaction.refreshToken.deleteMany({
         where: { id: stored.id, tokenHash },
       });
       if (count === 0) {
-        throw new UnauthorizedException('Invalid or expired refresh token');
+        this.rejectRefresh('rotation-race');
       }
 
       const rawNewRefreshToken = generateHexToken();
@@ -83,6 +114,11 @@ export class RefreshTokenService {
       });
       return { accessToken, refreshToken: rawNewRefreshToken };
     });
+  }
+
+  private rejectRefresh(reason: RefreshRejectionReason): never {
+    this.logger.warn(`Refresh rejected: ${reason}`);
+    throw new UnauthorizedException('Invalid or expired refresh token');
   }
 
   async revokeAllRefreshTokens(userId: string) {

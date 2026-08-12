@@ -1,15 +1,26 @@
 import { jest } from '@jest/globals';
 
 import { JwtService } from '@nestjs/jwt';
+import { Logger, UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { UnauthorizedException } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { RefreshTokenService } from './refresh-token.service';
 
+const REJECTION_PREFIX = 'Refresh rejected: ';
 const SIGNED_TOKEN = 'signed-token';
 const USER_EMAIL = 'email@addy.com';
 const USER_ID = 'user-1';
+
+const warnedLines = () =>
+  (Logger.prototype.warn as unknown as jest.Mock).mock.calls.map((call) =>
+    String(call[0] as unknown),
+  );
+
+const rejectionReasonsLogged = () =>
+  warnedLines()
+    .filter((line) => line.startsWith(REJECTION_PREFIX))
+    .map((line) => line.slice(REJECTION_PREFIX.length));
 
 describe('RefreshTokenService', () => {
   let service: RefreshTokenService;
@@ -51,6 +62,12 @@ describe('RefreshTokenService', () => {
 
     service = module.get<RefreshTokenService>(RefreshTokenService);
     jest.clearAllMocks();
+    // rejection-path tests exercise the warn branch on purpose; keep it quiet
+    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('should be defined', () => {
@@ -198,6 +215,133 @@ describe('RefreshTokenService', () => {
       await expect(service.refresh(RAW_REFRESH_TOKEN)).rejects.toThrow(
         'db down',
       );
+    });
+
+    describe('rejection reason codes', () => {
+      const REJECTED_RESPONSE = {
+        error: 'Unauthorized',
+        message: 'Invalid or expired refresh token',
+        statusCode: 401,
+      };
+
+      const arrangeStoredToken = (expiresAt: Date) => {
+        (
+          prismaServiceMock.refreshToken.findUnique as jest.Mock
+        ).mockResolvedValue({
+          id: 'rt-1',
+          userId: USER_ID,
+          expiresAt,
+          user: { id: USER_ID, email: USER_EMAIL, tokenVersion: 0 },
+        });
+      };
+
+      const arrangeUnknownToken = () => {
+        (
+          prismaServiceMock.refreshToken.findUnique as jest.Mock
+        ).mockResolvedValue(null);
+      };
+
+      const arrangeExpiredToken = () => {
+        arrangeStoredToken(new Date(Date.now() - 1000));
+      };
+
+      const arrangeRotationRace = () => {
+        arrangeStoredToken(new Date(Date.now() + 60 * 60 * 1000));
+        (
+          prismaServiceMock.refreshToken.deleteMany as jest.Mock
+        ).mockResolvedValueOnce({ count: 0 });
+      };
+
+      const rejectionOfRefresh = async () => {
+        try {
+          await service.refresh(RAW_REFRESH_TOKEN);
+        } catch (error) {
+          return error as UnauthorizedException;
+        }
+        throw new Error('refresh resolved where a rejection was expected');
+      };
+
+      const presentedTokenHash = () =>
+        (
+          (prismaServiceMock.refreshToken.findUnique as jest.Mock).mock
+            .calls[0][0] as { where: { tokenHash: string } }
+        ).where.tokenHash;
+
+      it('reports unknown-token when no stored row matches the hash', async () => {
+        arrangeUnknownToken();
+
+        await expect(service.refresh(RAW_REFRESH_TOKEN)).rejects.toThrow(
+          UnauthorizedException,
+        );
+
+        expect(rejectionReasonsLogged()).toEqual(['unknown-token']);
+      });
+
+      it('reports expired when the matched row had already lapsed', async () => {
+        arrangeExpiredToken();
+
+        await expect(service.refresh(RAW_REFRESH_TOKEN)).rejects.toThrow(
+          UnauthorizedException,
+        );
+
+        expect(rejectionReasonsLogged()).toEqual(['expired']);
+      });
+
+      it('reports rotation-race when a concurrent refresh won the delete', async () => {
+        arrangeRotationRace();
+
+        await expect(service.refresh(RAW_REFRESH_TOKEN)).rejects.toThrow(
+          UnauthorizedException,
+        );
+
+        expect(rejectionReasonsLogged()).toEqual(['rotation-race']);
+      });
+
+      it('stays silent when the refresh succeeds', async () => {
+        arrangeStoredToken(new Date(Date.now() + 60 * 60 * 1000));
+        (
+          prismaServiceMock.refreshToken.deleteMany as jest.Mock
+        ).mockResolvedValueOnce({ count: 1 });
+
+        await service.refresh(RAW_REFRESH_TOKEN);
+
+        expect(warnedLines()).toEqual([]);
+      });
+
+      it('answers every arm with a response a caller cannot tell apart', async () => {
+        arrangeUnknownToken();
+        const unknownToken = await rejectionOfRefresh();
+        arrangeExpiredToken();
+        const expired = await rejectionOfRefresh();
+        arrangeRotationRace();
+        const rotationRace = await rejectionOfRefresh();
+
+        for (const rejection of [unknownToken, expired, rotationRace]) {
+          expect(rejection).toBeInstanceOf(UnauthorizedException);
+          expect(rejection.getStatus()).toBe(401);
+          expect(rejection.getResponse()).toEqual(REJECTED_RESPONSE);
+        }
+      });
+
+      it('keeps the token, its hash, and the account out of every line', async () => {
+        arrangeUnknownToken();
+        await rejectionOfRefresh();
+        arrangeExpiredToken();
+        await rejectionOfRefresh();
+        arrangeRotationRace();
+        await rejectionOfRefresh();
+
+        const emitted = warnedLines().join('\n');
+        for (const secret of [
+          RAW_REFRESH_TOKEN,
+          presentedTokenHash(),
+          USER_EMAIL,
+          USER_ID,
+        ]) {
+          expect(emitted).not.toContain(secret);
+        }
+        expect(rejectionReasonsLogged()).toHaveLength(3);
+      });
     });
   });
 
