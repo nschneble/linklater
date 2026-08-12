@@ -119,6 +119,15 @@ function makeTokenExpiringIn(seconds: number): string {
   });
 }
 
+/**
+ * The legs a run spent, in order, with the base `apiFetch` interpolates
+ * taken back off, so a sequence can be read as a list of paths.
+ */
+function readPaths(mock: Mock): string[] {
+  const base = String(import.meta.env.VITE_API_BASE_URL);
+  return mock.mock.calls.map(([url]) => String(url).replace(base, ''));
+}
+
 function readAuthorization(call: unknown): string | undefined {
   const [, options] = call as [string, RequestInit];
   return (options.headers as Record<string, string>)['Authorization'];
@@ -819,7 +828,53 @@ describe('apiFetch expiry pre-flight', () => {
     );
   });
 
-  it('sends on and surfaces the server answer when the renewal is refused', async () => {
+  it('keeps the pair and sends the token it had when the renewal is refused with a 401', async () => {
+    const expired = makeTokenExpiringIn(-60);
+    setStoredToken(expired, 'spent-refresh');
+    // the server still honours the access token this clock calls expired
+    const fetchMock = mockFetchByLeg(
+      jsonResponse({ message: 'Invalid refresh' }, 401),
+      jsonResponse({ id: 'result' }),
+    );
+
+    await expect(apiFetch<{ id: string }>('/test')).resolves.toEqual({
+      id: 'result',
+    });
+
+    const [renewalUrl] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const [requestUrl] = fetchMock.mock.calls[1] as [string, RequestInit];
+    expect(renewalUrl).toContain('/auth/refresh');
+    expect(requestUrl).toContain('/test');
+    // a refused refresh token is no verdict on the access token
+    expect(readAuthorization(fetchMock.mock.calls[1])).toBe(
+      `Bearer ${expired}`,
+    );
+    expect(getStoredToken()).toBe(expired);
+    expect(getStoredRefreshToken()).toBe('spent-refresh');
+    expect(fetchMock.mock.calls).toHaveLength(2);
+  });
+
+  it('keeps the pair and sends the token it had when the renewal is refused with a 403', async () => {
+    const expired = makeTokenExpiringIn(-60);
+    setStoredToken(expired, 'spent-refresh');
+    const fetchMock = mockFetchByLeg(
+      jsonResponse({ message: 'Forbidden' }, 403),
+      jsonResponse({ id: 'result' }),
+    );
+
+    await expect(apiFetch<{ id: string }>('/test')).resolves.toEqual({
+      id: 'result',
+    });
+
+    expect(readAuthorization(fetchMock.mock.calls[1])).toBe(
+      `Bearer ${expired}`,
+    );
+    expect(getStoredToken()).toBe(expired);
+    expect(getStoredRefreshToken()).toBe('spent-refresh');
+    expect(fetchMock.mock.calls).toHaveLength(2);
+  });
+
+  it('still ends a session the server does refuse, one leg later', async () => {
     setStoredToken(makeTokenExpiringIn(-60), 'spent-refresh');
     const fetchMock = mockFetchByLeg(
       jsonResponse({ message: 'Invalid refresh' }, 401),
@@ -828,14 +883,16 @@ describe('apiFetch expiry pre-flight', () => {
 
     const error = await apiFetch('/test').catch((caught: unknown) => caught);
 
-    const [renewalUrl] = fetchMock.mock.calls[0] as [string, RequestInit];
-    const [requestUrl] = fetchMock.mock.calls[1] as [string, RequestInit];
-    expect(renewalUrl).toContain('/auth/refresh');
-    expect(requestUrl).toContain('/test');
-    // the refused renewal already cleared the pair, so no header is left
-    expect(readAuthorization(fetchMock.mock.calls[1])).toBeUndefined();
+    // refused renewal, refused request, then the 401 path's own refresh
+    expect(readPaths(fetchMock)).toEqual([
+      '/auth/refresh',
+      '/test',
+      '/auth/refresh',
+    ]);
     expect((error as ApiError).status).toBe(401);
-    expect(fetchMock.mock.calls).toHaveLength(2);
+    // the request was refused too, so this one is a verdict: clear
+    expect(getStoredToken()).toBeNull();
+    expect(getStoredRefreshToken()).toBeNull();
   });
 
   it('stops after the one retry when the renewed token is rejected too', async () => {

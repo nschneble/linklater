@@ -15,6 +15,15 @@
  * The token being spent is read once, up front, because a re-read taken
  * later could land after that rotation and leave the guard comparing
  * against a value this request never sent.
+ *
+ * Whether a refusal ends the session is the caller's question, not this
+ * module's, so the shared refresh reports an outcome and clears nothing.
+ * A refusal is a verdict only for a caller the server has already turned
+ * away; for one renewing ahead of a request it is a refusal of the
+ * refresh token alone, and the access token it holds may still be good.
+ * The distinction has to live outside the shared promise: every caller
+ * awaits the same one, so a policy carried inside it would be whichever
+ * caller happened to arrive first.
  */
 
 import {
@@ -25,7 +34,17 @@ import {
   setStoredToken,
 } from './storage';
 
-let inFlightRefresh: Promise<boolean> | null = null;
+/**
+ * What the renewal leg established, independent of who asked for it:
+ * `renewed` when a usable access token is now stored, `refused` when the
+ * server rejected the refresh token outright, `unresolved` when nothing
+ * was established at all (a transient status, a network failure, an
+ * abort). Only `refused` can end a session, and only for a caller
+ * holding an access token the server has already turned away.
+ */
+type RefreshOutcome = 'renewed' | 'refused' | 'unresolved';
+
+let inFlightRefresh: Promise<RefreshOutcome> | null = null;
 
 /**
  * Deadline for the token-refresh fetch. apiFetch imposes no timeout of its
@@ -48,14 +67,11 @@ let inFlightRefresh: Promise<boolean> | null = null;
  */
 const REFRESH_DEADLINE_MS = 10_000;
 
-async function performTokenRefresh(): Promise<boolean> {
+async function performTokenRefresh(): Promise<RefreshOutcome> {
   const spentRefreshToken = getStoredRefreshToken();
 
-  if (!spentRefreshToken) {
-    // no refresh token: the rejected access token is dead for good
-    clearStoredToken();
-    return false;
-  }
+  // nothing to renew with, which is a refusal reached without a leg
+  if (!spentRefreshToken) return 'refused';
 
   // not wired to a caller's signal: one abort must not kill the refresh
   const deadlineController = new AbortController();
@@ -76,10 +92,10 @@ async function performTokenRefresh(): Promise<boolean> {
       // only a 401/403 can prove a token spent; others are transient
       if (response.status === 401 || response.status === 403) {
         // the successor another tab stored is live; the retry uses it
-        if (isRefreshTokenSuperseded(spentRefreshToken)) return true;
-        clearStoredToken();
+        if (isRefreshTokenSuperseded(spentRefreshToken)) return 'renewed';
+        return 'refused';
       }
-      return false;
+      return 'unresolved';
     }
 
     const data = (await response.json()) as {
@@ -87,20 +103,42 @@ async function performTokenRefresh(): Promise<boolean> {
       refreshToken: string;
     };
     setStoredToken(data.accessToken, data.refreshToken);
-    return true;
+    return 'renewed';
   } catch {
     // network failure/abort reached no verdict, so keep tokens for retry
-    return false;
+    return 'unresolved';
   } finally {
     clearTimeout(deadlineTimeoutId);
   }
 }
 
-// dedup concurrent refreshes so N parallel 401s share one refresh call
-export async function attemptTokenRefresh(): Promise<boolean> {
+// dedup concurrent refreshes so N parallel callers share one refresh call
+function shareRefresh(): Promise<RefreshOutcome> {
   if (inFlightRefresh) return inFlightRefresh;
   inFlightRefresh = performTokenRefresh().finally(() => {
     inFlightRefresh = null;
   });
   return inFlightRefresh;
+}
+
+/**
+ * Renewal for a caller whose access token the server has just refused,
+ * answering whether the request is worth retrying. A refusal here is the
+ * end of the session, because both halves of the pair have now been
+ * turned away.
+ */
+export async function attemptTokenRefresh(): Promise<boolean> {
+  const outcome = await shareRefresh();
+  if (outcome === 'refused') clearStoredToken();
+  return outcome === 'renewed';
+}
+
+/**
+ * Renewal for a caller acting on its own clock, before the server has
+ * seen the token at all. It clears nothing whatever the answer: the
+ * access token it holds has not been refused by anyone, and throwing it
+ * away on a hunch is the logout this module exists to prevent.
+ */
+export async function attemptSpeculativeRefresh(): Promise<void> {
+  await shareRefresh();
 }

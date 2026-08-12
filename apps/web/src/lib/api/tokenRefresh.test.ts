@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { attemptTokenRefresh } from './tokenRefresh';
+import { attemptSpeculativeRefresh, attemptTokenRefresh } from './tokenRefresh';
 import {
   clearStoredToken,
   getStoredRefreshToken,
@@ -16,6 +16,12 @@ import {
  *
  * Only `fetch` is replaced. The real store runs, because the verdicts here
  * are about the pair it holds afterwards.
+ *
+ * The concurrent rows are load-bearing. One refusal reaches two callers
+ * holding opposite policies on it, so the pair they leave behind has to be
+ * the same whichever of them opened the leg, and the calls are made in one
+ * tick because that is what makes the second join the first rather than
+ * start its own.
  */
 describe('tokenRefresh.ts', () => {
   function respondWith(status: number, body: unknown): unknown {
@@ -248,6 +254,55 @@ describe('tokenRefresh.ts', () => {
     await expect(first).resolves.toBe(true);
     await expect(second).resolves.toBe(true);
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('clears for a refused caller whose leg a speculative one started', async () => {
+    setStoredToken('expired-jwt', 'spent-refresh');
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(respondWith(401, { message: 'Invalid refresh' }));
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const speculative = attemptSpeculativeRefresh();
+    const refused = attemptTokenRefresh();
+    await Promise.all([speculative, refused]);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(getStoredToken()).toBeNull();
+    expect(getStoredRefreshToken()).toBeNull();
+  });
+
+  it('keeps nothing alive for a speculative caller joining a refused leg', async () => {
+    setStoredToken('expired-jwt', 'spent-refresh');
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(respondWith(401, { message: 'Invalid refresh' }));
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const refused = attemptTokenRefresh();
+    const speculative = attemptSpeculativeRefresh();
+    await Promise.all([refused, speculative]);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(getStoredToken()).toBeNull();
+    expect(getStoredRefreshToken()).toBeNull();
+  });
+
+  it('leaves the pair alone when only speculative callers are refused', async () => {
+    setStoredToken('expired-jwt', 'spent-refresh');
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(respondWith(401, { message: 'Invalid refresh' }));
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    await Promise.all([
+      attemptSpeculativeRefresh(),
+      attemptSpeculativeRefresh(),
+    ]);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(getStoredToken()).toBe('expired-jwt');
+    expect(getStoredRefreshToken()).toBe('spent-refresh');
   });
 
   it('starts a new leg once a failed one settles', async () => {

@@ -8,7 +8,7 @@ export {
 
 import { API_BASE_URL, getStoredToken } from './storage';
 import { ApiError, parseError, parseResponse } from './responses';
-import { attemptTokenRefresh } from './tokenRefresh';
+import { attemptSpeculativeRefresh, attemptTokenRefresh } from './tokenRefresh';
 import { readTokenClaims } from './jwt';
 
 /**
@@ -34,8 +34,11 @@ export type AuthContext = boolean | string;
  *
  * The clock is the browser's and the expiry is the server's, so the two
  * can disagree. A slow clock asks for no renewal and falls back to being
- * told by the server, and a fast one asks for a renewal that succeeds.
- * Neither loses the session, which is why no skew allowance is taken.
+ * told by the server. A fast one asks early and can be refused, but a
+ * refusal ahead of the request clears nothing, so the token in question
+ * still goes out and the server keeps the last word on it. Neither
+ * answer can lose a live session, which is why no skew allowance is
+ * taken.
  */
 function hasTokenExpired(token: string): boolean {
   const expiry = readTokenClaims(token)?.exp;
@@ -84,8 +87,8 @@ export async function apiFetch<T>(
   }
 
   if (authContext === true && token && hasTokenExpired(token)) {
-    // send even if the renewal failed; only the server ends a session
-    await attemptTokenRefresh();
+    // a refusal here clears nothing; only a refused request ends it
+    await attemptSpeculativeRefresh();
     token = getStoredToken();
   }
 
