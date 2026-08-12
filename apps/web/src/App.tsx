@@ -1,3 +1,4 @@
+import BootInterstitial from './components/common/BootInterstitial';
 import { commonRoutes } from './routes/Common';
 import {
   CVD_MODE_KEY,
@@ -10,6 +11,7 @@ import ErrorBoundary from './components/errors/ErrorBoundary';
 import { Routes } from 'react-router';
 import { unauthenticatedRoutes } from './routes/Unauthenticated';
 import { useAuth } from './auth/AuthContext';
+import { useBootStatus } from './lib/hooks/useBootStatus';
 import { useEffect } from 'react';
 import { userRoutes } from './routes/User';
 import { useServerBooleanPrefSync } from './theme/useServerBooleanPrefSync';
@@ -17,6 +19,7 @@ import { useTheme } from './theme/ThemeContext';
 
 export default function App() {
   const { user, loading } = useAuth();
+  const boot = useBootStatus(loading);
   const {
     applyServerTheme,
     applyServerMode,
@@ -65,25 +68,26 @@ export default function App() {
     { updatedAtKey: DYSLEXIC_FONT_UPDATED_AT_KEY, valueKey: DYSLEXIC_FONT_KEY },
   );
 
-  if (loading) {
-    return (
-      <div
-        role="status"
-        className="flex items-center justify-center min-h-svh bg-[var(--base-bg)] text-[var(--base-text)] select-none"
-      >
-        <div className="text-[var(--base-alt-text)] text-sm animate-pulse">
-          Defrosting Linklater in the microwave…
-        </div>
-      </div>
-    );
-  }
-
+  // hoisted above the branch so the region is never remounted
   return (
-    <ErrorBoundary>
-      <Routes>
-        {commonRoutes()}
-        {user ? userRoutes() : unauthenticatedRoutes()}
-      </Routes>
-    </ErrorBoundary>
+    <>
+      <p
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {boot.announcement}
+      </p>
+      {boot.phase === 'interstitial' && <BootInterstitial />}
+      {boot.phase === 'app' && (
+        <ErrorBoundary>
+          <Routes>
+            {commonRoutes()}
+            {user ? userRoutes() : unauthenticatedRoutes()}
+          </Routes>
+        </ErrorBoundary>
+      )}
+    </>
   );
 }

@@ -226,7 +226,6 @@ const HIGHLIGHT_SITES: Record<Bundle, readonly RenderSite[]> = {
  * the discovery below applies as a rule rather than an exception list.
  */
 const PAINTERS: ReadonlyArray<readonly [string, string, string]> = [
-  ['App.tsx', 'base', ''],
   ['AppShell.tsx', 'base mount warn', ''],
   ['components/FailWhalePage/index.tsx', 'base mount', ''],
   ['components/Header.tsx', 'orbit', ''],
@@ -252,6 +251,7 @@ const PAINTERS: ReadonlyArray<readonly [string, string, string]> = [
   ['components/auth/ResetPasswordPage.tsx', 'base mount', ''],
   ['components/auth/VerifyLoginPage.tsx', 'base', ''],
   ['components/common/Alert.tsx', 'alert success', ''],
+  ['components/common/BootInterstitial.tsx', 'base', ''],
   ['components/common/CopyRevealPanel.tsx', 'orbit', ''],
   ['components/common/IconButton.tsx', 'mount orbit alert', 'alert'],
   ['components/common/IconListButton.tsx', 'mount orbit', ''],

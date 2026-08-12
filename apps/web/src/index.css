@@ -190,6 +190,27 @@ body {
   }
 }
 
+/* Boot message pulse. Animates COLOR between two tokens the WCAG contract
+   already enforces at 4.5:1 against --base-bg, for the same reason the link
+   cards moved off an opacity pulse: an opacity trough drops
+   --base-alt-text on --base-bg to well under the floor on nearly every
+   palette, and raising the floor cannot fix it, since a legal custom
+   palette validates at exactly 4.5:1 with no margin to spend. Both
+   endpoints sit on the same side of --base-bg in luminance, so every
+   interpolated midpoint lands between two passing ratios. No fill mode by
+   design: the global prefers-reduced-motion clamp collapses this to one
+   0.01ms iteration that must rest on the static base class (text
+   --base-alt-text); `forwards` would pin the 50% peak. */
+@keyframes boot-pulse {
+  0%,
+  100% {
+    color: var(--base-alt-text);
+  }
+  50% {
+    color: var(--base-text);
+  }
+}
+
 @theme {
   --animate-fade-in-up: fade-in-up 180ms ease-out both;
   --animate-card-enter: card-enter 400ms ease-out both;
@@ -198,6 +219,7 @@ body {
   --animate-fade-out-down: fade-out-down 150ms ease-in forwards;
   --animate-meta-pulse-border: meta-pulse-border 2s ease-in-out infinite;
   --animate-meta-pulse-bg: meta-pulse-bg 2s ease-in-out infinite;
+  --animate-boot-pulse: boot-pulse 2s ease-in-out infinite;
 }
 
 /* Brand page surface – theme-independent navy radial on the marketing
