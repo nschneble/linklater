@@ -36,4 +36,20 @@ describe('the paths the guard treats as auth-agnostic', () => {
   it('reads a real table rather than an empty one, which would pass both', () => {
     expect(declaredCommonPaths().length).toBeGreaterThan(0);
   });
+
+  it('declares no parameterized route, which no lookup here could match', () => {
+    // both filters above pass `/docs/:section`; no lookup ever matches it
+    const parameterized = declaredCommonPaths().filter(
+      (path) => path.includes(':') || path.includes('*'),
+    );
+    expect(parameterized).toEqual([]);
+  });
+
+  it('spells each path the way the guard normalizes an address bar', () => {
+    // an entry the normalizer cannot produce is an entry it cannot find
+    const unnormalized = [...AUTH_AGNOSTIC_PATHS].filter(
+      (path) => path !== path.toLowerCase() || path.endsWith('/'),
+    );
+    expect(unnormalized).toEqual([]);
+  });
 });

@@ -28,6 +28,7 @@ vi.mock('../../lib/api', () => ({
 
 import * as apiModule from '../../lib/api';
 import { readRenderedIdentity } from './renderedIdentity';
+import { restoreLocation, standOnPath } from '../../../test/locationMock';
 import { useAuthState } from './useAuthState';
 
 const makeUser = (
@@ -517,27 +518,12 @@ describe('recording who this tab is rendering', () => {
 });
 
 describe('booting on a token that belongs to somebody else', () => {
-  const realLocation = window.location;
-
-  function bootAt(pathname: string) {
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: { ...realLocation, assign: vi.fn(), pathname },
-      writable: true,
-    });
-    return window.location.assign as ReturnType<typeof vi.fn>;
-  }
-
   afterEach(() => {
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: realLocation,
-      writable: true,
-    });
+    restoreLocation();
   });
 
   it('abandons the boot it was about to run, rather than fetching as them', async () => {
-    const assignMock = bootAt('/settings');
+    const assignMock = standOnPath('/settings');
     sessionStorage.setItem('linklater_rendered_identity', 'user-1');
     vi.mocked(apiModule.getStoredToken).mockReturnValue('their-jwt');
     vi.mocked(apiModule.readTokenClaims).mockReturnValue({
@@ -552,7 +538,7 @@ describe('booting on a token that belongs to somebody else', () => {
   });
 
   it('boots normally when the token belongs to the last rendered user', async () => {
-    const assignMock = bootAt('/settings');
+    const assignMock = standOnPath('/settings');
     sessionStorage.setItem('linklater_rendered_identity', 'user-1');
     vi.mocked(apiModule.getStoredToken).mockReturnValue('same-jwt');
     vi.mocked(apiModule.readTokenClaims).mockReturnValue({
@@ -571,24 +557,13 @@ describe('booting on a token that belongs to somebody else', () => {
 });
 
 describe('the mirror the identity guard reads the rendered user through', () => {
-  const realLocation = window.location;
-
   afterEach(() => {
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: realLocation,
-      writable: true,
-    });
+    restoreLocation();
   });
 
   // the guard's own tests set .current by hand and cannot see this wire
   it('is fed, so a switch spotted on return to the tab is acted on', async () => {
-    const assignMock = vi.fn();
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: { ...realLocation, assign: assignMock, pathname: '/settings' },
-      writable: true,
-    });
+    const assignMock = standOnPath('/settings');
     Object.defineProperty(document, 'visibilityState', {
       configurable: true,
       get: () => 'visible',

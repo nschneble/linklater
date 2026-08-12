@@ -103,7 +103,7 @@ describe('root `/` route selects the visitor-appropriate element', () => {
   it('redirects an authenticated visitor to /unread with no landing CTAs', () => {
     renderAuthenticatedAt('/');
 
-    // <Navigate> swaps in before LandingPage mounts, so the CTAs never flash
+    // <Navigate> swaps in before LandingPage mounts: no CTA flash
     expect(screen.getByTestId('location')).toHaveTextContent('/unread');
     expect(screen.queryByText('Get started')).toBeNull();
     expect(screen.queryByText('Log in')).toBeNull();
@@ -113,7 +113,7 @@ describe('root `/` route selects the visitor-appropriate element', () => {
   it('renders the landing page for a logged-out visitor (no /login bounce)', () => {
     renderLoggedOutAt('/');
 
-    // C3: explicit `/` must beat the catch-all `*` → /login (no landing bounce)
+    // the explicit `/` beats the catch-all `*`, so no bounce to /login
     expect(screen.getByTestId('location')).toHaveTextContent('/');
     expect(screen.getByText('Get started')).toBeInTheDocument();
     expect(screen.getByText('Log in')).toBeInTheDocument();

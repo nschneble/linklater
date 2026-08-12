@@ -164,7 +164,11 @@ export function clearStoredToken(): void {
  * several of those). Exported because anything listening for a sibling's
  * sign-in has the same question and no other way to ask it.
  *
- * A `null` key is a whole-store `clear()`, which takes the pair with it.
+ * A `null` key is a whole-store `clear()`, which names no key at all and
+ * so has to be read as possibly concerning the pair. It is not read as
+ * the pair being gone: the precedence rule above answers that, and it
+ * keeps this tab's copy, since an emptied store is not proof the session
+ * ended any more than a single removal is.
  */
 export function isTokenStorageEvent(event: StorageEvent): boolean {
   return (

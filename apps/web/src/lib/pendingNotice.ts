@@ -59,8 +59,10 @@ const NOTICE_CATALOG: Record<PendingNotice, NoticeEntry> = {
     message: "You're now signed in to a different account",
     variant: 'warning',
   },
+  // past tense, so it cannot be heard as the login screen's standing
+  // offer (`AlreadySignedInNotice`) arriving a second time
   'already-logged-in': {
-    message: "You're already signed in",
+    message: 'You were already signed in, so nothing changed',
     variant: 'success',
   },
   'email-verified': {

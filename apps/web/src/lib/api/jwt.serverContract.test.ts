@@ -9,7 +9,9 @@
  * the same `@nestjs/jwt` `JwtService` the API mints through, with the same
  * call shape, so that gap cannot open again in silence.
  *
- * `@nestjs/jwt` is a devDependency of this workspace for this file alone.
+ * `@nestjs/jwt` is a devDependency of this workspace for minting here and
+ * in `routes/Unauthenticated.test.tsx`, which needs tokens a real reader
+ * can date rather than a stub of the reading.
  */
 
 import { describe, expect, it } from 'vitest';

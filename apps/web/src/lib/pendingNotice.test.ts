@@ -126,7 +126,7 @@ describe('setPendingNotice / consumePendingNotice', () => {
     setPendingNotice('already-logged-in');
     expect(hasPendingNotice()).toBe(true);
     expect(consumePendingNotice()).toEqual({
-      message: "You're already signed in",
+      message: 'You were already signed in, so nothing changed',
       variant: 'success',
     });
     expect(hasPendingNotice()).toBe(false);

@@ -16,8 +16,10 @@
  *
  * The notice is inert until the link is followed. Keying the swap to the
  * next keystroke or to submit would convert an N/A into a plain 3.2.2 On
- * Input failure, and nothing here moves focus, because preserving the
- * caret where the user left it is the entire point.
+ * Input failure.
+ *
+ * Nothing here moves focus either, because preserving the caret where the
+ * user left it is the entire point.
  *
  * Not a `Toast`: a toast auto-dismisses on a fixed timer with no way to
  * extend or disable it, and this message carries the only route to its
@@ -44,9 +46,19 @@
  * dark-mode toggle is a live region firing with no tie to anything the
  * user did.
  *
- * The state is recomputed from storage rather than latched on, so a
- * sibling signing out retracts the offer instead of leaving a link that
- * bounces off the auth gate back to the form.
+ * The offer never retracts, because a sibling signing out is not
+ * something this tab can observe. The persisted pair goes empty, an
+ * empty read is not proof the session ended, and so the token store
+ * answers with the copy it already holds (`lib/api/storage.ts`). What
+ * that leaves is a stale offer whose link bounces off the auth gate
+ * back to this form, taking the typed fields with it, which is the
+ * other half of why nothing here follows the link unasked.
+ *
+ * Raising it is therefore one-way. The one thing that can turn the check
+ * over afterwards is the clock, and an offer that vanished while it was
+ * being read would be a worse trade than a link that bounces; the live
+ * evidence is what the announcement is gated on, not what it is held up
+ * by.
  *
  * One string feeds both channels so they cannot drift, and only the
  * sr-only region carries live semantics; a role on the painted copy would
@@ -64,32 +76,40 @@ import { useEffect, useState } from 'react';
 
 const ALREADY_SIGNED_IN_MESSAGE = "You're already signed in.";
 
-/**
- * The destination, and the reason it is the only one: the pending notice
- * rides sessionStorage and only `AuthForm` and `LinksView` consume it.
- */
+/** The one destination, for the reason `useIdentityGuard` gives. */
 const SESSION_DESTINATION = '/unread';
 
 /**
- * Whether storage holds a token somebody is identifiable from. A token
- * nobody can be identified from is not evidence anyone signed in, which
- * is also how an opaque `ltk_` API token stays silent.
+ * Whether storage holds a token somebody is identifiable from that has
+ * not run out. A token nobody can be identified from is not evidence
+ * anyone signed in, which is also how an opaque `ltk_` API token stays
+ * silent, and an expired one is evidence of a session that has ended:
+ * the arm this feeds is a boot whose profile fetch failed without a 401,
+ * which is exactly what an expired token behind a network blip looks
+ * like. Announcing there sends the user through a bounce that costs the
+ * form. Expiry is necessary and not sufficient, since a revocation
+ * (a `tokenVersion` bump) leaves `exp` sitting in the future, and a
+ * token carrying no readable expiry is dated by nothing here.
  */
-function storedTokenHasOwner(): boolean {
-  return readTokenClaims(getStoredToken())?.subject != null;
+function storedTokenHasLiveOwner(): boolean {
+  const claims = readTokenClaims(getStoredToken());
+  if (claims?.subject == null) return false;
+  if (claims.exp === null) return true;
+  return claims.exp * 1000 > Date.now();
 }
 
 function useSignedInElsewhere(): boolean {
   const [signedInElsewhere, setSignedInElsewhere] = useState(false);
 
   useEffect(() => {
-    if (readRenderedIdentity() !== null && storedTokenHasOwner()) {
+    if (readRenderedIdentity() !== null && storedTokenHasLiveOwner()) {
       setSignedInElsewhere(true);
     }
 
     const handleStorage = (event: StorageEvent) => {
       if (!isTokenStorageEvent(event)) return;
-      setSignedInElsewhere(storedTokenHasOwner());
+      if (!storedTokenHasLiveOwner()) return;
+      setSignedInElsewhere(true);
     };
 
     window.addEventListener('storage', handleStorage);

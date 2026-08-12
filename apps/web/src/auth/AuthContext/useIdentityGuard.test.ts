@@ -27,9 +27,9 @@ import {
   reconcileColdBootIdentity,
   useIdentityGuard,
 } from './useIdentityGuard';
+import { restoreLocation, standOnPath } from '../../../test/locationMock';
 import type { User } from './types';
 
-const realLocation = window.location;
 let assignMock: ReturnType<typeof vi.fn>;
 
 function makeRenderedUser(userId: string): User {
@@ -55,22 +55,13 @@ function goVisible() {
 }
 
 function standOn(pathname: string) {
-  Object.defineProperty(window, 'location', {
-    configurable: true,
-    value: { ...realLocation, assign: assignMock, pathname },
-    writable: true,
-  });
+  assignMock = standOnPath(pathname);
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
   sessionStorage.clear();
-  assignMock = vi.fn();
-  Object.defineProperty(window, 'location', {
-    configurable: true,
-    value: { ...realLocation, assign: assignMock, pathname: '/unread' },
-    writable: true,
-  });
+  standOn('/unread');
   Object.defineProperty(document, 'visibilityState', {
     configurable: true,
     get: () => 'visible',
@@ -78,11 +69,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  Object.defineProperty(window, 'location', {
-    configurable: true,
-    value: realLocation,
-    writable: true,
-  });
+  restoreLocation();
   vi.restoreAllMocks();
 });
 
@@ -126,7 +113,7 @@ describe('same user rotates the token', () => {
     input.remove();
   });
 
-  it('still refreshes the profile, which is the behavior it replaces', () => {
+  it('still refreshes the profile, which the visibility handler owes its caller', () => {
     storedTokenBelongsTo('rotated-jwt', 'user-1');
     const refreshUser = vi.fn().mockResolvedValue(undefined);
 
@@ -269,6 +256,37 @@ describe('a route that renders regardless of auth state', () => {
     expect(consumePendingNotice()).toBeNull();
   });
 
+  // the router matches every one of these against the same route
+  it.each([
+    '/reset-password/',
+    '/Reset-Password',
+    '/RESET-PASSWORD',
+    '/reset-password//',
+  ])('keeps the document at %s, which renders the same form', (pathname) => {
+    standOn(pathname);
+    storedTokenBelongsTo('other-jwt', 'user-2');
+
+    renderHook(() =>
+      useIdentityGuard(userRef(makeRenderedUser('user-1')), vi.fn()),
+    );
+    goVisible();
+
+    expect(assignMock).not.toHaveBeenCalled();
+  });
+
+  it('still takes the move on a path the table only reads like', () => {
+    // the guard recognizes spellings of a path, never paths around one
+    standOn('/reset-password-help');
+    storedTokenBelongsTo('other-jwt', 'user-2');
+
+    renderHook(() =>
+      useIdentityGuard(userRef(makeRenderedUser('user-1')), vi.fn()),
+    );
+    goVisible();
+
+    expect(assignMock).toHaveBeenCalledWith('/unread');
+  });
+
   it('still takes the move on a route the login gate does protect', () => {
     // the same mismatch, one path over: the guard is off, not broken
     standOn('/settings');
@@ -280,6 +298,18 @@ describe('a route that renders regardless of auth state', () => {
     goVisible();
 
     expect(assignMock).toHaveBeenCalledWith('/unread');
+  });
+
+  it('spares a cold boot off an emailed link recased on the way in', () => {
+    standOn('/Reset-Password');
+    vi.mocked(apiModule.readTokenClaims).mockReturnValue({
+      exp: null,
+      subject: 'user-2',
+    });
+    noteRenderedIdentity('user-1');
+
+    expect(reconcileColdBootIdentity('jwt')).toBe(false);
+    expect(assignMock).not.toHaveBeenCalled();
   });
 
   it('spares a cold boot off an emailed link the bounce that spends it', () => {
@@ -397,12 +427,21 @@ describe('reconcileColdBootIdentity', () => {
     expect(readRenderedIdentity()).toBe('user-2');
   });
 
-  it('sends a mismatched boot on another route to the destination', () => {
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: { ...realLocation, assign: assignMock, pathname: '/settings' },
-      writable: true,
+  it('announces in place at a trailing-slash spelling of the destination', () => {
+    standOn('/unread/');
+    vi.mocked(apiModule.readTokenClaims).mockReturnValue({
+      exp: null,
+      subject: 'user-2',
     });
+    noteRenderedIdentity('user-1');
+
+    expect(reconcileColdBootIdentity('jwt')).toBe(false);
+    expect(assignMock).not.toHaveBeenCalled();
+    expect(consumePendingNotice()?.variant).toBe('warning');
+  });
+
+  it('sends a mismatched boot on another route to the destination', () => {
+    standOn('/settings');
     vi.mocked(apiModule.readTokenClaims).mockReturnValue({
       exp: null,
       subject: 'user-2',

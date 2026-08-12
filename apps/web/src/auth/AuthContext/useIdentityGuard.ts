@@ -3,8 +3,8 @@
  * user this tab is rendering.
  *
  * Tokens read through to `localStorage` and a sibling's rotation is carried
- * in by a `storage` event, so a tab can now adopt a token it never asked
- * for. Adopting a rotation of the SAME user is the point of that work and
+ * in by a `storage` event, so a tab adopts tokens it never asked for.
+ * Adopting a rotation of the SAME user is what that sync exists for and
  * stays silent. Adopting a DIFFERENT user is an account switch nobody on
  * this tab performed, and it gets announced.
  *
@@ -52,9 +52,14 @@ const SWITCHED_ACCOUNT_DESTINATION = '/unread';
 /**
  * Every path `routes/Common.tsx` declares, which is every path that
  * renders without consulting auth state. Whole-table rather than the
- * subset holding a form or a single-use token, because the cost of
- * protecting a static document is an announcement deferred to the next
- * navigation, while the cost of missing a form is unrecoverable.
+ * subset holding a form or a single-use token: missing a form costs
+ * input nobody can retype, while protecting a static document costs a
+ * tab that goes on rendering the previous account until the next
+ * navigation, the deferred announcement included. That second cost is
+ * not nothing, and `ExtensionAuthorizePage` is where it shows: it names
+ * the account it is about to grant on, and it would name the one that
+ * left. The grant is bearer-guarded, so it still lands on the account
+ * the token belongs to rather than the one on screen.
  * Exported so `authAgnosticPaths.test.ts` can fail when the two drift.
  */
 export const AUTH_AGNOSTIC_PATHS = new Set([
@@ -72,8 +77,28 @@ export const AUTH_AGNOSTIC_PATHS = new Set([
   '/verify-login',
 ]);
 
+/**
+ * The address bar's spelling of a path, reduced to the one the table is
+ * written in. The router matches case-insensitively and ignores trailing
+ * slashes, so a raw string compare recognizes fewer pages than actually
+ * render, and it fails in the direction that costs the most: an emailed
+ * link opened as `/Reset-Password` renders the form and gets replaced
+ * mid-entry, spending the single-use token with it (Postel's law).
+ */
+function normalizePathname(pathname: string): string {
+  const withoutTrailingSlash = pathname.toLowerCase().replace(/\/+$/, '');
+  if (withoutTrailingSlash === '') return '/';
+  return withoutTrailingSlash;
+}
+
 function rendersRegardlessOfAuth(): boolean {
-  return AUTH_AGNOSTIC_PATHS.has(window.location.pathname);
+  return AUTH_AGNOSTIC_PATHS.has(normalizePathname(window.location.pathname));
+}
+
+function standingOnDestination(): boolean {
+  return (
+    normalizePathname(window.location.pathname) === SWITCHED_ACCOUNT_DESTINATION
+  );
 }
 
 /** Queues the announcement and takes ownership of the new subject. */
@@ -109,7 +134,7 @@ export function reconcileColdBootIdentity(token: string): boolean {
   if (rendersRegardlessOfAuth()) return false;
 
   // already at the destination: announce in place, no second page load
-  if (window.location.pathname === SWITCHED_ACCOUNT_DESTINATION) {
+  if (standingOnDestination()) {
     announceSwitchTo(subject);
     return false;
   }

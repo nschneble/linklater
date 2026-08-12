@@ -18,52 +18,79 @@
  * The route table is pinned separately in
  * `Unauthenticated.routes.test.tsx`, which needs `AuthForm` stubbed and so
  * cannot share a module-scoped mock with this file.
+ *
+ * The token store is real, and the tokens are minted rather than stubbed.
+ * What the notice claims is a claim about what storage answers, so a
+ * mocked `getStoredToken` would let this suite certify behavior the store
+ * refutes: it keeps the copy this tab holds when a sibling's removal
+ * empties the persisted one, which is why the offer cannot retract. A
+ * sibling is therefore played the way the browser plays one, by writing
+ * `localStorage` directly and delivering the `storage` event the writing
+ * tab never sees.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthFormWrapper } from './Unauthenticated';
+import { clearStoredToken, getStoredToken } from '../lib/api';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { JwtService } from '@nestjs/jwt';
 import { MemoryRouter } from 'react-router';
+import { restoreLocation, standOnPath } from '../../test/locationMock';
 
 vi.mock('../auth/AuthContext', () => ({
   useAuth: vi.fn(),
 }));
 
-// the real key filter, so the ignored-key cases exercise what ships
+// only the network calls behind the form; the token store stays real
 vi.mock('../lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../lib/api')>()),
   forgotPassword: vi.fn(),
-  getStoredToken: vi.fn(),
-  readTokenClaims: vi.fn(),
   registerMagicLink: vi.fn(),
   requestMagicLink: vi.fn(),
   verifyOtp: vi.fn(),
 }));
 
-import * as apiModule from '../lib/api';
 import { useAuth } from '../auth/AuthContext';
 
 const ACTION = 'Go to your links';
 const ANNOUNCEMENT = 'already-signed-in-announcement';
 const MESSAGE = "You're already signed in.";
 const RENDERED_IDENTITY_KEY = 'linklater_rendered_identity';
+const TOKEN_KEY = 'linklater_token';
 
-const realLocation = window.location;
 let assignMock: ReturnType<typeof vi.fn>;
 
-function siblingSignedInAs(subject: string | null) {
-  vi.mocked(apiModule.getStoredToken).mockReturnValue('sibling-jwt');
-  vi.mocked(apiModule.readTokenClaims).mockReturnValue(
-    subject === null ? null : { exp: null, subject },
-  );
+/**
+ * A token the real reader can decode, signed the way the API signs.
+ * `exp` is passed rather than left to `expiresIn` so a test can date a
+ * token in the past, which is the state a failed boot cannot tell from a
+ * network blip.
+ */
+function mintToken(subject: string, secondsUntilExpiry: number | null): string {
+  const expiry =
+    secondsUntilExpiry === null
+      ? {}
+      : { exp: Math.floor(Date.now() / 1000) + secondsUntilExpiry };
+  return new JwtService({ secret: 'notice-test-secret' }).sign({
+    subject,
+    email: 'user@example.com',
+    ...expiry,
+  });
+}
+
+function siblingWrote(token: string) {
+  window.localStorage.setItem(TOKEN_KEY, token);
+}
+
+function siblingSignedInAs(subject: string) {
+  siblingWrote(mintToken(subject, 3600));
 }
 
 function siblingSignedOut() {
-  vi.mocked(apiModule.getStoredToken).mockReturnValue(null);
-  vi.mocked(apiModule.readTokenClaims).mockReturnValue(null);
+  window.localStorage.removeItem(TOKEN_KEY);
 }
 
-function fireStorageEvent(key: string | null = 'linklater_token') {
+function fireStorageEvent(key: string | null = TOKEN_KEY) {
   fireEvent(window, new StorageEvent('storage', { key }));
 }
 
@@ -91,27 +118,19 @@ function renderLoginScreen() {
 beforeEach(() => {
   vi.clearAllMocks();
   sessionStorage.clear();
-  assignMock = vi.fn();
-  Object.defineProperty(window, 'location', {
-    configurable: true,
-    value: { ...realLocation, assign: assignMock },
-    writable: true,
-  });
+  localStorage.clear();
+  // the store keeps an in-memory copy no outside write can reach
+  clearStoredToken();
+  assignMock = standOnPath();
   vi.mocked(useAuth).mockReturnValue({
     login: vi.fn(),
     refreshUser: vi.fn(),
     register: vi.fn(),
   } as unknown as ReturnType<typeof useAuth>);
-  vi.mocked(apiModule.getStoredToken).mockReturnValue(null);
-  vi.mocked(apiModule.readTokenClaims).mockReturnValue(null);
 });
 
 afterEach(() => {
-  Object.defineProperty(window, 'location', {
-    configurable: true,
-    value: realLocation,
-    writable: true,
-  });
+  restoreLocation();
 });
 
 describe('the live region before anything happens', () => {
@@ -259,9 +278,21 @@ describe('storage changes that are not a sibling signing in', () => {
 
   it('ignores a token whose owner cannot be read', () => {
     renderLoginScreen();
-    siblingSignedInAs(null);
+    // an opaque `ltk_` API token carries no readable payload
+    siblingWrote('ltk_0f8d1c2e4a6b4f21');
     fireStorageEvent();
     expect(screen.getByTestId(ANNOUNCEMENT).textContent).toBe('');
+    expect(noticeIsShowing()).toBe(false);
+
+    siblingSignedInAs('user-2');
+    fireStorageEvent();
+    expect(noticeIsShowing()).toBe(true);
+  });
+
+  it('ignores a token that arrives already expired', () => {
+    renderLoginScreen();
+    siblingWrote(mintToken('user-2', -60));
+    fireStorageEvent();
     expect(noticeIsShowing()).toBe(false);
 
     siblingSignedInAs('user-2');
@@ -281,20 +312,18 @@ describe('storage changes that are not a sibling signing in', () => {
     expect(noticeIsShowing()).toBe(true);
   });
 
-  it('reads a whole-store clear, which takes the token with it', () => {
+  it('says nothing on a whole-store clear that empties an empty store', () => {
     renderLoginScreen();
-    siblingSignedInAs('user-2');
-    fireStorageEvent();
-    expect(noticeIsShowing()).toBe(true);
-
-    siblingSignedOut();
+    localStorage.clear();
     fireStorageEvent(null);
+
     expect(noticeIsShowing()).toBe(false);
+    expect(screen.getByTestId(ANNOUNCEMENT).textContent).toBe('');
   });
 });
 
 describe('the sibling signs back out', () => {
-  it('retracts the offer rather than leaving a link the gate bounces', () => {
+  it('leaves the offer standing, since the token store keeps its copy', () => {
     renderLoginScreen();
     siblingSignedInAs('user-2');
     fireStorageEvent();
@@ -303,8 +332,46 @@ describe('the sibling signs back out', () => {
     siblingSignedOut();
     fireStorageEvent();
 
-    expect(noticeIsShowing()).toBe(false);
-    expect(screen.getByTestId(ANNOUNCEMENT).textContent).toBe('');
+    expect(noticeIsShowing()).toBe(true);
+    expect(screen.getByTestId(ANNOUNCEMENT).textContent).toBe(MESSAGE);
+  });
+
+  it('leaves it standing through a whole-store clear as well', () => {
+    renderLoginScreen();
+    siblingSignedInAs('user-2');
+    fireStorageEvent();
+    expect(noticeIsShowing()).toBe(true);
+
+    localStorage.clear();
+    fireStorageEvent(null);
+
+    expect(noticeIsShowing()).toBe(true);
+  });
+
+  it('is the store answering, not the notice ignoring the event', () => {
+    renderLoginScreen();
+    siblingSignedInAs('user-2');
+    fireStorageEvent();
+
+    siblingSignedOut();
+    fireStorageEvent();
+
+    // reading the same way the followed link would, through the store
+    expect(getStoredToken()).not.toBeNull();
+  });
+});
+
+describe('an offer already on screen', () => {
+  it('stays up when a later event carries a token that has run out', () => {
+    renderLoginScreen();
+    siblingSignedInAs('user-2');
+    fireStorageEvent();
+    expect(noticeIsShowing()).toBe(true);
+
+    siblingWrote(mintToken('user-2', -60));
+    fireStorageEvent();
+
+    expect(noticeIsShowing()).toBe(true);
   });
 });
 
@@ -336,6 +403,26 @@ describe('a boot that kept its token and failed its profile fetch', () => {
     renderLoginScreen();
 
     expect(noticeIsShowing()).toBe(false);
+  });
+
+  it('says nothing when the token it kept had already run out', () => {
+    // the arm this feeds is a boot whose fetch failed without a 401
+    sessionStorage.setItem(RENDERED_IDENTITY_KEY, 'user-1');
+    siblingWrote(mintToken('user-1', -60));
+
+    renderLoginScreen();
+
+    expect(noticeIsShowing()).toBe(false);
+    expect(screen.getByTestId(ANNOUNCEMENT).textContent).toBe('');
+  });
+
+  it('offers on a token carrying no expiry, which is nothing to date it by', () => {
+    sessionStorage.setItem(RENDERED_IDENTITY_KEY, 'user-1');
+    siblingWrote(mintToken('user-1', null));
+
+    renderLoginScreen();
+
+    expect(noticeIsShowing()).toBe(true);
   });
 });
 

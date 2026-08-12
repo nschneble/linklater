@@ -1,11 +1,11 @@
 /**
  * Tests for the response-to-user mapping.
  *
- * These ran through `renderHook(useAuthState)` and a `waitFor` before,
- * standing up a hook, a mocked fetch and an effect to watch a pure
- * function return a value. Called directly they need none of that, which
- * is the split `jwt.ts` and `jwt.test.ts` already use. The two narrowers
- * this module also exports keep their own suite in `narrowers.test.tsx`.
+ * `mapMeToUser` is a pure function, so it is called directly here rather
+ * than watched through a hook, a mocked fetch and a `waitFor`, none of
+ * which any claim below depends on. That is the same split `jwt.ts` and
+ * `jwt.test.ts` use. The two narrowers this module also exports keep
+ * their own suite in `narrowers.test.tsx`.
  */
 
 import { describe, expect, it } from 'vitest';
