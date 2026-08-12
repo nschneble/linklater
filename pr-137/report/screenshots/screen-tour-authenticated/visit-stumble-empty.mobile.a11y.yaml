@@ -1,3 +1,4 @@
+- status
 - img "A friendly pixel-art ghost"
 - heading "Boo. Your reading list is empty." [level=1]
 - paragraph: How about something from Testing Fixture?

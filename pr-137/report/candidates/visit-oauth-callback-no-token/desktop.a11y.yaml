@@ -1,4 +1,5 @@
 - status
+- status
 - text: We couldn't sign you in. Please try again.
 - button "Dismiss"
 - alert: We couldn't sign you in. Please try again.
