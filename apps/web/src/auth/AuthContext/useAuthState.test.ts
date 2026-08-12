@@ -19,6 +19,7 @@ vi.mock('../../lib/api', () => ({
   getStoredToken: vi.fn(),
   login: vi.fn(),
   logout: vi.fn(),
+  readTokenClaims: vi.fn(),
   register: vi.fn(),
   resendEmailChangeVerification: vi.fn(),
   resendVerificationEmail: vi.fn(),
@@ -26,6 +27,7 @@ vi.mock('../../lib/api', () => ({
 }));
 
 import * as apiModule from '../../lib/api';
+import { readRenderedIdentity } from './renderedIdentity';
 import { useAuthState } from './useAuthState';
 
 const makeUser = (
@@ -56,6 +58,8 @@ const makeUser = (
 beforeEach(() => {
   vi.clearAllMocks();
   localStorage.clear();
+  sessionStorage.clear();
+  vi.mocked(apiModule.readTokenClaims).mockReturnValue(null);
   vi.spyOn(console, 'error').mockImplementation(() => undefined);
 });
 
@@ -415,6 +419,155 @@ describe('markWelcomed', () => {
       expect.any(Error),
     );
     expect(result.current.user?.welcomedAt).not.toBeNull();
+  });
+});
+
+describe('a getMe that lands after the user signed out', () => {
+  /** Hands back the promise `getMe` is stuck on, plus its resolver. */
+  function deferGetMe() {
+    let release!: (me: ReturnType<typeof makeUser>) => void;
+    vi.mocked(apiModule.getMe).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          release = resolve as (me: ReturnType<typeof makeUser>) => void;
+        }),
+    );
+    return () => release(makeUser());
+  }
+
+  it('is discarded rather than throwing the user back into the app', async () => {
+    vi.mocked(apiModule.getStoredToken).mockReturnValue(null);
+    const releaseGetMe = deferGetMe();
+
+    const { result } = renderHook(() => useAuthState());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    let refresh!: Promise<void>;
+    act(() => {
+      refresh = result.current.refreshUser();
+    });
+    act(() => {
+      result.current.logout();
+    });
+    await act(async () => {
+      releaseGetMe();
+      await refresh;
+    });
+
+    expect(result.current.user).toBeNull();
+  });
+
+  it('is adopted normally when no sign-out interrupts it', async () => {
+    vi.mocked(apiModule.getStoredToken).mockReturnValue(null);
+    const releaseGetMe = deferGetMe();
+
+    const { result } = renderHook(() => useAuthState());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    let refresh!: Promise<void>;
+    act(() => {
+      refresh = result.current.refreshUser();
+    });
+    await act(async () => {
+      releaseGetMe();
+      await refresh;
+    });
+
+    expect(result.current.user?.email).toBe('user@example.com');
+  });
+});
+
+describe('recording who this tab is rendering', () => {
+  it('notes the identity on mount hydration', async () => {
+    vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());
+
+    const { result } = renderHook(() => useAuthState());
+    await waitFor(() => expect(result.current.user).not.toBeNull());
+
+    expect(readRenderedIdentity()).toBe('user-1');
+  });
+
+  it('notes the identity after a login', async () => {
+    vi.mocked(apiModule.getStoredToken).mockReturnValue(null);
+    vi.mocked(apiModule.login).mockResolvedValue({ accessToken: 'jwt' });
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());
+
+    const { result } = renderHook(() => useAuthState());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => {
+      await result.current.login('user@example.com', 'pass');
+    });
+
+    expect(readRenderedIdentity()).toBe('user-1');
+  });
+
+  it('forgets it on logout, because a signed-out tab renders nobody', async () => {
+    vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());
+
+    const { result } = renderHook(() => useAuthState());
+    await waitFor(() => expect(readRenderedIdentity()).toBe('user-1'));
+
+    act(() => {
+      result.current.logout();
+    });
+
+    expect(readRenderedIdentity()).toBeNull();
+  });
+});
+
+describe('booting on a token that belongs to somebody else', () => {
+  const realLocation = window.location;
+
+  function bootAt(pathname: string) {
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...realLocation, assign: vi.fn(), pathname },
+      writable: true,
+    });
+    return window.location.assign as ReturnType<typeof vi.fn>;
+  }
+
+  afterEach(() => {
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: realLocation,
+      writable: true,
+    });
+  });
+
+  it('abandons the boot it was about to run, rather than fetching as them', async () => {
+    const assignMock = bootAt('/settings');
+    sessionStorage.setItem('linklater_rendered_identity', 'user-1');
+    vi.mocked(apiModule.getStoredToken).mockReturnValue('their-jwt');
+    vi.mocked(apiModule.readTokenClaims).mockReturnValue({
+      exp: null,
+      sub: 'user-2',
+    });
+
+    renderHook(() => useAuthState());
+
+    await waitFor(() => expect(assignMock).toHaveBeenCalledWith('/unread'));
+    expect(apiModule.getMe).not.toHaveBeenCalled();
+  });
+
+  it('boots normally when the token belongs to the last rendered user', async () => {
+    const assignMock = bootAt('/settings');
+    sessionStorage.setItem('linklater_rendered_identity', 'user-1');
+    vi.mocked(apiModule.getStoredToken).mockReturnValue('same-jwt');
+    vi.mocked(apiModule.readTokenClaims).mockReturnValue({
+      exp: null,
+      sub: 'user-1',
+    });
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());
+
+    const { result } = renderHook(() => useAuthState());
+
+    await waitFor(() =>
+      expect(result.current.user?.email).toBe('user@example.com'),
+    );
+    expect(assignMock).not.toHaveBeenCalled();
   });
 });
 

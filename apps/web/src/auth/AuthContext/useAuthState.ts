@@ -9,81 +9,46 @@ import {
   resendVerificationEmail as apiResendVerificationEmail,
   setStoredToken,
 } from '../../lib/api';
-import { normalizeCustomTheme } from '../../theme/customTheme';
+import {
+  forgetRenderedIdentity,
+  noteRenderedIdentity,
+} from './renderedIdentity';
+import { mapMeToUser } from './mapMeToUser';
+import {
+  reconcileColdBootIdentity,
+  useIdentityGuard,
+} from './useIdentityGuard';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { VALID_BASE_THEME_IDS } from '../../theme/constants';
 import type { AuthContextValue, User } from './types';
-import type { BaseTheme, Mode } from '../../theme/constants';
 import type { MeResponse } from '../../lib/api';
 
-const VISIBILITY_REFRESH_MIN_INTERVAL_MS = 2000;
-
 /**
- * Narrows the server-returned `theme` string to a `BaseTheme`, falling back
- * to `'scanner-darkly'` if the server returns an id this client doesn't
- * know about (schema drift between API and web releases). The fallback is
- * silent at runtime to avoid disrupting the user, but a `console.warn` fires
- * in development so an in-flight deploy that ships an API theme before the
- * matching client CSS is visible during debugging.
- */
-export function narrowTheme(theme: string): BaseTheme {
-  if (VALID_BASE_THEME_IDS.has(theme)) return theme as BaseTheme;
-  if (import.meta.env.DEV) {
-    console.warn(
-      `[auth] Unknown server theme "${theme}"; falling back to "scanner-darkly".`,
-    );
-  }
-  return 'scanner-darkly';
-}
-
-/**
- * Narrows the server-returned `mode` string to a `Mode`, falling back to
- * `'dark'` for any unexpected value. Same dev-only warn rationale as
- * `narrowTheme`.
- */
-export function narrowMode(mode: string): Mode {
-  if (mode === 'light' || mode === 'dark') return mode;
-  if (import.meta.env.DEV) {
-    console.warn(
-      `[auth] Unknown server mode "${mode}"; falling back to "dark".`,
-    );
-  }
-  return 'dark';
-}
-
-/**
- * Maps the raw `GET /auth/me` response shape to the `User` interface.
- * Extracted to avoid repetition in every code path that calls `getMe`
- * (e.g. mount, login, loginWithToken, refreshUser).
- */
-function mapMeToUser(me: MeResponse): User {
-  return {
-    cvdMode: me.cvdMode,
-    dyslexicFont: me.dyslexicFont,
-    customTheme: normalizeCustomTheme(me.customTheme),
-    customThemeEnabled: me.customThemeEnabled,
-    connectedProviders: me.connectedProviders,
-    email: me.email,
-    emailVerifiedAt: me.emailVerifiedAt,
-    hasPassword: me.hasPassword,
-    mode: narrowMode(me.mode),
-    pendingEmail: me.pendingEmail,
-    theme: narrowTheme(me.theme),
-    multiFactorMethod: me.multiFactorMethod,
-    multiFactorPending: me.multiFactorPending,
-    accountDeletionPending: me.accountDeletionPending,
-    userId: me.userId,
-    welcomedAt: me.welcomedAt,
-  };
-}
-
-/**
- * Encapsulates all authentication state, effects, and action handlers.
+ * Encapsulates authentication state, effects, and action handlers.
  * Consumed by `AuthProvider`, which passes the returned value into context.
+ *
+ * Watching the stored token for an identity that stopped matching the
+ * rendered one lives next door in `useIdentityGuard`, which this hook
+ * feeds a mirror of `user` and its own `refreshUser`.
  */
 export function useAuthState(): AuthContextValue {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
+
+  // a [] callback captures a first-render user that is always null
+  const userReference = useRef<User | null>(null);
+  useEffect(() => {
+    userReference.current = user;
+  }, [user]);
+
+  // a getMe in flight when logout fires must not resurrect the session
+  const sessionEpochReference = useRef(0);
+
+  // rendering a user and recording who this tab is rendering are one act
+  const adoptUser = useCallback((me: MeResponse) => {
+    const nextUser = mapMeToUser(me);
+    noteRenderedIdentity(nextUser.userId);
+    setUser(nextUser);
+  }, []);
 
   // on mount: hydrate auth state from the stored JWT, if any
   useEffect(() => {
@@ -93,10 +58,14 @@ export function useAuthState(): AuthContextValue {
       return;
     }
 
+    // a token belonging to someone else is a switch, not a boot
+    if (reconcileColdBootIdentity(token)) return;
+
+    // no epoch check: loading hides every affordance a sign-out could use
     (async () => {
       try {
         const me = await getMe();
-        setUser(mapMeToUser(me));
+        adoptUser(me);
       } catch (error) {
         console.error('Failed to fetch current user', error);
         // leave the token on failed hydration; core clears it only on a 401/403
@@ -104,7 +73,7 @@ export function useAuthState(): AuthContextValue {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [adoptUser]);
 
   /**
    * Calls the API login endpoint, then fetches the user profile to populate
@@ -120,18 +89,18 @@ export function useAuthState(): AuthContextValue {
         return { mfaToken: result.mfaToken, mfaMethod: result.mfaMethod };
       }
       const me = await getMe();
-      setUser(mapMeToUser(me));
+      adoptUser(me);
     },
-    [],
+    [adoptUser],
   );
 
   const loginWithToken = useCallback(
     async (accessToken: string, refreshToken?: string) => {
       setStoredToken(accessToken, refreshToken);
       const me = await getMe();
-      setUser(mapMeToUser(me));
+      adoptUser(me);
     },
-    [],
+    [adoptUser],
   );
 
   /**
@@ -147,7 +116,9 @@ export function useAuthState(): AuthContextValue {
   );
 
   const logout = useCallback(() => {
+    sessionEpochReference.current += 1;
     void apiLogout();
+    forgetRenderedIdentity();
     setUser(null);
   }, []);
 
@@ -167,36 +138,17 @@ export function useAuthState(): AuthContextValue {
   }, []);
 
   const refreshUser = useCallback(async () => {
+    const epochAtStart = sessionEpochReference.current;
     try {
       const me = await getMe();
-      setUser(mapMeToUser(me));
+      if (sessionEpochReference.current !== epochAtStart) return;
+      adoptUser(me);
     } catch (error) {
       console.error('Failed to refresh user', error);
     }
-  }, []);
+  }, [adoptUser]);
 
-  // re-fetch user on tab focus; 2s stale guard stops rapid-switch fan-out
-  const lastVisibilityRefreshReference = useRef(0);
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState !== 'visible') return;
-      if (!getStoredToken()) return;
-      const now = Date.now();
-      if (
-        now - lastVisibilityRefreshReference.current <
-        VISIBILITY_REFRESH_MIN_INTERVAL_MS
-      ) {
-        return;
-      }
-      lastVisibilityRefreshReference.current = now;
-      void refreshUser();
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [refreshUser]);
+  useIdentityGuard(userReference, refreshUser);
 
   const markWelcomed = useCallback(async () => {
     setUser((previous) =>

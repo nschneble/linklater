@@ -14,10 +14,12 @@ interface PendingNoticeAnnouncerProps {
  * and a live region already populated on first paint reads as part of the
  * page rather than as an announcement; staying mounted and empty gives
  * screen readers a transition to report. Its role and live politeness
- * track the variant because two regions carrying one message at
- * mismatched priorities race on the announcement queue, which is worse
- * than either channel alone. The test id is here because a host page can
- * hold a second region of this shape.
+ * track the variant so the announcement fires at the priority the variant
+ * asks for. The mirror is the only announcer here: the toast is handed
+ * `announce={false}`, because a toast owning a region of its own would
+ * put two regions on one message at one instant, and a screen reader
+ * reading it twice is worse than either channel alone. The test id is
+ * here because a host page can hold a second region of this shape.
  */
 export default function PendingNoticeAnnouncer({
   notice,
@@ -30,7 +32,12 @@ export default function PendingNoticeAnnouncer({
   return (
     <>
       {notice && (
-        <Toast message={notice} onDismiss={onDismiss} variant={variant} />
+        <Toast
+          announce={false}
+          message={notice}
+          onDismiss={onDismiss}
+          variant={variant}
+        />
       )}
       <span
         className="sr-only"

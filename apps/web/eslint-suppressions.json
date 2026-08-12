@@ -99,11 +99,6 @@
       "count": 6
     }
   },
-  "src/routes/Unauthenticated.test.tsx": {
-    "local/no-comment-block-in-body": {
-      "count": 1
-    }
-  },
   "src/theme/colorMath.test.ts": {
     "local/no-comment-block-in-body": {
       "count": 1

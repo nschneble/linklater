@@ -244,6 +244,7 @@ const PAINTERS: ReadonlyArray<readonly [string, string, string]> = [
   ['components/api-docs/EndpointNavCompact.tsx', 'base orbit', ''],
   ['components/api-docs/ResponseTabs.tsx', 'orbit', ''],
   ['components/api-docs/WelcomePanel.tsx', 'mount', ''],
+  ['components/auth/AlreadySignedInNotice.tsx', 'mount', ''],
   ['components/auth/AuthCard.tsx', 'mount', ''],
   ['components/auth/ConfirmAccountDeletionPage.tsx', 'base', ''],
   ['components/auth/ExtensionAuthorizePage.tsx', 'mount', 'mount'],

@@ -36,6 +36,8 @@ export {
   getStoredToken,
   setStoredToken,
 } from './core';
+export type { TokenClaims } from './jwt';
+export { readTokenClaims } from './jwt';
 export type { PaginatedLinks, Link, LinkMeta } from './links';
 export {
   createLink,

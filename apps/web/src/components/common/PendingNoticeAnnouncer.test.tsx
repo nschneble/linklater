@@ -12,6 +12,7 @@
  *   - variant='error' renders the mirror as role="alert" aria-live="assertive"
  *   - The Toast is omitted when notice is null
  *   - The Toast paints with the right variant when notice is non-null
+ *   - The mirror is the ONLY live region; the toast announces nothing
  */
 
 import { describe, expect, it, vi } from 'vitest';
@@ -82,6 +83,55 @@ describe('PendingNoticeAnnouncer mirror – error variant', () => {
       container.querySelector('.fa-circle-exclamation'),
     ).toBeInTheDocument();
     expect(container.querySelector('.fa-circle-check')).not.toBeInTheDocument();
+  });
+});
+
+describe('PendingNoticeAnnouncer announcement channels', () => {
+  it.each([['success' as const], ['warning' as const], ['error' as const]])(
+    'puts exactly one live region on the message for the %s variant',
+    (variant) => {
+      const { container } = render(
+        <PendingNoticeAnnouncer
+          notice="Your email has been verified."
+          variant={variant}
+          onDismiss={vi.fn()}
+        />,
+      );
+
+      // two regions on one message is one message read twice
+      expect(container.querySelectorAll('[aria-live]')).toHaveLength(1);
+    },
+  );
+
+  it('leaves the visible toast card with no ARIA live semantics of its own', () => {
+    const { container } = render(
+      <PendingNoticeAnnouncer
+        notice="Your email has been verified."
+        variant="warning"
+        onDismiss={vi.fn()}
+      />,
+    );
+
+    const card = container
+      .querySelector('.fa-triangle-exclamation')
+      ?.closest('div');
+    expect(card).not.toBeNull();
+    expect(card).not.toHaveAttribute('role');
+    expect(card).not.toHaveAttribute('aria-live');
+  });
+
+  it('keeps the sr-only mirror as the one that carries the text', () => {
+    const { container } = render(
+      <PendingNoticeAnnouncer
+        notice="Your email has been verified."
+        variant="warning"
+        onDismiss={vi.fn()}
+      />,
+    );
+
+    const region = container.querySelector('[aria-live]');
+    expect(region).toHaveClass('sr-only');
+    expect(region?.textContent).toBe('Your email has been verified.');
   });
 });
 
