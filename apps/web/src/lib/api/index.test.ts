@@ -4,10 +4,15 @@
  *
  * All network calls are intercepted by replacing `globalThis.fetch` with a
  * vi.fn(). What lands here is what only a whole round trip can show: the URL,
- * method and headers an endpoint sends, the retry that follows a 401, and the
+ * method and headers an endpoint sends, the renewal that precedes a request
+ * carrying a token already out of date, the retry that follows a 401, and the
  * cases where `apiFetch`, `tokenRefresh` and `storage` decide between a
  * spent token and an ended session together. Each of those three modules
  * proves its own arms in its own suite.
+ *
+ * Leg counts are load-bearing in the pre-flight suite and asserted
+ * directly: what that renewal buys is a leg not spent, which no assertion
+ * about the response can show.
  */
 
 import {
@@ -66,15 +71,57 @@ import {
   verifyTotpSetup,
 } from '.';
 
-function mockFetch(body: unknown, status = 200): Mock {
-  const mock = vi.fn().mockResolvedValue({
+function jsonResponse(body: unknown, status = 200) {
+  return {
     ok: status >= 200 && status < 300,
     status,
     text: () => Promise.resolve(JSON.stringify(body)),
     json: () => Promise.resolve(body),
+  };
+}
+
+function mockFetch(body: unknown, status = 200): Mock {
+  const mock = vi.fn().mockResolvedValue(jsonResponse(body, status));
+  globalThis.fetch = mock as unknown as typeof fetch;
+  return mock;
+}
+
+/**
+ * Answers the renewal leg and the protected request separately, so a test
+ * can count what each one cost and read the header the second one carried.
+ */
+function mockFetchByLeg(renewal: unknown, request: unknown): Mock {
+  const mock = vi.fn((input: RequestInfo | URL) => {
+    const url = typeof input === 'string' ? input : input.toString();
+    return Promise.resolve(url.includes('/auth/refresh') ? renewal : request);
   });
   globalThis.fetch = mock as unknown as typeof fetch;
   return mock;
+}
+
+/**
+ * Builds a token around a payload. Payloads here are ASCII, so `btoa`
+ * covers what `jwt.test.ts` needs a TextEncoder pass for.
+ */
+function makeToken(payload: unknown): string {
+  const segment = btoa(JSON.stringify(payload))
+    .replaceAll('+', '-')
+    .replaceAll('/', '_')
+    .replace(/=+$/, '');
+  return `header.${segment}.signature`;
+}
+
+/** A token dated relative to now, negative for one already run out. */
+function makeTokenExpiringIn(seconds: number): string {
+  return makeToken({
+    subject: 'user-1',
+    exp: Math.floor(Date.now() / 1000) + seconds,
+  });
+}
+
+function readAuthorization(call: unknown): string | undefined {
+  const [, options] = call as [string, RequestInit];
+  return (options.headers as Record<string, string>)['Authorization'];
 }
 
 function mockFetchText(text: string, status = 400): Mock {
@@ -586,6 +633,226 @@ describe('apiFetch', () => {
       ApiError,
     );
     expect((fetchMock as unknown as Mock).mock.calls).toHaveLength(1);
+  });
+});
+
+describe('apiFetch expiry pre-flight', () => {
+  it('renews first, sparing the leg a server would refuse', async () => {
+    setStoredToken(makeTokenExpiringIn(-60), 'valid-refresh');
+    const renewed = makeTokenExpiringIn(3600);
+
+    // stands in for the server, which refuses anything past its expiry
+    const fetchMock = vi.fn(
+      (input: RequestInfo | URL, options?: RequestInit) => {
+        const url = typeof input === 'string' ? input : input.toString();
+        if (url.includes('/auth/refresh')) {
+          return Promise.resolve(
+            jsonResponse({
+              accessToken: renewed,
+              refreshToken: 'next-refresh',
+            }),
+          );
+        }
+        const headers = (options?.headers ?? {}) as Record<string, string>;
+        if (headers['Authorization'] !== `Bearer ${renewed}`) {
+          return Promise.resolve(
+            jsonResponse({ message: 'Unauthorized' }, 401),
+          );
+        }
+        return Promise.resolve(jsonResponse({ userId: 'user-1' }));
+      },
+    );
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    await expect(apiFetch('/auth/me')).resolves.toEqual({ userId: 'user-1' });
+
+    // renewal then request: the refused first leg is never spent
+    expect(fetchMock.mock.calls).toHaveLength(2);
+    const [renewalUrl] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const [requestUrl] = fetchMock.mock.calls[1] as [string, RequestInit];
+    expect(renewalUrl).toContain('/auth/refresh');
+    expect(requestUrl).toContain('/auth/me');
+    expect(readAuthorization(fetchMock.mock.calls[1])).toBe(
+      `Bearer ${renewed}`,
+    );
+    expect(getStoredToken()).toBe(renewed);
+  });
+
+  it('renews once for the several requests a boot fires at the same time', async () => {
+    setStoredToken(makeTokenExpiringIn(-60), 'valid-refresh');
+    const renewed = makeTokenExpiringIn(3600);
+    const fetchMock = mockFetchByLeg(
+      jsonResponse({ accessToken: renewed, refreshToken: 'next-refresh' }),
+      jsonResponse({ id: 'result' }),
+    );
+
+    await Promise.all([apiFetch('/me'), apiFetch('/links')]);
+
+    // one renewal, not one per request
+    const renewalCalls = fetchMock.mock.calls.filter(([url]) =>
+      String(url).includes('/auth/refresh'),
+    );
+    expect(renewalCalls).toHaveLength(1);
+    expect(fetchMock.mock.calls).toHaveLength(3);
+    expect(readAuthorization(fetchMock.mock.calls[1])).toBe(
+      `Bearer ${renewed}`,
+    );
+    expect(readAuthorization(fetchMock.mock.calls[2])).toBe(
+      `Bearer ${renewed}`,
+    );
+  });
+
+  it('sends straight out when the stored token is still in date', async () => {
+    const live = makeTokenExpiringIn(3600);
+    setStoredToken(live, 'valid-refresh');
+    const fetchMock = mockFetchByLeg(
+      jsonResponse({ accessToken: 'renewed-jwt' }),
+      jsonResponse({ id: 'result' }),
+    );
+
+    await apiFetch('/test');
+
+    expect(fetchMock.mock.calls).toHaveLength(1);
+    expect(readAuthorization(fetchMock.mock.calls[0])).toBe(`Bearer ${live}`);
+  });
+
+  it('sends an opaque API token as-is, having no expiry to read', async () => {
+    setStoredToken('ltk_opaque_api_token', 'valid-refresh');
+    const fetchMock = mockFetchByLeg(
+      jsonResponse({ accessToken: 'renewed-jwt' }),
+      jsonResponse({ id: 'result' }),
+    );
+
+    await apiFetch('/test');
+
+    expect(fetchMock.mock.calls).toHaveLength(1);
+    expect(readAuthorization(fetchMock.mock.calls[0])).toBe(
+      'Bearer ltk_opaque_api_token',
+    );
+  });
+
+  it('sends a token carrying no expiry claim as-is', async () => {
+    const undated = makeToken({ subject: 'user-1' });
+    setStoredToken(undated, 'valid-refresh');
+    const fetchMock = mockFetchByLeg(
+      jsonResponse({ accessToken: 'renewed-jwt' }),
+      jsonResponse({ id: 'result' }),
+    );
+
+    await apiFetch('/test');
+
+    expect(fetchMock.mock.calls).toHaveLength(1);
+    expect(readAuthorization(fetchMock.mock.calls[0])).toBe(
+      `Bearer ${undated}`,
+    );
+  });
+
+  it('sends a token whose expiry claim is not a number as-is', async () => {
+    const mistyped = makeToken({ subject: 'user-1', exp: '1893456000' });
+    setStoredToken(mistyped, 'valid-refresh');
+    const fetchMock = mockFetchByLeg(
+      jsonResponse({ accessToken: 'renewed-jwt' }),
+      jsonResponse({ id: 'result' }),
+    );
+
+    await apiFetch('/test');
+
+    expect(fetchMock.mock.calls).toHaveLength(1);
+    expect(readAuthorization(fetchMock.mock.calls[0])).toBe(
+      `Bearer ${mistyped}`,
+    );
+  });
+
+  it('leaves a literal token alone even once its expiry has passed', async () => {
+    const literal = makeTokenExpiringIn(-60);
+    setStoredToken(makeTokenExpiringIn(-60), 'valid-refresh');
+    const fetchMock = mockFetchByLeg(
+      jsonResponse({ accessToken: 'renewed-jwt' }),
+      jsonResponse({ id: 'result' }),
+    );
+
+    // a PAT or MFA token belongs to its caller and is not ours to rotate
+    await apiFetch('/test', {}, literal);
+
+    expect(fetchMock.mock.calls).toHaveLength(1);
+    expect(readAuthorization(fetchMock.mock.calls[0])).toBe(
+      `Bearer ${literal}`,
+    );
+  });
+
+  it('renews nothing for an unauthenticated call', async () => {
+    setStoredToken(makeTokenExpiringIn(-60), 'valid-refresh');
+    const fetchMock = mockFetchByLeg(
+      jsonResponse({ accessToken: 'renewed-jwt' }),
+      jsonResponse({ id: 'result' }),
+    );
+
+    await apiFetch('/test', {}, false);
+
+    expect(fetchMock.mock.calls).toHaveLength(1);
+    expect(readAuthorization(fetchMock.mock.calls[0])).toBeUndefined();
+  });
+
+  it('keeps the pair and sends anyway when the renewal cannot be reached', async () => {
+    const expired = makeTokenExpiringIn(-60);
+    setStoredToken(expired, 'valid-refresh');
+
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.includes('/auth/refresh')) {
+        return Promise.reject(new TypeError('Failed to fetch'));
+      }
+      return Promise.resolve(jsonResponse({ id: 'result' }));
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    await expect(apiFetch<{ id: string }>('/test')).resolves.toEqual({
+      id: 'result',
+    });
+
+    // a renewal that reached no verdict is no reason to end the session
+    expect(getStoredToken()).toBe(expired);
+    expect(getStoredRefreshToken()).toBe('valid-refresh');
+    expect(fetchMock.mock.calls).toHaveLength(2);
+    expect(readAuthorization(fetchMock.mock.calls[1])).toBe(
+      `Bearer ${expired}`,
+    );
+  });
+
+  it('sends on and surfaces the server answer when the renewal is refused', async () => {
+    setStoredToken(makeTokenExpiringIn(-60), 'spent-refresh');
+    const fetchMock = mockFetchByLeg(
+      jsonResponse({ message: 'Invalid refresh' }, 401),
+      jsonResponse({ message: 'Unauthorized' }, 401),
+    );
+
+    const error = await apiFetch('/test').catch((caught: unknown) => caught);
+
+    const [renewalUrl] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const [requestUrl] = fetchMock.mock.calls[1] as [string, RequestInit];
+    expect(renewalUrl).toContain('/auth/refresh');
+    expect(requestUrl).toContain('/test');
+    // the refused renewal already cleared the pair, so no header is left
+    expect(readAuthorization(fetchMock.mock.calls[1])).toBeUndefined();
+    expect((error as ApiError).status).toBe(401);
+    expect(fetchMock.mock.calls).toHaveLength(2);
+  });
+
+  it('stops after the one retry when the renewed token is rejected too', async () => {
+    setStoredToken(makeTokenExpiringIn(-60), 'valid-refresh');
+    const fetchMock = mockFetchByLeg(
+      jsonResponse({
+        accessToken: 'renewed-jwt',
+        refreshToken: 'renewed-refresh',
+      }),
+      jsonResponse({ message: 'Unauthorized' }, 401),
+    );
+
+    const error = await apiFetch('/test').catch((caught: unknown) => caught);
+
+    // renewal, request, the existing one-shot retry's renewal, retry
+    expect(fetchMock.mock.calls).toHaveLength(4);
+    expect((error as ApiError).status).toBe(401);
   });
 });
 

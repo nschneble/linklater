@@ -9,15 +9,38 @@ export {
 import { API_BASE_URL, getStoredToken } from './storage';
 import { ApiError, parseError, parseResponse } from './responses';
 import { attemptTokenRefresh } from './tokenRefresh';
+import { readTokenClaims } from './jwt';
 
 /**
  * Controls the Authorization header on an `apiFetch` call:
- * - `true` (default) – attach the stored JWT; retry once after a 401 with a
- *   token refresh
+ * - `true` (default) – attach the stored JWT, renewing it first if it has
+ *   already run out; retry once after a 401 with a token refresh
  * - `false` – send no Authorization header (public/unauthenticated endpoints)
  * - `string` – use the provided literal token as-is (e.g. a PAT or MFA token)
  */
 export type AuthContext = boolean | string;
+
+/**
+ * Whether this token is known to have run out, which is the one case where
+ * sending it is a round trip whose answer is already decided. Access tokens
+ * are signed for an hour, so a tab returning from an idle afternoon holds
+ * one of these, and spending a leg to be told so is the whole cost this
+ * question removes.
+ *
+ * Only a readable expiry sitting in the past answers yes. An expiry that
+ * is absent, mistyped or unreadable answers no, as does an opaque `ltk_`
+ * API token with no payload to read, because none of those is evidence of
+ * anything and the server is the authority either way.
+ *
+ * The clock is the browser's and the expiry is the server's, so the two
+ * can disagree. A slow clock asks for no renewal and falls back to being
+ * told by the server, and a fast one asks for a renewal that succeeds.
+ * Neither loses the session, which is why no skew allowance is taken.
+ */
+function hasTokenExpired(token: string): boolean {
+  const expiry = readTokenClaims(token)?.exp;
+  return typeof expiry === 'number' && expiry * 1000 < Date.now();
+}
 
 /**
  * Like `apiFetch<T>` but throws `ApiError` when the server returns an empty
@@ -57,6 +80,12 @@ export async function apiFetch<T>(
   if (typeof authContext === 'string') {
     token = authContext;
   } else if (authContext) {
+    token = getStoredToken();
+  }
+
+  if (authContext === true && token && hasTokenExpired(token)) {
+    // send even if the renewal failed; only the server ends a session
+    await attemptTokenRefresh();
     token = getStoredToken();
   }
 
