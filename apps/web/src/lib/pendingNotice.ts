@@ -13,7 +13,7 @@
  * One entry, `session-unavailable`, is queued by the auth gate itself
  * (`components/auth/offerBounce.ts`) rather than by a flow the user
  * asked for, one commit before the login form it explains mounts. It
- * goes through this table like every other message so the copy and the
+ * goes through the catalog like every other message so the copy and the
  * ARIA shape have one home, and so the form's focus bail sees it pending.
  *
  * Uses `sessionStorage` (not `localStorage`) because the signal should not
@@ -21,116 +21,24 @@
  * (not `location.state`) because the implicit catch-all redirect from
  * authenticated routes to `/login` would overwrite any router state.
  *
- * Each entry carries a `variant` so the surfacing UI (toast + sr-only
- * mirror) can pick the right ARIA shape and bundle paint. Success AND
- * warning variants ride `role="status"` + `aria-live="polite"`; error
- * variants ride `role="alert"` + `aria-live="assertive"` - both channels
- * MUST match per a11y-lead (divergence is worse than either channel
- * alone). Warning shares the polite channel with success because the
- * underlying user action was intentional; the warn paint + icon glyph
- * carry the "heads-up, side-effect happened" signal redundantly.
+ * The copy and the ARIA shape each entry carries live in
+ * `noticeCatalog.ts`. Both its types are re-exported here so a caller
+ * that only knows about the store has one import to reach for.
+ *
+ * A stored value is matched against the catalog's own keys rather than
+ * against everything the lookup would answer to. The inherited ones
+ * (`toString`, `constructor`, `valueOf`, `__proto__`) resolve to a
+ * function or to the prototype object, and a function reaching the
+ * caller's `setNotice` is read by React as a state updater and invoked.
  */
+
+import { NOTICE_CATALOG } from './noticeCatalog';
+import type { NoticeEntry, PendingNotice } from './noticeCatalog';
+
+export type { NoticeEntry, PendingNotice };
 
 // distinct key name so deploy-straddling sessions don't fire stale notices
 const PENDING_NOTICE_KEY = 'linklater_pending_notice';
-
-export type PendingNotice =
-  | 'account-deleted'
-  | 'account-switched'
-  | 'already-logged-in'
-  | 'email-verified'
-  | 'email-verified-please-sign-in'
-  | 'email-change-verified'
-  | 'email-change-verified-please-sign-in'
-  | 'password-reset-success'
-  | 'session-unavailable'
-  | 'deletion-link-invalid'
-  | 'verification-link-invalid'
-  | 'email-change-link-invalid'
-  | 'login-link-invalid'
-  | 'oauth-failed';
-
-export interface NoticeEntry {
-  message: string;
-  variant: 'success' | 'warning' | 'error';
-  /**
-   * Whether the message is the arriving page's own account of itself
-   * rather than a report on something the user just did. Those cannot
-   * ride a dismiss timer (WCAG 2.2.1 Timing Adjustable): the page will
-   * still be there, unexplained, after the timer runs out. The surfacing
-   * UI paints them in the flow instead of in a toast.
-   */
-  standing?: boolean;
-}
-
-// error copies inline the recovery hint (WCAG 3.3.3) when it's behind auth
-const NOTICE_CATALOG: Record<PendingNotice, NoticeEntry> = {
-  'account-deleted': {
-    message: 'Your account has been deleted.',
-    variant: 'success',
-  },
-  // generic copy: toast auto-dismiss is too short for SRs to read an email
-  'account-switched': {
-    message: "You're now signed in to a different account",
-    variant: 'warning',
-  },
-  // past tense, so it cannot be heard as the login screen's standing
-  // offer (`AlreadySignedInNotice`) arriving a second time
-  'already-logged-in': {
-    message: 'You were already signed in, so nothing changed',
-    variant: 'success',
-  },
-  'email-verified': {
-    message: 'Your email address has been verified',
-    variant: 'success',
-  },
-  'email-verified-please-sign-in': {
-    message: 'Your email address has been verified',
-    variant: 'success',
-  },
-  'email-change-verified': {
-    message: 'Your email address has been updated',
-    variant: 'success',
-  },
-  'email-change-verified-please-sign-in': {
-    message: 'Your email address has been updated',
-    variant: 'success',
-  },
-  'password-reset-success': {
-    message: 'Your password has been updated',
-    variant: 'success',
-  },
-  // names what the attempt did, not what the server did: a bounce off the
-  // auth gate reads the same whether the session ended or the network
-  // blipped. No instruction to log in, for the reason the two
-  // please-sign-in entries above dropped theirs: the form is right there
-  'session-unavailable': {
-    message: "We couldn't get you back into that session",
-    variant: 'warning',
-    standing: true,
-  },
-  'deletion-link-invalid': {
-    message: 'Account deletion link has expired',
-    variant: 'error',
-  },
-  'verification-link-invalid': {
-    message: 'Verification link has expired',
-    variant: 'error',
-  },
-  'email-change-link-invalid': {
-    message: 'Confirmation link has expired',
-    variant: 'error',
-  },
-  'login-link-invalid': {
-    message: 'Login link has expired',
-    variant: 'error',
-  },
-  // generic copy: toast is too short for SRs to parse a raw provider error
-  'oauth-failed': {
-    message: "We couldn't sign you in. Please try again.",
-    variant: 'error',
-  },
-};
 
 /**
  * The catalog's own census. A test that enumerates the notice keys has to
@@ -164,7 +72,8 @@ export function consumePendingNotice(): NoticeEntry | null {
     const raw = window.sessionStorage.getItem(PENDING_NOTICE_KEY);
     if (raw === null) return null;
     window.sessionStorage.removeItem(PENDING_NOTICE_KEY);
-    if (raw in NOTICE_CATALOG) {
+    // own keys only, per the inherited-name note in the overview
+    if (Object.hasOwn(NOTICE_CATALOG, raw)) {
       return NOTICE_CATALOG[raw as PendingNotice];
     }
     return null;

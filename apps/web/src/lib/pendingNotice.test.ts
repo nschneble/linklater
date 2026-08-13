@@ -187,6 +187,18 @@ describe('setPendingNotice / consumePendingNotice', () => {
     );
     expect(consumePendingNotice()).toBeNull();
   });
+
+  // handing one of these back reaches a setter that would invoke it
+  it.each([
+    'toString',
+    'constructor',
+    'valueOf',
+    'hasOwnProperty',
+    '__proto__',
+  ])('returns null for the inherited name %s', (inherited) => {
+    window.sessionStorage.setItem('linklater_pending_notice', inherited);
+    expect(consumePendingNotice()).toBeNull();
+  });
 });
 
 describe('hasPendingNotice', () => {
