@@ -17,7 +17,7 @@
  * SecurityError) costs the cold-boot comparison, not the session.
  */
 
-// distinct key name so a deploy-straddling session cannot misread an older shape
+// distinct key name so a deploy-straddling session reads no older shape
 const RENDERED_IDENTITY_KEY = 'linklater_rendered_identity';
 
 export function readRenderedIdentity(): string | null {

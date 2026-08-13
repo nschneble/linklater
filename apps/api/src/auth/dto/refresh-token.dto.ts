@@ -12,9 +12,10 @@ import { IsOptional, IsString, Matches, MinLength } from 'class-validator';
  * connection that died: it already holds the successor, so it can present
  * it on the next request instead of being signed out holding a token no
  * row matches. Only that client's own session is at stake in the value,
- * but the shape is still held to what the server would have generated, so
- * nothing weaker than 32 random bytes reaches storage. The pattern carries
- * that alone: `matches` type-guards before it tests, so anything that is
+ * so the check is on shape alone, and a run of 64 zeros satisfies it. A
+ * client that nominates something guessable weakens nothing but the
+ * session it is naming for itself. The pattern carries the check alone:
+ * `matches` type-guards before it tests, so anything that is
  * not a string fails it without a second decorator saying so. That is a
  * property of the decorator rather than of the expression it holds, and
  * the range on class-validator is a caret one, so the spec pins it with
@@ -37,7 +38,7 @@ export class RefreshTokenDto {
       'The token the client asks this rotation to produce, so a rotation' +
       ' whose response is lost stays recoverable. 64 lowercase hex' +
       ' characters. Ignored when the hash is already taken.',
-    example: 'a3f8c...64-character-hex-string...d91e',
+    example: '76752d9c27a74dc220dd7bd73b459790217dd0dda8fccee079c1153d43fb9fb7',
   })
   @IsOptional()
   @Matches(/^[0-9a-f]{64}$/, {

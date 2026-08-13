@@ -1,13 +1,21 @@
 /**
  * The API base URL, and the token store behind the API client along with
- * the precedence rule between the two copies it keeps: one in
- * `localStorage`, one in memory.
+ * the precedence rule between the two copies it keeps of each value: one
+ * in `localStorage`, one in memory.
  *
  * The persisted copy normally wins, which is what carries a rotation
  * performed in another tab into this one. `safeStorage` owns the cases
  * where it does not, and answers `null` for a read it could not take. None
  * of the things a `null` can mean is proof the session ended, so the token
  * this tab holds survives it.
+ *
+ * Three keys are kept, not two. Beside the pair sits the successor this
+ * tab has asked a renewal to rotate into, which is what makes a rotation
+ * the server committed and answered on a dead connection recoverable.
+ * Everything about it differs from the pair: it is written before the
+ * request it belongs to goes out rather than after, it is this tab's own
+ * proposal rather than anything the server has said, and it is dropped the
+ * moment a refresh token arrives to make it moot.
  */
 
 import { readPersisted, safeRead, safeRemove, safeWrite } from './safeStorage';
@@ -140,6 +148,12 @@ export function clearStoredToken(): void {
  * CVD, dyslexic font, keyboard shortcuts, and a paired timestamp for
  * several of those). Exported because anything listening for a sibling's
  * sign-in has the same question and no other way to ask it.
+ *
+ * The nomination is excluded too, and it is the only exclusion that is not
+ * a preference. A sibling writing one has started a renewal, not finished
+ * it, so counting the key would raise the sign-in offer for a session
+ * change that may never happen and would ask this tab to re-read a pair
+ * nothing has touched.
  *
  * A `null` key is a whole-store `clear()`, which names no key at all and
  * so has to be read as possibly concerning the pair. It is not read as

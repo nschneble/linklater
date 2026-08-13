@@ -86,11 +86,17 @@ export function consumePendingNotice(): NoticeEntry | null {
 
 /**
  * Peeks at the pending notice without consuming it. Returns `true` when any
- * value is queued (even an unknown one). Used by effects that need to branch
- * on the presence of a pending notice before the consumer effect clears it -
- * e.g. AuthForm's mode-change effect skips auto-focusing the email input when
- * a notice is queued, so the focus shift doesn't switch a screen reader into
- * forms mode mid-announcement.
+ * value is queued, even an unknown one, since the question is whether the
+ * slot is taken rather than what is in it.
+ *
+ * Two callers, asking opposite questions of the same answer. The arrival
+ * effect in `useAuthFormArrival.ts` skips auto-focusing the email input
+ * while a notice is queued, so the focus shift does not switch a screen
+ * reader into forms mode mid-announcement, which is why the peek has to
+ * happen before the consumer effect empties the slot. The auth gate in
+ * `components/auth/offerBounce.ts` asks so it can stand down: the slot is
+ * one-shot, and whatever is already there was queued by a flow the user
+ * asked for.
  */
 export function hasPendingNotice(): boolean {
   if (typeof window === 'undefined') return false;

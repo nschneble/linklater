@@ -4,10 +4,11 @@
  * A whole substitute store is stood in front of the accessor, rather than
  * the method being patched, because patching does not take: jsdom hands
  * out a `Storage` proxy whose methods are neither the prototype's nor
- * writable through the instance, so `sessionStorage.getItem = ...` stores
- * an item called `getItem` and the real method goes on answering. A test
- * written that way passes without ever reaching the arm it names, which
- * is the shape every best-effort `catch` here is supposed to be pinned by.
+ * writable through the instance. Assigning over one of those names stores
+ * an item under that name instead, and the real method goes on answering.
+ * A test written that way passes without ever reaching the arm it names,
+ * which is the shape every best-effort `catch` here is meant to be pinned
+ * by.
  */
 export function withRefusedStorage(
   method: 'getItem' | 'setItem' | 'removeItem',

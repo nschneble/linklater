@@ -3,11 +3,10 @@ import '@testing-library/jest-dom';
 /*
  * The block below does not replace `window.localStorage`, it supplies it:
  * this environment has none, and Node's own stays off without
- * `--localstorage-file`. Every site
- * `grep -rn 'vi.spyOn(window.localStorage' src` finds rests on that, and
- * works only because a plain object is patchable where a `Storage` is
- * not. Dropping this is loud rather than quiet, since spying on nothing
- * throws.
+ * `--localstorage-file`. Every suite that spies on a `localStorage`
+ * method rests on that, and works only because a plain object is
+ * patchable where a `Storage` is not. Dropping this is loud rather than
+ * quiet, since spying on nothing throws.
  *
  * `window.sessionStorage` does exist here, as a proxy whose methods are
  * not `Storage.prototype`'s, so the same idiom aimed at it installs

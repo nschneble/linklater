@@ -12,6 +12,19 @@
  * running, but one scheduled by an effect re-running on the phase change
  * only registers as `act` exits, by which time a single advance has
  * already closed its window and nothing is left to catch it.
+ *
+ * Two of the four durations are also advanced by literals rather than by
+ * themselves, because a test that steps by the constant it is testing
+ * re-derives its expectation from whatever that constant says and passes
+ * at every value. The two silences above bracket the threshold at exactly
+ * a second, which is the project's own bar for owing feedback at all and
+ * the boot the user complained about. The dwell is held above a tenth of
+ * a second, the bar below which a screen shown is a screen that flashed;
+ * where it sits above that is tuning.
+ *
+ * The remaining two carry no such number. The ready stagger asks only to
+ * be a task of its own after the handover, and nothing normative sets how
+ * long a polite region must hold its text before being emptied.
  */
 
 import { act, renderHook } from '@testing-library/react';
@@ -45,25 +58,35 @@ afterEach(() => {
 });
 
 describe('useBootStatus', () => {
-  it('renders nothing and says nothing before the threshold', () => {
+  it('renders nothing and says nothing before a full second has passed', () => {
     const { result } = renderBoot();
 
     expect(result.current.phase).toBe('blank');
     expect(result.current.announcement).toBe('');
 
-    advance(BOOT_THRESHOLD_MS - 1);
+    advance(999);
 
     expect(result.current.phase).toBe('blank');
     expect(result.current.announcement).toBe('');
   });
 
-  it('shows the interstitial and announces loading once the threshold passes', () => {
+  it('shows the interstitial and announces loading at a full second', () => {
     const { result } = renderBoot();
 
-    advance(BOOT_THRESHOLD_MS);
+    advance(1000);
 
     expect(result.current.phase).toBe('interstitial');
     expect(result.current.announcement).toBe('Loading Linklater…');
+  });
+
+  it('holds the screen past the tenth of a second that reads as a flash', () => {
+    const { result, rerender } = renderBoot();
+
+    advance(BOOT_THRESHOLD_MS);
+    act(() => rerender({ loading: false }));
+    advance(99);
+
+    expect(result.current.phase).toBe('interstitial');
   });
 
   it('stays silent forever when loading clears before the threshold', () => {

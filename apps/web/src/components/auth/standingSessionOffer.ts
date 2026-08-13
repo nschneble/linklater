@@ -14,17 +14,22 @@ import { getStoredToken, readTokenClaims } from '../../lib/api';
 import { readRenderedIdentity } from '../../auth/AuthContext/renderedIdentity';
 
 /**
- * Whether storage holds a token somebody is identifiable from that has
- * not run out. A token nobody can be identified from is not evidence
- * anyone signed in, which is also how an opaque `ltk_` API token stays
- * silent, and an expired one is evidence of a session that has ended:
- * the arm this feeds is a boot whose profile fetch failed without a 401,
- * which is exactly what an expired token behind a network blip looks
- * like. Announcing there offers a way back that cannot be taken, and
- * spends a document load to say so. Expiry is necessary and not
- * sufficient, since a revocation
- * (a `tokenVersion` bump) leaves `exp` sitting in the future, and a
- * token carrying no readable expiry is dated by nothing here.
+ * Whether storage holds a token that names somebody and has not run out.
+ *
+ * The two halves fail for different reasons. A token nobody can be
+ * identified from is not evidence anyone signed in, which is also how an
+ * opaque `ltk_` API token stays silent. An expiry already passed is read
+ * as the token no longer speaking for a session by itself, which is
+ * weaker than it once was: the pre-flight in `lib/api/core.ts` renews
+ * exactly such a token before spending a request on it, so a live refresh
+ * token behind it puts the session back in one round trip. Withholding
+ * the offer there is the conservative answer rather than the correct one,
+ * and it is kept because widening it is a question about what to promise
+ * someone, not about what is true.
+ *
+ * Neither half is close to sufficient in the other direction. A
+ * revocation (a `tokenVersion` bump) leaves `exp` sitting in the future,
+ * and a token carrying no readable expiry is dated by nothing here.
  */
 export function storedTokenHasLiveOwner(): boolean {
   const claims = readTokenClaims(getStoredToken());

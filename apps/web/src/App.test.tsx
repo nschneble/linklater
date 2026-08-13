@@ -140,6 +140,8 @@ describe('App boot', () => {
 
     expect(container.querySelectorAll('[role="status"]')).toHaveLength(1);
     expect(region(container)?.textContent).toBe('');
+    // seeing this on a boot this fast is the complaint being answered
+    expect(screen.queryByText(BOOT_MESSAGE)).toBeNull();
     expect(screen.getByTestId('routes')).toBeInTheDocument();
   });
 });

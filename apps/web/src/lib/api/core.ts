@@ -1,3 +1,23 @@
+/**
+ * The one call every request in the app goes through, and the two places
+ * it spends a token rather than merely attaching one.
+ *
+ * Both are here rather than in the store because both are decisions about
+ * a request. Ahead of one, a token whose expiry has already passed is
+ * renewed, which is what a tab returning from an idle afternoon needs: the
+ * alternative is a guaranteed 401 and a second leg to learn it. After one,
+ * a 401 is treated as possibly stale rather than final, and the retry is
+ * taken once. Neither path ends a session on its own; `tokenRefresh` owns
+ * that verdict and this module never clears anything.
+ *
+ * The retry is bounded to a single attempt and skips `/auth/refresh`
+ * itself, since a refusal there is the answer, not a reason to ask again.
+ *
+ * The store's own surface is re-exported straight through, so callers
+ * reach the token through one import rather than knowing which module
+ * behind here keeps it.
+ */
+
 export {
   clearStoredToken,
   getStoredRefreshToken,

@@ -8,14 +8,15 @@
 
 - Notice when a session picked up from another tab changes the account on screen
 - Offer to continue into a live session the login screen is covering
+- Screen reader narration while a slow boot runs, and again when it finishes
 
 ### Fixed
 
 - A token rotation performed in another tab signs this tab out
 - A rotation the server commits but never delivers ends the session
-- A browser refusing a storage write leaves the older token stored
 - An access token already known to be expired still spends a request
 - The boot screen appears on boots too fast to need explaining
+- The boot message fades under the contrast floor at the bottom of its pulse
 
 ## [1.5.0] - 2026-08-02
 

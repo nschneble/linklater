@@ -9,8 +9,13 @@
  * Error copies inline the recovery hint (WCAG 3.3.3) when it is behind
  * auth. Success AND warning variants ride `role="status"` +
  * `aria-live="polite"`; error variants ride `role="alert"` +
- * `aria-live="assertive"` - both channels MUST match per a11y-lead
- * (divergence is worse than either channel alone). Warning shares the
+ * `aria-live="assertive"`. The role and the attribute always name the same
+ * urgency because each of those roles already implies one, and an explicit
+ * attribute replaces what the role implied rather than adding to it. A
+ * pairing that disagrees therefore delivers the attribute's urgency while
+ * the role goes on naming the other, so the markup describes the message
+ * one way and announces it the opposite way, and only a reader who knows
+ * the precedence rule can tell which is happening. Warning shares the
  * polite channel with success because the underlying user action was
  * intentional; the warn paint + icon glyph carry the "heads-up,
  * side-effect happened" signal redundantly.
