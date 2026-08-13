@@ -1,3 +1,4 @@
+- status
 - heading "Sign in to authorize" [level=1]
 - paragraph: Sign in to your Linklater account to authorize the extension.
 - link "Sign in":

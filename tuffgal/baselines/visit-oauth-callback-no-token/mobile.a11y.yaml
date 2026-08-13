@@ -1,3 +1,8 @@
+- status
+- status
+- text: We couldn't sign you in. Please try again.
+- button "Dismiss"
+- alert: We couldn't sign you in. Please try again.
 - heading "Linklater" [level=1]
 - paragraph: Save links now, read them later.
 - tablist "Authentication mode":
@@ -12,7 +17,3 @@
   - button "Log in with magic link"
 - button "I literally have no idea what my password is"
 - alert
-- alert:
-  - text: We couldn't sign you in. Please try again.
-  - button "Dismiss"
-- alert: We couldn't sign you in. Please try again.
