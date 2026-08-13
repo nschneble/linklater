@@ -828,6 +828,26 @@ describe('apiFetch expiry pre-flight', () => {
     );
   });
 
+  it('keeps the token it holds when there is nothing to renew with', async () => {
+    const expired = makeTokenExpiringIn(-60);
+    setStoredToken(expired);
+    const fetchMock = mockFetchByLeg(
+      jsonResponse({ accessToken: 'renewed-jwt' }),
+      jsonResponse({ id: 'result' }),
+    );
+
+    await expect(apiFetch<{ id: string }>('/test')).resolves.toEqual({
+      id: 'result',
+    });
+
+    // a refusal reached without a leg is no verdict on the access token
+    expect(readPaths(fetchMock)).toEqual(['/test']);
+    expect(readAuthorization(fetchMock.mock.calls[0])).toBe(
+      `Bearer ${expired}`,
+    );
+    expect(getStoredToken()).toBe(expired);
+  });
+
   it('keeps the pair and sends the token it had when the renewal is refused with a 401', async () => {
     const expired = makeTokenExpiringIn(-60);
     setStoredToken(expired, 'spent-refresh');

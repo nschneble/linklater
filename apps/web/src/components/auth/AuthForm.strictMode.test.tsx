@@ -14,11 +14,12 @@
  * failures: both red together mean the notice path itself broke, while
  * only the wrapped one red means the effects stopped surviving the double
  * invoke. On their own they are where the declaration order of the mount
- * effects is pinned, which nothing else in this folder reads: the mode
- * effect peeks the store before the consume effect empties it, and that
- * peek is all its position buys. Hoist the consume effect above it and
- * the peek finds nothing, so focus lands on the email input and flips a
- * screen reader into forms mode in the middle of the message.
+ * effects in `useAuthFormArrival.ts` is pinned, which nothing else in
+ * this folder reads: the mode effect peeks the store before the consume
+ * effect empties it, and that peek is all its position buys. Hoist the
+ * consume effect above it and the peek finds nothing, so focus lands on
+ * the email input and flips a screen reader into forms mode in the
+ * middle of the message.
  */
 
 import { act, fireEvent, render, screen } from '@testing-library/react';
@@ -110,6 +111,16 @@ describe('AuthForm – a notice queued before the form mounted', () => {
       await arrive(reactStrictMode);
 
       expect(document.activeElement).toBe(document.body);
+    },
+  );
+
+  // without this the bails above pass on a form that never takes focus
+  it.each([false, true])(
+    'takes focus into the email input when nothing was queued (strict mode: %s)',
+    async (reactStrictMode) => {
+      await arrive(reactStrictMode);
+
+      expect(document.activeElement).toBe(screen.getByLabelText(/email/i));
     },
   );
 

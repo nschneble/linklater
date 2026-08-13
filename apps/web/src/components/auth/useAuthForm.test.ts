@@ -639,7 +639,7 @@ describe('useAuthForm', () => {
 
   // Part D: dismiss a lingering error toast before the form's own error Alert, else two role="alert" announcements collide (ARIA 1.2 §5.2.8.4)
   describe('coalesce-on-submit (error toast dismissed at handleSubmit start)', () => {
-    it('dismisses a queued error-variant notice at the top of handleSubmit', async () => {
+    it('replaces a queued error-variant notice with the success that follows', async () => {
       vi.mocked(pendingNoticeModule.consumePendingNotice).mockReturnValue({
         message: 'Verification link expired.',
         variant: 'error',
@@ -663,11 +663,45 @@ describe('useAuthForm', () => {
         await result.current.handleSubmit(event);
       });
 
-      // success notice replaced the error one, proving the dismiss ran at the TOP of handleSubmit
+      // the magic-link write reaches this whether or not the clear ran
       expect(result.current.notice).toEqual({
         message: 'Magic link sent!',
         variant: 'success',
       });
+    });
+
+    // a failing submit writes no notice, so an empty one is the clear
+    it('clears a queued error-variant notice when the submit itself fails', async () => {
+      vi.mocked(pendingNoticeModule.consumePendingNotice).mockReturnValue({
+        message: 'Verification link expired.',
+        variant: 'error',
+      });
+      const loginMock = vi
+        .fn()
+        .mockRejectedValue(new Error('Invalid credentials'));
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+
+      const { result } = renderAuthFormHook('/login');
+
+      await waitFor(() => {
+        expect(result.current.notice).toEqual({
+          message: 'Verification link expired.',
+          variant: 'error',
+        });
+      });
+
+      act(() => {
+        result.current.setEmail(USER_EMAIL);
+        result.current.setPassword(USER_PASSWORD);
+      });
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        await result.current.handleSubmit(event);
+      });
+
+      expect(result.current.notice).toBeNull();
+      expect(result.current.error).toBe('Invalid credentials');
     });
 
     it('preserves a queued success-variant notice across handleSubmit (no collision with the form Alert channel)', async () => {

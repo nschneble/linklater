@@ -36,10 +36,17 @@ import {
 
 /**
  * What the renewal leg established, independent of who asked for it:
- * `renewed` when a usable access token is now stored, `refused` when the
- * server rejected the refresh token outright, `unresolved` when nothing
- * was established at all (a transient status, a network failure, an
- * abort). Only `refused` can end a session, and only for a caller
+ * `renewed` when a successor to the spent token exists, so the store is
+ * worth re-reading and the request worth sending; `refused` when the
+ * server rejected the refresh token outright, or there was none to send;
+ * `unresolved` when nothing was established at all (a transient status, a
+ * network failure, an abort).
+ *
+ * `renewed` is not a promise that the token now stored is a fresh one.
+ * The supersession branch stores nothing, because the sibling that
+ * rotated is the one writing, and its access token can still be in
+ * flight; the retry then 401s and renews normally, as the header above
+ * describes. Only `refused` can end a session, and only for a caller
  * holding an access token the server has already turned away.
  */
 type RefreshOutcome = 'renewed' | 'refused' | 'unresolved';
