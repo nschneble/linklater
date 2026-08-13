@@ -20,9 +20,17 @@
  * error, which is the right outcome: one leg was spent finding out, the
  * session was never cleared, and the next request renews normally.
  *
- * The token being spent is read once, up front, because a re-read taken
- * later could land after that rotation and leave the guard comparing
- * against a value this request never sent.
+ * The spent token is read twice, once inside the leg and once by the
+ * caller, and the two readings answer to different guards. The leg reads
+ * what it is about to send, so its own guard compares the store against
+ * the value that request actually carried. The caller reads for a
+ * different purpose: whether the pair is worth destroying. A caller that
+ * starts the leg reaches both reads in one synchronous run and cannot
+ * see them differ. One that joins a leg already in flight reads later,
+ * so a rotation the leg's reading missed is one this reading can still
+ * catch, which is the whole of what the second guard asks. Folding
+ * either read into the other would put one question's answer where the
+ * other one is asked.
  *
  * Whether a refusal ends the session is the caller's question, not this
  * module's, so the shared refresh reports an outcome and clears nothing.

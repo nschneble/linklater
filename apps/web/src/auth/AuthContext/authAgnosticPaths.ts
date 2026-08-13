@@ -15,8 +15,11 @@
  * navigation, the deferred announcement included. That second cost is
  * not nothing, and `ExtensionAuthorizePage` is where it shows: it names
  * the account it is about to grant on, and it would name the one that
- * left. The grant is bearer-guarded, so it still lands on the account
- * the token belongs to rather than the one on screen.
+ * left. Which account the grant then lands on is an open question, not
+ * a guarantee: the hand-off is a top-level navigation carrying no
+ * bearer header, so the endpoint's guard refuses it before any account
+ * is chosen. The controller spec stubs that guard, which is why a green
+ * suite says nothing here. Delivering the token is its own change.
  * Exported so `authAgnosticPaths.test.ts` can fail when the two drift.
  */
 export const AUTH_AGNOSTIC_PATHS = new Set([

@@ -11,8 +11,9 @@
  * stop rendering the old user's data, and install the new user's page. On
  * a login screen there is nothing confidential to stop rendering, so the
  * only thing left is the data loss, and the typed email is destroyed and
- * demanded again (WCAG 3.3.7 Redundant Entry). The password is worse: it
- * was never submitted, so no password manager holds a copy.
+ * demanded again. The password is worse: it was never submitted, so no
+ * password manager holds a copy. Nothing at WCAG A or AA compels the
+ * offer over the swap; that loss is reason enough on its own.
  *
  * The notice is inert until the link is followed. WCAG 3.2.2 On Input
  * does not apply to it. Keying the swap to the next keystroke or to

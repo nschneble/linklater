@@ -15,7 +15,10 @@ import { IsOptional, IsString, Matches, MinLength } from 'class-validator';
  * but the shape is still held to what the server would have generated, so
  * nothing weaker than 32 random bytes reaches storage. The pattern carries
  * that alone: `matches` type-guards before it tests, so anything that is
- * not a string fails it without a second decorator saying so.
+ * not a string fails it without a second decorator saying so. That is a
+ * property of the decorator rather than of the expression it holds, and
+ * the range on class-validator is a caret one, so the spec pins it with
+ * values a bare test of the expression would accept.
  */
 export class RefreshTokenDto {
   @ApiProperty({

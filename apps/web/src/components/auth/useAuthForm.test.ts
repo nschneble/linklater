@@ -742,7 +742,7 @@ describe('useAuthForm', () => {
     });
   });
 
-  // WCAG 3.3.7 Redundant Entry: the address survives the offer's bounce
+  // the address survives the offer's bounce rather than being retyped
   describe('carried email', () => {
     const TYPED_EMAIL = 'typed@example.com';
 

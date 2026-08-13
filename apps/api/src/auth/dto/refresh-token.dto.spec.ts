@@ -49,4 +49,19 @@ describe('RefreshTokenDto', () => {
       (await errorsFor(dto as RefreshTokenDto, 'nextRefreshToken')).length,
     ).toBeGreaterThan(0);
   });
+
+  // both coerce past a bare regex test, so only the typeof guard rejects
+  it.each([
+    ['an array wrapping one', ['a'.repeat(64)]],
+    ['an object stringifying to one', { toString: () => 'a'.repeat(64) }],
+  ])(
+    'rejects a nominated successor given as %s',
+    async (_label, nextRefreshToken) => {
+      const dto = Object.assign(makeDto(), { nextRefreshToken });
+
+      expect(
+        (await errorsFor(dto as RefreshTokenDto, 'nextRefreshToken')).length,
+      ).toBeGreaterThan(0);
+    },
+  );
 });

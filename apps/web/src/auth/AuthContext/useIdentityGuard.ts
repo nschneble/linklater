@@ -15,17 +15,20 @@
  * indefinitely.
  *
  * A tab rendering nobody is deliberately left alone here. Re-hydrating it
- * would replace a login screen mid-keystroke and destroy the typed email
- * (WCAG 3.3.7); that case belongs to `AlreadySignedInNotice`, which offers
- * the move instead of taking it.
+ * would replace a login screen mid-keystroke and destroy the typed email;
+ * that case belongs to `AlreadySignedInNotice`, which offers the move
+ * instead of taking it.
  *
  * Rendering nobody is not the only place that reasoning holds, though.
  * `routes/Common.tsx` renders regardless of auth state, so a signed-in
  * user sits on `/reset-password` with a new password half typed and a
  * single-use token in the query string. Replacing that document costs
- * both, and the reset link cannot be reissued without another email
- * (WCAG 3.3.7, 2.4.3, 3.2.5). Those routes get the same offer-don't-take
- * treatment, on both the visibility arm and the cold boot.
+ * both, and the reset link cannot be reissued without another email.
+ * Nothing at WCAG A or AA compels holding off: 3.2.5 Change on Request
+ * is AAA, and 3.3.7 Redundant Entry governs a second ask, not a field
+ * cleared before it was ever submitted. That cost is reason enough on
+ * its own. Those routes get the same offer-don't-take treatment, on
+ * both the visibility arm and the cold boot.
  *
  * Recording the new subject is part of announcing it, never a separate
  * step: every path here ends in a document that re-runs this comparison,

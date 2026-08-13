@@ -4,10 +4,11 @@
  *
  * `AlreadySignedInNotice` offers a full document load into a session it
  * cannot verify is still good. When that session is gone the auth gate
- * lands the user back on the login form, and without this the email is
- * demanded a second time (WCAG 3.3.7 Redundant Entry). The password is
- * deliberately not carried: it was never submitted, and a value nobody
- * asked to store should not outlive the document that holds it.
+ * lands the user back on the login form, and without this the address is
+ * demanded again because an offer they accepted did not land. The
+ * password is deliberately not carried: it was never submitted, and a
+ * value nobody asked to store should not outlive the document that holds
+ * it.
  *
  * Two halves, because the form knows the value and the notice knows the
  * navigation. The form keeps this module told in memory; the notice

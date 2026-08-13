@@ -24,10 +24,10 @@ export type MfaChallenge = 'totp' | 'recovery';
 
 /**
  * The email `takeCarriedEmail` hands back was typed into a form this
- * user was moved off of, so putting it back is WCAG 3.3.7 Redundant
- * Entry. It is not evidence of how the move ended, and nothing is
- * announced from there: the auth gate saw whether the offer landed, and
- * queues the explanation itself (`offerBounce.ts`).
+ * user was moved off of, and putting it back spares them retyping what
+ * they had already typed. It is not evidence of how the move
+ * ended, and nothing is announced from there: the auth gate saw whether
+ * the offer landed, and queues the explanation itself (`offerBounce.ts`).
  *
  * What an arrival at one of these screens clears, takes and focuses
  * lives in `useAuthFormArrival.ts`, which holds its two effects together
