@@ -25,124 +25,106 @@ No pending migrations to apply.
 [0] 
 [0] [36m> [39m[46m[1m SWC [22m[49m [36mRunning...[39m
 [1] 
-[1]   [32m[1mVITE[22m v8.2.0[39m  [2mready in [0m[1m734[22m[2m[0m ms[22m
+[1]   [32m[1mVITE[22m v8.2.0[39m  [2mready in [0m[1m722[22m[2m[0m ms[22m
 [1] 
 [1]   [32m➜[39m  [1mLocal[22m:   [36mhttps://localhost:[1m5173[22m/[39m
 [1]   [32m➜[39m  [1mLocal[22m:   [36mhttps://runnervmvrwv9.local:[1m5173[22m/[39m
 [1] [2m  [32m➜[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
-[0] Successfully compiled: 174 files with swc (370.62ms)
+[0] Successfully compiled: 174 files with swc (348.16ms)
 [0] Watching for file changes.
-[0] ◇ injected env (0) from .env // tip: ⌁ auth for agents [www.vestauth.com]
 [0] ◇ injected env (0) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPrismaModule dependencies initialized[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mQueueModule dependencies initialized[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMetadataModule dependencies initialized[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mEmailModule dependencies initialized[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTokensModule dependencies initialized[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mUsersModule dependencies initialized[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mLinksModule dependencies initialized[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSuggestionsModule dependencies initialized[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAuthController {/auth}:[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/register, POST} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/login, POST} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/me, GET} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/verify-email, POST} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/forgot-password, POST} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/reset-password, POST} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/resend-verification, POST} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/request-email-change, POST} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/resend-email-change, POST} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/verify-email-change, POST} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/set-password, POST} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/refresh, POST} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/welcome, POST} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/sessions, DELETE} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mExtensionAuthController {/auth}:[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/extension/authorize, GET} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/extension/token, POST} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMagicLinkController {/auth}:[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/request-magic-link, POST} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/register-magic-link, POST} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/verify-magic-link, POST} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mOAuthLinkController {/auth}:[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/google/link, GET} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/google/link/callback, GET} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/providers/:provider, DELETE} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mOAuthSignInController {/auth}:[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/google, GET} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/google/callback, GET} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/apple, GET} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/apple/callback, POST} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMultiFactorController {/auth}:[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/verify-otp, POST} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/mfa/totp/setup, POST} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/mfa/totp/verify, POST} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/mfa/totp/setup, DELETE} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/mfa, DELETE} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/mfa/recovery-codes/regenerate, POST} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mEmailPreviewController {/email/preview}:[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/email/preview, GET} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/email/preview/:template, GET} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mTokensController {/tokens}:[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/tokens, POST} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/tokens, GET} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/tokens/bookmarklet, GET} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/tokens/bookmarklet/regenerate, POST} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/tokens/api-docs, GET} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/tokens/:id, DELETE} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mUsersController {/users}:[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me, GET} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me, PATCH} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me, DELETE} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAccountDeletionController {/auth/account-deletion}:[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/account-deletion/confirm, POST} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/account-deletion/pending, DELETE} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health}:[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mLinksController {/links}:[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/links, POST} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/links, GET} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/links/random, GET} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/links/stumble, POST} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/links/:id, GET} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/links/:id/read, POST} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/links/:id/unread, POST} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/links/read, DELETE} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/links/:id, DELETE} route[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSuggestionsController {/suggestions}:[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/suggestions, GET} route[39m
-[0] [33m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [33m   WARN[39m [38;5;3m[ExtensionAuthService] [39m[33mEXTENSION_REDIRECT_URIS is not set – the browser extension authorization flow will reject all redirect URIs. Set this to a comma-separated list of allowed extension callback URIs.[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[SuggestionsService] [39m[32mTESTING_UI=1: skipping RSS scheduling and bootstrap refresh.[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.45 [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.08.59 [32m    LOG[39m [38;5;3m[EmailService] [39m[32mTESTING_UI=1: noop email send subject=Reset your Linklater password[39m
-[0] [33m[37m[Nest] 5468 [39m[39m2026-08-13 03.09.41 [33m   WARN[39m [38;5;3m[MetadataFetcherService] [39m[33mMetadata fetch blocked or failed for https://example.test/articles/testing-ui-determinism: getaddrinfo ENOTFOUND example.test[39m
-[0] [33m[37m[Nest] 5468 [39m[39m2026-08-13 03.09.41 [33m   WARN[39m [38;5;3m[MetadataService] [39m[33mMetadata fetch failed for https://example.test/articles/testing-ui-determinism: PrismaClientKnownRequestError: 
-[0] Invalid `this.prisma.meta.upsert()` invocation in
-[0] /home/runner/work/linklater/linklater/apps/api/src/metadata/metadata.service.ts:73:30
-[0] 
-[0]   70 try {
-[0]   71   const metadata = await this.metadataFetcher.fetchMetadata(url);
-[0]   72 
-[0] → 73   await this.prisma.meta.upsert(
-[0] Foreign key constraint violated on the constraint: `Meta_linkId_fkey`[39m
-[0] [33m[37m[Nest] 5468 [39m[39m2026-08-13 03.09.41 [33m   WARN[39m [38;5;3m[MetadataService] [39m[33mFailed to record metadata fetch failure for https://example.test/articles/testing-ui-determinism: PrismaClientKnownRequestError: 
-[0] Invalid `.upsert()` invocation in
-[0] /home/runner/work/linklater/linklater/apps/api/src/metadata/metadata.service.ts:109:10
-[0] 
-[0]   106 this.logger.warn(`Metadata fetch failed for ${url}: ${String(error)}`);
-[0]   107 // stamp the attempt even on failure or the client polls forever
-[0]   108 await this.prisma.meta
-[0] → 109   .upsert(
-[0] Foreign key constraint violated on the constraint: `Meta_linkId_fkey`[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.10.09 [32m    LOG[39m [38;5;3m[EmailService] [39m[32mTESTING_UI=1: noop email send subject=Verify your Linklater email[39m
-[0] [32m[37m[Nest] 5468 [39m[39m2026-08-13 03.10.11 [32m    LOG[39m [38;5;3m[EmailService] [39m[32mTESTING_UI=1: noop email send subject=Reset your Linklater password[39m
-[0] [33m[37m[Nest] 5468 [39m[39m2026-08-13 03.10.57 [33m   WARN[39m [38;5;3m[MetadataFetcherService] [39m[33mMetadata fetch blocked or failed for https://example.test/articles/testing-ui-determinism: getaddrinfo ENOTFOUND example.test[39m
-[1] (node:5400) Warning: Setting the NODE_TLS_REJECT_UNAUTHORIZED environment variable to '0' makes TLS connections and HTTPS requests insecure by disabling certificate verification.
+[0] ◇ injected env (0) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPrismaModule dependencies initialized[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mQueueModule dependencies initialized[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMetadataModule dependencies initialized[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mEmailModule dependencies initialized[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTokensModule dependencies initialized[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mUsersModule dependencies initialized[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mLinksModule dependencies initialized[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSuggestionsModule dependencies initialized[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAuthController {/auth}:[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/register, POST} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/login, POST} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/me, GET} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/verify-email, POST} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/forgot-password, POST} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/reset-password, POST} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/resend-verification, POST} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/request-email-change, POST} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/resend-email-change, POST} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/verify-email-change, POST} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/set-password, POST} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/refresh, POST} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/welcome, POST} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/sessions, DELETE} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mExtensionAuthController {/auth}:[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/extension/authorize, GET} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/extension/token, POST} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMagicLinkController {/auth}:[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/request-magic-link, POST} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/register-magic-link, POST} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/verify-magic-link, POST} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mOAuthLinkController {/auth}:[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/google/link, GET} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/google/link/callback, GET} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/providers/:provider, DELETE} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mOAuthSignInController {/auth}:[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/google, GET} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/google/callback, GET} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/apple, GET} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/apple/callback, POST} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMultiFactorController {/auth}:[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/verify-otp, POST} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/mfa/totp/setup, POST} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/mfa/totp/verify, POST} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/mfa/totp/setup, DELETE} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/mfa, DELETE} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/mfa/recovery-codes/regenerate, POST} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mEmailPreviewController {/email/preview}:[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/email/preview, GET} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/email/preview/:template, GET} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mTokensController {/tokens}:[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/tokens, POST} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/tokens, GET} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/tokens/bookmarklet, GET} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/tokens/bookmarklet/regenerate, POST} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/tokens/api-docs, GET} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/tokens/:id, DELETE} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mUsersController {/users}:[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me, GET} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me, PATCH} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me, DELETE} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAccountDeletionController {/auth/account-deletion}:[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/account-deletion/confirm, POST} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/account-deletion/pending, DELETE} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health}:[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mLinksController {/links}:[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/links, POST} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/links, GET} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/links/random, GET} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/links/stumble, POST} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/links/:id, GET} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/links/:id/read, POST} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/links/:id/unread, POST} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/links/read, DELETE} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/links/:id, DELETE} route[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSuggestionsController {/suggestions}:[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/suggestions, GET} route[39m
+[0] [33m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [33m   WARN[39m [38;5;3m[ExtensionAuthService] [39m[33mEXTENSION_REDIRECT_URIS is not set – the browser extension authorization flow will reject all redirect URIs. Set this to a comma-separated list of allowed extension callback URIs.[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[SuggestionsService] [39m[32mTESTING_UI=1: skipping RSS scheduling and bootstrap refresh.[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.36 [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.18.50 [32m    LOG[39m [38;5;3m[EmailService] [39m[32mTESTING_UI=1: noop email send subject=Reset your Linklater password[39m
+[0] [33m[37m[Nest] 5537 [39m[39m2026-08-13 04.19.30 [33m   WARN[39m [38;5;3m[MetadataFetcherService] [39m[33mMetadata fetch blocked or failed for https://example.test/articles/testing-ui-determinism: getaddrinfo ENOTFOUND example.test[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.19.59 [32m    LOG[39m [38;5;3m[EmailService] [39m[32mTESTING_UI=1: noop email send subject=Verify your Linklater email[39m
+[0] [32m[37m[Nest] 5537 [39m[39m2026-08-13 04.20.00 [32m    LOG[39m [38;5;3m[EmailService] [39m[32mTESTING_UI=1: noop email send subject=Reset your Linklater password[39m
+[0] [33m[37m[Nest] 5537 [39m[39m2026-08-13 04.20.51 [33m   WARN[39m [38;5;3m[MetadataFetcherService] [39m[33mMetadata fetch blocked or failed for https://example.test/articles/testing-ui-determinism: getaddrinfo ENOTFOUND example.test[39m
+[1] (node:5470) Warning: Setting the NODE_TLS_REJECT_UNAUTHORIZED environment variable to '0' makes TLS connections and HTTPS requests insecure by disabling certificate verification.
 [1] (Use `node --trace-warnings ...` to show where the warning was created)
