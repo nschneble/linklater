@@ -46,6 +46,17 @@ type FormNotice = NoticeEntry;
  * no home for the clear either: back and forward between the auth routes
  * change the mode without passing through it.
  *
+ * That same conflation reaches the focus bail. Its first arm is a live
+ * read of the one-shot store, which the first pass of the consume effect
+ * has already emptied by the time the second pass asks, so the bail
+ * answers no and moves focus into an input over the announcement. The
+ * answer the mount arrived at is kept, and only a real mode change asks
+ * again; keeping it for good would strand focus for every mode switch
+ * left in the session. It is the whole three-arm answer that is kept,
+ * because latching the first arm alone leaves the other two deciding a
+ * question already settled. The OAuth arm needs none of this, being
+ * latched in render where it is raised (`useOAuthArrivalError.ts`).
+ *
  * The email `takeCarriedEmail` hands back was typed into a form this
  * user was moved off of, so putting it back is WCAG 3.3.7 Redundant
  * Entry. It is not evidence of how the move ended, and nothing is
@@ -61,6 +72,7 @@ export function useAuthForm() {
   const errorReference = useRef<HTMLParagraphElement>(null);
   const mfaInputReference = useRef<HTMLInputElement>(null);
   const passwordReference = useRef<HTMLInputElement>(null);
+  const mountInboundAnnouncement = useRef<boolean | null>(null);
   const previousMode = useRef<Mode | null>(null);
 
   const [email, setEmail] = useState('');
@@ -125,8 +137,14 @@ export function useAuthForm() {
     // a standing one would otherwise outlive the screen it describes
     if (modeChanged) setNotice(null);
 
-    const hasInboundAnnouncement =
+    const inboundNow =
       hasPendingNotice() || arrivedWithOAuthError || hasStandingSessionOffer();
+    if (mountInboundAnnouncement.current === null) {
+      mountInboundAnnouncement.current = inboundNow;
+    }
+    const hasInboundAnnouncement = modeChanged
+      ? inboundNow
+      : mountInboundAnnouncement.current;
     // auto-focus would flip a screen reader into forms mode, muting it
     if (hasInboundAnnouncement) return;
 

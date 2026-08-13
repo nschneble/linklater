@@ -102,13 +102,16 @@ describe('AuthForm – a notice queued before the form mounted', () => {
   });
 
   // reds on a consume-before-mode reordering, per the overview above
-  it('holds focus off the inputs while a notice is being announced', async () => {
-    setPendingNotice('session-unavailable');
+  it.each([false, true])(
+    'holds focus off the inputs while a notice is being announced (strict mode: %s)',
+    async (reactStrictMode) => {
+      setPendingNotice('session-unavailable');
 
-    await arrive(false);
+      await arrive(reactStrictMode);
 
-    expect(document.activeElement).toBe(document.body);
-  });
+      expect(document.activeElement).toBe(document.body);
+    },
+  );
 
   it('leaves the region empty when nothing was queued', async () => {
     await arrive(true);
