@@ -12,6 +12,10 @@ const REFRESH_TOKEN_KEY = 'linklater_refresh_token';
  * that throw while reads keep serving the older value (quota exhaustion,
  * some Safari private-browsing and ITP states).
  *
+ * `safeStorage.ts` holds that layer and has no suite of its own: nothing it
+ * exports is reachable outside these accessors, so what is worth pinning is
+ * the answer a token read gives, which is what every case below asks for.
+ *
  * The module is re-imported per test so its top-level read and its cache
  * start clean; the listener each import registers is torn down in
  * `afterEach`.
