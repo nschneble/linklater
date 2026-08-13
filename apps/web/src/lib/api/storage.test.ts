@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const TOKEN_KEY = 'linklater_token';
 const REFRESH_TOKEN_KEY = 'linklater_refresh_token';
+const NOMINATION_KEY = 'linklater_nominated_refresh_token';
 
 /**
  * Read precedence between the persisted pair and the in-memory one, plus
@@ -145,6 +146,42 @@ describe('storage.ts token precedence', () => {
     // otherwise a sign-in leaves a live token for the account before it
     expect(nominated).toMatch(/^[0-9a-f]{64}$/);
     expect(module.getNominatedRefreshToken()).toBeNull();
+  });
+
+  it('carries a nomination across the load that follows a lost answer', async () => {
+    const bootNomination = 'a'.repeat(64);
+    window.localStorage.setItem(NOMINATION_KEY, bootNomination);
+    const module = await loadStorageModule();
+
+    // a nomination only this tab's memory holds dies with the page
+    breakStorageReads();
+    expect(module.getNominatedRefreshToken()).toBe(bootNomination);
+    expect(module.nominateRefreshToken()).toBe(bootNomination);
+
+    vi.restoreAllMocks();
+    const laterNomination = 'b'.repeat(64);
+    window.localStorage.setItem(NOMINATION_KEY, laterNomination);
+
+    expect(module.getNominatedRefreshToken()).toBe(laterNomination);
+  });
+
+  it('drops the nomination only once the refresh token has landed', async () => {
+    const module = await loadStorageModule();
+    module.nominateRefreshToken();
+    const order: string[] = [];
+    vi.spyOn(window.localStorage, 'setItem').mockImplementation((key) => {
+      order.push(`write ${key}`);
+    });
+    vi.spyOn(window.localStorage, 'removeItem').mockImplementation((key) => {
+      order.push(`remove ${key}`);
+    });
+
+    module.setStoredToken('access-token', 'refresh-token');
+
+    // the reverse leaves a sibling holding a token this tab has spent
+    expect(order.indexOf(`remove ${NOMINATION_KEY}`)).toBeGreaterThan(
+      order.indexOf(`write ${REFRESH_TOKEN_KEY}`),
+    );
   });
 
   it('drops the nomination when the pair is cleared', async () => {

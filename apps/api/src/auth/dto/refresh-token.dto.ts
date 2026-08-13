@@ -13,9 +13,9 @@ import { IsOptional, IsString, Matches, MinLength } from 'class-validator';
  * it on the next request instead of being signed out holding a token no
  * row matches. Only that client's own session is at stake in the value,
  * but the shape is still held to what the server would have generated, so
- * nothing weaker than 32 random bytes reaches storage. `IsString` is not
- * redundant beside the pattern: `RegExp.test` coerces, so an object whose
- * `toString` reads as hex would otherwise pass.
+ * nothing weaker than 32 random bytes reaches storage. The pattern carries
+ * that alone: `matches` type-guards before it tests, so anything that is
+ * not a string fails it without a second decorator saying so.
  */
 export class RefreshTokenDto {
   @ApiProperty({
@@ -37,7 +37,6 @@ export class RefreshTokenDto {
     example: 'a3f8c...64-character-hex-string...d91e',
   })
   @IsOptional()
-  @IsString()
   @Matches(/^[0-9a-f]{64}$/, {
     message: 'nextRefreshToken must be 64 lowercase hexadecimal characters',
   })

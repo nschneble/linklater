@@ -88,9 +88,10 @@ function clearNomination(): void {
  * trying. Asked through the same precedence rule the token was read
  * through, since a successor can arrive by either route: persisted by the
  * other tab, or carried into memory by the `storage` event. Nothing at all
- * is not a successor, so `null` reads as no.
+ * is not a successor, so a `null` current reads as no; a caller that spent
+ * nothing counts any stored token as one, since a sibling put it there.
  */
-export function isRefreshTokenSuperseded(spentToken: string): boolean {
+export function isRefreshTokenSuperseded(spentToken: string | null): boolean {
   const current = getStoredRefreshToken();
   return current !== null && current !== spentToken;
 }
@@ -107,16 +108,18 @@ export function isRefreshTokenSuperseded(spentToken: string): boolean {
  * whether it was spent on this rotation or belongs to a session this pair
  * replaces. Dropping it on every arrival rather than on a renewal alone is
  * what keeps a sign-in from leaving a live token behind for the account
- * that was here before.
+ * that was here before. It is dropped after the token it is moot against
+ * lands, for the same reason the pair is written in the order it is: a
+ * sibling reading in between would otherwise be left with neither.
  */
 export function setStoredToken(
   accessToken: string,
   refreshToken?: string,
 ): void {
   if (refreshToken !== undefined) {
-    clearNomination();
     cachedRefreshToken = refreshToken;
     safeWrite(REFRESH_TOKEN_KEY, refreshToken);
+    clearNomination();
   }
 
   cachedToken = accessToken;

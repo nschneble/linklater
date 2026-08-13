@@ -207,11 +207,28 @@ function shareReplay(): Promise<RefreshOutcome> {
  * turned away, but only once the nominated successor has been offered
  * too: a rotation whose answer was lost leaves this client holding a spent
  * token and a live one, and refusing the spent one says nothing about the
- * other. Two legs at most, and the verdict of the second one stands.
+ * other. Two legs at most.
+ *
+ * The store having moved off the token this caller spent outranks both
+ * verdicts, which is why the clear is guarded here rather than inside
+ * either leg. A nomination lives in `localStorage`, so tabs share one while
+ * the deduping above is per tab: two of them can spend it, and the server
+ * rotates it for whichever arrives first. The loser is then refused on a
+ * successor that is live and already stored, and clearing would destroy the
+ * pair the winner just recovered.
+ *
+ * The question is asked of the spent token and not of the nomination. A
+ * session that really has ended still holds the token it spent, which
+ * differs from the nomination, so a guard asked about the nomination would
+ * answer "superseded" every time and never clear anything.
  */
 export async function attemptTokenRefresh(): Promise<boolean> {
+  const spentRefreshToken = getStoredRefreshToken();
   let outcome = await shareRefresh();
   if (outcome === 'refused') outcome = await shareReplay();
+  if (outcome === 'refused' && isRefreshTokenSuperseded(spentRefreshToken)) {
+    outcome = 'renewed';
+  }
   if (outcome === 'refused') clearStoredToken();
   return outcome === 'renewed';
 }
