@@ -463,8 +463,20 @@ describe('AuthService', () => {
 
       expect(refreshTokenServiceMock.refresh).toHaveBeenCalledWith(
         'old-raw-token',
+        undefined,
       );
       expect(result).toBe(tokenPair);
+    });
+
+    it('carries the successor the caller nominated', async () => {
+      const nominated = '0123456789abcdef'.repeat(4);
+
+      await service.refresh('old-raw-token', nominated);
+
+      expect(refreshTokenServiceMock.refresh).toHaveBeenCalledWith(
+        'old-raw-token',
+        nominated,
+      );
     });
   });
 

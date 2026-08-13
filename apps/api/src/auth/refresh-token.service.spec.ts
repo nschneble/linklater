@@ -1,5 +1,6 @@
 import { jest } from '@jest/globals';
 
+import { createHash } from 'node:crypto';
 import { JwtService } from '@nestjs/jwt';
 import { Logger, UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -40,6 +41,7 @@ describe('RefreshTokenService', () => {
   const prismaServiceMock = {
     refreshToken: {
       create: jest.fn().mockResolvedValue({}),
+      createMany: jest.fn().mockResolvedValue({ count: 1 }),
       delete: jest.fn().mockResolvedValue({}),
       deleteMany: jest.fn().mockResolvedValue({}),
       findUnique: jest.fn(),
@@ -158,6 +160,131 @@ describe('RefreshTokenService', () => {
       );
       expect(result).toHaveProperty('accessToken', SIGNED_TOKEN);
       expect(result).toHaveProperty('refreshToken');
+    });
+
+    /**
+     * A client that names its own successor can recover a rotation whose
+     * answer it never received, so the raw value it will hold has to be one
+     * it chose. What has to hold here is that nominating changes nothing
+     * else: a taken hash still rotates, and a refusal still reads the same
+     * to whoever asked.
+     */
+    describe('a nominated successor', () => {
+      const NOMINATED = '0123456789abcdef'.repeat(4);
+
+      const hashOf = (value: string) =>
+        createHash('sha256').update(value).digest('hex');
+
+      const arrangeRotatableToken = () => {
+        (
+          prismaServiceMock.refreshToken.findUnique as jest.Mock
+        ).mockResolvedValue({
+          id: 'rt-1',
+          userId: USER_ID,
+          expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+          user: { id: USER_ID, email: USER_EMAIL, tokenVersion: 0 },
+        });
+        (
+          prismaServiceMock.refreshToken.deleteMany as jest.Mock
+        ).mockResolvedValueOnce({ count: 1 });
+      };
+
+      it('rotates into the token the client nominated', async () => {
+        arrangeRotatableToken();
+
+        const result = await service.refresh(RAW_REFRESH_TOKEN, NOMINATED);
+
+        expect(prismaServiceMock.refreshToken.createMany).toHaveBeenCalledWith({
+          data: [
+            expect.objectContaining({
+              tokenHash: hashOf(NOMINATED),
+              userId: USER_ID,
+            }),
+          ],
+          skipDuplicates: true,
+        });
+        expect(result.refreshToken).toBe(NOMINATED);
+        expect(prismaServiceMock.refreshToken.create).not.toHaveBeenCalled();
+      });
+
+      it('falls back to a generated token when the nominated hash is taken', async () => {
+        arrangeRotatableToken();
+        (
+          prismaServiceMock.refreshToken.createMany as jest.Mock
+        ).mockResolvedValueOnce({ count: 0 });
+
+        const result = await service.refresh(RAW_REFRESH_TOKEN, NOMINATED);
+
+        expect(result.refreshToken).not.toBe(NOMINATED);
+        expect(result.refreshToken).toMatch(/^[0-9a-f]{64}$/);
+        expect(result).toHaveProperty('accessToken', SIGNED_TOKEN);
+        expect(prismaServiceMock.refreshToken.create).toHaveBeenCalledWith({
+          data: expect.objectContaining({
+            tokenHash: hashOf(result.refreshToken),
+            userId: USER_ID,
+          }),
+        });
+        // a collision is not a refusal, so it says nothing a prober can read
+        expect(warnedLines()).toEqual([]);
+      });
+
+      it('refuses to rotate a token into itself', async () => {
+        arrangeRotatableToken();
+
+        const result = await service.refresh(
+          RAW_REFRESH_TOKEN,
+          RAW_REFRESH_TOKEN,
+        );
+
+        // rotation is what makes a stolen token cost the thief a sign-out
+        expect(result.refreshToken).not.toBe(RAW_REFRESH_TOKEN);
+        expect(
+          prismaServiceMock.refreshToken.createMany,
+        ).not.toHaveBeenCalled();
+      });
+
+      it('leaves the generated path untouched when nothing is nominated', async () => {
+        arrangeRotatableToken();
+
+        const result = await service.refresh(RAW_REFRESH_TOKEN);
+
+        expect(
+          prismaServiceMock.refreshToken.createMany,
+        ).not.toHaveBeenCalled();
+        expect(prismaServiceMock.refreshToken.create).toHaveBeenCalledWith({
+          data: expect.objectContaining({
+            tokenHash: hashOf(result.refreshToken),
+            userId: USER_ID,
+          }),
+        });
+      });
+
+      it('answers a refusal the same way whether or not one was nominated', async () => {
+        const refusalOf = async (nominated?: string) => {
+          (
+            prismaServiceMock.refreshToken.findUnique as jest.Mock
+          ).mockResolvedValue(null);
+          try {
+            await service.refresh(RAW_REFRESH_TOKEN, nominated);
+          } catch (error) {
+            return error as UnauthorizedException;
+          }
+          throw new Error('refresh resolved where a refusal was expected');
+        };
+
+        const plain = await refusalOf();
+        const nominating = await refusalOf(NOMINATED);
+
+        expect(nominating.getStatus()).toBe(plain.getStatus());
+        expect(nominating.getResponse()).toEqual(plain.getResponse());
+        expect(rejectionReasonsLogged()).toEqual([
+          'unknown-token',
+          'unknown-token',
+        ]);
+        expect(
+          prismaServiceMock.refreshToken.createMany,
+        ).not.toHaveBeenCalled();
+      });
     });
 
     it('throws UnauthorizedException (not 500) when a concurrent refresh already deleted the row', async () => {

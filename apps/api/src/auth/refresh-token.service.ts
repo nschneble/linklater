@@ -82,7 +82,32 @@ export class RefreshTokenService {
     return { accessToken, refreshToken: rawRefreshToken };
   }
 
-  async refresh(rawRefreshToken: string) {
+  /**
+   * Rotates a presented refresh token into a fresh pair.
+   *
+   * `nominatedRefreshToken` is the successor the client asked for, and the
+   * reason it can ask is that a rotation this transaction commits may be
+   * answered on a connection that has already died. A client that chose
+   * the successor still holds it, so it recovers on its next request
+   * instead of being signed out holding a token no row matches. The server
+   * cannot supply that on its own: it keeps hashes only, deliberately, so
+   * it has no way to reproduce a raw value it has already answered with.
+   *
+   * A nominated hash that is already taken falls through to a generated
+   * token rather than failing the rotation. `skipDuplicates` is what keeps
+   * that fallback reachable: a create raising inside the transaction would
+   * take the whole rotation down with it, and a read-then-create would
+   * leave a window between the two. Neither outcome is distinguishable
+   * from outside, since both answer 200 with a rotated pair and log
+   * nothing, and naming a token in the first place means holding it.
+   *
+   * A client naming the token it is presenting is the one nomination
+   * refused outright. Honouring it would rebuild the row just deleted and
+   * leave the token good forever, which costs the only theft signal this
+   * design has: without rotation, a stolen token and the copy it was taken
+   * from go on working side by side and nobody is ever signed out.
+   */
+  async refresh(rawRefreshToken: string, nominatedRefreshToken?: string) {
     const tokenHash = sha256Hex(rawRefreshToken);
 
     // single transaction: crash-safe rotation; race loser 401s not P2025 500
@@ -106,16 +131,39 @@ export class RefreshTokenService {
         this.rejectRefresh('rotation-race');
       }
 
-      const rawNewRefreshToken = generateHexToken();
-      const newTokenHash = sha256Hex(rawNewRefreshToken);
       const newExpiresAt = expiresInMs(REFRESH_TOKEN_TTL_MS);
-      await transaction.refreshToken.create({
-        data: {
-          tokenHash: newTokenHash,
-          userId: stored.userId,
-          expiresAt: newExpiresAt,
-        },
-      });
+      let rawNewRefreshToken: string | null = null;
+
+      if (nominatedRefreshToken) {
+        const nominatedHash = sha256Hex(nominatedRefreshToken);
+        // its own row was just deleted, so naming it would rotate nowhere
+        if (nominatedHash !== tokenHash) {
+          // on conflict do nothing: a taken hash must not raise in here
+          const { count } = await transaction.refreshToken.createMany({
+            data: [
+              {
+                tokenHash: nominatedHash,
+                userId: stored.userId,
+                expiresAt: newExpiresAt,
+              },
+            ],
+            skipDuplicates: true,
+          });
+          if (count === 1) rawNewRefreshToken = nominatedRefreshToken;
+        }
+      }
+
+      if (!rawNewRefreshToken) {
+        rawNewRefreshToken = generateHexToken();
+        await transaction.refreshToken.create({
+          data: {
+            tokenHash: sha256Hex(rawNewRefreshToken),
+            userId: stored.userId,
+            expiresAt: newExpiresAt,
+          },
+        });
+      }
+
       const accessToken = this.jwtService.sign({
         subject: stored.userId,
         email: stored.user.email,

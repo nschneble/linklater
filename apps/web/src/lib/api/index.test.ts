@@ -168,6 +168,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.useRealTimers();
 });
 
 describe('token helpers', () => {
@@ -355,6 +356,7 @@ describe('apiFetch', () => {
     const [, refreshOptions] = fetchMock.mock.calls[1] as [string, RequestInit];
     expect(JSON.parse(refreshOptions.body as string)).toEqual({
       refreshToken: 'rotated-refresh',
+      nextRefreshToken: expect.stringMatching(/^[0-9a-f]{64}$/),
     });
     expect(getStoredToken()).toBe('fresh-jwt');
   });
@@ -495,6 +497,7 @@ describe('apiFetch', () => {
     const [, refreshOptions] = fetchMock.mock.calls[1] as [string, RequestInit];
     expect(JSON.parse(refreshOptions.body as string)).toEqual({
       refreshToken: 'my-refresh',
+      nextRefreshToken: expect.stringMatching(/^[0-9a-f]{64}$/),
     });
     expect(getStoredRefreshToken()).toBe('sibling-refresh');
     expect(result).toEqual({ id: 'retried' });
@@ -547,7 +550,7 @@ describe('apiFetch', () => {
         text: () =>
           Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
       })
-      .mockResolvedValueOnce({
+      .mockResolvedValue({
         ok: false,
         status: 401,
         text: () =>
@@ -557,10 +560,14 @@ describe('apiFetch', () => {
 
     const error = await apiFetch('/test').catch((caught: unknown) => caught);
 
-    // a store older than memory is no successor, so the session has ended
+    // neither an older store nor a refused nomination is a successor
     expect(getStoredRefreshToken()).toBeNull();
     expect(getStoredToken()).toBeNull();
-    expect(fetchMock.mock.calls).toHaveLength(2);
+    expect(readPaths(fetchMock)).toEqual([
+      '/test',
+      '/auth/refresh',
+      '/auth/refresh',
+    ]);
     expect((error as ApiError).status).toBe(401);
   });
 
@@ -583,7 +590,7 @@ describe('apiFetch', () => {
         text: () =>
           Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
       })
-      .mockResolvedValueOnce({
+      .mockResolvedValue({
         ok: false,
         status: 401,
         text: () =>
@@ -594,14 +601,15 @@ describe('apiFetch', () => {
     const error = await apiFetch('/test').catch((caught: unknown) => caught);
 
     // the cached copy was spent against the server, not assumed dead
-    expect(fetchMock.mock.calls).toHaveLength(2);
-    const [refreshUrl, refreshOptions] = fetchMock.mock.calls[1] as [
-      string,
-      RequestInit,
-    ];
-    expect(refreshUrl).toContain('/auth/refresh');
+    expect(readPaths(fetchMock)).toEqual([
+      '/test',
+      '/auth/refresh',
+      '/auth/refresh',
+    ]);
+    const [, refreshOptions] = fetchMock.mock.calls[1] as [string, RequestInit];
     expect(JSON.parse(refreshOptions.body as string)).toEqual({
       refreshToken: 'cached-refresh',
+      nextRefreshToken: expect.stringMatching(/^[0-9a-f]{64}$/),
     });
     // the server rejected it and no successor is stored: session over
     expect(getStoredToken()).toBeNull();
@@ -903,16 +911,100 @@ describe('apiFetch expiry pre-flight', () => {
 
     const error = await apiFetch('/test').catch((caught: unknown) => caught);
 
-    // refused renewal, refused request, then the 401 path's own refresh
+    // renewal, request, the 401 path's refresh, then the nomination
     expect(readPaths(fetchMock)).toEqual([
       '/auth/refresh',
       '/test',
+      '/auth/refresh',
       '/auth/refresh',
     ]);
     expect((error as ApiError).status).toBe(401);
     // the request was refused too, so this one is a verdict: clear
     expect(getStoredToken()).toBeNull();
     expect(getStoredRefreshToken()).toBeNull();
+  });
+
+  /**
+   * The rotation the server keeps and the client never learns of. Answered
+   * by a store that really rotates, so the second renewal is refused for
+   * the reason the real server would refuse it: the token it carries has no
+   * row any more. Nothing but the successor this client named can get it
+   * back, which is what the leg sequence below reads out.
+   */
+  it('recovers a session whose rotation was kept and whose answer was lost', async () => {
+    vi.useFakeTimers();
+    const expired = makeTokenExpiringIn(-60);
+    setStoredToken(expired, 'committed-refresh');
+
+    const server = { live: 'committed-refresh' };
+    const legs: string[] = [];
+    let nomination = '';
+    let answered = false;
+
+    const fetchMock = vi.fn(
+      (input: RequestInfo | URL, options?: RequestInit) => {
+        const url = typeof input === 'string' ? input : input.toString();
+
+        if (!url.includes('/auth/refresh')) {
+          const authorization = readAuthorization([input, options]);
+          legs.push(`request ${authorization}`);
+          if (authorization !== 'Bearer live-jwt') {
+            return Promise.resolve(
+              jsonResponse({ message: 'Unauthorized' }, 401),
+            );
+          }
+          return Promise.resolve(jsonResponse({ id: 'recovered' }));
+        }
+
+        const body = JSON.parse(String(options?.body)) as {
+          refreshToken: string;
+          nextRefreshToken?: string;
+        };
+        legs.push(
+          `refresh ${body.refreshToken} + ${body.nextRefreshToken ?? 'none'}`,
+        );
+        if (body.refreshToken !== server.live) {
+          return Promise.resolve(
+            jsonResponse({ message: 'Invalid or expired refresh token' }, 401),
+          );
+        }
+
+        server.live = body.nextRefreshToken ?? 'server-minted';
+        if (answered) {
+          return Promise.resolve(
+            jsonResponse({
+              accessToken: 'live-jwt',
+              refreshToken: server.live,
+            }),
+          );
+        }
+
+        answered = true;
+        nomination = server.live;
+        // committed, then the socket dies with the answer still on it
+        return new Promise((_resolve, reject) => {
+          options?.signal?.addEventListener('abort', () =>
+            reject(new DOMException('The operation was aborted', 'AbortError')),
+          );
+        });
+      },
+    );
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const pending = apiFetch<{ id: string }>('/test');
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    await expect(pending).resolves.toEqual({ id: 'recovered' });
+    expect(nomination).toMatch(/^[0-9a-f]{64}$/);
+    expect(legs).toEqual([
+      `refresh committed-refresh + ${nomination}`,
+      `request Bearer ${expired}`,
+      `refresh committed-refresh + ${nomination}`,
+      `refresh ${nomination} + none`,
+      'request Bearer live-jwt',
+    ]);
+    expect(getStoredToken()).toBe('live-jwt');
+    expect(getStoredRefreshToken()).toBe('server-minted');
   });
 
   it('stops after the one retry when the renewed token is rejected too', async () => {

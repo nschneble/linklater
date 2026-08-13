@@ -1,10 +1,18 @@
 /**
- * Renewal of an expired access token, and the single question a rejected
- * renewal has to answer: is this session over, or did another tab get to
- * the rotation first? Only the first warrants clearing the tokens, and
- * treating the second as the first is a logout the user never asked for.
+ * Renewal of an expired access token, and the question a rejected renewal
+ * has to answer: is this session over, or was the rotation already taken?
+ * Only the first warrants clearing the tokens, and treating the second as
+ * the first is a logout the user never asked for.
  *
- * The second case needs no second network leg here: reporting success is
+ * Two things take a rotation out from under a renewal. Another tab can win
+ * it, and the server can commit one whose answer never arrives. The second
+ * used to be unrecoverable: the successor existed only in a response that
+ * was lost, so the next renewal presented a token with no row and read the
+ * refusal as a dead session. It is recoverable now because the client names
+ * the successor itself and stores it before the request goes out, which is
+ * what `replayNominatedToken` spends.
+ *
+ * The sibling case needs no second network leg here: reporting success is
  * enough for `apiFetch` to retry with whatever access token the store now
  * serves. That token may still be the expired one, because the sibling's
  * two writes are not atomic (see `setStoredToken`) and its access token
@@ -29,8 +37,10 @@
 import {
   API_BASE_URL,
   clearStoredToken,
+  getNominatedRefreshToken,
   getStoredRefreshToken,
   isRefreshTokenSuperseded,
+  nominateRefreshToken,
   setStoredToken,
 } from './storage';
 
@@ -52,6 +62,7 @@ import {
 type RefreshOutcome = 'renewed' | 'refused' | 'unresolved';
 
 let inFlightRefresh: Promise<RefreshOutcome> | null = null;
+let inFlightReplay: Promise<RefreshOutcome> | null = null;
 
 /**
  * Deadline for the token-refresh fetch. apiFetch imposes no timeout of its
@@ -74,13 +85,12 @@ let inFlightRefresh: Promise<RefreshOutcome> | null = null;
  */
 const REFRESH_DEADLINE_MS = 10_000;
 
-async function performTokenRefresh(): Promise<RefreshOutcome> {
-  const spentRefreshToken = getStoredRefreshToken();
-
-  // nothing to renew with, which is a refusal reached without a leg
-  if (!spentRefreshToken) return 'refused';
-
-  // not wired to a caller's signal: one abort must not kill the refresh
+/**
+ * One leg to the refresh endpoint, answering `null` for anything that
+ * settled without a server response. Shared by both legs so the deadline
+ * covers each of them and neither can be wired to a caller's own signal.
+ */
+async function postRefresh(body: object): Promise<Response | null> {
   const deadlineController = new AbortController();
   const deadlineTimeoutId = setTimeout(
     () => deadlineController.abort(),
@@ -88,23 +98,28 @@ async function performTokenRefresh(): Promise<RefreshOutcome> {
   );
 
   try {
-    const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+    return await fetch(`${API_BASE_URL}/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken: spentRefreshToken }),
+      body: JSON.stringify(body),
       signal: deadlineController.signal,
     });
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(deadlineTimeoutId);
+  }
+}
 
-    if (!response.ok) {
-      // only a 401/403 can prove a token spent; others are transient
-      if (response.status === 401 || response.status === 403) {
-        // the successor another tab stored is live; the retry uses it
-        if (isRefreshTokenSuperseded(spentRefreshToken)) return 'renewed';
-        return 'refused';
-      }
-      return 'unresolved';
-    }
-
+/**
+ * Stores what a 2xx carried, or reports that it carried nothing readable.
+ * A proxy or captive portal answering 200 with a login page reaches here,
+ * and a body that will not parse establishes no more than a dead socket
+ * does, so it has to leave the pair alone rather than throw out through
+ * every caller waiting on this leg.
+ */
+async function storeRotatedPair(response: Response): Promise<RefreshOutcome> {
+  try {
     const data = (await response.json()) as {
       accessToken: string;
       refreshToken: string;
@@ -112,11 +127,58 @@ async function performTokenRefresh(): Promise<RefreshOutcome> {
     setStoredToken(data.accessToken, data.refreshToken);
     return 'renewed';
   } catch {
-    // network failure/abort reached no verdict, so keep tokens for retry
     return 'unresolved';
-  } finally {
-    clearTimeout(deadlineTimeoutId);
   }
+}
+
+async function performTokenRefresh(): Promise<RefreshOutcome> {
+  const spentRefreshToken = getStoredRefreshToken();
+
+  // nothing to renew with, which is a refusal reached without a leg
+  if (!spentRefreshToken) return 'refused';
+
+  const response = await postRefresh({
+    refreshToken: spentRefreshToken,
+    nextRefreshToken: nominateRefreshToken(),
+  });
+
+  // no verdict keeps the tokens, and the nomination keeps its rotation
+  if (!response) return 'unresolved';
+
+  if (!response.ok) {
+    // only a 401/403 can prove a token spent; others are transient
+    if (response.status === 401 || response.status === 403) {
+      // the successor another tab stored is live; the retry uses it
+      if (isRefreshTokenSuperseded(spentRefreshToken)) return 'renewed';
+      return 'refused';
+    }
+    return 'unresolved';
+  }
+
+  return storeRotatedPair(response);
+}
+
+/**
+ * The leg that spends the nominated successor, taken only once the server
+ * has refused the token this client thought it held. If a rotation was
+ * committed and lost, this is the token it committed to, so a refusal here
+ * is the first evidence the session is actually over. It nominates nothing
+ * of its own: recovering one lost answer is the job, and a chain of them
+ * is a retry loop wearing a different name.
+ */
+async function replayNominatedToken(): Promise<RefreshOutcome> {
+  const nominated = getNominatedRefreshToken();
+  if (!nominated) return 'refused';
+
+  const response = await postRefresh({ refreshToken: nominated });
+  if (!response) return 'unresolved';
+
+  if (!response.ok) {
+    if (response.status === 401 || response.status === 403) return 'refused';
+    return 'unresolved';
+  }
+
+  return storeRotatedPair(response);
 }
 
 // dedup concurrent refreshes so N parallel callers share one refresh call
@@ -128,14 +190,28 @@ function shareRefresh(): Promise<RefreshOutcome> {
   return inFlightRefresh;
 }
 
+// a slot of its own: two callers spending the one nomination in parallel
+// would leave the loser reading its own 401 as a dead session
+function shareReplay(): Promise<RefreshOutcome> {
+  if (inFlightReplay) return inFlightReplay;
+  inFlightReplay = replayNominatedToken().finally(() => {
+    inFlightReplay = null;
+  });
+  return inFlightReplay;
+}
+
 /**
  * Renewal for a caller whose access token the server has just refused,
  * answering whether the request is worth retrying. A refusal here is the
  * end of the session, because both halves of the pair have now been
- * turned away.
+ * turned away, but only once the nominated successor has been offered
+ * too: a rotation whose answer was lost leaves this client holding a spent
+ * token and a live one, and refusing the spent one says nothing about the
+ * other. Two legs at most, and the verdict of the second one stands.
  */
 export async function attemptTokenRefresh(): Promise<boolean> {
-  const outcome = await shareRefresh();
+  let outcome = await shareRefresh();
+  if (outcome === 'refused') outcome = await shareReplay();
   if (outcome === 'refused') clearStoredToken();
   return outcome === 'renewed';
 }

@@ -22,9 +22,11 @@ export { API_BASE_URL };
 
 const TOKEN_KEY = 'linklater_token';
 const REFRESH_TOKEN_KEY = 'linklater_refresh_token';
+const NOMINATED_REFRESH_TOKEN_KEY = 'linklater_nominated_refresh_token';
 
 let cachedToken: string | null = safeRead(TOKEN_KEY);
 let cachedRefreshToken: string | null = safeRead(REFRESH_TOKEN_KEY);
+let cachedNomination: string | null = safeRead(NOMINATED_REFRESH_TOKEN_KEY);
 
 export function getStoredToken(): string | null {
   return readPersisted(TOKEN_KEY, cachedToken);
@@ -32,6 +34,51 @@ export function getStoredToken(): string | null {
 
 export function getStoredRefreshToken(): string | null {
   return readPersisted(REFRESH_TOKEN_KEY, cachedRefreshToken);
+}
+
+/**
+ * The successor this tab asked the server to rotate into, if it has one
+ * outstanding. It is the only thing that can recover a rotation the server
+ * committed and answered on a connection that died: the token the server
+ * moved to is otherwise a value nobody here ever saw.
+ */
+export function getNominatedRefreshToken(): string | null {
+  return readPersisted(NOMINATED_REFRESH_TOKEN_KEY, cachedNomination);
+}
+
+// the shape the server would have generated, from the browser's own CSPRNG
+function generateHexToken(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join(
+    '',
+  );
+}
+
+/**
+ * The successor to send with the next renewal, minted and persisted here so
+ * it is already durable by the time the request carrying it goes out. That
+ * ordering is the whole point: a nomination written when the answer arrives
+ * is gone in exactly the case it exists for.
+ *
+ * An outstanding nomination is reused rather than replaced. A renewal that
+ * reached no verdict may have been committed against it, and a renewal that
+ * followed would otherwise mint over the one token that could still get the
+ * session back. Nothing weakens on reuse, since it stays 32 bytes only this
+ * client has seen until the pair rotates or is cleared.
+ */
+export function nominateRefreshToken(): string {
+  const outstanding = getNominatedRefreshToken();
+  if (outstanding) return outstanding;
+
+  cachedNomination = generateHexToken();
+  safeWrite(NOMINATED_REFRESH_TOKEN_KEY, cachedNomination);
+  return cachedNomination;
+}
+
+// a nomination outlives its own request, so nothing may outlive the pair
+function clearNomination(): void {
+  cachedNomination = null;
+  safeRemove(NOMINATED_REFRESH_TOKEN_KEY);
 }
 
 /**
@@ -55,12 +102,19 @@ export function isRefreshTokenSuperseded(spentToken: string): boolean {
  * good for the rest of its hour, while the reverse order leaves it
  * holding a refresh token this tab has already spent, so its next renewal
  * 401s into the logout this sync exists to prevent.
+ *
+ * A refresh token arriving means any nomination outstanding is moot,
+ * whether it was spent on this rotation or belongs to a session this pair
+ * replaces. Dropping it on every arrival rather than on a renewal alone is
+ * what keeps a sign-in from leaving a live token behind for the account
+ * that was here before.
  */
 export function setStoredToken(
   accessToken: string,
   refreshToken?: string,
 ): void {
   if (refreshToken !== undefined) {
+    clearNomination();
     cachedRefreshToken = refreshToken;
     safeWrite(REFRESH_TOKEN_KEY, refreshToken);
   }
@@ -70,6 +124,7 @@ export function setStoredToken(
 }
 
 export function clearStoredToken(): void {
+  clearNomination();
   cachedToken = null;
   cachedRefreshToken = null;
   safeRemove(TOKEN_KEY);

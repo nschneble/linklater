@@ -3,10 +3,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { attemptSpeculativeRefresh, attemptTokenRefresh } from './tokenRefresh';
 import {
   clearStoredToken,
+  getNominatedRefreshToken,
   getStoredRefreshToken,
   getStoredToken,
   setStoredToken,
 } from './storage';
+
+const NOMINATION_KEY = 'linklater_nominated_refresh_token';
 
 /**
  * `attemptTokenRefresh` on its own: what it answers, and what it leaves in
@@ -22,6 +25,10 @@ import {
  * the same whichever of them opened the leg, and the calls are made in one
  * tick because that is what makes the second join the first rather than
  * start its own.
+ *
+ * A refused caller now spends two legs, the second carrying the successor
+ * this client nominated, so leg counts through here read one higher than
+ * they did before that existed.
  */
 describe('tokenRefresh.ts', () => {
   function respondWith(status: number, body: unknown): unknown {
@@ -31,6 +38,14 @@ describe('tokenRefresh.ts', () => {
       text: () => Promise.resolve(JSON.stringify(body)),
       json: () => Promise.resolve(body),
     };
+  }
+
+  function bodyOf(
+    mock: ReturnType<typeof vi.fn>,
+    index: number,
+  ): Record<string, string> {
+    const [, options] = mock.mock.calls[index] as [string, RequestInit];
+    return JSON.parse(options.body as string) as Record<string, string>;
   }
 
   function rotatedPair(): unknown {
@@ -62,7 +77,7 @@ describe('tokenRefresh.ts', () => {
     expect(getStoredRefreshToken()).toBe('new-refresh');
   });
 
-  it('sends the stored refresh token to the refresh endpoint', async () => {
+  it('sends the stored refresh token and a nominated successor', async () => {
     setStoredToken('expired-jwt', 'valid-refresh');
     const fetchMock = vi.fn().mockResolvedValue(rotatedPair());
     globalThis.fetch = fetchMock as unknown as typeof fetch;
@@ -74,7 +89,116 @@ describe('tokenRefresh.ts', () => {
     expect(options.method).toBe('POST');
     expect(JSON.parse(options.body as string)).toEqual({
       refreshToken: 'valid-refresh',
+      nextRefreshToken: expect.stringMatching(/^[0-9a-f]{64}$/),
     });
+  });
+
+  it('stores the nomination before the request that spends it goes out', async () => {
+    setStoredToken('expired-jwt', 'valid-refresh');
+    const order: string[] = [];
+    const store = window.localStorage.setItem.bind(window.localStorage);
+    vi.spyOn(window.localStorage, 'setItem').mockImplementation(
+      (key: string, value: string) => {
+        order.push(key);
+        store(key, value);
+      },
+    );
+    globalThis.fetch = vi.fn(() => {
+      order.push('fetch');
+      return Promise.resolve(rotatedPair());
+    }) as unknown as typeof fetch;
+
+    await attemptTokenRefresh();
+
+    // a nomination written after the answer would not survive losing it
+    expect(order.indexOf(NOMINATION_KEY)).toBeGreaterThanOrEqual(0);
+    expect(order.indexOf(NOMINATION_KEY)).toBeLessThan(order.indexOf('fetch'));
+  });
+
+  it('keeps one nomination across legs so a committed successor survives', async () => {
+    setStoredToken('expired-jwt', 'valid-refresh');
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(respondWith(500, { message: 'Server error' }))
+      .mockResolvedValueOnce(rotatedPair());
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    await attemptTokenRefresh();
+    await attemptTokenRefresh();
+
+    // a fresh one here would overwrite the successor the server just kept
+    expect(bodyOf(fetchMock, 0).nextRefreshToken).toMatch(/^[0-9a-f]{64}$/);
+    expect(bodyOf(fetchMock, 1).nextRefreshToken).toBe(
+      bodyOf(fetchMock, 0).nextRefreshToken,
+    );
+  });
+
+  it('replays with the nominated successor when the spent token is refused', async () => {
+    setStoredToken('expired-jwt', 'spent-refresh');
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(respondWith(401, { message: 'Invalid refresh' }))
+      .mockResolvedValueOnce(rotatedPair());
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    await expect(attemptTokenRefresh()).resolves.toBe(true);
+
+    // the replay is the recovery leg, so it nominates nothing of its own
+    expect(bodyOf(fetchMock, 1)).toEqual({
+      refreshToken: bodyOf(fetchMock, 0).nextRefreshToken,
+    });
+    expect(getStoredToken()).toBe('new-jwt');
+    expect(getStoredRefreshToken()).toBe('new-refresh');
+  });
+
+  it('drops the nomination once the pair has rotated', async () => {
+    setStoredToken('expired-jwt', 'valid-refresh');
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(rotatedPair()) as unknown as typeof fetch;
+
+    await attemptTokenRefresh();
+
+    expect(getNominatedRefreshToken()).toBeNull();
+  });
+
+  it('keeps the pair and the nomination when the replay is throttled', async () => {
+    setStoredToken('expired-jwt', 'spent-refresh');
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(respondWith(401, { message: 'Invalid refresh' }))
+      .mockResolvedValueOnce(
+        respondWith(429, { message: 'Too many refresh attempts' }),
+      );
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    await expect(attemptTokenRefresh()).resolves.toBe(false);
+
+    // throttled is not refused, so nothing here has been proven spent
+    expect(getStoredToken()).toBe('expired-jwt');
+    expect(getStoredRefreshToken()).toBe('spent-refresh');
+    expect(getNominatedRefreshToken()).toBe(
+      bodyOf(fetchMock, 0).nextRefreshToken,
+    );
+  });
+
+  it('shares one replay between concurrent refused callers', async () => {
+    setStoredToken('expired-jwt', 'spent-refresh');
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(respondWith(401, { message: 'Invalid refresh' }))
+      .mockResolvedValue(rotatedPair());
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const [first, second] = await Promise.all([
+      attemptTokenRefresh(),
+      attemptTokenRefresh(),
+    ]);
+
+    // two replays would leave the loser reading its own 401 as a dead session
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(first).toBe(true);
+    expect(second).toBe(true);
   });
 
   it('clears the dead access token when no refresh token is stored', async () => {
@@ -160,11 +284,24 @@ describe('tokenRefresh.ts', () => {
     await expect(attemptTokenRefresh()).resolves.toBe(false);
     await expect(attemptTokenRefresh()).resolves.toBe(true);
 
-    const [, secondOptions] = fetchMock.mock.calls[1] as [string, RequestInit];
-    expect(JSON.parse(secondOptions.body as string)).toEqual({
-      refreshToken: 'valid-refresh',
-    });
+    expect(bodyOf(fetchMock, 1).refreshToken).toBe('valid-refresh');
     expect(getStoredToken()).toBe('new-jwt');
+  });
+
+  it('keeps the pair when a 200 carries nothing readable', async () => {
+    setStoredToken('expired-jwt', 'valid-refresh');
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: () => Promise.resolve('<html>captive portal</html>'),
+      json: () => Promise.reject(new SyntaxError('Unexpected token <')),
+    }) as unknown as typeof fetch;
+
+    // a body that will not parse proves no more than a dead socket does
+    await expect(attemptTokenRefresh()).resolves.toBe(false);
+
+    expect(getStoredToken()).toBe('expired-jwt');
+    expect(getStoredRefreshToken()).toBe('valid-refresh');
   });
 
   it('keeps the pair when the refresh fetch rejects with a network error', async () => {
@@ -267,7 +404,8 @@ describe('tokenRefresh.ts', () => {
     const refused = attemptTokenRefresh();
     await Promise.all([speculative, refused]);
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    // one shared refusal, then the replay only the refused caller takes
+    expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(getStoredToken()).toBeNull();
     expect(getStoredRefreshToken()).toBeNull();
   });
@@ -283,7 +421,7 @@ describe('tokenRefresh.ts', () => {
     const speculative = attemptSpeculativeRefresh();
     await Promise.all([refused, speculative]);
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(getStoredToken()).toBeNull();
     expect(getStoredRefreshToken()).toBeNull();
   });
@@ -310,14 +448,15 @@ describe('tokenRefresh.ts', () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(respondWith(401, { message: 'Invalid refresh' }))
+      .mockResolvedValueOnce(respondWith(401, { message: 'Invalid refresh' }))
       .mockResolvedValueOnce(rotatedPair());
     globalThis.fetch = fetchMock as unknown as typeof fetch;
 
     await expect(attemptTokenRefresh()).resolves.toBe(false);
     setStoredToken('another-expired-jwt', 'another-valid-refresh');
 
-    // a failure releases the slot; it does not block later attempts
+    // a failure releases both slots; it does not block later attempts
     await expect(attemptTokenRefresh()).resolves.toBe(true);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 });

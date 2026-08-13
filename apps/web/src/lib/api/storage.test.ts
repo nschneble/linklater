@@ -136,6 +136,26 @@ describe('storage.ts token precedence', () => {
     expect(module.getStoredRefreshToken()).toBe('memory-refresh');
   });
 
+  it('drops a nomination the arriving pair makes moot', async () => {
+    const module = await loadStorageModule();
+    const nominated = module.nominateRefreshToken();
+
+    module.setStoredToken('signed-in-access', 'signed-in-refresh');
+
+    // otherwise a sign-in leaves a live token for the account before it
+    expect(nominated).toMatch(/^[0-9a-f]{64}$/);
+    expect(module.getNominatedRefreshToken()).toBeNull();
+  });
+
+  it('drops the nomination when the pair is cleared', async () => {
+    const module = await loadStorageModule();
+    module.nominateRefreshToken();
+
+    module.clearStoredToken();
+
+    expect(module.getNominatedRefreshToken()).toBeNull();
+  });
+
   it('persists the refresh token before the access token', async () => {
     const setItemSpy = vi.spyOn(window.localStorage, 'setItem');
     const module = await loadStorageModule();
