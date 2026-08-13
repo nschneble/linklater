@@ -562,10 +562,12 @@ describe('booting on a token that belongs to somebody else', () => {
       subject: 'user-2',
     });
 
-    renderHook(() => useAuthState());
+    const { result } = renderHook(() => useAuthState());
 
     await waitFor(() => expect(assignMock).toHaveBeenCalledWith('/unread'));
     expect(apiModule.getMe).not.toHaveBeenCalled();
+    // releasing it here paints a login form over a departing document
+    expect(result.current.loading).toBe(true);
   });
 
   it('boots normally when the token belongs to the last rendered user', async () => {

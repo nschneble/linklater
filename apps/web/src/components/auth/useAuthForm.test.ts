@@ -38,6 +38,11 @@ vi.mock('./standingSessionOffer', () => ({
 // ─── Imports after mocks ─────────────────────────────────────────────────────
 
 import * as apiModule from '../../lib/api';
+import {
+  carryTypedEmail,
+  hasCarriedEmail,
+  takeCarriedEmail,
+} from '../../auth/AuthContext/carriedEmail';
 import * as pendingNoticeModule from '../../lib/pendingNotice';
 import * as standingOfferModule from './standingSessionOffer';
 import { useAuth } from '../../auth/AuthContext';
@@ -703,6 +708,32 @@ describe('useAuthForm', () => {
     });
   });
 
+  // WCAG 3.3.7 Redundant Entry: the address survives the offer's bounce
+  describe('carried email', () => {
+    const TYPED_EMAIL = 'typed@example.com';
+
+    it('prefills the email input from the value the offer carried', async () => {
+      sessionStorage.setItem('linklater_carried_email', TYPED_EMAIL);
+
+      const { result } = renderAuthFormHook('/login');
+      await act(async () => {});
+
+      expect(result.current.email).toBe(TYPED_EMAIL);
+      expect(hasCarriedEmail()).toBe(false);
+    });
+
+    it('notes what was typed, so the offer has an address to carry', async () => {
+      const { result } = renderAuthFormHook('/login');
+
+      act(() => result.current.setEmail(TYPED_EMAIL));
+      await act(async () => {});
+
+      carryTypedEmail();
+
+      expect(takeCarriedEmail()).toBe(TYPED_EMAIL);
+    });
+  });
+
   describe('focus management – mode change', () => {
     it('focuses emailReference when email is empty on mode change', async () => {
       const { result } = renderAuthFormHook('/login');
@@ -806,6 +837,34 @@ describe('useAuthForm', () => {
 
       expect(emailFocusSpy).not.toHaveBeenCalled();
       expect(passwordFocusSpy).not.toHaveBeenCalled();
+    });
+
+    // focus into the email input would land on top of the standing offer
+    it('does not auto-focus the email input on mount when a session offer is standing', async () => {
+      vi.mocked(standingOfferModule.hasStandingSessionOffer).mockReturnValue(
+        true,
+      );
+
+      const emailInput = document.createElement('input');
+      const focusSpy = vi.spyOn(emailInput, 'focus');
+
+      renderHook(
+        () => {
+          const hook = useAuthForm();
+          if (hook.emailReference.current === null) {
+            hook.emailReference.current = emailInput;
+          }
+          return hook;
+        },
+        {
+          wrapper: ({ children }) =>
+            MemoryRouter({ children, initialEntries: ['/login'] }),
+        },
+      );
+
+      await act(async () => {});
+
+      expect(focusSpy).not.toHaveBeenCalled();
     });
 
     // C4: negative control for FLAG-2 - no pending notice, so focus must fire, proving the guard is gated not just absent

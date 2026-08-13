@@ -144,6 +144,18 @@ describe('setPendingNotice / consumePendingNotice', () => {
     expect(hasPendingNotice()).toBe(false);
   });
 
+  // the gate queues this one, so it stays put instead of riding a timer
+  it('round-trips session-unavailable as a standing warning-variant entry', () => {
+    setPendingNotice('session-unavailable');
+    expect(hasPendingNotice()).toBe(true);
+    expect(consumePendingNotice()).toEqual({
+      message: "We couldn't get you back into that session",
+      variant: 'warning',
+      standing: true,
+    });
+    expect(hasPendingNotice()).toBe(false);
+  });
+
   it('returns null when no notice has been set', () => {
     expect(consumePendingNotice()).toBeNull();
   });
