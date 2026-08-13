@@ -24,7 +24,7 @@ describe('RefreshTokenDto', () => {
     expect(await errorsFor(dto, 'nextRefreshToken')).toHaveLength(0);
   });
 
-  // the shape the server would have generated, so nothing weaker gets stored
+  // a pattern pins shape, never entropy; a weak successor is self-harm
   it.each([
     ['uppercase hex', 'A'.repeat(64)],
     ['63 characters', 'a'.repeat(63)],

@@ -5,10 +5,11 @@
  * change, read once by whichever entry point mounts next, then cleared so
  * a page reload does not re-show the message.
  *
- * Consumers today: `AuthForm` (login/signup/auth arrivals) and `LinksView`
- * (links-page arrivals, e.g. after verify-email redirect to /unread).
- * The sessionStorage key is shared - whichever entry point mounts first
- * consumes the notice and clears the key, so the other won't double-fire.
+ * Consumers today: `useAuthFormArrival` (login/signup/auth arrivals) and
+ * `LinksView` (links-page arrivals, e.g. after verify-email redirect to
+ * /unread). The sessionStorage key is shared, so whichever entry point
+ * mounts first consumes the notice and clears the key and the other will
+ * not double-fire.
  *
  * One entry, `session-unavailable`, is queued by the auth gate itself
  * (`components/auth/offerBounce.ts`) rather than by a flow the user

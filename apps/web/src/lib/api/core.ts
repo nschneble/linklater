@@ -1,5 +1,5 @@
 /**
- * The one call every request in the app goes through, and the two places
+ * The one call every application request goes through, and the two places
  * it spends a token rather than merely attaching one.
  *
  * Both are here rather than in the store because both are decisions about
@@ -13,9 +13,12 @@
  * The retry is bounded to a single attempt and skips `/auth/refresh`
  * itself, since a refusal there is the answer, not a reason to ask again.
  *
- * The store's own surface is re-exported straight through, so callers
- * reach the token through one import rather than knowing which module
- * behind here keeps it.
+ * The token-facing part of the store is re-exported straight through, so
+ * callers reach the token through one import rather than knowing which
+ * module behind here keeps it. The nomination and supersession helpers
+ * stay off that surface; outside tests `tokenRefresh` is the only module
+ * that reaches for them, and routing them through here would offer the
+ * rest of the app a lever it has no business pulling.
  */
 
 export {
