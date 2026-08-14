@@ -16,11 +16,28 @@
  * the four other places this route says it; the "Log in" rule belongs to
  * the login screen, whose control is labelled that way.
  *
- * The statement and the instruction are siblings rather than one node,
- * so the live region carries the state and not the errand. Both stay
- * mounted while empty, since a region born populated in a single commit
- * is the shape screen readers miss, and both leave the flow while they
- * are empty so the card keeps its spacing.
+ * The statement and the instruction ride one region root, though they
+ * stay separate nodes. The instruction is the only text telling the user
+ * what to do about any of this, and reaching them through the button's
+ * description does not reach them at all: a description is read when a
+ * control takes focus, and the account changes while the control already
+ * has it. A second live root inside the first would not help either,
+ * since the politeness and atomic walks can stop at different elements
+ * and the statement can then queue twice.
+ *
+ * The root leaves the flow while empty rather than hiding, because
+ * `display: none` takes it out of the accessibility tree and a region
+ * that is not in the tree cannot announce when it comes back. It cannot
+ * use `display: contents` either: an element with no box discards the
+ * margins the card's spacing hands it, so the gaps around this would
+ * disappear. It cannot key off `:empty`, which does not match an element
+ * holding element children, so the state is marked on the root instead.
+ *
+ * `aria-atomic` is written out even though `role="status"` implies it.
+ * The atomic walk looks for an ancestor that has explicitly set the
+ * attribute, and a role's implied default is not a value anyone set.
+ * With one sentence that distinction is idle; with two it decides
+ * whether the region reads as one utterance or as whichever half moved.
  *
  * Nothing here moves focus. 3.2.1 governs focus as a trigger rather than
  * an effect, 4.1.3 asks that the message land without one, and the place
@@ -41,21 +58,26 @@ export default function ExtensionAccountChanged({
   mismatched,
 }: ExtensionAccountChangedProps) {
   return (
-    <>
+    <div
+      data-testid="extension-account-changed-region"
+      data-mismatched={mismatched || undefined}
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      className="absolute data-mismatched:static space-y-4"
+    >
       <p
         id="extension-account-changed"
-        role="status"
-        aria-live="polite"
-        className="empty:absolute text-[var(--mount-text)] text-sm font-medium"
+        className="text-[var(--mount-text)] text-sm font-medium"
       >
         {mismatched && ACCOUNT_CHANGED_MESSAGE}
       </p>
       <p
         id="extension-account-changed-next"
-        className="empty:absolute text-[var(--mount-alt-text)] text-xs"
+        className="text-[var(--mount-alt-text)] text-xs"
       >
         {mismatched && ACCOUNT_CHANGED_NEXT_STEP}
       </p>
-    </>
+    </div>
   );
 }

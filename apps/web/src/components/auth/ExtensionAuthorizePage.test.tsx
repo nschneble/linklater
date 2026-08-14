@@ -123,8 +123,9 @@ function errorNode(): HTMLElement {
 
 /*
  * Two polite regions now sit on this page, so neither is reachable by
- * role alone. The pending one is the anonymous of the pair, which is why
- * it is the one carrying a test hook.
+ * role alone. Both carry a test hook: the pending one has no text to
+ * find it by while it is empty, and the account-changed one is a wrapper
+ * whose own text belongs to the two paragraphs inside it.
  */
 function pendingNode(): HTMLElement {
   return screen.getByTestId('extension-authorize-pending');
@@ -470,15 +471,20 @@ describe('ExtensionAuthorizePage account switched underneath it', () => {
   });
 
   // assertive is for a verdict the user is waiting on; nobody waits here
-  it('speaks on the polite channel, and separately from the errand', () => {
+  it('speaks the statement and the errand as one polite announcement', () => {
     setStoredToken(ALICE_TOKEN);
     renderPage();
 
-    expect(changedNode()).toHaveAttribute('role', 'status');
-    expect(changedNode()).toHaveAttribute('aria-live', 'polite');
-    expect(nodeById('extension-account-changed-next')).not.toHaveAttribute(
-      'aria-live',
-    );
+    const region = screen.getByTestId('extension-account-changed-region');
+    expect(region).toHaveAttribute('role', 'status');
+    expect(region).toHaveAttribute('aria-live', 'polite');
+    expect(region).toHaveAttribute('aria-atomic', 'true');
+    expect(region).toContainElement(changedNode());
+    expect(region).toContainElement(nodeById('extension-account-changed-next'));
+    // a root inside the root is where one utterance quietly becomes two
+    expect(
+      region.querySelectorAll('[aria-live], [role="status"]'),
+    ).toHaveLength(0);
   });
 
   it('stays quiet when the sibling rotated the same account', () => {

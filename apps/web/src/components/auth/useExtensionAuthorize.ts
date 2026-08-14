@@ -7,9 +7,22 @@
  * repaint the control as ready in the moment before the document unloads.
  *
  * The failure arm empties the pending state in the same commit that fills
- * the error, so the document never carries both at once. An utterance the
- * pending region already queued still finishes on its own; what the single
- * commit rules out is a page that reads as pending and failed together.
+ * the error, so the document never carries both at once. What that buys
+ * is the page never reading as pending and failed together. It does not
+ * buy anything about the utterance already in flight: the error is
+ * assertive, and an assertive region is allowed to drop everything
+ * queued behind it, so a pending line part-spoken may simply stop.
+ *
+ * A mismatch clears any standing failure in the same commit, for the
+ * same reason and against a worse pairing: the failure asks the user to
+ * try again while the control it belongs to has already stopped
+ * accepting, and the retry it asks for is the thing that cannot work.
+ * All three places that raise a mismatch go through one writer so none
+ * of them can forget. It clears on every raise rather than on the
+ * transition, because the two cannot differ, a click cannot reach the
+ * failure setter once mismatched is up, and a transition test inside the
+ * storage listener would read a `mismatched` frozen at the value it had
+ * when the effect ran.
  *
  * Failure is kept as a kind rather than a rendered string because the two
  * differ where it matters: the same failure twice writes the same text
@@ -34,7 +47,7 @@
 import { authorizeExtension, isTokenStorageEvent } from '../../lib/api';
 import { authorizeFailureFrom } from './extensionAuthorizeMessages';
 import { readGrantIdentity } from './grantIdentity';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { AuthorizeFailure } from './extensionAuthorizeMessages';
 
 interface ExtensionAuthorize {
@@ -53,19 +66,24 @@ export function useExtensionAuthorize(
   const [failure, setFailure] = useState<AuthorizeFailure | null>(null);
   const [mismatched, setMismatched] = useState(false);
 
+  const noteMismatch = useCallback((next: boolean) => {
+    setMismatched(next);
+    if (next) setFailure(null);
+  }, []);
+
   useEffect(() => {
-    setMismatched(readGrantIdentity(userId).mismatched);
+    noteMismatch(readGrantIdentity(userId).mismatched);
 
     const handleStorage = (event: StorageEvent) => {
       if (!isTokenStorageEvent(event)) return;
-      setMismatched(readGrantIdentity(userId).mismatched);
+      noteMismatch(readGrantIdentity(userId).mismatched);
     };
 
     window.addEventListener('storage', handleStorage);
     return () => {
       window.removeEventListener('storage', handleStorage);
     };
-  }, [userId]);
+  }, [noteMismatch, userId]);
 
   const handleAuthorize = async () => {
     // aria-disabled leaves the control activatable, which is the point
@@ -73,7 +91,7 @@ export function useExtensionAuthorize(
 
     const identity = readGrantIdentity(userId);
     if (identity.mismatched) {
-      setMismatched(true);
+      noteMismatch(true);
       return;
     }
 
