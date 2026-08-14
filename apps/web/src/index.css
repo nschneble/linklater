@@ -284,6 +284,9 @@ body {
   outline-offset: 3px;
 }
 
+/* currentColor, because a selector keyed on :disabled cannot know its host
+   bundle: the base-tier tokens this used to name are pinned against
+   --base-bg, and these controls are filled from mount, orbit or alert. */
 [data-cvd='on'] :disabled,
 [data-cvd='on'] [aria-disabled='true'] {
   opacity: 1;
@@ -291,10 +294,9 @@ body {
     51deg,
     transparent,
     transparent 4px,
-    var(--base-border) 4px,
-    var(--base-border) 5px
+    currentColor 4px,
+    currentColor 5px
   );
-  color: var(--base-alt-text);
 }
 
 [data-cvd='on'] a {
