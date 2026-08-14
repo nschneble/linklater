@@ -1,139 +1,72 @@
+/**
+ * The one call every application request goes through, and the two places
+ * it spends a token rather than merely attaching one.
+ *
+ * Both are here rather than in the store because both are decisions about
+ * a request. Ahead of one, a token whose expiry has already passed is
+ * renewed, which is what a tab returning from an idle afternoon needs: the
+ * alternative is a guaranteed 401 and a second leg to learn it. After one,
+ * a 401 is treated as possibly stale rather than final, and the retry is
+ * taken once. Neither path ends a session on its own; `tokenRefresh` owns
+ * that verdict and this module never clears anything.
+ *
+ * The retry is bounded to a single attempt and skips `/auth/refresh`
+ * itself, since a refusal there is the answer, not a reason to ask again.
+ *
+ * The token-facing part of the store is re-exported straight through, so
+ * callers reach the token through one import rather than knowing which
+ * module behind here keeps it. The nomination and supersession helpers
+ * stay off that surface; outside tests `tokenRefresh` is the only module
+ * that reaches for them, and routing them through here would offer the
+ * rest of the app a lever it has no business pulling.
+ */
+
 export {
   clearStoredToken,
   getStoredRefreshToken,
   getStoredToken,
+  isTokenStorageEvent,
   setStoredToken,
 } from './storage';
 
-import {
-  API_BASE_URL,
-  clearStoredToken,
-  getStoredRefreshToken,
-  getStoredToken,
-  setStoredToken,
-} from './storage';
-
-export class ApiError extends Error {
-  status: number;
-
-  constructor(message: string, status: number) {
-    super(message);
-    this.name = 'ApiError';
-    this.status = status;
-  }
-}
-
-async function parseResponse<T>(response: Response): Promise<T | undefined> {
-  const text = await response.text();
-  if (!text) return undefined;
-  try {
-    return JSON.parse(text) as T;
-  } catch {
-    throw new ApiError(
-      `Server returned non-JSON response: ${text.slice(0, 100)}`,
-      0,
-    );
-  }
-}
-
-async function parseError(response: Response): Promise<ApiError> {
-  const text = await response.text();
-  let message = text || `Request failed with ${response.status}`;
-  try {
-    const body = JSON.parse(text) as { message?: string };
-    if (body.message) message = body.message;
-  } catch {
-    // body is not JSON, use the raw text as the error message
-  }
-  return new ApiError(message, response.status);
-}
-
-let inFlightRefresh: Promise<boolean> | null = null;
-
-/**
- * Deadline for the token-refresh fetch. apiFetch imposes no timeout of its own,
- * and every 401'd caller awaits this single shared refresh, so a refresh hung
- * on a dead network (a mid-request socket stall) would hold every awaiter open
- * until the browser's socket-level timeout, which can run to minutes. Callers
- * that carry their own per-request deadline still could not escape it: the
- * metadata poller's deadline bounds its poll but explicitly does not cover the
- * refresh leg it triggers. Bounding the refresh here is the only place that
- * leg gets a limit.
- *
- * An abort rejects the fetch exactly as an unreachable server would, so a
- * timed-out refresh follows the same catch below as any network failure: this
- * request fails, but the stored tokens survive because a refresh that never
- * answered has not proven the session dead. Held at 10s to match the poller's
- * per-request deadline: comfortably above a healthy round-trip on a slow
- * connection, well under the socket timeout it stands in for.
- * AbortSignal.timeout is deliberately avoided; its internal timer is not
- * driven by the test suite's fake timers.
- */
-const REFRESH_DEADLINE_MS = 10_000;
-
-async function performTokenRefresh(): Promise<boolean> {
-  if (!getStoredRefreshToken()) {
-    // no refresh token: the rejected access token is dead for good, so clear it
-    clearStoredToken();
-    return false;
-  }
-
-  // not wired to a caller's signal: one abort must not kill the shared refresh
-  const deadlineController = new AbortController();
-  const deadlineTimeoutId = setTimeout(
-    () => deadlineController.abort(),
-    REFRESH_DEADLINE_MS,
-  );
-
-  try {
-    const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken: getStoredRefreshToken() }),
-      signal: deadlineController.signal,
-    });
-
-    if (!response.ok) {
-      // only a 401/403 proves the token spent; other statuses are transient
-      if (response.status === 401 || response.status === 403) {
-        clearStoredToken();
-      }
-      return false;
-    }
-
-    const data = (await response.json()) as {
-      accessToken: string;
-      refreshToken: string;
-    };
-    setStoredToken(data.accessToken, data.refreshToken);
-    return true;
-  } catch {
-    // network failure/abort reached no verdict, so keep tokens for retry
-    return false;
-  } finally {
-    clearTimeout(deadlineTimeoutId);
-  }
-}
-
-// dedup concurrent refreshes so N parallel 401s share one refresh call
-async function attemptTokenRefresh(): Promise<boolean> {
-  if (inFlightRefresh) return inFlightRefresh;
-  inFlightRefresh = performTokenRefresh().finally(() => {
-    inFlightRefresh = null;
-  });
-  return inFlightRefresh;
-}
-
-// untyped callers get void, typed get T; an empty typed body is `undefined` at runtime
+import { API_BASE_URL, getStoredToken } from './storage';
+import { ApiError, parseError, parseResponse } from './responses';
+import { attemptSpeculativeRefresh, attemptTokenRefresh } from './tokenRefresh';
+import { readTokenClaims } from './jwt';
 
 /**
  * Controls the Authorization header on an `apiFetch` call:
- * - `true` (default) – attach the stored JWT; retry once after a 401 with a
- *   token refresh
+ * - `true` (default) – attach the stored JWT, renewing it first if it has
+ *   already run out; retry once after a 401 with a token refresh
  * - `false` – send no Authorization header (public/unauthenticated endpoints)
  * - `string` – use the provided literal token as-is (e.g. a PAT or MFA token)
  */
 export type AuthContext = boolean | string;
+
+/**
+ * Whether this token is known to have run out, which is the one case where
+ * sending it is a round trip whose answer is already decided. Access tokens
+ * are signed for an hour, so a tab returning from an idle afternoon holds
+ * one of these, and spending a leg to be told so is the whole cost this
+ * question removes.
+ *
+ * Only a readable expiry sitting in the past answers yes. An expiry that
+ * is absent, mistyped or unreadable answers no, as does an opaque `ltk_`
+ * API token with no payload to read, because none of those is evidence of
+ * anything and the server is the authority either way.
+ *
+ * The clock is the browser's and the expiry is the server's, so the two
+ * can disagree. A slow clock asks for no renewal and falls back to being
+ * told by the server. A fast one asks early and can be refused, but a
+ * refusal ahead of the request clears nothing, so the token in question
+ * still goes out and the server keeps the last word on it. Neither
+ * answer can lose a live session, which is why no skew allowance is
+ * taken.
+ */
+function hasTokenExpired(token: string): boolean {
+  const expiry = readTokenClaims(token)?.exp;
+  return typeof expiry === 'number' && expiry * 1000 < Date.now();
+}
 
 /**
  * Like `apiFetch<T>` but throws `ApiError` when the server returns an empty
@@ -152,6 +85,8 @@ export async function apiFetchRequired<T>(
   return data;
 }
 
+// untyped callers get void, typed get T; an empty typed body is
+// `undefined` at runtime
 export async function apiFetch(
   path: string,
   options?: RequestInit,
@@ -174,6 +109,12 @@ export async function apiFetch<T>(
     token = getStoredToken();
   }
 
+  if (authContext === true && token && hasTokenExpired(token)) {
+    // a refusal here clears nothing; only a refused request ends it
+    await attemptSpeculativeRefresh();
+    token = getStoredToken();
+  }
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...((options.headers as Record<string, string>) || {}),
@@ -192,8 +133,9 @@ export async function apiFetch<T>(
       authContext === true &&
       path !== '/auth/refresh'
     ) {
-      const refreshed = await attemptTokenRefresh();
-      if (refreshed) {
+      // true also when another tab's rotation left a newer token to use
+      const canRetry = await attemptTokenRefresh();
+      if (canRetry) {
         const retryHeaders = {
           ...headers,
           Authorization: `Bearer ${getStoredToken()}`,

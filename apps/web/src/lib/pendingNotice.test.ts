@@ -2,9 +2,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   consumePendingNotice,
   hasPendingNotice,
+  pendingNoticeKeys,
   setPendingNotice,
   type PendingNotice,
 } from './pendingNotice';
+import { withRefusedStorage } from '../../test/refusedStorage';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -126,7 +128,7 @@ describe('setPendingNotice / consumePendingNotice', () => {
     setPendingNotice('already-logged-in');
     expect(hasPendingNotice()).toBe(true);
     expect(consumePendingNotice()).toEqual({
-      message: "You're already signed in",
+      message: 'You were already signed in, so nothing changed',
       variant: 'success',
     });
     expect(hasPendingNotice()).toBe(false);
@@ -142,6 +144,18 @@ describe('setPendingNotice / consumePendingNotice', () => {
     expect(hasPendingNotice()).toBe(false);
   });
 
+  // the gate queues this one, so it stays put instead of riding a timer
+  it('round-trips session-unavailable as a standing warning-variant entry', () => {
+    setPendingNotice('session-unavailable');
+    expect(hasPendingNotice()).toBe(true);
+    expect(consumePendingNotice()).toEqual({
+      message: "We couldn't get you back into that session",
+      variant: 'warning',
+      standing: true,
+    });
+    expect(hasPendingNotice()).toBe(false);
+  });
+
   it('returns null when no notice has been set', () => {
     expect(consumePendingNotice()).toBeNull();
   });
@@ -153,31 +167,17 @@ describe('setPendingNotice / consumePendingNotice', () => {
   });
 
   it('does not throw when sessionStorage rejects writes', () => {
-    const originalSetItem = window.sessionStorage.setItem.bind(
-      window.sessionStorage,
-    );
-    window.sessionStorage.setItem = () => {
-      throw new DOMException('QuotaExceededError');
-    };
-    try {
+    withRefusedStorage('setItem', () => {
       expect(() => setPendingNotice('account-deleted')).not.toThrow();
-    } finally {
-      window.sessionStorage.setItem = originalSetItem;
-    }
+    });
+    expect(hasPendingNotice()).toBe(false);
   });
 
   it('returns null and does not throw when sessionStorage rejects reads', () => {
-    const originalGetItem = window.sessionStorage.getItem.bind(
-      window.sessionStorage,
-    );
-    window.sessionStorage.getItem = () => {
-      throw new DOMException('SecurityError');
-    };
-    try {
+    setPendingNotice('account-deleted');
+    withRefusedStorage('getItem', () => {
       expect(consumePendingNotice()).toBeNull();
-    } finally {
-      window.sessionStorage.getItem = originalGetItem;
-    }
+    });
   });
 
   it('returns null when stored value is unknown (forward-compat guard)', () => {
@@ -185,6 +185,18 @@ describe('setPendingNotice / consumePendingNotice', () => {
       'linklater_pending_notice',
       'not-a-real-notice',
     );
+    expect(consumePendingNotice()).toBeNull();
+  });
+
+  // handing one of these back reaches a setter that would invoke it
+  it.each([
+    'toString',
+    'constructor',
+    'valueOf',
+    'hasOwnProperty',
+    '__proto__',
+  ])('returns null for the inherited name %s', (inherited) => {
+    window.sessionStorage.setItem('linklater_pending_notice', inherited);
     expect(consumePendingNotice()).toBeNull();
   });
 });
@@ -215,38 +227,36 @@ describe('hasPendingNotice', () => {
   });
 
   it('returns false and does not throw when sessionStorage rejects reads', () => {
-    const originalGetItem = window.sessionStorage.getItem.bind(
-      window.sessionStorage,
-    );
-    window.sessionStorage.getItem = () => {
-      throw new DOMException('SecurityError');
-    };
-    try {
+    setPendingNotice('account-deleted');
+    withRefusedStorage('getItem', () => {
       expect(hasPendingNotice()).toBe(false);
-    } finally {
-      window.sessionStorage.getItem = originalGetItem;
-    }
+    });
   });
 });
 
-// drift guard: every PendingNotice key must round-trip the catalog or ship silently dropped
 describe('catalog drift guard', () => {
-  // TypeScript erases the union at runtime, so enumerate; a new member trips the compiler
-  const ALL_KEYS: readonly PendingNotice[] = [
-    'account-deleted',
-    'account-switched',
-    'already-logged-in',
-    'email-verified',
-    'email-verified-please-sign-in',
-    'email-change-verified',
-    'email-change-verified-please-sign-in',
-    'password-reset-success',
-    'deletion-link-invalid',
-    'verification-link-invalid',
-    'email-change-link-invalid',
-    'login-link-invalid',
-    'oauth-failed',
-  ];
+  // the union erases at runtime, so a keyed object stands in as its census
+  const ALL_KEYS = Object.keys({
+    'account-deleted': true,
+    'account-switched': true,
+    'already-logged-in': true,
+    'email-verified': true,
+    'email-verified-please-sign-in': true,
+    'email-change-verified': true,
+    'email-change-verified-please-sign-in': true,
+    'password-reset-success': true,
+    'session-unavailable': true,
+    'deletion-link-invalid': true,
+    'verification-link-invalid': true,
+    'email-change-link-invalid': true,
+    'login-link-invalid': true,
+    'oauth-failed': true,
+  } satisfies Record<PendingNotice, true>) as PendingNotice[];
+
+  // `satisfies` cannot hold the census above to the catalog from here
+  it('names every key the catalog carries, and no key it does not', () => {
+    expect([...ALL_KEYS].sort()).toEqual([...pendingNoticeKeys()].sort());
+  });
 
   for (const key of ALL_KEYS) {
     it(`'${key}' has both a non-empty message and a valid variant`, () => {

@@ -1,3 +1,8 @@
+- status
+- status
+- text: Magic link sent!
+- button "Dismiss"
+- status: Magic link sent!
 - heading "Linklater" [level=1]
 - paragraph: Save links now, read them later.
 - tablist "Authentication mode":
@@ -12,7 +17,3 @@
   - button "Log in with magic link" [disabled]
 - button "I literally have no idea what my password is"
 - alert
-- status:
-  - text: Magic link sent!
-  - button "Dismiss"
-- status: Magic link sent!

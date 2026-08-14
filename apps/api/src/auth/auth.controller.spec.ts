@@ -191,6 +191,23 @@ describe('AuthController', () => {
     });
   });
 
+  describe('refreshToken', () => {
+    it('hands the nominated successor on with the spent token', async () => {
+      const nominated = '0123456789abcdef'.repeat(4);
+
+      await controller.refreshToken({
+        refreshToken: REFRESH_TOKEN,
+        nextRefreshToken: nominated,
+      });
+
+      // dropping it here would sign out every client whose answer was lost
+      expect(authServiceMock.refresh).toHaveBeenCalledWith(
+        REFRESH_TOKEN,
+        nominated,
+      );
+    });
+  });
+
   describe('resendVerification', () => {
     it('applies JwtAuthGuard before CustomThrottlerGuard so only authenticated users can trigger the send', () => {
       const guards: unknown[] = Reflect.getMetadata(

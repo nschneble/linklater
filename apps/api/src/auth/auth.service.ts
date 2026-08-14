@@ -133,8 +133,11 @@ export class AuthService {
     );
   }
 
-  async refresh(rawRefreshToken: string) {
-    return this.refreshTokenService.refresh(rawRefreshToken);
+  async refresh(rawRefreshToken: string, nominatedRefreshToken?: string) {
+    return this.refreshTokenService.refresh(
+      rawRefreshToken,
+      nominatedRefreshToken,
+    );
   }
 
   async revokeAllRefreshTokens(userId: string) {

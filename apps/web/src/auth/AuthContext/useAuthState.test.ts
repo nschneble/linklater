@@ -19,6 +19,7 @@ vi.mock('../../lib/api', () => ({
   getStoredToken: vi.fn(),
   login: vi.fn(),
   logout: vi.fn(),
+  readTokenClaims: vi.fn(),
   register: vi.fn(),
   resendEmailChangeVerification: vi.fn(),
   resendVerificationEmail: vi.fn(),
@@ -26,6 +27,9 @@ vi.mock('../../lib/api', () => ({
 }));
 
 import * as apiModule from '../../lib/api';
+import { hasCarriedEmail } from './carriedEmail';
+import { readRenderedIdentity } from './renderedIdentity';
+import { restoreLocation, standOnPath } from '../../../test/locationMock';
 import { useAuthState } from './useAuthState';
 
 const makeUser = (
@@ -56,6 +60,8 @@ const makeUser = (
 beforeEach(() => {
   vi.clearAllMocks();
   localStorage.clear();
+  sessionStorage.clear();
+  vi.mocked(apiModule.readTokenClaims).mockReturnValue(null);
   vi.spyOn(console, 'error').mockImplementation(() => undefined);
 });
 
@@ -112,8 +118,7 @@ describe('initial state – stored token present', () => {
         expect(result.current.loading).toBe(false);
       });
 
-      // transient first getMe fault keeps the session; token clears only on a
-      // confirmed auth rejection
+      // a transient getMe fault keeps the session; only a 401 clears it
       expect(apiModule.clearStoredToken).not.toHaveBeenCalled();
       expect(result.current.user).toBeNull();
     },
@@ -418,89 +423,200 @@ describe('markWelcomed', () => {
   });
 });
 
-describe('mapMeToUser dyslexicFont passthrough', () => {
-  it('maps a false server dyslexicFont onto the user', async () => {
-    vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
-    vi.mocked(apiModule.getMe).mockResolvedValue(
-      makeUser({ dyslexicFont: false }),
+describe('a getMe that lands after the user signed out', () => {
+  /** Hands back the promise `getMe` is stuck on, plus its resolver. */
+  function deferGetMe() {
+    let release!: (me: ReturnType<typeof makeUser>) => void;
+    vi.mocked(apiModule.getMe).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          release = resolve as (me: ReturnType<typeof makeUser>) => void;
+        }),
     );
+    return () => release(makeUser());
+  }
+
+  it('is discarded rather than throwing the user back into the app', async () => {
+    vi.mocked(apiModule.getStoredToken).mockReturnValue(null);
+    const releaseGetMe = deferGetMe();
 
     const { result } = renderHook(() => useAuthState());
+    await waitFor(() => expect(result.current.loading).toBe(false));
 
-    await waitFor(() =>
-      expect(result.current.user?.email).toBe('user@example.com'),
-    );
+    let refresh!: Promise<void>;
+    act(() => {
+      refresh = result.current.refreshUser();
+    });
+    act(() => {
+      result.current.logout();
+    });
+    await act(async () => {
+      releaseGetMe();
+      await refresh;
+    });
 
-    expect(result.current.user?.dyslexicFont).toBe(false);
+    expect(result.current.user).toBeNull();
   });
 
-  it('maps a true server dyslexicFont onto the user', async () => {
-    vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
-    vi.mocked(apiModule.getMe).mockResolvedValue(
-      makeUser({ dyslexicFont: true }),
-    );
+  it('is adopted normally when no sign-out interrupts it', async () => {
+    vi.mocked(apiModule.getStoredToken).mockReturnValue(null);
+    const releaseGetMe = deferGetMe();
 
     const { result } = renderHook(() => useAuthState());
+    await waitFor(() => expect(result.current.loading).toBe(false));
 
-    await waitFor(() =>
-      expect(result.current.user?.email).toBe('user@example.com'),
-    );
+    let refresh!: Promise<void>;
+    act(() => {
+      refresh = result.current.refreshUser();
+    });
+    await act(async () => {
+      releaseGetMe();
+      await refresh;
+    });
 
-    expect(result.current.user?.dyslexicFont).toBe(true);
+    expect(result.current.user?.email).toBe('user@example.com');
   });
 });
 
-describe('mapMeToUser customTheme normalization', () => {
-  it('normalizes a valid server blob onto user.customTheme', async () => {
+describe('recording who this tab is rendering', () => {
+  it('notes the identity on mount hydration', async () => {
     vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
-    vi.mocked(apiModule.getMe).mockResolvedValue(
-      makeUser({
-        customTheme: {
-          dark: { '--mount-border': '#abcdef', '--bogus-key': '#000000' },
-          light: {},
-        },
-      }),
-    );
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());
 
     const { result } = renderHook(() => useAuthState());
+    await waitFor(() => expect(result.current.user).not.toBeNull());
 
-    await waitFor(() =>
-      expect(result.current.user?.email).toBe('user@example.com'),
-    );
+    expect(readRenderedIdentity()).toBe('user-1');
+  });
 
-    // known keys survive; unknown keys are stripped by the trust boundary
-    expect(result.current.user?.customTheme).toEqual({
-      dark: { '--mount-border': '#abcdef' },
-      light: {},
+  it('notes the identity after a login', async () => {
+    vi.mocked(apiModule.getStoredToken).mockReturnValue(null);
+    vi.mocked(apiModule.login).mockResolvedValue({ accessToken: 'jwt' });
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());
+
+    const { result } = renderHook(() => useAuthState());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => {
+      await result.current.login('user@example.com', 'pass');
     });
+
+    expect(readRenderedIdentity()).toBe('user-1');
   });
 
-  it('yields null for a malformed (non-object) customTheme, never raw passthrough', async () => {
+  it('forgets it on logout, because a signed-out tab renders nobody', async () => {
     vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
-    vi.mocked(apiModule.getMe).mockResolvedValue(
-      makeUser({ customTheme: 'not-an-object' }),
-    );
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());
+
+    const { result } = renderHook(() => useAuthState());
+    await waitFor(() => expect(readRenderedIdentity()).toBe('user-1'));
+
+    act(() => {
+      result.current.logout();
+    });
+
+    expect(readRenderedIdentity()).toBeNull();
+  });
+});
+
+describe('an offer whose link landed', () => {
+  /**
+   * The email is handed across the offer's document load in case the load
+   * bounces. Rendering a user is the proof it did not, and the value has
+   * to go then: left behind it prefills a form the user reaches later by
+   * signing out, and arms an explanation for a bounce that never happened.
+   */
+  it('drops the carried email once a user is rendered', async () => {
+    sessionStorage.setItem('linklater_carried_email', 'half-typed@test.com');
+    vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());
+
+    const { result } = renderHook(() => useAuthState());
+    await waitFor(() => expect(result.current.user).not.toBeNull());
+
+    expect(hasCarriedEmail()).toBe(false);
+  });
+
+  it('leaves it alone while the boot is still failing to render anyone', async () => {
+    sessionStorage.setItem('linklater_carried_email', 'half-typed@test.com');
+    vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
+    vi.mocked(apiModule.getMe).mockRejectedValue(new Error('network'));
+
+    const { result } = renderHook(() => useAuthState());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(hasCarriedEmail()).toBe(true);
+  });
+});
+
+describe('booting on a token that belongs to somebody else', () => {
+  afterEach(() => {
+    restoreLocation();
+  });
+
+  it('abandons the boot it was about to run, rather than fetching as them', async () => {
+    const assignMock = standOnPath('/settings');
+    sessionStorage.setItem('linklater_rendered_identity', 'user-1');
+    vi.mocked(apiModule.getStoredToken).mockReturnValue('their-jwt');
+    vi.mocked(apiModule.readTokenClaims).mockReturnValue({
+      exp: null,
+      subject: 'user-2',
+    });
+
+    const { result } = renderHook(() => useAuthState());
+
+    await waitFor(() => expect(assignMock).toHaveBeenCalledWith('/unread'));
+    expect(apiModule.getMe).not.toHaveBeenCalled();
+    // releasing it here paints a login form over a departing document
+    expect(result.current.loading).toBe(true);
+  });
+
+  it('boots normally when the token belongs to the last rendered user', async () => {
+    const assignMock = standOnPath('/settings');
+    sessionStorage.setItem('linklater_rendered_identity', 'user-1');
+    vi.mocked(apiModule.getStoredToken).mockReturnValue('same-jwt');
+    vi.mocked(apiModule.readTokenClaims).mockReturnValue({
+      exp: null,
+      subject: 'user-1',
+    });
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());
 
     const { result } = renderHook(() => useAuthState());
 
     await waitFor(() =>
       expect(result.current.user?.email).toBe('user@example.com'),
     );
+    expect(assignMock).not.toHaveBeenCalled();
+  });
+});
 
-    expect(result.current.user?.customTheme).toBeNull();
+describe('the mirror the identity guard reads the rendered user through', () => {
+  afterEach(() => {
+    restoreLocation();
   });
 
-  it('coerces an array customTheme to safe empty mode maps', async () => {
+  // the guard's own tests set .current by hand and cannot see this wire
+  it('is fed, so a switch spotted on return to the tab is acted on', async () => {
+    const assignMock = standOnPath('/settings');
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      get: () => 'visible',
+    });
     vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
-    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser({ customTheme: [] }));
+    vi.mocked(apiModule.readTokenClaims).mockReturnValue({
+      exp: null,
+      subject: 'user-1',
+    });
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());
 
     const { result } = renderHook(() => useAuthState());
+    await waitFor(() => expect(result.current.user?.userId).toBe('user-1'));
 
-    await waitFor(() =>
-      expect(result.current.user?.email).toBe('user@example.com'),
-    );
+    vi.mocked(apiModule.readTokenClaims).mockReturnValue({
+      exp: null,
+      subject: 'user-2',
+    });
+    document.dispatchEvent(new Event('visibilitychange'));
 
-    // an array is an object, so normalize returns empty mode maps, not the raw array
-    expect(result.current.user?.customTheme).toEqual({ dark: {}, light: {} });
+    expect(assignMock).toHaveBeenCalledWith('/unread');
   });
 });

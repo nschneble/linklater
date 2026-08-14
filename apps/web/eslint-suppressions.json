@@ -1,9 +1,4 @@
 {
-  "src/auth/AuthContext/useAuthState.test.ts": {
-    "local/no-comment-block-in-body": {
-      "count": 1
-    }
-  },
   "src/components/api-docs/ApiDocsView.test.tsx": {
     "local/no-comment-block-in-body": {
       "count": 3
@@ -97,11 +92,6 @@
   "src/lib/hooks/useToastAnnouncement.test.ts": {
     "local/no-comment-block-in-body": {
       "count": 6
-    }
-  },
-  "src/routes/Unauthenticated.test.tsx": {
-    "local/no-comment-block-in-body": {
-      "count": 1
     }
   },
   "src/theme/colorMath.test.ts": {

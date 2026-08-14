@@ -1,15 +1,35 @@
 import { jest } from '@jest/globals';
 
+import { createHash } from 'node:crypto';
 import { JwtService } from '@nestjs/jwt';
+import { Logger, UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { UnauthorizedException } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { RefreshTokenService } from './refresh-token.service';
 
+const REJECTION_PREFIX = 'Refresh rejected: ';
 const SIGNED_TOKEN = 'signed-token';
 const USER_EMAIL = 'email@addy.com';
 const USER_ID = 'user-1';
+
+const warnedCalls = () =>
+  (Logger.prototype.warn as unknown as jest.Mock).mock.calls as unknown[][];
+
+// every argument, not only the message: Nest prints each optional param on
+// a line of its own, so whatever a caller attaches beside the message
+// reaches stdout exactly as the message does
+const warnedLines = () =>
+  warnedCalls().map((call) => call.map(String).join(' '));
+
+// the message alone, because a reason code is a claim about what was said,
+// and Nest's own second parameter is a context label a caller is entitled
+// to pass without changing which reason was reported
+const rejectionReasonsLogged = () =>
+  warnedCalls()
+    .map((call) => String(call[0]))
+    .filter((message) => message.startsWith(REJECTION_PREFIX))
+    .map((message) => message.slice(REJECTION_PREFIX.length));
 
 describe('RefreshTokenService', () => {
   let service: RefreshTokenService;
@@ -21,6 +41,7 @@ describe('RefreshTokenService', () => {
   const prismaServiceMock = {
     refreshToken: {
       create: jest.fn().mockResolvedValue({}),
+      createMany: jest.fn().mockResolvedValue({ count: 1 }),
       delete: jest.fn().mockResolvedValue({}),
       deleteMany: jest.fn().mockResolvedValue({}),
       findUnique: jest.fn(),
@@ -51,6 +72,12 @@ describe('RefreshTokenService', () => {
 
     service = module.get<RefreshTokenService>(RefreshTokenService);
     jest.clearAllMocks();
+    // rejection-path tests exercise the warn branch on purpose; keep it quiet
+    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('should be defined', () => {
@@ -135,6 +162,131 @@ describe('RefreshTokenService', () => {
       expect(result).toHaveProperty('refreshToken');
     });
 
+    /**
+     * A client that names its own successor can recover a rotation whose
+     * answer it never received, so the raw value it will hold has to be one
+     * it chose. What has to hold here is that nominating changes nothing
+     * else: a taken hash still rotates, and a refusal still reads the same
+     * to whoever asked.
+     */
+    describe('a nominated successor', () => {
+      const NOMINATED = '0123456789abcdef'.repeat(4);
+
+      const hashOf = (value: string) =>
+        createHash('sha256').update(value).digest('hex');
+
+      const arrangeRotatableToken = () => {
+        (
+          prismaServiceMock.refreshToken.findUnique as jest.Mock
+        ).mockResolvedValue({
+          id: 'rt-1',
+          userId: USER_ID,
+          expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+          user: { id: USER_ID, email: USER_EMAIL, tokenVersion: 0 },
+        });
+        (
+          prismaServiceMock.refreshToken.deleteMany as jest.Mock
+        ).mockResolvedValueOnce({ count: 1 });
+      };
+
+      it('rotates into the token the client nominated', async () => {
+        arrangeRotatableToken();
+
+        const result = await service.refresh(RAW_REFRESH_TOKEN, NOMINATED);
+
+        expect(prismaServiceMock.refreshToken.createMany).toHaveBeenCalledWith({
+          data: [
+            expect.objectContaining({
+              tokenHash: hashOf(NOMINATED),
+              userId: USER_ID,
+            }),
+          ],
+          skipDuplicates: true,
+        });
+        expect(result.refreshToken).toBe(NOMINATED);
+        expect(prismaServiceMock.refreshToken.create).not.toHaveBeenCalled();
+      });
+
+      it('falls back to a generated token when the nominated hash is taken', async () => {
+        arrangeRotatableToken();
+        (
+          prismaServiceMock.refreshToken.createMany as jest.Mock
+        ).mockResolvedValueOnce({ count: 0 });
+
+        const result = await service.refresh(RAW_REFRESH_TOKEN, NOMINATED);
+
+        expect(result.refreshToken).not.toBe(NOMINATED);
+        expect(result.refreshToken).toMatch(/^[0-9a-f]{64}$/);
+        expect(result).toHaveProperty('accessToken', SIGNED_TOKEN);
+        expect(prismaServiceMock.refreshToken.create).toHaveBeenCalledWith({
+          data: expect.objectContaining({
+            tokenHash: hashOf(result.refreshToken),
+            userId: USER_ID,
+          }),
+        });
+        // a collision is not a refusal, so it says nothing a prober can read
+        expect(warnedLines()).toEqual([]);
+      });
+
+      it('refuses to rotate a token into itself', async () => {
+        arrangeRotatableToken();
+
+        const result = await service.refresh(
+          RAW_REFRESH_TOKEN,
+          RAW_REFRESH_TOKEN,
+        );
+
+        // rotation is what makes a stolen token cost the thief a sign-out
+        expect(result.refreshToken).not.toBe(RAW_REFRESH_TOKEN);
+        expect(
+          prismaServiceMock.refreshToken.createMany,
+        ).not.toHaveBeenCalled();
+      });
+
+      it('leaves the generated path untouched when nothing is nominated', async () => {
+        arrangeRotatableToken();
+
+        const result = await service.refresh(RAW_REFRESH_TOKEN);
+
+        expect(
+          prismaServiceMock.refreshToken.createMany,
+        ).not.toHaveBeenCalled();
+        expect(prismaServiceMock.refreshToken.create).toHaveBeenCalledWith({
+          data: expect.objectContaining({
+            tokenHash: hashOf(result.refreshToken),
+            userId: USER_ID,
+          }),
+        });
+      });
+
+      it('answers a refusal the same way whether or not one was nominated', async () => {
+        const refusalOf = async (nominated?: string) => {
+          (
+            prismaServiceMock.refreshToken.findUnique as jest.Mock
+          ).mockResolvedValue(null);
+          try {
+            await service.refresh(RAW_REFRESH_TOKEN, nominated);
+          } catch (error) {
+            return error as UnauthorizedException;
+          }
+          throw new Error('refresh resolved where a refusal was expected');
+        };
+
+        const plain = await refusalOf();
+        const nominating = await refusalOf(NOMINATED);
+
+        expect(nominating.getStatus()).toBe(plain.getStatus());
+        expect(nominating.getResponse()).toEqual(plain.getResponse());
+        expect(rejectionReasonsLogged()).toEqual([
+          'unknown-token',
+          'unknown-token',
+        ]);
+        expect(
+          prismaServiceMock.refreshToken.createMany,
+        ).not.toHaveBeenCalled();
+      });
+    });
+
     it('throws UnauthorizedException (not 500) when a concurrent refresh already deleted the row', async () => {
       (
         prismaServiceMock.refreshToken.findUnique as jest.Mock
@@ -152,31 +304,6 @@ describe('RefreshTokenService', () => {
         UnauthorizedException,
       );
       expect(prismaServiceMock.refreshToken.create).not.toHaveBeenCalled();
-    });
-
-    it('throws UnauthorizedException when the refresh token is not found', async () => {
-      (
-        prismaServiceMock.refreshToken.findUnique as jest.Mock
-      ).mockResolvedValue(null);
-
-      await expect(service.refresh(RAW_REFRESH_TOKEN)).rejects.toThrow(
-        UnauthorizedException,
-      );
-    });
-
-    it('throws UnauthorizedException when the refresh token is expired', async () => {
-      (
-        prismaServiceMock.refreshToken.findUnique as jest.Mock
-      ).mockResolvedValue({
-        id: 'rt-1',
-        userId: USER_ID,
-        expiresAt: new Date(Date.now() - 1000),
-        user: { id: USER_ID, email: USER_EMAIL, tokenVersion: 0 },
-      });
-
-      await expect(service.refresh(RAW_REFRESH_TOKEN)).rejects.toThrow(
-        UnauthorizedException,
-      );
     });
 
     it('propagates failure from the create half of the rotation so prisma rolls back the delete', async () => {
@@ -198,6 +325,134 @@ describe('RefreshTokenService', () => {
       await expect(service.refresh(RAW_REFRESH_TOKEN)).rejects.toThrow(
         'db down',
       );
+    });
+
+    describe('rejection reason codes', () => {
+      const REJECTED_RESPONSE = {
+        error: 'Unauthorized',
+        message: 'Invalid or expired refresh token',
+        statusCode: 401,
+      };
+
+      const arrangeStoredToken = (expiresAt: Date) => {
+        (
+          prismaServiceMock.refreshToken.findUnique as jest.Mock
+        ).mockResolvedValue({
+          id: 'rt-1',
+          userId: USER_ID,
+          expiresAt,
+          user: { id: USER_ID, email: USER_EMAIL, tokenVersion: 0 },
+        });
+      };
+
+      const arrangeUnknownToken = () => {
+        (
+          prismaServiceMock.refreshToken.findUnique as jest.Mock
+        ).mockResolvedValue(null);
+      };
+
+      const arrangeExpiredToken = () => {
+        arrangeStoredToken(new Date(Date.now() - 1000));
+      };
+
+      const arrangeRotationRace = () => {
+        arrangeStoredToken(new Date(Date.now() + 60 * 60 * 1000));
+        (
+          prismaServiceMock.refreshToken.deleteMany as jest.Mock
+        ).mockResolvedValueOnce({ count: 0 });
+      };
+
+      const rejectionOfRefresh = async () => {
+        try {
+          await service.refresh(RAW_REFRESH_TOKEN);
+        } catch (error) {
+          return error as UnauthorizedException;
+        }
+        throw new Error('refresh resolved where a rejection was expected');
+      };
+
+      const presentedTokenHash = () =>
+        (
+          (prismaServiceMock.refreshToken.findUnique as jest.Mock).mock
+            .calls[0][0] as { where: { tokenHash: string } }
+        ).where.tokenHash;
+
+      it('reports unknown-token when no stored row matches the hash', async () => {
+        arrangeUnknownToken();
+
+        await expect(service.refresh(RAW_REFRESH_TOKEN)).rejects.toThrow(
+          UnauthorizedException,
+        );
+
+        expect(rejectionReasonsLogged()).toEqual(['unknown-token']);
+      });
+
+      it('reports expired when the matched row had already lapsed', async () => {
+        arrangeExpiredToken();
+
+        await expect(service.refresh(RAW_REFRESH_TOKEN)).rejects.toThrow(
+          UnauthorizedException,
+        );
+
+        expect(rejectionReasonsLogged()).toEqual(['expired']);
+      });
+
+      it('reports rotation-race when a concurrent refresh won the delete', async () => {
+        arrangeRotationRace();
+
+        await expect(service.refresh(RAW_REFRESH_TOKEN)).rejects.toThrow(
+          UnauthorizedException,
+        );
+
+        expect(rejectionReasonsLogged()).toEqual(['rotation-race']);
+      });
+
+      it('stays silent when the refresh succeeds', async () => {
+        arrangeStoredToken(new Date(Date.now() + 60 * 60 * 1000));
+        (
+          prismaServiceMock.refreshToken.deleteMany as jest.Mock
+        ).mockResolvedValueOnce({ count: 1 });
+
+        await service.refresh(RAW_REFRESH_TOKEN);
+
+        expect(warnedLines()).toEqual([]);
+      });
+
+      // the only pin the missing-row and lapsed-row arms have
+      it('answers every arm with a response a caller cannot tell apart', async () => {
+        arrangeUnknownToken();
+        const unknownToken = await rejectionOfRefresh();
+        arrangeExpiredToken();
+        const expired = await rejectionOfRefresh();
+        arrangeRotationRace();
+        const rotationRace = await rejectionOfRefresh();
+
+        for (const rejection of [unknownToken, expired, rotationRace]) {
+          expect(rejection).toBeInstanceOf(UnauthorizedException);
+          expect(rejection.getStatus()).toBe(401);
+          expect(rejection.getResponse()).toEqual(REJECTED_RESPONSE);
+        }
+      });
+
+      it('keeps the token, its hash, and the account out of every line', async () => {
+        arrangeUnknownToken();
+        await rejectionOfRefresh();
+        arrangeExpiredToken();
+        await rejectionOfRefresh();
+        arrangeRotationRace();
+        await rejectionOfRefresh();
+
+        const emitted = warnedLines().join('\n');
+        for (const secret of [
+          RAW_REFRESH_TOKEN,
+          presentedTokenHash(),
+          USER_EMAIL,
+          USER_ID,
+        ]) {
+          expect(emitted).not.toContain(secret);
+        }
+        expect(rejectionReasonsLogged()).toHaveLength(3);
+      });
     });
   });
 

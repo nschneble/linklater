@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { narrowMode, narrowTheme } from './useAuthState';
+import { narrowMode, narrowTheme } from './mapMeToUser';
 
 describe('narrowMode', () => {
   it('passes "light" through unchanged', () => {

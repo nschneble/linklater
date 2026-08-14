@@ -1,10 +1,18 @@
 /**
- * Tests for the central API client (`lib/api/`).
+ * Tests for the central API client (`lib/api/`) through its barrel: the
+ * request each endpoint builds, and what `apiFetch` does around it.
  *
  * All network calls are intercepted by replacing `globalThis.fetch` with a
- * vi.fn(). Tests verify both the happy path (correct URL, method, headers,
- * returned value) and the error path (non-2xx responses, JSON vs. plain-text
- * error bodies).
+ * vi.fn(). What lands here is what only a whole round trip can show: the URL,
+ * method and headers an endpoint sends, the renewal that precedes a request
+ * carrying a token already out of date, the retry that follows a 401, and the
+ * cases where `apiFetch`, `tokenRefresh` and `storage` decide between a
+ * spent token and an ended session together. Each of those three modules
+ * proves its own arms in its own suite.
+ *
+ * Leg counts are load-bearing in the pre-flight suite and asserted
+ * directly: what that renewal buys is a leg not spent, which no assertion
+ * about the response can show.
  */
 
 import {
@@ -63,15 +71,66 @@ import {
   verifyTotpSetup,
 } from '.';
 
-function mockFetch(body: unknown, status = 200): Mock {
-  const mock = vi.fn().mockResolvedValue({
+function jsonResponse(body: unknown, status = 200) {
+  return {
     ok: status >= 200 && status < 300,
     status,
     text: () => Promise.resolve(JSON.stringify(body)),
     json: () => Promise.resolve(body),
+  };
+}
+
+function mockFetch(body: unknown, status = 200): Mock {
+  const mock = vi.fn().mockResolvedValue(jsonResponse(body, status));
+  globalThis.fetch = mock as unknown as typeof fetch;
+  return mock;
+}
+
+/**
+ * Answers the renewal leg and the protected request separately, so a test
+ * can count what each one cost and read the header the second one carried.
+ */
+function mockFetchByLeg(renewal: unknown, request: unknown): Mock {
+  const mock = vi.fn((input: RequestInfo | URL) => {
+    const url = typeof input === 'string' ? input : input.toString();
+    return Promise.resolve(url.includes('/auth/refresh') ? renewal : request);
   });
   globalThis.fetch = mock as unknown as typeof fetch;
   return mock;
+}
+
+/**
+ * Builds a token around a payload. Payloads here are ASCII, so `btoa`
+ * covers what `jwt.test.ts` needs a TextEncoder pass for.
+ */
+function makeToken(payload: unknown): string {
+  const segment = btoa(JSON.stringify(payload))
+    .replaceAll('+', '-')
+    .replaceAll('/', '_')
+    .replace(/=+$/, '');
+  return `header.${segment}.signature`;
+}
+
+/** A token dated relative to now, negative for one already run out. */
+function makeTokenExpiringIn(seconds: number): string {
+  return makeToken({
+    subject: 'user-1',
+    exp: Math.floor(Date.now() / 1000) + seconds,
+  });
+}
+
+/**
+ * The legs a run spent, in order, with the base `apiFetch` interpolates
+ * taken back off, so a sequence can be read as a list of paths.
+ */
+function readPaths(mock: Mock): string[] {
+  const base = String(import.meta.env.VITE_API_BASE_URL);
+  return mock.mock.calls.map(([url]) => String(url).replace(base, ''));
+}
+
+function readAuthorization(call: unknown): string | undefined {
+  const [, options] = call as [string, RequestInit];
+  return (options.headers as Record<string, string>)['Authorization'];
 }
 
 function mockFetchText(text: string, status = 400): Mock {
@@ -109,6 +168,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.useRealTimers();
 });
 
 describe('token helpers', () => {
@@ -202,45 +262,12 @@ describe('apiFetch', () => {
     expect((error as ApiError).status).toBe(400);
   });
 
-  it('throws ApiError with raw text when response body is not JSON', async () => {
-    mockFetchText('Bad gateway', 502);
-
-    const error = await apiFetch('/test').catch((caught: unknown) => caught);
-    expect(error).toBeInstanceOf(ApiError);
-    expect((error as ApiError).message).toBe('Bad gateway');
-    expect((error as ApiError).status).toBe(502);
-  });
-
-  it('throws ApiError with fallback message when response body is empty', async () => {
-    globalThis.fetch = vi.fn().mockResolvedValue({
-      ok: false,
-      status: 503,
-      text: () => Promise.resolve(''),
-    }) as unknown as typeof fetch;
-
-    const error = await apiFetch('/test').catch((caught: unknown) => caught);
-    expect(error).toBeInstanceOf(ApiError);
-    expect((error as ApiError).message).toBe('Request failed with 503');
-    expect((error as ApiError).status).toBe(503);
-  });
-
   it('returns parsed JSON on a 2xx response', async () => {
     mockFetch({ id: 'abc', url: 'https://example.com' });
 
     const result = await apiFetch<{ id: string; url: string }>('/test');
 
     expect(result).toEqual({ id: 'abc', url: 'https://example.com' });
-  });
-
-  it('returns undefined when the 2xx response body is empty', async () => {
-    globalThis.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      text: () => Promise.resolve(''),
-    }) as unknown as typeof fetch;
-
-    const result = await apiFetch('/test');
-
-    expect(result).toBeUndefined();
   });
 
   it('retries with new token after 401 when a refresh token is stored', async () => {
@@ -286,111 +313,20 @@ describe('apiFetch', () => {
     expect(getStoredRefreshToken()).toBe('new-refresh');
   });
 
-  it('clears tokens and throws when refresh token is expired', async () => {
-    setStoredToken('expired-jwt', 'expired-refresh');
-
-    globalThis.fetch = vi
-      .fn()
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 401,
-        text: () =>
-          Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
-      })
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 401,
-        text: () =>
-          Promise.resolve(JSON.stringify({ message: 'Invalid refresh token' })),
-      }) as unknown as typeof fetch;
-
-    await expect(apiFetch('/test')).rejects.toBeInstanceOf(ApiError);
-    expect(getStoredToken()).toBeNull();
-    expect(getStoredRefreshToken()).toBeNull();
-  });
-
-  it('clears tokens and throws when the refresh endpoint answers 403', async () => {
-    setStoredToken('expired-jwt', 'forbidden-refresh');
-
-    globalThis.fetch = vi
-      .fn()
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 401,
-        text: () =>
-          Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
-      })
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 403,
-        text: () => Promise.resolve(JSON.stringify({ message: 'Forbidden' })),
-      }) as unknown as typeof fetch;
-
-    await expect(apiFetch('/test')).rejects.toBeInstanceOf(ApiError);
-    // 403 means the refresh token is rejected: session dead, clear the tokens
-    expect(getStoredToken()).toBeNull();
-    expect(getStoredRefreshToken()).toBeNull();
-  });
-
-  it('keeps the stored tokens when the refresh endpoint answers 500', async () => {
-    setStoredToken('expired-jwt', 'valid-refresh');
-
-    globalThis.fetch = vi
-      .fn()
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 401,
-        text: () =>
-          Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
-      })
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        text: () =>
-          Promise.resolve(JSON.stringify({ message: 'Server error' })),
-      }) as unknown as typeof fetch;
-
-    await expect(apiFetch('/test')).rejects.toBeInstanceOf(ApiError);
-    // 5xx is a server fault, not a spent session, so tokens survive to retry
-    expect(getStoredToken()).toBe('expired-jwt');
-    expect(getStoredRefreshToken()).toBe('valid-refresh');
-  });
-
-  it('recovers on a later request after a transient refresh failure leaves the tokens intact', async () => {
-    setStoredToken('expired-jwt', 'valid-refresh');
+  it('refreshes with the token another tab rotated, not the stale cached one', async () => {
+    setStoredToken('expired-jwt', 'spent-refresh');
+    // the other tab rotated and persisted a successor before this 401
+    localStorage.setItem('linklater_refresh_token', 'rotated-refresh');
 
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce({
-        // first request → 401
         ok: false,
         status: 401,
         text: () =>
           Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
       })
       .mockResolvedValueOnce({
-        // refresh → 500 (transient); the tokens must survive untouched
-        ok: false,
-        status: 500,
-        text: () =>
-          Promise.resolve(JSON.stringify({ message: 'Server error' })),
-      });
-    globalThis.fetch = fetchMock as unknown as typeof fetch;
-
-    await expect(apiFetch('/first')).rejects.toBeInstanceOf(ApiError);
-    expect(getStoredToken()).toBe('expired-jwt');
-    expect(getStoredRefreshToken()).toBe('valid-refresh');
-
-    (fetchMock as unknown as Mock)
-      .mockResolvedValueOnce({
-        // second request → 401
-        ok: false,
-        status: 401,
-        text: () =>
-          Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
-      })
-      .mockResolvedValueOnce({
-        // refresh → 200; the surviving refresh token now rotates cleanly
         ok: true,
         status: 200,
         text: () =>
@@ -407,30 +343,278 @@ describe('apiFetch', () => {
           }),
       })
       .mockResolvedValueOnce({
-        // retry → 200
         ok: true,
         status: 200,
-        text: () => Promise.resolve(JSON.stringify({ id: 'recovered' })),
+        text: () => Promise.resolve(JSON.stringify({ id: 'retried' })),
       });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
 
-    await expect(apiFetch<{ id: string }>('/second')).resolves.toEqual({
-      id: 'recovered',
+    await expect(apiFetch<{ id: string }>('/test')).resolves.toEqual({
+      id: 'retried',
+    });
+
+    const [, refreshOptions] = fetchMock.mock.calls[1] as [string, RequestInit];
+    expect(JSON.parse(refreshOptions.body as string)).toEqual({
+      refreshToken: 'rotated-refresh',
+      nextRefreshToken: expect.stringMatching(/^[0-9a-f]{64}$/),
     });
     expect(getStoredToken()).toBe('fresh-jwt');
-    expect(getStoredRefreshToken()).toBe('fresh-refresh');
   });
 
-  it('does not retry when no refresh token is stored', async () => {
-    setStoredToken('expired-jwt');
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: false,
-      status: 401,
-      text: () => Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
-    }) as unknown as typeof fetch;
-    globalThis.fetch = fetchMock;
+  it('keeps the session when another tab rotates the pair mid-refresh', async () => {
+    setStoredToken('expired-jwt', 'my-refresh');
+
+    let protectedCallCount = 0;
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+
+      if (url.includes('/auth/refresh')) {
+        // lands mid-flight, so no storage event precedes the 401
+        localStorage.setItem('linklater_token', 'sibling-jwt');
+        localStorage.setItem('linklater_refresh_token', 'sibling-refresh');
+        return Promise.resolve({
+          ok: false,
+          status: 401,
+          text: () =>
+            Promise.resolve(JSON.stringify({ message: 'Invalid refresh' })),
+        });
+      }
+
+      protectedCallCount += 1;
+      if (protectedCallCount === 1) {
+        return Promise.resolve({
+          ok: false,
+          status: 401,
+          text: () =>
+            Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        text: () => Promise.resolve(JSON.stringify({ id: 'retried' })),
+      });
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const result = await apiFetch<{ id: string }>('/test').catch(
+      (caught: unknown) => caught,
+    );
+
+    // a 401 on a token the sibling replaced says that token is spent
+    expect(getStoredRefreshToken()).toBe('sibling-refresh');
+    expect(getStoredToken()).toBe('sibling-jwt');
+    expect(result).toEqual({ id: 'retried' });
+
+    const [, retryOptions] = fetchMock.mock.calls[2] as [string, RequestInit];
+    expect((retryOptions.headers as Record<string, string>).Authorization).toBe(
+      'Bearer sibling-jwt',
+    );
+  });
+
+  it('gives up after one retry when the access token it finds is dead too', async () => {
+    setStoredToken('expired-jwt', 'my-refresh');
+
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+
+      if (url.includes('/auth/refresh')) {
+        // the sibling's refresh token landed; its access token has not
+        localStorage.setItem('linklater_refresh_token', 'sibling-refresh');
+        return Promise.resolve({
+          ok: false,
+          status: 401,
+          text: () =>
+            Promise.resolve(JSON.stringify({ message: 'Invalid refresh' })),
+        });
+      }
+      return Promise.resolve({
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Still unauthorized' })),
+      });
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const error = await apiFetch('/test').catch((caught: unknown) => caught);
+
+    // the retry is one-shot, so its own 401 ends the request
+    expect(fetchMock.mock.calls).toHaveLength(3);
+    expect((error as ApiError).message).toBe('Still unauthorized');
+    expect((error as ApiError).status).toBe(401);
+  });
+
+  it('keeps the session when a sibling rotates over a write this tab could not persist', async () => {
+    localStorage.setItem('linklater_token', 'older-jwt');
+    localStorage.setItem('linklater_refresh_token', 'older-refresh');
+    const setItemSpy = vi
+      .spyOn(window.localStorage, 'setItem')
+      .mockImplementation(() => {
+        throw new Error('QuotaExceededError');
+      });
+    setStoredToken('my-jwt', 'my-refresh');
+    // quota frees up; the store still holds the replaced pair
+    setItemSpy.mockRestore();
+
+    let protectedCallCount = 0;
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+
+      if (url.includes('/auth/refresh')) {
+        localStorage.setItem('linklater_token', 'sibling-jwt');
+        localStorage.setItem('linklater_refresh_token', 'sibling-refresh');
+        return Promise.resolve({
+          ok: false,
+          status: 401,
+          text: () =>
+            Promise.resolve(JSON.stringify({ message: 'Invalid refresh' })),
+        });
+      }
+
+      protectedCallCount += 1;
+      if (protectedCallCount === 1) {
+        return Promise.resolve({
+          ok: false,
+          status: 401,
+          text: () =>
+            Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        text: () => Promise.resolve(JSON.stringify({ id: 'retried' })),
+      });
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const result = await apiFetch<{ id: string }>('/test').catch(
+      (caught: unknown) => caught,
+    );
+
+    // the unpersisted pair is what got spent, not the older stored one
+    const [, refreshOptions] = fetchMock.mock.calls[1] as [string, RequestInit];
+    expect(JSON.parse(refreshOptions.body as string)).toEqual({
+      refreshToken: 'my-refresh',
+      nextRefreshToken: expect.stringMatching(/^[0-9a-f]{64}$/),
+    });
+    expect(getStoredRefreshToken()).toBe('sibling-refresh');
+    expect(result).toEqual({ id: 'retried' });
+  });
+
+  it('does not retry when this tab logs out while the refresh is in flight', async () => {
+    setStoredToken('expired-jwt', 'my-refresh');
+
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+
+      if (url.includes('/auth/refresh')) {
+        clearStoredToken();
+        return Promise.resolve({
+          ok: false,
+          status: 401,
+          text: () =>
+            Promise.resolve(JSON.stringify({ message: 'Invalid refresh' })),
+        });
+      }
+      return Promise.resolve({
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+      });
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
 
     await expect(apiFetch('/test')).rejects.toBeInstanceOf(ApiError);
-    expect((fetchMock as unknown as Mock).mock.calls).toHaveLength(1);
+
+    // an empty store is no successor, so nothing is worth retrying against
+    expect(fetchMock.mock.calls).toHaveLength(2);
+    expect(getStoredToken()).toBeNull();
+  });
+
+  it('logs out when a 401 finds only the pair this tab could not persist', async () => {
+    localStorage.setItem('linklater_refresh_token', 'older-refresh');
+    vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => {
+      throw new Error('QuotaExceededError');
+    });
+    // the store goes on serving the pair this rotation replaced
+    setStoredToken('my-jwt', 'my-refresh');
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+      })
+      .mockResolvedValue({
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Invalid refresh' })),
+      });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const error = await apiFetch('/test').catch((caught: unknown) => caught);
+
+    // neither an older store nor a refused nomination is a successor
+    expect(getStoredRefreshToken()).toBeNull();
+    expect(getStoredToken()).toBeNull();
+    expect(readPaths(fetchMock)).toEqual([
+      '/test',
+      '/auth/refresh',
+      '/auth/refresh',
+    ]);
+    expect((error as ApiError).status).toBe(401);
+  });
+
+  it('logs out when a sibling removes the refresh token and the server rejects it', async () => {
+    setStoredToken('expired-jwt', 'cached-refresh');
+    // this tab keeps its copy; a removal elsewhere is not proof of an end
+    localStorage.removeItem('linklater_refresh_token');
+    window.dispatchEvent(
+      new StorageEvent('storage', {
+        key: 'linklater_refresh_token',
+        newValue: null,
+      }),
+    );
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
+      })
+      .mockResolvedValue({
+        ok: false,
+        status: 401,
+        text: () =>
+          Promise.resolve(JSON.stringify({ message: 'Invalid refresh' })),
+      });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const error = await apiFetch('/test').catch((caught: unknown) => caught);
+
+    // the cached copy was spent against the server, not assumed dead
+    expect(readPaths(fetchMock)).toEqual([
+      '/test',
+      '/auth/refresh',
+      '/auth/refresh',
+    ]);
+    const [, refreshOptions] = fetchMock.mock.calls[1] as [string, RequestInit];
+    expect(JSON.parse(refreshOptions.body as string)).toEqual({
+      refreshToken: 'cached-refresh',
+      nextRefreshToken: expect.stringMatching(/^[0-9a-f]{64}$/),
+    });
+    // the server rejected it and no successor is stored: session over
+    expect(getStoredToken()).toBeNull();
+    expect(getStoredRefreshToken()).toBeNull();
+    expect((error as ApiError).status).toBe(401);
   });
 
   it('clears the dead access token when a 401 finds no refresh token to renew it', async () => {
@@ -453,144 +637,6 @@ describe('apiFetch', () => {
     expect((fetchMock as unknown as Mock).mock.calls).toHaveLength(1);
   });
 
-  it('dedupes concurrent refreshes – two parallel 401s share one /auth/refresh call', async () => {
-    setStoredToken('expired-jwt', 'valid-refresh');
-
-    let resolveRefresh: (value: unknown) => void = () => {};
-    const refreshResponse = new Promise((resolve) => {
-      resolveRefresh = resolve;
-    });
-
-    let retryTargetCallCount = 0;
-    const fetchMock = vi.fn((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input.toString();
-
-      if (url.includes('/auth/refresh')) {
-        return refreshResponse;
-      }
-
-      if (url.includes('/retry-target')) {
-        retryTargetCallCount += 1;
-        if (retryTargetCallCount <= 2) {
-          return Promise.resolve({
-            ok: false,
-            status: 401,
-            text: () =>
-              Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
-          });
-        }
-        return Promise.resolve({
-          ok: true,
-          status: 200,
-          text: () => Promise.resolve(JSON.stringify({ id: 'retried' })),
-        });
-      }
-
-      return Promise.resolve({
-        ok: false,
-        status: 401,
-        text: () =>
-          Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
-      });
-    });
-    globalThis.fetch = fetchMock as unknown as typeof fetch;
-
-    const first = apiFetch('/retry-target');
-    const second = apiFetch('/retry-target');
-
-    await vi.waitFor(() => {
-      const refreshCalls = fetchMock.mock.calls.filter(([input]) => {
-        const url =
-          typeof input === 'string' ? input : (input as URL).toString();
-        return url.includes('/auth/refresh');
-      });
-      expect(refreshCalls).toHaveLength(1);
-    });
-
-    resolveRefresh({
-      ok: true,
-      status: 200,
-      text: () =>
-        Promise.resolve(
-          JSON.stringify({
-            accessToken: 'new-jwt',
-            refreshToken: 'new-refresh',
-          }),
-        ),
-      json: () =>
-        Promise.resolve({
-          accessToken: 'new-jwt',
-          refreshToken: 'new-refresh',
-        }),
-    });
-
-    await expect(first).resolves.toEqual({ id: 'retried' });
-    await expect(second).resolves.toEqual({ id: 'retried' });
-
-    const totalRefreshCalls = fetchMock.mock.calls.filter(([input]) => {
-      const url = typeof input === 'string' ? input : (input as URL).toString();
-      return url.includes('/auth/refresh');
-    });
-    expect(totalRefreshCalls).toHaveLength(1);
-  });
-
-  it('allows a new refresh after the previous one settles (failure does not block future attempts)', async () => {
-    setStoredToken('expired-jwt', 'valid-refresh');
-
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 401,
-        text: () =>
-          Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
-      })
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 401,
-        text: () =>
-          Promise.resolve(JSON.stringify({ message: 'Invalid refresh token' })),
-      });
-    globalThis.fetch = fetchMock as unknown as typeof fetch;
-
-    await expect(apiFetch('/first')).rejects.toBeInstanceOf(ApiError);
-    expect(getStoredToken()).toBeNull();
-
-    setStoredToken('another-expired-jwt', 'another-valid-refresh');
-
-    (fetchMock as unknown as Mock)
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 401,
-        text: () =>
-          Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        text: () =>
-          Promise.resolve(
-            JSON.stringify({
-              accessToken: 'fresh-jwt',
-              refreshToken: 'fresh-refresh',
-            }),
-          ),
-        json: () =>
-          Promise.resolve({
-            accessToken: 'fresh-jwt',
-            refreshToken: 'fresh-refresh',
-          }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        text: () => Promise.resolve(JSON.stringify({ id: 'recovered' })),
-      });
-
-    await expect(apiFetch('/second')).resolves.toEqual({ id: 'recovered' });
-    expect(getStoredToken()).toBe('fresh-jwt');
-  });
-
   it('does not retry when authContext is false (suppresses the refresh-retry path)', async () => {
     setStoredToken('expired-jwt', 'valid-refresh');
     const fetchMock = vi.fn().mockResolvedValue({
@@ -607,134 +653,375 @@ describe('apiFetch', () => {
   });
 });
 
-describe('apiFetch token-refresh deadline', () => {
-  afterEach(() => {
-    vi.useRealTimers();
-  });
+describe('apiFetch expiry pre-flight', () => {
+  it('renews first, sparing the leg a server would refuse', async () => {
+    setStoredToken(makeTokenExpiringIn(-60), 'valid-refresh');
+    const renewed = makeTokenExpiringIn(3600);
 
-  it('keeps the stored tokens when a hung refresh aborts at its deadline', async () => {
-    vi.useFakeTimers();
-    setStoredToken('expired-jwt', 'valid-refresh');
-
-    globalThis.fetch = vi.fn(
+    // stands in for the server, which refuses anything past its expiry
+    const fetchMock = vi.fn(
       (input: RequestInfo | URL, options?: RequestInit) => {
         const url = typeof input === 'string' ? input : input.toString();
         if (url.includes('/auth/refresh')) {
-          // a socket that never answers; settles only when the deadline aborts it
-          return new Promise((_resolve, reject) => {
-            options?.signal?.addEventListener('abort', () =>
-              reject(
-                new DOMException('The operation was aborted', 'AbortError'),
-              ),
-            );
-          });
+          return Promise.resolve(
+            jsonResponse({
+              accessToken: renewed,
+              refreshToken: 'next-refresh',
+            }),
+          );
         }
-        return Promise.resolve({
-          ok: false,
-          status: 401,
-          text: () =>
-            Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
-        });
+        const headers = (options?.headers ?? {}) as Record<string, string>;
+        if (headers['Authorization'] !== `Bearer ${renewed}`) {
+          return Promise.resolve(
+            jsonResponse({ message: 'Unauthorized' }, 401),
+          );
+        }
+        return Promise.resolve(jsonResponse({ userId: 'user-1' }));
       },
-    ) as unknown as typeof fetch;
+    );
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
 
-    // attach the reject handler before advancing so the abort isn't unhandled
-    const caught = apiFetch('/test').catch((error: unknown) => error);
-    // nothing resolves the refresh until REFRESH_DEADLINE_MS (10s) in core.ts
-    await vi.advanceTimersByTimeAsync(10_000);
+    await expect(apiFetch('/auth/me')).resolves.toEqual({ userId: 'user-1' });
 
-    const error = await caught;
-    expect(error).toBeInstanceOf(ApiError);
-    // the caller sees the original 401, not a refresh-specific error
-    expect((error as ApiError).status).toBe(401);
-    // a deadline abort is transient: no verdict reached, so tokens survive
-    expect(getStoredToken()).toBe('expired-jwt');
-    expect(getStoredRefreshToken()).toBe('valid-refresh');
+    // renewal then request: the refused first leg is never spent
+    expect(fetchMock.mock.calls).toHaveLength(2);
+    const [renewalUrl] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const [requestUrl] = fetchMock.mock.calls[1] as [string, RequestInit];
+    expect(renewalUrl).toContain('/auth/refresh');
+    expect(requestUrl).toContain('/auth/me');
+    expect(readAuthorization(fetchMock.mock.calls[1])).toBe(
+      `Bearer ${renewed}`,
+    );
+    expect(getStoredToken()).toBe(renewed);
   });
 
-  it('keeps the stored tokens when the refresh fetch rejects with a network error', async () => {
-    setStoredToken('expired-jwt', 'valid-refresh');
+  it('renews once for the several requests a boot fires at the same time', async () => {
+    setStoredToken(makeTokenExpiringIn(-60), 'valid-refresh');
+    const renewed = makeTokenExpiringIn(3600);
+    const fetchMock = mockFetchByLeg(
+      jsonResponse({ accessToken: renewed, refreshToken: 'next-refresh' }),
+      jsonResponse({ id: 'result' }),
+    );
 
-    globalThis.fetch = vi.fn((input: RequestInfo | URL) => {
+    await Promise.all([apiFetch('/me'), apiFetch('/links')]);
+
+    // one renewal, not one per request
+    const renewalCalls = fetchMock.mock.calls.filter(([url]) =>
+      String(url).includes('/auth/refresh'),
+    );
+    expect(renewalCalls).toHaveLength(1);
+    expect(fetchMock.mock.calls).toHaveLength(3);
+    expect(readAuthorization(fetchMock.mock.calls[1])).toBe(
+      `Bearer ${renewed}`,
+    );
+    expect(readAuthorization(fetchMock.mock.calls[2])).toBe(
+      `Bearer ${renewed}`,
+    );
+  });
+
+  it('sends straight out when the stored token is still in date', async () => {
+    const live = makeTokenExpiringIn(3600);
+    setStoredToken(live, 'valid-refresh');
+    const fetchMock = mockFetchByLeg(
+      jsonResponse({ accessToken: 'renewed-jwt' }),
+      jsonResponse({ id: 'result' }),
+    );
+
+    await apiFetch('/test');
+
+    expect(fetchMock.mock.calls).toHaveLength(1);
+    expect(readAuthorization(fetchMock.mock.calls[0])).toBe(`Bearer ${live}`);
+  });
+
+  it('sends an opaque API token as-is, having no expiry to read', async () => {
+    setStoredToken('ltk_opaque_api_token', 'valid-refresh');
+    const fetchMock = mockFetchByLeg(
+      jsonResponse({ accessToken: 'renewed-jwt' }),
+      jsonResponse({ id: 'result' }),
+    );
+
+    await apiFetch('/test');
+
+    expect(fetchMock.mock.calls).toHaveLength(1);
+    expect(readAuthorization(fetchMock.mock.calls[0])).toBe(
+      'Bearer ltk_opaque_api_token',
+    );
+  });
+
+  it('sends a token carrying no expiry claim as-is', async () => {
+    const undated = makeToken({ subject: 'user-1' });
+    setStoredToken(undated, 'valid-refresh');
+    const fetchMock = mockFetchByLeg(
+      jsonResponse({ accessToken: 'renewed-jwt' }),
+      jsonResponse({ id: 'result' }),
+    );
+
+    await apiFetch('/test');
+
+    expect(fetchMock.mock.calls).toHaveLength(1);
+    expect(readAuthorization(fetchMock.mock.calls[0])).toBe(
+      `Bearer ${undated}`,
+    );
+  });
+
+  it('sends a token whose expiry claim is not a number as-is', async () => {
+    const mistyped = makeToken({ subject: 'user-1', exp: '1893456000' });
+    setStoredToken(mistyped, 'valid-refresh');
+    const fetchMock = mockFetchByLeg(
+      jsonResponse({ accessToken: 'renewed-jwt' }),
+      jsonResponse({ id: 'result' }),
+    );
+
+    await apiFetch('/test');
+
+    expect(fetchMock.mock.calls).toHaveLength(1);
+    expect(readAuthorization(fetchMock.mock.calls[0])).toBe(
+      `Bearer ${mistyped}`,
+    );
+  });
+
+  it('leaves a literal token alone even once its expiry has passed', async () => {
+    const literal = makeTokenExpiringIn(-60);
+    setStoredToken(makeTokenExpiringIn(-60), 'valid-refresh');
+    const fetchMock = mockFetchByLeg(
+      jsonResponse({ accessToken: 'renewed-jwt' }),
+      jsonResponse({ id: 'result' }),
+    );
+
+    // a PAT or MFA token belongs to its caller and is not ours to rotate
+    await apiFetch('/test', {}, literal);
+
+    expect(fetchMock.mock.calls).toHaveLength(1);
+    expect(readAuthorization(fetchMock.mock.calls[0])).toBe(
+      `Bearer ${literal}`,
+    );
+  });
+
+  it('renews nothing for an unauthenticated call', async () => {
+    setStoredToken(makeTokenExpiringIn(-60), 'valid-refresh');
+    const fetchMock = mockFetchByLeg(
+      jsonResponse({ accessToken: 'renewed-jwt' }),
+      jsonResponse({ id: 'result' }),
+    );
+
+    await apiFetch('/test', {}, false);
+
+    expect(fetchMock.mock.calls).toHaveLength(1);
+    expect(readAuthorization(fetchMock.mock.calls[0])).toBeUndefined();
+  });
+
+  it('keeps the pair and sends anyway when the renewal cannot be reached', async () => {
+    const expired = makeTokenExpiringIn(-60);
+    setStoredToken(expired, 'valid-refresh');
+
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input.toString();
       if (url.includes('/auth/refresh')) {
         return Promise.reject(new TypeError('Failed to fetch'));
       }
-      return Promise.resolve({
-        ok: false,
-        status: 401,
-        text: () =>
-          Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
-      });
-    }) as unknown as typeof fetch;
+      return Promise.resolve(jsonResponse({ id: 'result' }));
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
 
-    await expect(apiFetch('/test')).rejects.toBeInstanceOf(ApiError);
-    // same as the deadline abort: a refresh not reaching server keeps tokens
-    expect(getStoredToken()).toBe('expired-jwt');
+    await expect(apiFetch<{ id: string }>('/test')).resolves.toEqual({
+      id: 'result',
+    });
+
+    // a renewal that reached no verdict is no reason to end the session
+    expect(getStoredToken()).toBe(expired);
     expect(getStoredRefreshToken()).toBe('valid-refresh');
+    expect(fetchMock.mock.calls).toHaveLength(2);
+    expect(readAuthorization(fetchMock.mock.calls[1])).toBe(
+      `Bearer ${expired}`,
+    );
   });
 
-  it('lets a slow refresh that answers before the deadline complete the retry', async () => {
-    vi.useFakeTimers();
-    setStoredToken('expired-jwt', 'valid-refresh');
+  it('keeps the token it holds when there is nothing to renew with', async () => {
+    const expired = makeTokenExpiringIn(-60);
+    setStoredToken(expired);
+    const fetchMock = mockFetchByLeg(
+      jsonResponse({ accessToken: 'renewed-jwt' }),
+      jsonResponse({ id: 'result' }),
+    );
 
-    let testCalls = 0;
-    globalThis.fetch = vi.fn(
+    await expect(apiFetch<{ id: string }>('/test')).resolves.toEqual({
+      id: 'result',
+    });
+
+    // a refusal reached without a leg is no verdict on the access token
+    expect(readPaths(fetchMock)).toEqual(['/test']);
+    expect(readAuthorization(fetchMock.mock.calls[0])).toBe(
+      `Bearer ${expired}`,
+    );
+    expect(getStoredToken()).toBe(expired);
+  });
+
+  it('keeps the pair and sends the token it had when the renewal is refused with a 401', async () => {
+    const expired = makeTokenExpiringIn(-60);
+    setStoredToken(expired, 'spent-refresh');
+    // the server still honours the access token this clock calls expired
+    const fetchMock = mockFetchByLeg(
+      jsonResponse({ message: 'Invalid refresh' }, 401),
+      jsonResponse({ id: 'result' }),
+    );
+
+    await expect(apiFetch<{ id: string }>('/test')).resolves.toEqual({
+      id: 'result',
+    });
+
+    const [renewalUrl] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const [requestUrl] = fetchMock.mock.calls[1] as [string, RequestInit];
+    expect(renewalUrl).toContain('/auth/refresh');
+    expect(requestUrl).toContain('/test');
+    // a refused refresh token is no verdict on the access token
+    expect(readAuthorization(fetchMock.mock.calls[1])).toBe(
+      `Bearer ${expired}`,
+    );
+    expect(getStoredToken()).toBe(expired);
+    expect(getStoredRefreshToken()).toBe('spent-refresh');
+    expect(fetchMock.mock.calls).toHaveLength(2);
+  });
+
+  it('keeps the pair and sends the token it had when the renewal is refused with a 403', async () => {
+    const expired = makeTokenExpiringIn(-60);
+    setStoredToken(expired, 'spent-refresh');
+    const fetchMock = mockFetchByLeg(
+      jsonResponse({ message: 'Forbidden' }, 403),
+      jsonResponse({ id: 'result' }),
+    );
+
+    await expect(apiFetch<{ id: string }>('/test')).resolves.toEqual({
+      id: 'result',
+    });
+
+    expect(readAuthorization(fetchMock.mock.calls[1])).toBe(
+      `Bearer ${expired}`,
+    );
+    expect(getStoredToken()).toBe(expired);
+    expect(getStoredRefreshToken()).toBe('spent-refresh');
+    expect(fetchMock.mock.calls).toHaveLength(2);
+  });
+
+  it('still ends a session the server does refuse, one leg later', async () => {
+    setStoredToken(makeTokenExpiringIn(-60), 'spent-refresh');
+    const fetchMock = mockFetchByLeg(
+      jsonResponse({ message: 'Invalid refresh' }, 401),
+      jsonResponse({ message: 'Unauthorized' }, 401),
+    );
+
+    const error = await apiFetch('/test').catch((caught: unknown) => caught);
+
+    // renewal, request, the 401 path's refresh, then the nomination
+    expect(readPaths(fetchMock)).toEqual([
+      '/auth/refresh',
+      '/test',
+      '/auth/refresh',
+      '/auth/refresh',
+    ]);
+    expect((error as ApiError).status).toBe(401);
+    // the request was refused too, so this one is a verdict: clear
+    expect(getStoredToken()).toBeNull();
+    expect(getStoredRefreshToken()).toBeNull();
+  });
+
+  /**
+   * The rotation the server keeps and the client never learns of. Answered
+   * by a store that really rotates, so the second renewal is refused for
+   * the reason the real server would refuse it: the token it carries has no
+   * row any more. Nothing but the successor this client named can get it
+   * back, which is what the leg sequence below reads out.
+   */
+  it('recovers a session whose rotation was kept and whose answer was lost', async () => {
+    vi.useFakeTimers();
+    const expired = makeTokenExpiringIn(-60);
+    setStoredToken(expired, 'committed-refresh');
+
+    const server = { live: 'committed-refresh' };
+    const legs: string[] = [];
+    let nomination = '';
+    let answered = false;
+
+    const fetchMock = vi.fn(
       (input: RequestInfo | URL, options?: RequestInit) => {
         const url = typeof input === 'string' ? input : input.toString();
-        if (url.includes('/auth/refresh')) {
-          // answers at 9s, inside the 10s deadline: must complete, not abort
-          return new Promise((resolve, reject) => {
-            options?.signal?.addEventListener('abort', () =>
-              reject(
-                new DOMException('The operation was aborted', 'AbortError'),
-              ),
+
+        if (!url.includes('/auth/refresh')) {
+          const authorization = readAuthorization([input, options]);
+          legs.push(`request ${authorization}`);
+          if (authorization !== 'Bearer live-jwt') {
+            return Promise.resolve(
+              jsonResponse({ message: 'Unauthorized' }, 401),
             );
-            setTimeout(
-              () =>
-                resolve({
-                  ok: true,
-                  status: 200,
-                  text: () =>
-                    Promise.resolve(
-                      JSON.stringify({
-                        accessToken: 'new-jwt',
-                        refreshToken: 'new-refresh',
-                      }),
-                    ),
-                  json: () =>
-                    Promise.resolve({
-                      accessToken: 'new-jwt',
-                      refreshToken: 'new-refresh',
-                    }),
-                }),
-              9_000,
-            );
-          });
+          }
+          return Promise.resolve(jsonResponse({ id: 'recovered' }));
         }
-        testCalls += 1;
-        if (testCalls === 1) {
-          return Promise.resolve({
-            ok: false,
-            status: 401,
-            text: () =>
-              Promise.resolve(JSON.stringify({ message: 'Unauthorized' })),
-          });
+
+        const body = JSON.parse(String(options?.body)) as {
+          refreshToken: string;
+          nextRefreshToken?: string;
+        };
+        legs.push(
+          `refresh ${body.refreshToken} + ${body.nextRefreshToken ?? 'none'}`,
+        );
+        if (body.refreshToken !== server.live) {
+          return Promise.resolve(
+            jsonResponse({ message: 'Invalid or expired refresh token' }, 401),
+          );
         }
-        return Promise.resolve({
-          ok: true,
-          status: 200,
-          text: () => Promise.resolve(JSON.stringify({ id: 'result' })),
+
+        server.live = body.nextRefreshToken ?? 'server-minted';
+        if (answered) {
+          return Promise.resolve(
+            jsonResponse({
+              accessToken: 'live-jwt',
+              refreshToken: server.live,
+            }),
+          );
+        }
+
+        answered = true;
+        nomination = server.live;
+        // committed, then the socket dies with the answer still on it
+        return new Promise((_resolve, reject) => {
+          options?.signal?.addEventListener('abort', () =>
+            reject(new DOMException('The operation was aborted', 'AbortError')),
+          );
         });
       },
-    ) as unknown as typeof fetch;
+    );
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
 
     const pending = apiFetch<{ id: string }>('/test');
-    await vi.advanceTimersByTimeAsync(9_000);
+    await vi.advanceTimersByTimeAsync(10_000);
 
-    await expect(pending).resolves.toEqual({ id: 'result' });
-    expect(getStoredToken()).toBe('new-jwt');
-    expect(getStoredRefreshToken()).toBe('new-refresh');
+    await expect(pending).resolves.toEqual({ id: 'recovered' });
+    expect(nomination).toMatch(/^[0-9a-f]{64}$/);
+    expect(legs).toEqual([
+      `refresh committed-refresh + ${nomination}`,
+      `request Bearer ${expired}`,
+      `refresh committed-refresh + ${nomination}`,
+      `refresh ${nomination} + none`,
+      'request Bearer live-jwt',
+    ]);
+    expect(getStoredToken()).toBe('live-jwt');
+    expect(getStoredRefreshToken()).toBe('server-minted');
+  });
+
+  it('stops after the one retry when the renewed token is rejected too', async () => {
+    setStoredToken(makeTokenExpiringIn(-60), 'valid-refresh');
+    const fetchMock = mockFetchByLeg(
+      jsonResponse({
+        accessToken: 'renewed-jwt',
+        refreshToken: 'renewed-refresh',
+      }),
+      jsonResponse({ message: 'Unauthorized' }, 401),
+    );
+
+    const error = await apiFetch('/test').catch((caught: unknown) => caught);
+
+    // renewal, request, the existing one-shot retry's renewal, retry
+    expect(fetchMock.mock.calls).toHaveLength(4);
+    expect((error as ApiError).status).toBe(401);
   });
 });
 

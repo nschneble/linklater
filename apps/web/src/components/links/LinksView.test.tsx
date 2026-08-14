@@ -111,6 +111,7 @@ beforeEach(() => {
   vi.mocked(usePendingNotice).mockReturnValue({
     notice: null,
     variant: 'success',
+    standing: false,
     dismiss: vi.fn(),
   });
 });
@@ -299,6 +300,7 @@ describe('LinksView – cross-route pending notice surface', () => {
     vi.mocked(usePendingNotice).mockReturnValue({
       notice: 'Your email has been verified.',
       variant: 'success',
+      standing: false,
       dismiss: vi.fn(),
     });
 
@@ -310,10 +312,27 @@ describe('LinksView – cross-route pending notice surface', () => {
     ).toBeInTheDocument();
   });
 
+  it('paints a standing notice in the flow rather than in a timed toast', () => {
+    vi.mocked(usePendingNotice).mockReturnValue({
+      notice: "We couldn't get you back into that session",
+      variant: 'warning',
+      standing: true,
+      dismiss: vi.fn(),
+    });
+
+    renderLinksView();
+
+    const painted = screen
+      .getAllByText("We couldn't get you back into that session")
+      .find((element) => element.closest('.sr-only') === null);
+    expect(painted?.closest('div')?.className).not.toContain('fixed');
+  });
+
   it('omits the toast when no notice is queued', () => {
     vi.mocked(usePendingNotice).mockReturnValue({
       notice: null,
       variant: 'success',
+      standing: false,
       dismiss: vi.fn(),
     });
 
@@ -343,6 +362,7 @@ describe('LinksView – cross-route pending notice surface', () => {
     vi.mocked(usePendingNotice).mockReturnValue({
       notice: 'Your account has been deleted.',
       variant: 'success',
+      standing: false,
       dismiss: vi.fn(),
     });
     rerender(
@@ -364,6 +384,7 @@ describe('LinksView – cross-route pending notice surface', () => {
     vi.mocked(usePendingNotice).mockReturnValue({
       notice: 'Your email has been verified.',
       variant: 'success',
+      standing: false,
       dismiss: vi.fn(),
     });
 

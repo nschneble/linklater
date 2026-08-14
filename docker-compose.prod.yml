@@ -23,12 +23,14 @@
 # into the image; the bare CLI call is the leaner deploy-time step.)
 
 # Container stdout is the only place logs land (no service writes files):
-# Caddy has no `log` directive, so there are no access logs, and the API's
-# CompactLogger emits lifecycle lines, not per-request entries. Without this
-# block Docker's json-file driver keeps that stream forever; the caps bound it
-# to ~30MB per service and make the privacy policy's "rolling basis,
-# automatically overwritten, never archived" retention statement true by
-# construction (docs/PRIVACY.md, Data Retention).
+# Caddy has no `log` directive, so nothing here keeps an access log. What the
+# API writes beside its lifecycle lines is a line per notable event, never one
+# per request: a refused refresh, a blocked outbound fetch, a background write
+# that failed. The stream grows with those events rather than with traffic.
+# Without this block Docker's json-file driver would keep it forever; the caps
+# bound it to ~30MB per service, which is what makes the privacy policy's
+# "rolling basis, automatically overwritten, never archived" retention
+# statement true by construction (docs/PRIVACY.md, Data Retention).
 x-bounded-logging: &bounded-logging
   driver: json-file
   options:

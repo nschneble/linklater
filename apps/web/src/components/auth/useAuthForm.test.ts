@@ -27,14 +27,27 @@ vi.mock('../../auth/AuthContext', () => ({
 vi.mock('../../lib/pendingNotice', () => ({
   consumePendingNotice: vi.fn().mockReturnValue(null),
   hasPendingNotice: vi.fn().mockReturnValue(false),
+  setPendingNotice: vi.fn(),
+}));
+
+// the predicate is a storage read; its own suite covers what it reads
+vi.mock('./standingSessionOffer', () => ({
+  hasStandingSessionOffer: vi.fn().mockReturnValue(false),
 }));
 
 // ─── Imports after mocks ─────────────────────────────────────────────────────
 
 import * as apiModule from '../../lib/api';
+import {
+  carryTypedEmail,
+  hasCarriedEmail,
+  takeCarriedEmail,
+} from '../../auth/AuthContext/carriedEmail';
 import * as pendingNoticeModule from '../../lib/pendingNotice';
+import * as standingOfferModule from './standingSessionOffer';
 import { useAuth } from '../../auth/AuthContext';
 import { useAuthForm } from './useAuthForm';
+import type { NoticeEntry } from '../../lib/pendingNotice';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -64,10 +77,26 @@ function makeAuthContext(
 }
 
 /** Renders useAuthForm inside a MemoryRouter at the given path. */
-function renderAuthFormHook(initialPath = '/login') {
+function renderAuthFormHook(initialPath = '/login', reactStrictMode = false) {
   return renderHook(() => useAuthForm(), {
+    reactStrictMode,
     wrapper: ({ children }) =>
       MemoryRouter({ children, initialEntries: [initialPath] }),
+  });
+}
+
+/**
+ * Stubs the store's one-shot read: the entry once, `null` after. A stub
+ * that answers the same entry every time models a store this app does not
+ * have, and hands the second of StrictMode's two effect passes a clean
+ * answer no real mount would get.
+ */
+function queueOnce(entry: NoticeEntry) {
+  let unread = true;
+  vi.mocked(pendingNoticeModule.consumePendingNotice).mockImplementation(() => {
+    if (!unread) return null;
+    unread = false;
+    return entry;
   });
 }
 
@@ -78,6 +107,8 @@ beforeEach(() => {
   vi.mocked(useAuth).mockReturnValue(makeAuthContext());
   vi.mocked(pendingNoticeModule.consumePendingNotice).mockReturnValue(null);
   vi.mocked(pendingNoticeModule.hasPendingNotice).mockReturnValue(false);
+  vi.mocked(standingOfferModule.hasStandingSessionOffer).mockReturnValue(false);
+  sessionStorage.clear();
 });
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
@@ -139,6 +170,24 @@ describe('useAuthForm', () => {
       vi.mocked(pendingNoticeModule.consumePendingNotice).mockReturnValue(null);
       const { result } = renderAuthFormHook();
       await act(async () => {});
+      expect(result.current.notice).toBeNull();
+    });
+
+    // StrictMode, because the app mounts in it and runs effects twice
+    it('survives the mount that consumed it and goes on a mode change', async () => {
+      queueOnce({
+        message: "We couldn't get you back into that session",
+        variant: 'warning',
+        standing: true,
+      });
+      const { result } = renderAuthFormHook('/login', true);
+
+      await waitFor(() => expect(result.current.notice).not.toBeNull());
+
+      await act(async () => {
+        result.current.handleModeChange('register');
+      });
+
       expect(result.current.notice).toBeNull();
     });
   });
@@ -590,7 +639,7 @@ describe('useAuthForm', () => {
 
   // Part D: dismiss a lingering error toast before the form's own error Alert, else two role="alert" announcements collide (ARIA 1.2 §5.2.8.4)
   describe('coalesce-on-submit (error toast dismissed at handleSubmit start)', () => {
-    it('dismisses a queued error-variant notice at the top of handleSubmit', async () => {
+    it('replaces a queued error-variant notice with the success that follows', async () => {
       vi.mocked(pendingNoticeModule.consumePendingNotice).mockReturnValue({
         message: 'Verification link expired.',
         variant: 'error',
@@ -614,11 +663,45 @@ describe('useAuthForm', () => {
         await result.current.handleSubmit(event);
       });
 
-      // success notice replaced the error one, proving the dismiss ran at the TOP of handleSubmit
+      // the magic-link write reaches this whether or not the clear ran
       expect(result.current.notice).toEqual({
         message: 'Magic link sent!',
         variant: 'success',
       });
+    });
+
+    // a failing submit writes no notice, so an empty one is the clear
+    it('clears a queued error-variant notice when the submit itself fails', async () => {
+      vi.mocked(pendingNoticeModule.consumePendingNotice).mockReturnValue({
+        message: 'Verification link expired.',
+        variant: 'error',
+      });
+      const loginMock = vi
+        .fn()
+        .mockRejectedValue(new Error('Invalid credentials'));
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+
+      const { result } = renderAuthFormHook('/login');
+
+      await waitFor(() => {
+        expect(result.current.notice).toEqual({
+          message: 'Verification link expired.',
+          variant: 'error',
+        });
+      });
+
+      act(() => {
+        result.current.setEmail(USER_EMAIL);
+        result.current.setPassword(USER_PASSWORD);
+      });
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        await result.current.handleSubmit(event);
+      });
+
+      expect(result.current.notice).toBeNull();
+      expect(result.current.error).toBe('Invalid credentials');
     });
 
     it('preserves a queued success-variant notice across handleSubmit (no collision with the form Alert channel)', async () => {
@@ -656,6 +739,32 @@ describe('useAuthForm', () => {
         variant: 'success',
       });
       expect(result.current.error).toBe('Invalid credentials');
+    });
+  });
+
+  // the address survives the offer's bounce rather than being retyped
+  describe('carried email', () => {
+    const TYPED_EMAIL = 'typed@example.com';
+
+    it('prefills the email input from the value the offer carried', async () => {
+      sessionStorage.setItem('linklater_carried_email', TYPED_EMAIL);
+
+      const { result } = renderAuthFormHook('/login');
+      await act(async () => {});
+
+      expect(result.current.email).toBe(TYPED_EMAIL);
+      expect(hasCarriedEmail()).toBe(false);
+    });
+
+    it('notes what was typed, so the offer has an address to carry', async () => {
+      const { result } = renderAuthFormHook('/login');
+
+      act(() => result.current.setEmail(TYPED_EMAIL));
+      await act(async () => {});
+
+      carryTypedEmail();
+
+      expect(takeCarriedEmail()).toBe(TYPED_EMAIL);
     });
   });
 
@@ -762,6 +871,34 @@ describe('useAuthForm', () => {
 
       expect(emailFocusSpy).not.toHaveBeenCalled();
       expect(passwordFocusSpy).not.toHaveBeenCalled();
+    });
+
+    // focus into the email input would land on top of the standing offer
+    it('does not auto-focus the email input on mount when a session offer is standing', async () => {
+      vi.mocked(standingOfferModule.hasStandingSessionOffer).mockReturnValue(
+        true,
+      );
+
+      const emailInput = document.createElement('input');
+      const focusSpy = vi.spyOn(emailInput, 'focus');
+
+      renderHook(
+        () => {
+          const hook = useAuthForm();
+          if (hook.emailReference.current === null) {
+            hook.emailReference.current = emailInput;
+          }
+          return hook;
+        },
+        {
+          wrapper: ({ children }) =>
+            MemoryRouter({ children, initialEntries: ['/login'] }),
+        },
+      );
+
+      await act(async () => {});
+
+      expect(focusSpy).not.toHaveBeenCalled();
     });
 
     // C4: negative control for FLAG-2 - no pending notice, so focus must fire, proving the guard is gated not just absent

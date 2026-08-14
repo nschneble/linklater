@@ -1,17 +1,18 @@
 import { capitalizeFirst } from '../../lib/strings';
 import {
-  consumePendingNotice,
-  hasPendingNotice,
-} from '../../lib/pendingNotice';
-import {
   forgotPassword as apiForgotPassword,
   registerMagicLink,
   requestMagicLink,
   verifyOtp,
 } from '../../lib/api';
 import { getErrorMessage } from '../../lib/errors';
+import {
+  noteTypedEmail,
+  takeCarriedEmail,
+} from '../../auth/AuthContext/carriedEmail';
 import { useAuth } from '../../auth/AuthContext';
-import { useEffect, useRef, useState } from 'react';
+import { useAuthFormArrival } from './useAuthFormArrival';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFormError } from './useFormError';
 import { useLocation, useNavigate } from 'react-router';
 import { useOAuthArrivalError } from './useOAuthArrivalError';
@@ -21,26 +22,25 @@ import type { FormEvent } from 'react';
 export type Mode = 'login' | 'register' | 'forgot-password';
 export type MfaChallenge = 'totp' | 'recovery';
 
-interface FormNotice {
-  message: string;
-  variant: 'success' | 'warning' | 'error';
-}
-
 /**
- * Effects below run in declaration order and that order is load-bearing:
- * the mode effect peeks at the pending notice before the effect that
- * consumes it, and the arrival-error effect follows the mode effect so a
- * cleared error cannot land on top of the message it should paint.
+ * The email `takeCarriedEmail` hands back was typed into a form this
+ * user was moved off of, and putting it back spares them retyping what
+ * they had already typed. It is not evidence of how the move
+ * ended, and nothing is announced from there: the auth gate saw whether
+ * the offer landed, and queues the explanation itself (`offerBounce.ts`).
+ *
+ * What an arrival at one of these screens clears, takes and focuses
+ * lives in `useAuthFormArrival.ts`, which holds its two effects together
+ * because the order between them is load-bearing. `resetForm` below is
+ * the part of that work reaching state this file owns.
  */
 export function useAuthForm() {
   const { login, refreshUser, register } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
-  const emailReference = useRef<HTMLInputElement>(null);
   const errorReference = useRef<HTMLParagraphElement>(null);
   const mfaInputReference = useRef<HTMLInputElement>(null);
-  const passwordReference = useRef<HTMLInputElement>(null);
 
   const [email, setEmail] = useState('');
   const { error, errorFromArrival, setError } = useFormError();
@@ -51,7 +51,6 @@ export function useAuthForm() {
   const [mfaChallenge, setMfaChallenge] = useState<MfaChallenge | null>(null);
   const [mfaCode, setMfaCode] = useState('');
   const [mfaToken, setMfaToken] = useState<string | null>(null);
-  const [notice, setNotice] = useState<FormNotice | null>(null);
   const [password, setPassword] = useState('');
 
   const {
@@ -82,32 +81,30 @@ export function useAuthForm() {
   }
 
   useEffect(() => {
+    const carriedEmail = takeCarriedEmail();
+    if (carriedEmail === null) return;
+    setEmail(carriedEmail);
+  }, []);
+
+  useEffect(() => {
+    noteTypedEmail(email);
+  }, [email]);
+
+  // a new identity per render would re-run the arrival effect
+  const resetForm = useCallback(() => {
     setPassword('');
     setError(null);
     setLoading(false);
     setMagicLinkSentJustNow(false);
     setForgotPasswordSentJustNow(false);
+  }, [setError]);
 
-    const hasInboundAnnouncement = hasPendingNotice() || arrivedWithOAuthError;
-    // auto-focus would flip a screen reader into forms mode, muting it
-    if (hasInboundAnnouncement) return;
-
-    const emailInputValue = emailReference.current?.value ?? '';
-    if (mode !== 'forgot-password' && emailInputValue.length > 0) {
-      passwordReference.current?.focus();
-      return;
-    }
-    emailReference.current?.focus();
-  }, [mode, arrivedWithOAuthError, setError]);
+  const { emailReference, notice, passwordReference, setNotice } =
+    useAuthFormArrival({ arrivedWithOAuthError, mode, resetForm });
 
   useEffect(() => {
     if (oauthErrorMessage !== null) setError(oauthErrorMessage, 'arrival');
   }, [oauthErrorMessage, setError]);
-
-  useEffect(() => {
-    const pending = consumePendingNotice();
-    if (pending !== null) setNotice(pending);
-  }, []);
 
   useEffect(() => {
     if (mfaChallenge) {
