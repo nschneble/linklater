@@ -246,7 +246,7 @@ const PAINTERS: ReadonlyArray<readonly [string, string, string]> = [
   ['components/auth/AlreadySignedInNotice.tsx', 'mount', ''],
   ['components/auth/AuthCard.tsx', 'mount', ''],
   ['components/auth/ConfirmAccountDeletionPage.tsx', 'base', ''],
-  ['components/auth/ExtensionAuthorizePage.tsx', 'mount', 'mount'],
+  ['components/auth/ExtensionAuthorizeCard.tsx', 'mount', ''],
   ['components/auth/OAuthCallbackPage.tsx', 'base', ''],
   ['components/auth/ResetPasswordPage.tsx', 'base mount', ''],
   ['components/auth/VerifyLoginPage.tsx', 'base', ''],

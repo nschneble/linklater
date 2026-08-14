@@ -97,6 +97,21 @@ const variantClassesByHost: Record<Surface, Record<Variant, string>> = {
   },
 };
 
+/**
+ * The paint alone, for the one affordance a `<button>` cannot carry: a
+ * navigation. Mirrors `primaryActionClasses`, including why an anchor
+ * borrows a class list rather than restating one that would then drift.
+ *
+ * `stateClasses` is the disabled tier, which only the button has.
+ */
+export function iconActionClasses(
+  variant: Variant = 'default',
+  surface: Surface = 'mount',
+  stateClasses = '',
+): string {
+  return `inline-flex items-center justify-center gap-1.5 text-xs rounded-full cursor-pointer ${stateClasses} active:scale-[0.96] transition duration-200 ${variantClassesByHost[surface][variant]}`;
+}
+
 export default function IconButton({
   className = '',
   children,
@@ -115,7 +130,7 @@ export default function IconButton({
 
   return (
     <button
-      className={`inline-flex items-center justify-center gap-1.5 text-xs rounded-full cursor-pointer ${disabledClasses} active:scale-[0.96] transition duration-200 ${variantClassesByHost[surface][variant]} ${visibilityClasses} ${className}`}
+      className={`${iconActionClasses(variant, surface, disabledClasses)} ${visibilityClasses} ${className}`}
       type="button"
       data-surface={surface}
       // disabled + aria-hidden hide from AT; disabled already blocks focus

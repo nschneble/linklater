@@ -1,8 +1,16 @@
+/*
+ * Handler-level tests. Both guards are stubbed permissive here, so nothing
+ * in this file is evidence that either one refuses anything: the metadata
+ * assertion below says a guard is named on the route, not that a request
+ * has to satisfy it. `extension-auth.guard.spec.ts` is where the authorize
+ * route is driven over HTTP with the real guard, and it is the file that
+ * would have caught the grant refusing every user.
+ */
+
 import { jest } from '@jest/globals';
 
 import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import type { Response } from 'express';
 
 import { CustomThrottlerGuard } from './custom-throttler.guard';
 import { ExtensionAuthController } from './extension-auth.controller';
@@ -24,8 +32,6 @@ const REDIRECT_URI = 'chrome-extension://abc/callback';
 
 const makeRequest = () =>
   ({ user: { userId: USER_ID } }) as unknown as AuthRequest;
-
-const makeResponse = () => ({ redirect: jest.fn() }) as unknown as Response;
 
 describe('ExtensionAuthController', () => {
   let controller: ExtensionAuthController;
@@ -72,40 +78,34 @@ describe('ExtensionAuthController', () => {
       expect(guards).toContain(JwtAuthGuard);
     });
 
-    it('redirects to callbackUrl with the code as a query parameter', async () => {
+    it('returns the callback URL with the code as a query parameter', async () => {
       (
         extensionAuthServiceMock.authorizeExtension as jest.Mock
       ).mockResolvedValue({
         code: CODE,
         callbackUrl: REDIRECT_URI,
       });
-      const response = makeResponse();
 
-      await controller.extensionAuthorize(
-        makeRequest(),
-        response,
-        CODE_CHALLENGE,
-        REDIRECT_URI,
-      );
+      const result = await controller.extensionAuthorize(makeRequest(), {
+        codeChallenge: CODE_CHALLENGE,
+        redirectUri: REDIRECT_URI,
+      });
 
       const destination = new URL(REDIRECT_URI);
       destination.searchParams.set('code', CODE);
-      expect(response.redirect).toHaveBeenCalledWith(destination.toString());
+      expect(result).toEqual({ redirectUrl: destination.toString() });
     });
 
     it('propagates BadRequestException when redirect URI is not allowed', async () => {
       (
         extensionAuthServiceMock.authorizeExtension as jest.Mock
       ).mockRejectedValue(new BadRequestException('Invalid redirect_uri'));
-      const response = makeResponse();
 
       await expect(
-        controller.extensionAuthorize(
-          makeRequest(),
-          response,
-          CODE_CHALLENGE,
-          'https://evil.example.com',
-        ),
+        controller.extensionAuthorize(makeRequest(), {
+          codeChallenge: CODE_CHALLENGE,
+          redirectUri: 'https://evil.example.com',
+        }),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -115,15 +115,12 @@ describe('ExtensionAuthController', () => {
       ).mockRejectedValue(
         new BadRequestException('code_challenge and redirect_uri are required'),
       );
-      const response = makeResponse();
 
       await expect(
-        controller.extensionAuthorize(
-          makeRequest(),
-          response,
-          '',
-          REDIRECT_URI,
-        ),
+        controller.extensionAuthorize(makeRequest(), {
+          codeChallenge: '',
+          redirectUri: REDIRECT_URI,
+        }),
       ).rejects.toThrow(BadRequestException);
     });
   });

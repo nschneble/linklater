@@ -1,34 +1,37 @@
 import {
   ApiBearerAuth,
   ApiOperation,
-  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import {
   Body,
   Controller,
-  Get,
   HttpCode,
   Post,
-  Query,
   Req,
-  Res,
   UseGuards,
 } from '@nestjs/common';
 import { CustomThrottlerGuard } from './custom-throttler.guard.js';
+import { ExtensionAuthorizeDto } from './dto/extension-authorize.dto.js';
 import { ExtensionAuthService } from './extension-auth.service.js';
 import { ExtensionTokenDto } from './dto/extension-token.dto.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { Throttle } from '@nestjs/throttler';
 import { ThrottleMessage } from './throttle-message.decorator.js';
 import type { AuthRequest } from './auth-request.type.js';
-import type { Response } from 'express';
 
 /**
  * Browser-extension PKCE authorization endpoints. Authorize step requires a
  * full browser session JWT; the token exchange is public and validates the
  * verifier against the stored challenge.
+ *
+ * Authorize answers with the callback URL as JSON rather than redirecting
+ * to it, for the reason `OAuthLinkController.googleLink` gives: only the
+ * single-page app can attach the session JWT, and it can only attach one
+ * to a `fetch`. A redirecting endpoint would be reached by a top-level
+ * navigation instead, which carries no Authorization header, so the guard
+ * would refuse every caller.
  */
 @ApiTags('auth')
 @Controller('auth')
@@ -37,21 +40,11 @@ export class ExtensionAuthController {
 
   @ApiOperation({ summary: 'Authorize a browser extension (PKCE flow)' })
   @ApiBearerAuth()
-  @ApiQuery({
-    name: 'code_challenge',
-    required: true,
-    description:
-      'PKCE code challenge: base64url-encoded SHA-256 of the verifier.',
-  })
-  @ApiQuery({
-    name: 'redirect_uri',
-    required: true,
-    description:
-      'Extension callback URL the auth code is appended to on redirect.',
-  })
   @ApiResponse({
-    status: 302,
-    description: 'Redirects to redirect_uri with auth code.',
+    status: 200,
+    description:
+      'Returns the extension callback URL with the auth code appended, for' +
+      ' the caller to navigate to.',
   })
   @ApiResponse({
     status: 400,
@@ -59,23 +52,22 @@ export class ExtensionAuthController {
   })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
   @UseGuards(JwtAuthGuard)
-  @Get('extension/authorize')
+  @Post('extension/authorize')
+  @HttpCode(200)
   async extensionAuthorize(
     @Req() request: AuthRequest,
-    @Res() response: Response,
-    @Query('code_challenge') codeChallenge: string,
-    @Query('redirect_uri') redirectUri: string,
-  ) {
+    @Body() body: ExtensionAuthorizeDto,
+  ): Promise<{ redirectUrl: string }> {
     const { code, callbackUrl } =
       await this.extensionAuthService.authorizeExtension(
         request.user.userId,
-        codeChallenge,
-        redirectUri,
+        body.codeChallenge,
+        body.redirectUri,
       );
 
     const destination = new URL(callbackUrl);
     destination.searchParams.set('code', code);
-    response.redirect(destination.toString());
+    return { redirectUrl: destination.toString() };
   }
 
   @ApiOperation({ summary: 'Exchange extension auth code for token pair' })

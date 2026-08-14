@@ -15,11 +15,11 @@
  * navigation, the deferred announcement included. That second cost is
  * not nothing, and `ExtensionAuthorizePage` is where it shows: it names
  * the account it is about to grant on, and it would name the one that
- * left. Which account the grant then lands on is an open question, not
- * a guarantee: the hand-off is a top-level navigation carrying no
- * bearer header, so the endpoint's guard refuses it before any account
- * is chosen. The controller spec stubs that guard, which is why a green
- * suite says nothing here. Delivering the token is its own change.
+ * left. That cost is live rather than theoretical now that the grant
+ * goes out as an `apiFetch`: it lands on whichever account the stored
+ * token belongs to, so the screen can name one account and grant on
+ * another. Carrying a grant across a sign-in is its own change, and it
+ * is where that gap closes.
  * Exported so `authAgnosticPaths.test.ts` can fail when the two drift.
  */
 export const AUTH_AGNOSTIC_PATHS = new Set([
