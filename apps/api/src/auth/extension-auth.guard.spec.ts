@@ -16,6 +16,11 @@
  * `JwtAuthGuard` is the one thing left real. The throttler on the sibling
  * token route is overridden only because Nest instantiates every guard on
  * the controller and that one needs a module this test does not import.
+ *
+ * The body-validation arms live here for the same reason the guard ones
+ * do. A handler called directly is handed whatever the test writes, so the
+ * DTO's own rules only bind a request that goes through the pipe, and the
+ * refusals arrive with a bearer because a guard runs ahead of a pipe.
  */
 
 import { jest } from '@jest/globals';
@@ -44,6 +49,14 @@ const USER_ID = 'user-1';
 
 function signToken(payload: Record<string, unknown>, secret: string): string {
   return new JwtService({ secret }).sign(payload);
+}
+
+/** A bearer the strategy accepts, so a refusal below is the pipe's. */
+function acceptedToken(): string {
+  return signToken(
+    { subject: USER_ID, email: USER_EMAIL, tokenVersion: 0 },
+    process.env.JWT_SECRET as string,
+  );
 }
 
 describe('POST /auth/extension/authorize (guarded)', () => {
@@ -136,14 +149,9 @@ describe('POST /auth/extension/authorize (guarded)', () => {
   });
 
   it('mints a code for a bearer token the strategy accepts', async () => {
-    const token = signToken(
-      { subject: USER_ID, email: USER_EMAIL, tokenVersion: 0 },
-      process.env.JWT_SECRET as string,
-    );
-
     const response = await request(app.getHttpServer())
       .post('/auth/extension/authorize')
-      .set('Authorization', `Bearer ${token}`)
+      .set('Authorization', `Bearer ${acceptedToken()}`)
       .send({ codeChallenge: CODE_CHALLENGE, redirectUri: REDIRECT_URI });
 
     expect(response.status).toBe(200);
@@ -156,4 +164,33 @@ describe('POST /auth/extension/authorize (guarded)', () => {
       REDIRECT_URI,
     );
   });
+
+  it('refuses a body carrying neither field', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/auth/extension/authorize')
+      .set('Authorization', `Bearer ${acceptedToken()}`)
+      .send({});
+
+    expect(response.status).toBe(400);
+    expect(extensionAuthServiceMock.authorizeExtension).not.toHaveBeenCalled();
+  });
+
+  // an empty string is the case a required-field check alone lets past
+  it.each([
+    ['codeChallenge', { codeChallenge: '', redirectUri: REDIRECT_URI }],
+    ['redirectUri', { codeChallenge: CODE_CHALLENGE, redirectUri: '' }],
+  ])(
+    'refuses an empty %s rather than handing it to the service',
+    async (_field, body) => {
+      const response = await request(app.getHttpServer())
+        .post('/auth/extension/authorize')
+        .set('Authorization', `Bearer ${acceptedToken()}`)
+        .send(body);
+
+      expect(response.status).toBe(400);
+      expect(
+        extensionAuthServiceMock.authorizeExtension,
+      ).not.toHaveBeenCalled();
+    },
+  );
 });

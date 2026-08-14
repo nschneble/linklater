@@ -28,6 +28,7 @@ import {
 import {
   ApiError,
   apiFetch,
+  authorizeExtension,
   clearStoredToken,
   createApiToken,
   createLink,
@@ -1736,6 +1737,45 @@ describe('revokeApiToken', () => {
     expect(url).toContain('/tokens/tok-1');
     expect((options as { method: string }).method).toBe('DELETE');
     expect(result).toEqual({ success: true });
+  });
+});
+
+/*
+ * The one client whose request line is the whole feature. A top-level
+ * navigation reaches this endpoint with no Authorization header, which is
+ * what made the grant refuse every user, so the header is pinned here
+ * rather than left to the page suite, which mocks this module away.
+ */
+describe('authorizeExtension', () => {
+  it('POSTs to /auth/extension/authorize with a bearer header', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({ redirectUrl: 'chrome-extension://abc/cb' });
+
+    await authorizeExtension(
+      'sha256-challenge-abc',
+      'chrome-extension://abc/cb',
+    );
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/auth/extension/authorize');
+    expect((options as { method: string }).method).toBe('POST');
+    expect(readAuthorization(fetchMock.mock.calls[0])).toBe('Bearer my-jwt');
+  });
+
+  it('names the challenge and callback as the server spells them', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({ redirectUrl: 'chrome-extension://abc/cb' });
+
+    await authorizeExtension(
+      'sha256-challenge-abc',
+      'chrome-extension://abc/cb',
+    );
+
+    const [, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(JSON.parse((options as { body: string }).body)).toEqual({
+      codeChallenge: 'sha256-challenge-abc',
+      redirectUri: 'chrome-extension://abc/cb',
+    });
   });
 });
 

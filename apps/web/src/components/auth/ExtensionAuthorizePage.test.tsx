@@ -17,6 +17,11 @@
  * is checked against the click it is supposed to swallow, because the
  * forward half of any of those passes on its own while the state it
  * leaves behind is wrong.
+ *
+ * The grant is reset rather than cleared between tests. Clearing keeps the
+ * queue of single-use outcomes, so a deferred grant a test never consumed
+ * would go on to decide the next one, which is how a test that fails here
+ * can pass on its own.
  */
 
 import {
@@ -101,6 +106,7 @@ function deferGrant(): {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  authorizeExtensionMock.mockReset();
   currentUser = SIGNED_IN_USER;
   standOnPath('/extension/authorize');
 });

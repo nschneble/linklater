@@ -43,6 +43,14 @@ describe('extensionDenialUrl', () => {
     ).toBeNull();
   });
 
+  it('refuses the web auth host over plain http, which any hop can forge', () => {
+    expect(extensionDenialUrl('http://abcdef.chromiumapp.org/')).toBeNull();
+  });
+
+  it('refuses a host ending in the suffix without the label boundary', () => {
+    expect(extensionDenialUrl('https://evilchromiumapp.org/')).toBeNull();
+  });
+
   it('refuses a javascript URL, which parses but has no host', () => {
     expect(extensionDenialUrl('javascript:alert(1)')).toBeNull();
   });
