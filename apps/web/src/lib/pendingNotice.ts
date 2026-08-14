@@ -41,6 +41,39 @@ export type { NoticeEntry, PendingNotice };
 // distinct key name so deploy-straddling sessions don't fire stale notices
 const PENDING_NOTICE_KEY = 'linklater_pending_notice';
 
+// not in storage: sessionStorage survives a reload, and a notice the
+// previous load consumed would then silence the next boot's message
+let consumedThisLoad = false;
+
+/**
+ * Whether any queued notice was handed to a consumer during this page's
+ * life. `hasPendingNotice` cannot answer this, and not for want of
+ * timing: it reports what is still waiting, and the case that matters is
+ * the one where the waiting is over.
+ *
+ * The caller is `useBootStatus`, deciding whether the boot it narrated
+ * has already been accounted for by a louder channel. It cannot peek the
+ * store itself, because React flushes a child's passive effects before
+ * its parent's, so the consumer below `App` has emptied the slot before
+ * `App` gets to look, on exactly the arrival where the answer should be
+ * yes. A record of the read survives that, where the read does not.
+ */
+export function noticeWasConsumed(): boolean {
+  return consumedThisLoad;
+}
+
+/**
+ * Exists for suites whose cases disagree about whether a read has already
+ * happened. The latch is monotone and module-scoped, so without this the
+ * cases that need it down have to run before the ones that raise it, and
+ * a suite ordered by anything other than source position reds. Nothing in
+ * the app calls it: a page that lowered the latch would be claiming a
+ * read it had not undone.
+ */
+export function resetNoticeConsumed(): void {
+  consumedThisLoad = false;
+}
+
 /**
  * The catalog's own census. A test that enumerates the notice keys has to
  * hand-write them, because the union erases at runtime and `tsconfig.app`
@@ -75,6 +108,8 @@ export function consumePendingNotice(): NoticeEntry | null {
     window.sessionStorage.removeItem(PENDING_NOTICE_KEY);
     // own keys only, per the inherited-name note in the overview
     if (Object.hasOwn(NOTICE_CATALOG, raw)) {
+      // an unknown value announces nothing, so it accounts for nothing
+      consumedThisLoad = true;
       return NOTICE_CATALOG[raw as PendingNotice];
     }
     return null;

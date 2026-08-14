@@ -11,21 +11,44 @@
  *
  * Everything below App's own wiring is stubbed at the module boundary,
  * mirroring `AppShell.test.tsx`.
+ *
+ * The terminal message is asked for here rather than only at the hook,
+ * because two of the three things that decide it are only true of a real
+ * tree. A crash reaches App as a callback from a boundary it renders, so
+ * nothing outside App can hand it that landing. And a notice is consumed
+ * by a child's mount effect, which React flushes before App's own, so a
+ * peek would answer no on precisely the arrival where the answer is yes.
+ * The route stubs stand in for the throwing element and the consuming
+ * one; the copy each landing resolves to is pinned at the hook.
  */
 
 import { act, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
-import { BOOT_DWELL_MS, BOOT_THRESHOLD_MS } from './lib/hooks/useBootStatus';
+import {
+  BOOT_CLEAR_MS,
+  BOOT_DWELL_MS,
+  BOOT_READY_DELAY_MS,
+  BOOT_THRESHOLD_MS,
+} from './lib/hooks/useBootStatus';
+import { resetNoticeConsumed, setPendingNotice } from './lib/pendingNotice';
 import { StrictMode } from 'react';
+import { unauthenticatedRoutes } from './routes/Unauthenticated';
 import { useAuth } from './auth/AuthContext';
+import { usePendingNotice } from './lib/hooks/usePendingNotice';
 
 vi.mock('./auth/AuthContext', () => ({
   useAuth: vi.fn(),
 }));
 
+// the setters only matter once a user arrives, which one landing needs
 vi.mock('./theme/ThemeContext', () => ({
-  useTheme: () => ({}),
+  useTheme: () => ({
+    applyServerCustomTheme: () => undefined,
+    applyServerCustomThemeEnabled: () => undefined,
+    applyServerMode: () => undefined,
+    applyServerTheme: () => undefined,
+  }),
 }));
 
 vi.mock('./theme/useServerBooleanPrefSync', () => ({
@@ -41,16 +64,48 @@ vi.mock('react-router', () => ({
 vi.mock('./routes/Common', () => ({ commonRoutes: () => null }));
 vi.mock('./routes/User', () => ({ userRoutes: () => null }));
 vi.mock('./routes/Unauthenticated', () => ({
-  unauthenticatedRoutes: () => null,
+  unauthenticatedRoutes: vi.fn(() => null),
 }));
 
 const BOOT_MESSAGE = 'Defrosting Linklater in the microwave…';
 
-function setLoading(loading: boolean) {
+function setLoading(loading: boolean, user: unknown = null) {
   vi.mocked(useAuth).mockReturnValue({
     loading,
-    user: null,
+    user,
   } as unknown as ReturnType<typeof useAuth>);
+}
+
+function Crashing(): never {
+  throw new Error('boom');
+}
+
+function ConsumesNotice() {
+  usePendingNotice();
+  return null;
+}
+
+/**
+ * Puts an element under `Routes`, where the boundary can reach it. The
+ * builders run there too now, in a render of their own, which is what the
+ * throwing-builder case below is asking about.
+ */
+function landOn(element: React.ReactNode) {
+  vi.mocked(unauthenticatedRoutes).mockReturnValue(
+    element as unknown as ReturnType<typeof unauthenticatedRoutes>,
+  );
+}
+
+/** A boot slow enough to speak, up to the moment before it does. */
+function slowBoot(user: unknown = null) {
+  const rendered = render(<App />);
+
+  advance(BOOT_THRESHOLD_MS);
+  setLoading(false, user);
+  act(() => rendered.rerender(<App />));
+  advance(BOOT_DWELL_MS);
+
+  return rendered;
 }
 
 function strictApp() {
@@ -74,11 +129,18 @@ function advance(milliseconds: number) {
 beforeEach(() => {
   vi.useFakeTimers();
   vi.clearAllMocks();
+  // the real module runs here, and its latch outlives the test that raised it
+  resetNoticeConsumed();
+  vi.mocked(unauthenticatedRoutes).mockReturnValue(
+    null as unknown as ReturnType<typeof unauthenticatedRoutes>,
+  );
   setLoading(true);
 });
 
 afterEach(() => {
   vi.useRealTimers();
+  vi.restoreAllMocks();
+  window.sessionStorage.clear();
 });
 
 describe('App boot', () => {
@@ -143,5 +205,73 @@ describe('App boot', () => {
     // seeing this on a boot this fast is the complaint being answered
     expect(screen.queryByText(BOOT_MESSAGE)).toBeNull();
     expect(screen.getByTestId('routes')).toBeInTheDocument();
+  });
+});
+
+describe('App boot – what the region says it landed on', () => {
+  it('reports the auth state when the boot found nobody signed in', () => {
+    const { container } = slowBoot();
+
+    advance(BOOT_READY_DELAY_MS);
+
+    expect(region(container)?.textContent).toBe(
+      "Linklater is ready. You're not signed in.",
+    );
+  });
+
+  it('goes on saying only ready when somebody is signed in', () => {
+    const { container } = slowBoot({ theme: 'apollo' });
+
+    advance(BOOT_READY_DELAY_MS);
+
+    expect(region(container)?.textContent).toBe('Linklater is ready.');
+  });
+
+  it('does not call the app ready over the error fallback', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    landOn(<Crashing />);
+
+    const { container } = slowBoot();
+    advance(BOOT_READY_DELAY_MS);
+
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Something went wrong' }),
+    ).toBeInTheDocument();
+    expect(region(container)?.textContent).toBe('');
+  });
+
+  // the child's mount effect empties the store before App's effect runs
+  it('stands down when a child consumed the notice on the way in', () => {
+    setPendingNotice('session-unavailable');
+    landOn(<ConsumesNotice />);
+
+    const { container } = slowBoot();
+    advance(BOOT_READY_DELAY_MS);
+
+    expect(region(container)?.textContent).toBe('');
+  });
+
+  it('empties the region afterwards on every landing', () => {
+    const { container } = slowBoot();
+
+    advance(BOOT_READY_DELAY_MS);
+    // second advance: the clear is scheduled by an effect, not by a timer
+    advance(BOOT_CLEAR_MS);
+
+    expect(region(container)?.textContent).toBe('');
+  });
+});
+
+describe('App boot – a route table that will not build', () => {
+  it('catches a throw from route construction itself', () => {
+    vi.mocked(unauthenticatedRoutes).mockImplementation(() => {
+      throw new Error('route table exploded');
+    });
+    setLoading(false);
+
+    // called during a render below the boundary, or nothing catches it
+    render(<App />);
+
+    expect(screen.getByText('Something went wrong')).toBeInTheDocument();
   });
 });

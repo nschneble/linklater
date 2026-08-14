@@ -28,6 +28,7 @@ import {
 import {
   ApiError,
   apiFetch,
+  authorizeExtension,
   clearStoredToken,
   createApiToken,
   createLink,
@@ -1736,6 +1737,112 @@ describe('revokeApiToken', () => {
     expect(url).toContain('/tokens/tok-1');
     expect((options as { method: string }).method).toBe('DELETE');
     expect(result).toEqual({ success: true });
+  });
+});
+
+/*
+ * The one client whose request line is the whole feature. A top-level
+ * navigation reaches this endpoint with no Authorization header, which is
+ * what made the grant refuse every user, so the header is pinned here
+ * rather than left to the page suite, which mocks this module away.
+ */
+describe('authorizeExtension', () => {
+  it('POSTs to /auth/extension/authorize with a bearer header', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({ redirectUrl: 'chrome-extension://abc/cb' });
+
+    await authorizeExtension(
+      'sha256-challenge-abc',
+      'chrome-extension://abc/cb',
+    );
+
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/auth/extension/authorize');
+    expect((options as { method: string }).method).toBe('POST');
+    expect(readAuthorization(fetchMock.mock.calls[0])).toBe('Bearer my-jwt');
+  });
+
+  it('names the challenge and callback as the server spells them', async () => {
+    setStoredToken('my-jwt');
+    const fetchMock = mockFetch({ redirectUrl: 'chrome-extension://abc/cb' });
+
+    await authorizeExtension(
+      'sha256-challenge-abc',
+      'chrome-extension://abc/cb',
+    );
+
+    const [, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(JSON.parse((options as { body: string }).body)).toEqual({
+      codeChallenge: 'sha256-challenge-abc',
+      redirectUri: 'chrome-extension://abc/cb',
+    });
+  });
+
+  /*
+   * The consent screen checks one token and has to spend that one. Every
+   * assertion below is about a token the store also holds, because the
+   * store is what the three unpinned reads would reach for, and each of
+   * them can hand back a sibling tab's sign-in.
+   */
+  it('spends the token it was handed, not the one the store holds', async () => {
+    setStoredToken('bob-jwt');
+    const fetchMock = mockFetch({ redirectUrl: 'chrome-extension://abc/cb' });
+
+    await authorizeExtension(
+      'sha256-challenge-abc',
+      'chrome-extension://abc/cb',
+      'alice-jwt',
+    );
+
+    expect(readAuthorization(fetchMock.mock.calls[0])).toBe('Bearer alice-jwt');
+  });
+
+  it('never retries a refused grant under a token nobody checked', async () => {
+    setStoredToken('bob-jwt', 'bob-refresh');
+    const fetchMock = mockFetch({ message: 'Unauthorized' }, 401);
+
+    await expect(
+      authorizeExtension(
+        'sha256-challenge-abc',
+        'chrome-extension://abc/cb',
+        'alice-jwt',
+      ),
+    ).rejects.toBeInstanceOf(ApiError);
+
+    // one leg: no renewal, and no second grant carrying bob's token
+    expect(readPaths(fetchMock)).toEqual(['/auth/extension/authorize']);
+    expect(readAuthorization(fetchMock.mock.calls[0])).toBe('Bearer alice-jwt');
+  });
+
+  it('takes no renewal for a pinned token that has already run out', async () => {
+    const expired = makeTokenExpiringIn(-60);
+    setStoredToken(expired, 'valid-refresh');
+    const fetchMock = mockFetch({ redirectUrl: 'chrome-extension://abc/cb' });
+
+    await authorizeExtension(
+      'sha256-challenge-abc',
+      'chrome-extension://abc/cb',
+      expired,
+    );
+
+    expect(readPaths(fetchMock)).toEqual(['/auth/extension/authorize']);
+  });
+
+  // an empty literal is still a pin: no header, and no path to a retry
+  it('sends nothing rather than a token it never checked', async () => {
+    setStoredToken('bob-jwt', 'bob-refresh');
+    const fetchMock = mockFetch({ message: 'Unauthorized' }, 401);
+
+    await expect(
+      authorizeExtension(
+        'sha256-challenge-abc',
+        'chrome-extension://abc/cb',
+        '',
+      ),
+    ).rejects.toBeInstanceOf(ApiError);
+
+    expect(readPaths(fetchMock)).toEqual(['/auth/extension/authorize']);
+    expect(readAuthorization(fetchMock.mock.calls[0])).toBeUndefined();
   });
 });
 

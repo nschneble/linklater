@@ -9,6 +9,7 @@ import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { EmailModule } from '../email/email.module.js';
 import { EmailVerificationService } from './email-verification.service.js';
+import { ExtensionAuthCodeCleanupService } from './extension-auth-code-cleanup.service.js';
 import { ExtensionAuthController } from './extension-auth.controller.js';
 import { ExtensionAuthService } from './extension-auth.service.js';
 import { GoogleLinkStrategy } from './google-link.strategy.js';
@@ -23,6 +24,7 @@ import { OAuthLinkController } from './oauth-link.controller.js';
 import { OAuthLinkService } from './oauth-link.service.js';
 import { OAuthSignInController } from './oauth-sign-in.controller.js';
 import { OAuthSignInService } from './oauth-sign-in.service.js';
+import { QueueModule } from '../queue/queue.module.js';
 import { RefreshTokenService } from './refresh-token.service.js';
 import { TokenScopeService } from './token-scope.service.js';
 import { TokensModule } from '../tokens/tokens.module.js';
@@ -63,6 +65,7 @@ const oauthProviders: Provider[] = [
       signOptions: { expiresIn: '1h' },
     }),
     PassportModule,
+    QueueModule,
     TokensModule,
     forwardRef(() => UsersModule),
   ],
@@ -71,6 +74,7 @@ const oauthProviders: Provider[] = [
     AnyAuthGuard,
     AuthService,
     EmailVerificationService,
+    ExtensionAuthCodeCleanupService,
     ExtensionAuthService,
     MagicLinkService,
     OAuthLinkService,

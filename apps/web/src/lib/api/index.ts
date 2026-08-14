@@ -29,6 +29,7 @@ export {
   verifyTotpSetup,
 } from './auth';
 export {
+  API_BASE_URL,
   apiFetch,
   apiFetchRequired,
   clearStoredToken,
@@ -37,6 +38,7 @@ export {
   isTokenStorageEvent,
   setStoredToken,
 } from './core';
+export { authorizeExtension } from './extension';
 export type { TokenClaims } from './jwt';
 export { readTokenClaims } from './jwt';
 export type { PaginatedLinks, Link, LinkMeta } from './links';

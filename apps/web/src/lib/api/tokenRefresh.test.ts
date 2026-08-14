@@ -173,6 +173,84 @@ describe('tokenRefresh.ts', () => {
     expect(getStoredRefreshToken()).toBe('sibling-refresh');
   });
 
+  it('keeps a sibling rotation that lands while the first leg runs', async () => {
+    setStoredToken('expired-jwt', 'my-refresh');
+    globalThis.fetch = vi.fn(() => {
+      // the sibling rotates while this leg's request is still in flight
+      localStorage.setItem('linklater_token', 'sibling-jwt');
+      localStorage.setItem('linklater_refresh_token', 'sibling-refresh');
+      return Promise.resolve(rotatedPair());
+    }) as unknown as typeof fetch;
+
+    await expect(attemptTokenRefresh()).resolves.toBe(true);
+
+    // a pair minted from a token the store has left is the older one
+    expect(getStoredToken()).toBe('sibling-jwt');
+    expect(getStoredRefreshToken()).toBe('sibling-refresh');
+  });
+
+  it('keeps a sibling rotation that lands while the replay answers', async () => {
+    setStoredToken('expired-jwt', 'spent-refresh');
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(respondWith(401, { message: 'Invalid refresh' }))
+      .mockImplementationOnce(() => {
+        localStorage.setItem('linklater_token', 'sibling-jwt');
+        localStorage.setItem('linklater_refresh_token', 'sibling-refresh');
+        return Promise.resolve(rotatedPair());
+      });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    await expect(attemptTokenRefresh()).resolves.toBe(true);
+
+    // the recovery leg is the slow path, so the most exposed to this
+    expect(getStoredToken()).toBe('sibling-jwt');
+    expect(getStoredRefreshToken()).toBe('sibling-refresh');
+  });
+
+  it('writes its recovered pair when the store holds what it spent', async () => {
+    setStoredToken('expired-jwt', 'spent-refresh');
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(respondWith(401, { message: 'Invalid refresh' }))
+      .mockImplementationOnce(() => {
+        // the sibling's rotation was answered with the shared nomination
+        const nomination = localStorage.getItem(NOMINATION_KEY) as string;
+        localStorage.setItem('linklater_token', 'sibling-jwt');
+        localStorage.setItem('linklater_refresh_token', nomination);
+        return Promise.resolve(rotatedPair());
+      });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    await expect(attemptTokenRefresh()).resolves.toBe(true);
+
+    // the store is behind this answer, so discarding leaves nothing live
+    expect(getStoredRefreshToken()).toBe('new-refresh');
+    expect(getStoredToken()).toBe('new-jwt');
+  });
+
+  it('keeps a sibling rotation that lands as the answer is parsed', async () => {
+    setStoredToken('expired-jwt', 'my-refresh');
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: () => Promise.resolve('{}'),
+      json: () =>
+        Promise.resolve().then(() => {
+          // the sibling lands after the answer but before the write
+          localStorage.setItem('linklater_token', 'sibling-jwt');
+          localStorage.setItem('linklater_refresh_token', 'sibling-refresh');
+          return { accessToken: 'new-jwt', refreshToken: 'new-refresh' };
+        }),
+    }) as unknown as typeof fetch;
+
+    await expect(attemptTokenRefresh()).resolves.toBe(true);
+
+    // a reading taken before the body parsed would miss this one
+    expect(getStoredToken()).toBe('sibling-jwt');
+    expect(getStoredRefreshToken()).toBe('sibling-refresh');
+  });
+
   it('drops the nomination once the pair has rotated', async () => {
     setStoredToken('expired-jwt', 'valid-refresh');
     globalThis.fetch = vi

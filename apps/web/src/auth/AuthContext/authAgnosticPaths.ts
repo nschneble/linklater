@@ -13,13 +13,13 @@
  * input nobody can retype, while protecting a static document costs a
  * tab that goes on rendering the previous account until the next
  * navigation, the deferred announcement included. That second cost is
- * not nothing, and `ExtensionAuthorizePage` is where it shows: it names
- * the account it is about to grant on, and it would name the one that
- * left. Which account the grant then lands on is an open question, not
- * a guarantee: the hand-off is a top-level navigation carrying no
- * bearer header, so the endpoint's guard refuses it before any account
- * is chosen. The controller spec stubs that guard, which is why a green
- * suite says nothing here. Delivering the token is its own change.
+ * not nothing, and `ExtensionAuthorizePage` is where it showed: it names
+ * the account it is about to grant on, and left alone it would name the
+ * one that left while granting for the one that arrived. That page pays
+ * the cost itself now (`grantIdentity`), which is the only place it can
+ * be paid: rehydrating this route would navigate away from the request
+ * the extension is waiting on, discarding the challenge and the callback
+ * with it, so the tab that noticed would be the tab that lost the grant.
  * Exported so `authAgnosticPaths.test.ts` can fail when the two drift.
  */
 export const AUTH_AGNOSTIC_PATHS = new Set([

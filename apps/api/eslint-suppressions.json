@@ -1,9 +1,4 @@
 {
-  "src/auth/extension-auth.controller.spec.ts": {
-    "local/no-comment-block-in-body": {
-      "count": 2
-    }
-  },
   "src/auth/google-link.strategy.spec.ts": {
     "local/no-comment-block-in-body": {
       "count": 1

@@ -3,7 +3,7 @@ import { IsString, MinLength } from 'class-validator';
 
 /**
  * Request body for `POST /auth/extension/token`. Completes the PKCE
- * authorization code exchange started by `GET /auth/extension/authorize`.
+ * authorization code exchange started by `POST /auth/extension/authorize`.
  *
  * The server re-derives the `code_challenge` (SHA-256 of `codeVerifier`,
  * base64url-encoded) and compares it to the value stored when the code was
@@ -13,7 +13,7 @@ export class ExtensionTokenDto {
   @ApiProperty({
     description:
       'The raw authorization code received as the `code` query parameter' +
-      ' in the redirect from `GET /auth/extension/authorize`.',
+      ' on the callback URL `POST /auth/extension/authorize` hands back.',
     example: 'a3f8c...64-character-hex-string...d91e',
   })
   @IsString()

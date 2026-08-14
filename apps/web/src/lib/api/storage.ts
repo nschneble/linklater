@@ -90,18 +90,25 @@ function clearNomination(): void {
 }
 
 /**
- * Whether this tab now knows a refresh token other than the one just
- * spent. A 401 on a token another tab has already replaced proves that
- * token spent, not that the session ended, so the successor is worth
- * trying. Asked through the same precedence rule the token was read
- * through, since a successor can arrive by either route: persisted by the
- * other tab, or carried into memory by the `storage` event. Nothing at all
- * is not a successor, so a `null` current reads as no; a caller that spent
+ * Whether this tab now knows a refresh token other than the ones given.
+ * A 401 on a token another tab has already replaced proves that token
+ * spent, not that the session ended, so the successor is worth trying.
+ * Asked through the same precedence rule the token was read through,
+ * since a successor can arrive by either route: persisted by the other
+ * tab, or carried into memory by the `storage` event. Nothing at all is
+ * not a successor, so a `null` current reads as no; a caller that spent
  * nothing counts any stored token as one, since a sibling put it there.
+ *
+ * More than one is accepted because a caller can hold two values that
+ * finding in the store would not mean supersession: what it read before
+ * its request went out, and what that request actually spent. Those are
+ * the same token for a renewal, and different ones for a recovery.
  */
-export function isRefreshTokenSuperseded(spentToken: string | null): boolean {
+export function isRefreshTokenSuperseded(
+  ...accountedFor: (string | null)[]
+): boolean {
   const current = getStoredRefreshToken();
-  return current !== null && current !== spentToken;
+  return current !== null && !accountedFor.includes(current);
 }
 
 /**
@@ -182,11 +189,22 @@ export function isTokenStorageEvent(event: StorageEvent): boolean {
  *
  * The store is re-read rather than trusting the event payload, so the rule
  * that a `null` never evicts a live token lives in a single place.
+ *
+ * A sibling's refresh token moots this tab's nomination for the reason
+ * `setStoredToken` drops one on its own arrival, and this is the only
+ * place that can say so: the nomination is excluded from the event filter
+ * on purpose, so a sibling removing the key reaches nobody, and the rule
+ * that a `null` never evicts would keep serving the removed value from
+ * memory indefinitely. Left standing it outlives the session it belonged
+ * to, and a renewal after a sign-in would offer the new account a token
+ * minted for the old one.
  */
 function handleTokenStorageEvent(event: StorageEvent): void {
   if (!isTokenStorageEvent(event)) return;
+  const previousRefreshToken = cachedRefreshToken;
   cachedToken = readPersisted(TOKEN_KEY, cachedToken);
   cachedRefreshToken = readPersisted(REFRESH_TOKEN_KEY, cachedRefreshToken);
+  if (cachedRefreshToken !== previousRefreshToken) clearNomination();
 }
 
 function startCrossTabTokenSync(): void {

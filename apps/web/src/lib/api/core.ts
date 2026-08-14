@@ -15,13 +15,16 @@
  *
  * The token-facing part of the store is re-exported straight through, so
  * callers reach the token through one import rather than knowing which
- * module behind here keeps it. The nomination and supersession helpers
- * stay off that surface; outside tests `tokenRefresh` is the only module
- * that reaches for them, and routing them through here would offer the
- * rest of the app a lever it has no business pulling.
+ * module behind here keeps it. The API's own origin rides along, since a
+ * caller building a link to an endpoint rather than fetching one needs
+ * the same base this does. The nomination and supersession helpers stay
+ * off that surface; outside tests `tokenRefresh` is the only module that
+ * reaches for them, and routing them through here would offer the rest of
+ * the app a lever it has no business pulling.
  */
 
 export {
+  API_BASE_URL,
   clearStoredToken,
   getStoredRefreshToken,
   getStoredToken,

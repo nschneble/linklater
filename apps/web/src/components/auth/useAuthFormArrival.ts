@@ -2,6 +2,7 @@ import {
   consumePendingNotice,
   hasPendingNotice,
 } from '../../lib/pendingNotice';
+import { hasBootAnnouncementInbound } from '../../lib/bootAnnouncementSignal';
 import { hasStandingSessionOffer } from './standingSessionOffer';
 import { useEffect, useRef, useState } from 'react';
 import type { Mode } from './useAuthForm';
@@ -46,10 +47,16 @@ interface AuthFormArrivalOptions {
  * answers no and moves focus into an input over the announcement. The
  * answer the mount arrived at is kept, and only a real mode change asks
  * again; keeping it for good would strand focus for every mode switch
- * left in the session. It is the whole three-arm answer that is kept,
- * because latching the first arm alone leaves the other two deciding a
- * question already settled. The OAuth arm needs none of this, being
- * latched in render where it is raised (`useOAuthArrivalError.ts`).
+ * left in the session. It is the whole answer that is kept, because
+ * latching the first arm alone leaves the rest deciding a question
+ * already settled. The OAuth arm needs none of this, being latched in
+ * render where it is raised (`useOAuthArrivalError.ts`).
+ *
+ * The last arm is a boot still narrating itself out of a region above
+ * this form (`lib/bootAnnouncementSignal.ts`). A slow boot speaks a
+ * second in and hands over no sooner than the threshold plus the dwell
+ * floor, so this screen mounts while that is still in flight and the
+ * other three arms have nothing to say about it.
  *
  * The resets arrive as one callback rather than as a handful of setters,
  * so what this module asks its caller for is a concept and not a copy of
@@ -79,7 +86,10 @@ export function useAuthFormArrival({
     if (modeChanged) setNotice(null);
 
     const inboundNow =
-      hasPendingNotice() || arrivedWithOAuthError || hasStandingSessionOffer();
+      hasPendingNotice() ||
+      arrivedWithOAuthError ||
+      hasStandingSessionOffer() ||
+      hasBootAnnouncementInbound();
     if (mountInboundAnnouncement.current === null) {
       mountInboundAnnouncement.current = inboundNow;
     }
