@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { FOCUS_RING } from '../../lib/styles';
 import { render, screen } from '@testing-library/react';
 import SectionPanel from './SectionPanel';
 
@@ -53,7 +54,7 @@ describe('SectionPanel', () => {
     );
     const panel = screen.getByRole('tabpanel');
     expect(panel).toHaveAttribute('tabindex', '0');
-    expect(panel).toHaveClass('focus-visible:ring-2');
+    expect(panel).toHaveClass(...FOCUS_RING.split(' '));
   });
 
   it('defaults to a focus stop when hasFocusableContent is omitted', () => {
@@ -64,7 +65,7 @@ describe('SectionPanel', () => {
     );
     const panel = screen.getByRole('tabpanel');
     expect(panel).toHaveAttribute('tabindex', '0');
-    expect(panel).toHaveClass('focus-visible:ring-2');
+    expect(panel).toHaveClass(...FOCUS_RING.split(' '));
   });
 
   it('drops its own tab stop and ring when it owns a focusable descendant', () => {
@@ -75,7 +76,7 @@ describe('SectionPanel', () => {
     );
     const panel = screen.getByRole('tabpanel');
     expect(panel).not.toHaveAttribute('tabindex');
-    expect(panel.className).not.toContain('focus-visible:ring-2');
+    expect(panel.className).not.toContain(FOCUS_RING);
   });
 
   it('merges a passed className after the (conditional) focus ring', () => {
@@ -86,6 +87,6 @@ describe('SectionPanel', () => {
     );
     const panel = screen.getByRole('tabpanel');
     expect(panel).toHaveClass('mt-2');
-    expect(panel).toHaveClass('focus-visible:ring-2');
+    expect(panel).toHaveClass(...FOCUS_RING.split(' '));
   });
 });

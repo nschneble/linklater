@@ -1,9 +1,4 @@
-import {
-  DISABLED,
-  FOCUS_RING,
-  FOCUS_RING_DANGER,
-  FOCUS_RING_DANGER_FILLED,
-} from '../../lib/styles';
+import { DISABLED, FOCUS_RING } from '../../lib/styles';
 import type { ButtonHTMLAttributes, Ref } from 'react';
 
 /**
@@ -73,24 +68,23 @@ type Surface = NonNullable<IconButtonProps['surface']>;
 const variantClassesByHost: Record<Surface, Record<Variant, string>> = {
   base: {
     default: `${SMALL_PADDING} hover:bg-[var(--mount-bg)] disabled:bg-inherit aria-disabled:bg-inherit ring-1 ring-[var(--base-border)] text-[var(--base-text)] ${FOCUS_RING} disabled:active:scale-100 aria-disabled:active:scale-100`,
-    danger: `${SMALL_PADDING} hover:bg-[var(--alert-bg)] ring-1 ring-[var(--alert-border)] text-[var(--alert-text)] ${FOCUS_RING_DANGER}`,
-    // danger-filled fills highlight, so ring uses highlight-fg (else invisible)
-    'danger-filled': `${SMALL_PADDING} bg-[var(--alert-highlight)] hover:bg-[var(--alert-highlight-hover)] ring-1 ring-[var(--alert-highlight)] hover:ring-[var(--alert-highlight-hover)] text-[var(--alert-highlight-fg)] ${FOCUS_RING_DANGER_FILLED}`,
+    danger: `${SMALL_PADDING} hover:bg-[var(--alert-bg)] ring-1 ring-[var(--alert-border)] text-[var(--alert-text)] ${FOCUS_RING}`,
+    'danger-filled': `${SMALL_PADDING} bg-[var(--alert-highlight)] hover:bg-[var(--alert-highlight-hover)] ring-1 ring-[var(--alert-highlight)] hover:ring-[var(--alert-highlight-hover)] text-[var(--alert-highlight-fg)] ${FOCUS_RING}`,
     ghost: `${SMALL_PADDING} ring-1 ring-[var(--base-border)] text-[var(--base-alt-text)] ${FOCUS_RING}`,
     elevated: `pl-3.5 pr-4 py-2 bg-[var(--mount-bg)] disabled:bg-[var(--mount-bg)] aria-disabled:bg-[var(--mount-bg)] hover:bg-[var(--orbit-bg)] border-shadow hover:border-shadow text-[var(--mount-text)] font-semibold ${FOCUS_RING} disabled:active:scale-100 aria-disabled:active:scale-100`,
   },
   mount: {
     default: `${SMALL_PADDING} hover:bg-[var(--orbit-bg)] disabled:bg-inherit aria-disabled:bg-inherit ring-1 ring-[var(--mount-border)] text-[var(--mount-text)] ${FOCUS_RING} disabled:active:scale-100 aria-disabled:active:scale-100`,
-    danger: `${SMALL_PADDING} hover:bg-[var(--alert-bg)] ring-1 ring-[var(--alert-border)] text-[var(--alert-text)] ${FOCUS_RING_DANGER}`,
-    'danger-filled': `${SMALL_PADDING} bg-[var(--alert-highlight)] hover:bg-[var(--alert-highlight-hover)] ring-1 ring-[var(--alert-highlight)] hover:ring-[var(--alert-highlight-hover)] text-[var(--alert-highlight-fg)] ${FOCUS_RING_DANGER_FILLED}`,
+    danger: `${SMALL_PADDING} hover:bg-[var(--alert-bg)] ring-1 ring-[var(--alert-border)] text-[var(--alert-text)] ${FOCUS_RING}`,
+    'danger-filled': `${SMALL_PADDING} bg-[var(--alert-highlight)] hover:bg-[var(--alert-highlight-hover)] ring-1 ring-[var(--alert-highlight)] hover:ring-[var(--alert-highlight-hover)] text-[var(--alert-highlight-fg)] ${FOCUS_RING}`,
     ghost: `${SMALL_PADDING} ring-1 ring-[var(--mount-border)] text-[var(--mount-alt-text)] ${FOCUS_RING}`,
     elevated: `pl-3.5 pr-4 py-2 bg-[var(--orbit-bg)] disabled:bg-[var(--orbit-bg)] aria-disabled:bg-[var(--orbit-bg)] hover:bg-[var(--mount-bg)] border-shadow hover:border-shadow text-[var(--orbit-text)] font-semibold ${FOCUS_RING} disabled:active:scale-100 aria-disabled:active:scale-100`,
   },
   orbit: {
     // no over-orbit hover slot; add one before using it here, don't fall back
     default: `${SMALL_PADDING} disabled:bg-inherit aria-disabled:bg-inherit ring-1 ring-[var(--orbit-border)] text-[var(--orbit-text)] ${FOCUS_RING} disabled:active:scale-100 aria-disabled:active:scale-100`,
-    danger: `${SMALL_PADDING} hover:bg-[var(--alert-bg)] ring-1 ring-[var(--alert-border)] text-[var(--alert-text)] ${FOCUS_RING_DANGER}`,
-    'danger-filled': `${SMALL_PADDING} bg-[var(--alert-highlight)] hover:bg-[var(--alert-highlight-hover)] ring-1 ring-[var(--alert-highlight)] hover:ring-[var(--alert-highlight-hover)] text-[var(--alert-highlight-fg)] ${FOCUS_RING_DANGER_FILLED}`,
+    danger: `${SMALL_PADDING} hover:bg-[var(--alert-bg)] ring-1 ring-[var(--alert-border)] text-[var(--alert-text)] ${FOCUS_RING}`,
+    'danger-filled': `${SMALL_PADDING} bg-[var(--alert-highlight)] hover:bg-[var(--alert-highlight-hover)] ring-1 ring-[var(--alert-highlight)] hover:ring-[var(--alert-highlight-hover)] text-[var(--alert-highlight-fg)] ${FOCUS_RING}`,
     ghost: `${SMALL_PADDING} ring-1 ring-[var(--orbit-border)] text-[var(--orbit-alt-text)] ${FOCUS_RING}`,
     // elevated on orbit has no over-orbit slot; unsupported and unused
     elevated: `pl-3.5 pr-4 py-2 bg-[var(--orbit-bg)] disabled:bg-[var(--orbit-bg)] aria-disabled:bg-[var(--orbit-bg)] border-shadow text-[var(--orbit-text)] font-semibold ${FOCUS_RING} disabled:active:scale-100 aria-disabled:active:scale-100`,

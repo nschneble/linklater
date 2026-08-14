@@ -1,27 +1,22 @@
 import type { CSSProperties } from 'react';
 
-// the forced-colors outline is the Windows High Contrast fallback: that
-// mode drops the ring's background color, so the outline has to carry the
-// focus indicator on its own
+/**
+ * The one focus indicator, for every control on every surface.
+ *
+ * `outline` rather than `ring`, because a ring is a box-shadow and loses to
+ * any elevation shadow on the same element. The 2px offset is load-bearing:
+ * it holds the band clear of the control's own fill so both its edges sit on
+ * the host surface, which is where the bundle contract pins `--focus-ring`
+ * at 3:1. Against a filled control the two are often the same color.
+ *
+ * That offset is also why there is no destructive variant. The pair that
+ * justified one — a red ring vanishing into a red fill — cannot arise when
+ * the band never touches the fill.
+ */
 export const FOCUS_RING =
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-[ButtonText]';
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] forced-colors:focus-visible:outline-[Highlight]';
 
 export const DISABLED = 'disabled:opacity-60 disabled:cursor-not-allowed';
-
-/**
- * For destructive buttons drawn on their host surface. Use
- * `FOCUS_RING_DANGER_FILLED` when the alert highlight is the button fill.
- */
-export const FOCUS_RING_DANGER =
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--alert-highlight)] forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-[ButtonText]';
-
-/**
- * For destructive buttons filled with the alert highlight, where a ring in
- * that same color would paint invisible. Uses the highlight foreground,
- * which the bundle contract already floors at 4.5:1 against that fill.
- */
-export const FOCUS_RING_DANGER_FILLED =
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--alert-highlight-fg)] forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-[ButtonText]';
 
 // closing runs faster than opening so the panel feels snappy
 export function menuRevealStyle(
