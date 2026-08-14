@@ -1777,6 +1777,73 @@ describe('authorizeExtension', () => {
       redirectUri: 'chrome-extension://abc/cb',
     });
   });
+
+  /*
+   * The consent screen checks one token and has to spend that one. Every
+   * assertion below is about a token the store also holds, because the
+   * store is what the three unpinned reads would reach for, and each of
+   * them can hand back a sibling tab's sign-in.
+   */
+  it('spends the token it was handed, not the one the store holds', async () => {
+    setStoredToken('bob-jwt');
+    const fetchMock = mockFetch({ redirectUrl: 'chrome-extension://abc/cb' });
+
+    await authorizeExtension(
+      'sha256-challenge-abc',
+      'chrome-extension://abc/cb',
+      'alice-jwt',
+    );
+
+    expect(readAuthorization(fetchMock.mock.calls[0])).toBe('Bearer alice-jwt');
+  });
+
+  it('never retries a refused grant under a token nobody checked', async () => {
+    setStoredToken('bob-jwt', 'bob-refresh');
+    const fetchMock = mockFetch({ message: 'Unauthorized' }, 401);
+
+    await expect(
+      authorizeExtension(
+        'sha256-challenge-abc',
+        'chrome-extension://abc/cb',
+        'alice-jwt',
+      ),
+    ).rejects.toBeInstanceOf(ApiError);
+
+    // one leg: no renewal, and no second grant carrying bob's token
+    expect(readPaths(fetchMock)).toEqual(['/auth/extension/authorize']);
+    expect(readAuthorization(fetchMock.mock.calls[0])).toBe('Bearer alice-jwt');
+  });
+
+  it('takes no renewal for a pinned token that has already run out', async () => {
+    const expired = makeTokenExpiringIn(-60);
+    setStoredToken(expired, 'valid-refresh');
+    const fetchMock = mockFetch({ redirectUrl: 'chrome-extension://abc/cb' });
+
+    await authorizeExtension(
+      'sha256-challenge-abc',
+      'chrome-extension://abc/cb',
+      expired,
+    );
+
+    expect(readPaths(fetchMock)).toEqual(['/auth/extension/authorize']);
+  });
+
+  // an empty literal is still a pin: no header, and no path to a retry
+  it('sends nothing rather than a token it never checked', async () => {
+    setStoredToken('bob-jwt', 'bob-refresh');
+    const fetchMock = mockFetch({ message: 'Unauthorized' }, 401);
+
+    await expect(
+      authorizeExtension(
+        'sha256-challenge-abc',
+        'chrome-extension://abc/cb',
+        '',
+      ),
+    ).rejects.toBeInstanceOf(ApiError);
+
+    expect(readPaths(fetchMock)).toEqual(['/auth/extension/authorize']);
+    expect(readAuthorization(fetchMock.mock.calls[0])).toBeUndefined();
+  });
 });
 
 describe('typed endpoints – ApiError guards on empty response body', () => {

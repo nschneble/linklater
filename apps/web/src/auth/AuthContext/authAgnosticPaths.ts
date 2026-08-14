@@ -13,13 +13,13 @@
  * input nobody can retype, while protecting a static document costs a
  * tab that goes on rendering the previous account until the next
  * navigation, the deferred announcement included. That second cost is
- * not nothing, and `ExtensionAuthorizePage` is where it shows: it names
- * the account it is about to grant on, and it would name the one that
- * left. That cost is live rather than theoretical now that the grant
- * goes out as an `apiFetch`: it lands on whichever account the stored
- * token belongs to, so the screen can name one account and grant on
- * another. Carrying a grant across a sign-in is its own change, and it
- * is where that gap closes.
+ * not nothing, and `ExtensionAuthorizePage` is where it showed: it names
+ * the account it is about to grant on, and left alone it would name the
+ * one that left while granting for the one that arrived. That page pays
+ * the cost itself now (`grantIdentity`), which is the only place it can
+ * be paid: rehydrating this route would navigate away from the request
+ * the extension is waiting on, discarding the challenge and the callback
+ * with it, so the tab that noticed would be the tab that lost the grant.
  * Exported so `authAgnosticPaths.test.ts` can fail when the two drift.
  */
 export const AUTH_AGNOSTIC_PATHS = new Set([

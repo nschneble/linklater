@@ -18,6 +18,12 @@
  * forward half of any of those passes on its own while the state it
  * leaves behind is wrong.
  *
+ * The account check is pinned on both of its arms, since they answer
+ * different questions: the subscription decides what the page displays,
+ * and the handler decides whether a grant goes out at all. A suite that
+ * only ever announced through the subscription would pass while the one
+ * that matters, a tab no event reached, granted on the wrong account.
+ *
  * The grant is reset rather than cleared between tests. Clearing keeps the
  * queue of single-use outcomes, so a deferred grant a test never consumed
  * would go on to decide the next one, which is how a test that fails here
@@ -33,7 +39,12 @@ import {
   vi,
   type Mock,
 } from 'vitest';
-import { ApiError, authorizeExtension } from '../../lib/api';
+import {
+  ApiError,
+  authorizeExtension,
+  clearStoredToken,
+  setStoredToken,
+} from '../../lib/api';
 import ExtensionAuthorizePage from './ExtensionAuthorizePage';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
@@ -61,8 +72,30 @@ const REDIRECT_URI = 'chrome-extension://abc/callback';
 const CALLBACK_URL = `${REDIRECT_URI}?code=auth-code-123`;
 
 const ERROR_ID = 'extension-authorize-error';
+const CHANGED_ID = 'extension-account-changed';
 
 const authorizeExtensionMock = authorizeExtension as Mock;
+
+/**
+ * Tokens the store can actually read a subject out of. `user-1` is the
+ * account the page renders; `user-2` is the sibling tab signing in.
+ */
+function makeToken(subject: string): string {
+  const segment = btoa(JSON.stringify({ subject, exp: 4102444800 }))
+    .replaceAll('+', '-')
+    .replaceAll('/', '_')
+    .replace(/=+$/, '');
+  return `header.${segment}.signature`;
+}
+
+const ALICE_TOKEN = makeToken('user-1');
+const BOB_TOKEN = makeToken('user-2');
+
+/** A sibling tab's write, as this tab receives it. */
+function signInElsewhere(token: string, key = 'linklater_token') {
+  setStoredToken(token);
+  fireEvent(window, new StorageEvent('storage', { key }));
+}
 
 function renderPage(
   search = `?code_challenge=${CODE_CHALLENGE}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`,
@@ -78,10 +111,23 @@ function authorizeButton(): HTMLElement {
   return screen.getByRole('button', { name: /authoriz/i });
 }
 
-function errorNode(): HTMLElement {
-  const node = document.getElementById(ERROR_ID);
-  if (!node) throw new Error(`no #${ERROR_ID} in the document`);
+function nodeById(id: string): HTMLElement {
+  const node = document.getElementById(id);
+  if (!node) throw new Error(`no #${id} in the document`);
   return node;
+}
+
+function errorNode(): HTMLElement {
+  return nodeById(ERROR_ID);
+}
+
+/*
+ * Two polite regions now sit on this page, so neither is reachable by
+ * role alone. The pending one is the anonymous of the pair, which is why
+ * it is the one carrying a test hook.
+ */
+function pendingNode(): HTMLElement {
+  return screen.getByTestId('extension-authorize-pending');
 }
 
 /*
@@ -120,6 +166,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   authorizeExtensionMock.mockReset();
   currentUser = SIGNED_IN_USER;
+  localStorage.clear();
+  clearStoredToken();
   standOnPath('/extension/authorize');
 });
 
@@ -150,6 +198,7 @@ describe('ExtensionAuthorizePage', () => {
   });
 
   it('sends the grant through the API client, not a top-level navigation', async () => {
+    setStoredToken(ALICE_TOKEN);
     authorizeExtensionMock.mockResolvedValue({ redirectUrl: CALLBACK_URL });
     renderPage();
     fireEvent.click(authorizeButton());
@@ -158,8 +207,32 @@ describe('ExtensionAuthorizePage', () => {
       expect(authorizeExtensionMock).toHaveBeenCalledWith(
         CODE_CHALLENGE,
         REDIRECT_URI,
+        ALICE_TOKEN,
       );
     });
+  });
+
+  /*
+   * The token travels with the grant rather than being looked up again
+   * inside it. What `index.test.ts` proves is that a literal suppresses
+   * the renewal and the retry; what this proves is that the page hands
+   * one over at all, which is the half the client cannot do for itself.
+   */
+  it('pins the grant to the token it checked, never to a later read', async () => {
+    setStoredToken(ALICE_TOKEN);
+    const grant = deferGrant();
+    renderPage();
+    fireEvent.click(authorizeButton());
+
+    setStoredToken(BOB_TOKEN);
+    expect(authorizeExtensionMock).toHaveBeenCalledWith(
+      CODE_CHALLENGE,
+      REDIRECT_URI,
+      ALICE_TOKEN,
+    );
+
+    grant.reject(new ApiError('Bad gateway', 502));
+    await findFailure();
   });
 
   it('navigates to the URL the server chose, never one it assembled itself', async () => {
@@ -190,15 +263,14 @@ describe('ExtensionAuthorizePage pending state', () => {
     const grant = deferGrant();
     renderPage();
 
-    const pending = screen.getByRole('status');
-    expect(pending).toHaveTextContent('');
+    expect(pendingNode()).toHaveTextContent('');
 
     fireEvent.click(authorizeButton());
-    expect(pending).toHaveTextContent('Authorizing…');
+    expect(pendingNode()).toHaveTextContent('Authorizing…');
 
     grant.reject(new ApiError('Bad gateway', 502));
     await waitFor(() => {
-      expect(pending).toHaveTextContent('');
+      expect(pendingNode()).toHaveTextContent('');
     });
   });
 
@@ -313,10 +385,11 @@ describe('ExtensionAuthorizePage failures', () => {
     });
   });
 
+  // three empty regions are still joined by two spaces, which is no text
   it('describes the retry control by the failure, and by nothing at idle', async () => {
     authorizeExtensionMock.mockRejectedValue(new ApiError('Nope', 502));
     renderPage();
-    expect(authorizeButton()).toHaveAccessibleDescription('');
+    expect(authorizeButton()).toHaveAccessibleDescription(/^\s*$/);
 
     fireEvent.click(authorizeButton());
 
@@ -356,6 +429,180 @@ describe('ExtensionAuthorizePage failures', () => {
 
     await findFailure();
     expect(document.activeElement).toBe(authorizeButton());
+  });
+});
+
+/*
+ * The account the screen names and the account it would grant on are the
+ * same one, or there is no grant. Both arms are pinned: the subscription
+ * that keeps the display honest, and the click that refuses whether or
+ * not the subscription ever heard anything.
+ */
+describe('ExtensionAuthorizePage account switched underneath it', () => {
+  function changedNode(): HTMLElement {
+    return nodeById(CHANGED_ID);
+  }
+
+  it('says so once a sibling tab signs in as somebody else', () => {
+    setStoredToken(ALICE_TOKEN);
+    renderPage();
+    expect(changedNode()).toHaveTextContent('');
+
+    signInElsewhere(BOB_TOKEN);
+    expect(changedNode()).toHaveTextContent(
+      'This tab is now signed in to a different account.',
+    );
+  });
+
+  /*
+   * A tab that opened after the switch heard no event, and the route is
+   * left out of the identity guard, so first paint is the only chance
+   * this arm gets to notice.
+   */
+  it('notices a token that already belonged to somebody else', () => {
+    setStoredToken(BOB_TOKEN);
+    renderPage();
+
+    expect(changedNode()).toHaveTextContent(
+      'This tab is now signed in to a different account.',
+    );
+    expect(screen.queryByText(SIGNED_IN_USER.email)).toBeNull();
+  });
+
+  // assertive is for a verdict the user is waiting on; nobody waits here
+  it('speaks on the polite channel, and separately from the errand', () => {
+    setStoredToken(ALICE_TOKEN);
+    renderPage();
+
+    expect(changedNode()).toHaveAttribute('role', 'status');
+    expect(changedNode()).toHaveAttribute('aria-live', 'polite');
+    expect(nodeById('extension-account-changed-next')).not.toHaveAttribute(
+      'aria-live',
+    );
+  });
+
+  it('stays quiet when the sibling rotated the same account', () => {
+    setStoredToken(ALICE_TOKEN);
+    renderPage();
+
+    signInElsewhere(ALICE_TOKEN);
+    expect(changedNode()).toHaveTextContent('');
+  });
+
+  // unfiltered, a sibling's dark-mode toggle would fire the region
+  it('ignores a storage write that is not the token pair', () => {
+    setStoredToken(ALICE_TOKEN);
+    renderPage();
+
+    signInElsewhere(BOB_TOKEN, 'linklater_theme');
+    expect(changedNode()).toHaveTextContent('');
+  });
+
+  it('takes the offer back when the user switches back', () => {
+    setStoredToken(ALICE_TOKEN);
+    renderPage();
+
+    signInElsewhere(BOB_TOKEN);
+    signInElsewhere(ALICE_TOKEN);
+
+    expect(changedNode()).toHaveTextContent('');
+    expect(authorizeButton()).toHaveAttribute('aria-disabled', 'false');
+  });
+
+  it('stops naming an account it can no longer grant on', () => {
+    setStoredToken(ALICE_TOKEN);
+    renderPage();
+    expect(screen.getByText(SIGNED_IN_USER.email)).toBeInTheDocument();
+
+    signInElsewhere(BOB_TOKEN);
+    expect(screen.queryByText(SIGNED_IN_USER.email)).toBeNull();
+  });
+
+  it('marks the control inoperable in the same commit', () => {
+    setStoredToken(ALICE_TOKEN);
+    renderPage();
+
+    signInElsewhere(BOB_TOKEN);
+    expect(authorizeButton()).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  it('refuses the grant the marked control still accepts a click on', () => {
+    setStoredToken(ALICE_TOKEN);
+    renderPage();
+
+    signInElsewhere(BOB_TOKEN);
+    fireEvent.click(authorizeButton());
+
+    expect(authorizeExtensionMock).not.toHaveBeenCalled();
+  });
+
+  /*
+   * The gate is the handler, never the announcement. This route is left
+   * out of the identity guard on purpose, so a tab that missed the event
+   * has nothing else standing between it and a grant on the wrong
+   * account.
+   */
+  it('refuses on a token switch it was never told about', () => {
+    setStoredToken(ALICE_TOKEN);
+    renderPage();
+
+    setStoredToken(BOB_TOKEN);
+    fireEvent.click(authorizeButton());
+
+    expect(authorizeExtensionMock).not.toHaveBeenCalled();
+    expect(changedNode()).toHaveTextContent(
+      'This tab is now signed in to a different account.',
+    );
+    expect(authorizeButton()).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  it('never claims a grant is in flight for one that never left', () => {
+    setStoredToken(ALICE_TOKEN);
+    renderPage();
+
+    setStoredToken(BOB_TOKEN);
+    fireEvent.click(authorizeButton());
+
+    expect(pendingNode()).toHaveTextContent('');
+    expect(authorizeButton()).toHaveTextContent('Authorize');
+  });
+
+  it('keeps the control mounted and holding focus through the refusal', () => {
+    setStoredToken(ALICE_TOKEN);
+    renderPage();
+    authorizeButton().focus();
+
+    signInElsewhere(BOB_TOKEN);
+    fireEvent.click(authorizeButton());
+
+    expect(authorizeButton()).toBeInTheDocument();
+    expect(document.activeElement).toBe(authorizeButton());
+  });
+
+  // anchored, because what is pinned here is the order, not the presence
+  it('describes the control by the precondition ahead of any verdict', () => {
+    setStoredToken(ALICE_TOKEN);
+    renderPage();
+
+    signInElsewhere(BOB_TOKEN);
+    expect(authorizeButton()).toHaveAccessibleDescription(
+      /^This tab is now signed in to a different account\. Close this tab and start again from the extension\.\s*$/,
+    );
+  });
+
+  it('leaves a standing precondition where a click cannot erase it', async () => {
+    setStoredToken(ALICE_TOKEN);
+    authorizeExtensionMock.mockRejectedValue(new ApiError('Nope', 502));
+    renderPage();
+    fireEvent.click(authorizeButton());
+    await findFailure();
+
+    signInElsewhere(BOB_TOKEN);
+    fireEvent.click(authorizeButton());
+
+    expect(changedNode()).toHaveTextContent(
+      'This tab is now signed in to a different account.',
+    );
   });
 });
 

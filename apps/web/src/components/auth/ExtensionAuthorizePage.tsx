@@ -1,5 +1,7 @@
+import { accountIsVouchedFor } from './grantIdentity';
 import Alert from '../common/Alert';
 import { AUTHORIZE_FAILURE_MESSAGES } from './extensionAuthorizeMessages';
+import ExtensionAccountChanged from './ExtensionAccountChanged';
 import ExtensionAuthorizeCard from './ExtensionAuthorizeCard';
 import { extensionDenialUrl } from './extensionDenialUrl';
 import ExtensionRequestUnreadable from './ExtensionRequestUnreadable';
@@ -21,6 +23,15 @@ import { useSearchParams } from 'react-router';
  * endpoint, and the page then navigates to the callback URL the server
  * hands back. Whether the extension may be redirected to at all is the
  * server's answer, not this page's.
+ *
+ * The account it names and the account it grants on are the same one, or
+ * it grants on nothing, and the grant carries the very token that answer
+ * was read off. Nothing re-hydrates this route, so the check is
+ * page-local: `grantIdentity` reads it and `useExtensionAuthorize` acts
+ * on it. What arrives here is a boolean that closes the identity line,
+ * marks the control, and fills a region of its own, since a standing
+ * precondition and a server's verdict are not the same message and must
+ * not share a node.
  *
  * Failures speak through a single always-mounted `Alert`, which carries
  * `role="alert"` while it is still empty, so the region is in the tree
@@ -44,10 +55,8 @@ export default function ExtensionAuthorizePage() {
   const codeChallenge = searchParameters.get('code_challenge') ?? '';
   const redirectUri = searchParameters.get('redirect_uri') ?? '';
 
-  const { authorizing, failure, handleAuthorize } = useExtensionAuthorize(
-    codeChallenge,
-    redirectUri,
-  );
+  const { authorizing, failure, handleAuthorize, mismatched } =
+    useExtensionAuthorize(codeChallenge, redirectUri, user?.userId ?? null);
 
   if (!codeChallenge || !redirectUri) return <ExtensionRequestUnreadable />;
 
@@ -72,8 +81,8 @@ export default function ExtensionAuthorizePage() {
       <h1 className="text-[var(--mount-text)] text-2xl font-bold">
         Authorize Linklater Extension?
       </h1>
-      {/* a refused session is not this account's to grant on */}
-      {failure !== 'session-lost' && (
+      {/* only states that still vouch for it may name the account */}
+      {accountIsVouchedFor(failure, mismatched) && (
         <p className="text-[var(--mount-alt-text)] text-sm">
           Signed in as{' '}
           <span className="text-[var(--mount-text)] font-medium">
@@ -81,11 +90,17 @@ export default function ExtensionAuthorizePage() {
           </span>
         </p>
       )}
+      <ExtensionAccountChanged mismatched={mismatched} />
       <p className="text-[var(--mount-alt-text)] text-xs">
         The extension will be able to save and manage your links.
       </p>
 
-      <p role="status" aria-live="polite" className="sr-only">
+      <p
+        role="status"
+        aria-live="polite"
+        className="sr-only"
+        data-testid="extension-authorize-pending"
+      >
         {authorizing ? 'Authorizing…' : ''}
       </p>
       {/* ahead of the pair so the explanation precedes the control */}
@@ -102,8 +117,8 @@ export default function ExtensionAuthorizePage() {
           type="button"
           className="aria-disabled:active:scale-100 aria-disabled:cursor-not-allowed"
           onClick={() => void handleAuthorize()}
-          aria-disabled={authorizing}
-          aria-describedby="extension-authorize-error"
+          aria-disabled={authorizing || mismatched}
+          aria-describedby="extension-account-changed extension-account-changed-next extension-authorize-error"
         >
           {authorizing ? 'Authorizing…' : 'Authorize'}
         </PrimaryButton>
