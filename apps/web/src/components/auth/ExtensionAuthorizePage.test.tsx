@@ -268,12 +268,26 @@ describe('ExtensionAuthorizePage pending state', () => {
     expect(pendingNode()).toHaveTextContent('');
 
     fireEvent.click(authorizeButton());
-    expect(pendingNode()).toHaveTextContent('Authorizing…');
+    expect(pendingNode()).toHaveTextContent(
+      'Sending your approval to the extension.',
+    );
 
     grant.reject(new ApiError('Bad gateway', 502));
     await waitFor(() => {
       expect(pendingNode()).toHaveTextContent('');
     });
+  });
+
+  it('does not say the same thing the button just started saying', () => {
+    deferGrant();
+    renderPage();
+
+    fireEvent.click(authorizeButton());
+
+    // one string in both places is spoken twice, name then region text
+    expect(pendingNode().textContent?.trim()).not.toBe(
+      authorizeButton().textContent?.trim(),
+    );
   });
 
   it('marks the control pending and un-marks it, without ever removing it', async () => {

@@ -57,6 +57,10 @@ import { useSearchParams } from 'react-router';
  */
 const AUTHORIZE_ERROR_ID = 'extension-authorize-error';
 
+// not the button's own label: an identical string in both places is read
+// twice, once as the control's new name and once as the region's text
+const PENDING_MESSAGE = 'Sending your approval to the extension.';
+
 export default function ExtensionAuthorizePage() {
   const { user } = useAuth();
   const [searchParameters] = useSearchParams();
@@ -112,7 +116,7 @@ export default function ExtensionAuthorizePage() {
         className="sr-only"
         data-testid="extension-authorize-pending"
       >
-        {authorizing ? 'Authorizing…' : ''}
+        {authorizing ? PENDING_MESSAGE : ''}
       </p>
       {/* ahead of the pair so the explanation precedes the control */}
       <Alert
