@@ -31,7 +31,7 @@ import {
   BOOT_READY_DELAY_MS,
   BOOT_THRESHOLD_MS,
 } from './lib/hooks/useBootStatus';
-import { setPendingNotice } from './lib/pendingNotice';
+import { resetNoticeConsumed, setPendingNotice } from './lib/pendingNotice';
 import { StrictMode } from 'react';
 import { unauthenticatedRoutes } from './routes/Unauthenticated';
 import { useAuth } from './auth/AuthContext';
@@ -129,6 +129,8 @@ function advance(milliseconds: number) {
 beforeEach(() => {
   vi.useFakeTimers();
   vi.clearAllMocks();
+  // the real module runs here, and its latch outlives the test that raised it
+  resetNoticeConsumed();
   vi.mocked(unauthenticatedRoutes).mockReturnValue(
     null as unknown as ReturnType<typeof unauthenticatedRoutes>,
   );

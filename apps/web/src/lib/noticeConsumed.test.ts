@@ -3,24 +3,28 @@
  * this page's life.
  *
  * It has a file of its own because it is monotone and module-scoped:
- * once up it stays up for the document, so the case that needs it down
- * has to be asked before the case that raises it. Mixing it into
+ * once up it stays up for the document. Mixing it into
  * `pendingNotice.test.ts`, where most tests consume something, would
  * make the down cases depend on where in that file they happened to
- * sit. The order below is deliberate, and the tests are written to be
- * read top to bottom.
+ * sit. Here every case lowers it first, so each one states its own
+ * starting position rather than inheriting the one above it.
  *
  * It cannot live in storage. `sessionStorage` survives a reload, and a
  * notice consumed by the previous page load would then suppress a boot
  * message on the next one.
  */
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   consumePendingNotice,
   noticeWasConsumed,
+  resetNoticeConsumed,
   setPendingNotice,
 } from './pendingNotice';
+
+beforeEach(() => {
+  resetNoticeConsumed();
+});
 
 afterEach(() => {
   window.sessionStorage.clear();
@@ -51,6 +55,9 @@ describe('noticeWasConsumed', () => {
   });
 
   it('stays up after the store has gone back to empty', () => {
+    setPendingNotice('session-unavailable');
+    consumePendingNotice();
+
     expect(consumePendingNotice()).toBeNull();
     expect(noticeWasConsumed()).toBe(true);
   });

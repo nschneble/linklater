@@ -63,6 +63,18 @@ export function noticeWasConsumed(): boolean {
 }
 
 /**
+ * Exists for suites whose cases disagree about whether a read has already
+ * happened. The latch is monotone and module-scoped, so without this the
+ * cases that need it down have to run before the ones that raise it, and
+ * a suite ordered by anything other than source position reds. Nothing in
+ * the app calls it: a page that lowered the latch would be claiming a
+ * read it had not undone.
+ */
+export function resetNoticeConsumed(): void {
+  consumedThisLoad = false;
+}
+
+/**
  * The catalog's own census. A test that enumerates the notice keys has to
  * hand-write them, because the union erases at runtime and `tsconfig.app`
  * excludes test files from the typecheck that would have caught the list
