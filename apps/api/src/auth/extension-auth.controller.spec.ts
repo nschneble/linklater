@@ -78,6 +78,25 @@ describe('ExtensionAuthController', () => {
       expect(guards).toContain(JwtAuthGuard);
     });
 
+    it('applies JwtAuthGuard before CustomThrottlerGuard so only signed-in callers spend the bucket', () => {
+      const guards: unknown[] = Reflect.getMetadata(
+        '__guards__',
+        ExtensionAuthController.prototype.extensionAuthorize,
+      );
+      expect(guards).toContain(CustomThrottlerGuard);
+      expect(guards.indexOf(JwtAuthGuard)).toBeLessThan(
+        guards.indexOf(CustomThrottlerGuard),
+      );
+    });
+
+    it('overrides the default bucket with 10 requests per 60 s', () => {
+      const method = ExtensionAuthController.prototype.extensionAuthorize;
+      const ttl = Reflect.getMetadata(THROTTLER_TTL + 'default', method);
+      const limit = Reflect.getMetadata(THROTTLER_LIMIT + 'default', method);
+      expect(limit).toBe(10);
+      expect(ttl).toBe(60000);
+    });
+
     it('returns the callback URL with the code as a query parameter', async () => {
       (
         extensionAuthServiceMock.authorizeExtension as jest.Mock

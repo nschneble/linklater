@@ -51,7 +51,13 @@ export class ExtensionAuthController {
     description: 'Invalid redirect_uri or missing parameters.',
   })
   @ApiResponse({ status: 401, description: 'Missing or invalid JWT.' })
-  @UseGuards(JwtAuthGuard)
+  @ApiResponse({
+    status: 429,
+    description: 'Too many extension authorization attempts.',
+  })
+  @UseGuards(JwtAuthGuard, CustomThrottlerGuard)
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
+  @ThrottleMessage('Too many extension authorization attempts')
   @Post('extension/authorize')
   @HttpCode(200)
   async extensionAuthorize(
