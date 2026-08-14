@@ -33,47 +33,13 @@ vi.mock('./lib/api', () => ({
   updateMe: vi.fn().mockResolvedValue({}),
 }));
 
+import { makeAuthContext, makeUser } from '../test/factories';
 import { setShortcutsEnabled } from './lib/hooks/useShortcutsEnabled';
 import { useAppShell } from './useAppShell';
 import { useAuth } from './auth/AuthContext';
 import { useLocation, useNavigate } from 'react-router';
 import { useTheme } from './theme/ThemeContext';
 
-function makeUser(overrides = {}) {
-  return {
-    cvdMode: false,
-    dyslexicFont: false,
-    connectedProviders: [],
-    email: 'user@example.com',
-    emailVerifiedAt: '2024-01-01T00:00:00Z',
-    hasPassword: true,
-    mode: 'light' as const,
-    pendingEmail: null,
-    theme: 'scanner-darkly',
-    multiFactorMethod: null,
-    multiFactorPending: false,
-    userId: 'user-1',
-    welcomedAt: null,
-    ...overrides,
-  };
-}
-
-function makeAuthContext(overrides = {}) {
-  return {
-    loading: false,
-    login: vi.fn(),
-    loginWithToken: vi.fn(),
-    logout: vi.fn(),
-    markWelcomed: vi.fn(),
-    refreshUser: vi.fn(),
-    register: vi.fn(),
-    resendEmailChangeVerification: vi.fn(),
-    resendVerificationEmail: vi.fn(),
-    setPendingEmail: vi.fn(),
-    user: makeUser(),
-    ...overrides,
-  };
-}
 
 function makeThemeContext(overrides = {}) {
   return {
@@ -95,7 +61,7 @@ const navigateMock = vi.fn();
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(useAuth).mockReturnValue(makeAuthContext());
+  vi.mocked(useAuth).mockReturnValue(makeAuthContext({ user: makeUser() }));
   vi.mocked(useTheme).mockReturnValue(makeThemeContext());
   vi.mocked(useLocation).mockReturnValue({
     pathname: '/',

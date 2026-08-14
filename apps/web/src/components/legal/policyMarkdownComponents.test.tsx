@@ -9,37 +9,9 @@
  * from the semantics, because it is the same attribute.
  */
 
-import { compile } from 'tailwindcss';
-import { createRequire } from 'node:module';
+import { compileClasses } from '../../../test/tailwind';
 import { describe, expect, it } from 'vitest';
-import { dirname, resolve } from 'node:path';
 import { makePolicyMarkdownComponents } from './policyMarkdownComponents';
-import { readFileSync } from 'node:fs';
-
-const requireFromHere = createRequire(import.meta.url);
-
-/**
- * Resolves `@import "tailwindcss";` (and its relative sub-imports) off disk so
- * the compiler can register core variants + utilities.
- */
-function loadStylesheet(id: string, base: string) {
-  const path =
-    id === 'tailwindcss'
-      ? resolve(
-          dirname(requireFromHere.resolve('tailwindcss/package.json')),
-          'index.css',
-        )
-      : resolve(base, id);
-  return { base: dirname(path), content: readFileSync(path, 'utf8'), path };
-}
-
-async function compileClasses(classes: string[]): Promise<string> {
-  const compiler = await compile('@import "tailwindcss";', {
-    base: process.cwd(),
-    loadStylesheet,
-  });
-  return compiler.build(classes);
-}
 
 /** Pulls the class string the `th` mapping renders with. */
 function thClassName(): string {

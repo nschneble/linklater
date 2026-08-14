@@ -46,6 +46,7 @@ vi.mock('react-router', async () => {
 
 // ─── Imports after mocks ──────────────────────────────────────────────────────
 
+import { makeAuthContext } from '../../../test/factories';
 import * as pendingNoticeModule from '../../lib/pendingNotice';
 import { useAuth } from '../../auth/AuthContext';
 
@@ -67,22 +68,6 @@ function makeUser(overrides: Partial<User> = {}): User {
     userId: 'user-xyz',
     welcomedAt: '2026-06-14T00:00:00.000Z',
     ...overrides,
-  };
-}
-
-function makeAuthContext(user: User | null) {
-  return {
-    loading: false,
-    login: vi.fn(),
-    loginWithToken: vi.fn(),
-    logout: vi.fn(),
-    register: vi.fn(),
-    refreshUser: vi.fn(),
-    resendEmailChangeVerification: vi.fn(),
-    resendVerificationEmail: vi.fn(),
-    setPendingEmail: vi.fn(),
-    markWelcomed: vi.fn(),
-    user,
   };
 }
 
@@ -119,7 +104,7 @@ function renderPage(options: RenderOptions = {}) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(useAuth).mockReturnValue(makeAuthContext(null));
+  vi.mocked(useAuth).mockReturnValue(makeAuthContext());
 });
 
 // ─── Verifying state ─────────────────────────────────────────────────────────
@@ -150,7 +135,7 @@ describe('TokenVerificationPage verifying state', () => {
 
 describe('TokenVerificationPage success path – signed-in user', () => {
   beforeEach(() => {
-    vi.mocked(useAuth).mockReturnValue(makeAuthContext(makeUser()));
+    vi.mocked(useAuth).mockReturnValue(makeAuthContext({ user: makeUser() }));
   });
 
   it('calls onVerify with the token from the URL', async () => {
@@ -245,7 +230,7 @@ describe('TokenVerificationPage success path – signed-in user', () => {
 
 describe('TokenVerificationPage success path – signed-out user', () => {
   beforeEach(() => {
-    vi.mocked(useAuth).mockReturnValue(makeAuthContext(null));
+    vi.mocked(useAuth).mockReturnValue(makeAuthContext());
   });
 
   it('queues the signed-out notice key on success', async () => {

@@ -46,52 +46,10 @@ vi.mock('../../auth/AuthContext', () => ({
 
 import { ApiError } from '../../lib/api';
 import * as apiModule from '../../lib/api';
+import { makeAuthContext, makeUser } from '../../../test/factories';
 import { useAuth } from '../../auth/AuthContext';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function makeUser(overrides: Partial<User> = {}): User {
-  return {
-    connectedProviders: [],
-    cvdMode: false,
-    dyslexicFont: false,
-    email: 'current@example.com',
-    emailVerifiedAt: '2024-01-01T00:00:00.000Z',
-    hasPassword: true,
-    pendingEmail: null,
-    mode: 'light',
-    theme: 'scanner-darkly',
-    multiFactorMethod: null,
-    multiFactorPending: false,
-    userId: 'user-1',
-    welcomedAt: null,
-    ...overrides,
-  };
-}
-
-function makeAuthContext(
-  overrides: Partial<{
-    user: User | null;
-    resendEmailChangeVerification: ReturnType<typeof vi.fn>;
-    resendVerificationEmail: ReturnType<typeof vi.fn>;
-    setPendingEmail: ReturnType<typeof vi.fn>;
-  }> = {},
-) {
-  return {
-    loading: false,
-    login: vi.fn(),
-    loginWithToken: vi.fn(),
-    logout: vi.fn(),
-    register: vi.fn(),
-    refreshUser: vi.fn(),
-    resendEmailChangeVerification: vi.fn().mockResolvedValue(undefined),
-    resendVerificationEmail: vi.fn().mockResolvedValue(undefined),
-    setPendingEmail: vi.fn(),
-    markWelcomed: vi.fn(),
-    user: makeUser(),
-    ...overrides,
-  };
-}
 
 function renderForm() {
   return render(<EmailSettingsForm />);
@@ -101,7 +59,7 @@ function renderForm() {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(useAuth).mockReturnValue(makeAuthContext());
+  vi.mocked(useAuth).mockReturnValue(makeAuthContext({ user: makeUser() }));
   vi.mocked(apiModule.requestEmailChange).mockResolvedValue(undefined);
 });
 
@@ -126,7 +84,9 @@ describe('EmailSettingsForm happy path', () => {
 
   it('calls setPendingEmail after a successful email change request', async () => {
     const setPendingEmail = vi.fn();
-    vi.mocked(useAuth).mockReturnValue(makeAuthContext({ setPendingEmail }));
+    vi.mocked(useAuth).mockReturnValue(
+      makeAuthContext({ setPendingEmail, user: makeUser() }),
+    );
     const { container } = renderForm();
 
     fireEvent.change(screen.getByLabelText(/new email/i), {

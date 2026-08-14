@@ -54,33 +54,11 @@ vi.mock('react-router', async () => {
 // ─── Imports after mocks ──────────────────────────────────────────────────────
 
 import * as apiModule from '../../lib/api';
+import { makeAuthContext, makeUser } from '../../../test/factories';
 import * as pendingNoticeModule from '../../lib/pendingNotice';
 import { useAuth } from '../../auth/AuthContext';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function makeAuthContext(
-  overrides: Partial<{
-    loginWithToken: ReturnType<typeof vi.fn>;
-    refreshUser: ReturnType<typeof vi.fn>;
-    user: { userId: string } | null;
-  }> = {},
-) {
-  return {
-    loading: false,
-    login: vi.fn(),
-    loginWithToken: vi.fn().mockResolvedValue(undefined),
-    logout: vi.fn(),
-    register: vi.fn(),
-    refreshUser: vi.fn().mockResolvedValue(undefined),
-    resendEmailChangeVerification: vi.fn(),
-    resendVerificationEmail: vi.fn(),
-    setPendingEmail: vi.fn(),
-    markWelcomed: vi.fn(),
-    user: null,
-    ...overrides,
-  };
-}
 
 function renderPage(search = '?token=valid-token') {
   return render(
@@ -197,7 +175,7 @@ describe('VerifyLoginPage same-account branch (already signed in as the link rec
   it('does NOT call loginWithToken when current user matches the magic-link userId', async () => {
     const loginWithToken = vi.fn().mockResolvedValue(undefined);
     vi.mocked(useAuth).mockReturnValue(
-      makeAuthContext({ loginWithToken, user: { userId: 'user-1' } }),
+      makeAuthContext({ loginWithToken, user: makeUser({ userId: 'user-1' }) }),
     );
     vi.mocked(apiModule.verifyMagicLink).mockResolvedValue({
       accessToken: 'jwt-abc',
@@ -217,7 +195,7 @@ describe('VerifyLoginPage same-account branch (already signed in as the link rec
 
   it("queues 'already-logged-in' pending notice when the link is for the current user", async () => {
     vi.mocked(useAuth).mockReturnValue(
-      makeAuthContext({ user: { userId: 'user-1' } }),
+      makeAuthContext({ user: makeUser({ userId: 'user-1' }) }),
     );
     vi.mocked(apiModule.verifyMagicLink).mockResolvedValue({
       accessToken: 'jwt-abc',
@@ -238,7 +216,7 @@ describe('VerifyLoginPage same-account branch (already signed in as the link rec
 
   it('does NOT call revokeAllSessions on the same-account branch', async () => {
     vi.mocked(useAuth).mockReturnValue(
-      makeAuthContext({ user: { userId: 'user-1' } }),
+      makeAuthContext({ user: makeUser({ userId: 'user-1' }) }),
     );
     vi.mocked(apiModule.verifyMagicLink).mockResolvedValue({
       accessToken: 'jwt-abc',

@@ -13,7 +13,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import IdPsSection from '.';
 import { render, screen } from '@testing-library/react';
-import type { User } from '../../../auth/AuthContext/types';
 
 // ─── Module mocks ─────────────────────────────────────────────────────────────
 
@@ -28,52 +27,16 @@ vi.mock('../../../auth/AuthContext', () => ({
 
 // ─── Imports after mocks ──────────────────────────────────────────────────────
 
+import { makeAuthContext, makeUser } from '../../../../test/factories';
 import { useAuth } from '../../../auth/AuthContext';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function makeUser(overrides: Partial<User> = {}): User {
-  return {
-    accountDeletionPending: false,
-    connectedProviders: [],
-    cvdMode: false,
-    dyslexicFont: false,
-    email: 'test@example.com',
-    emailVerifiedAt: null,
-    hasPassword: false,
-    mode: 'light',
-    multiFactorMethod: null,
-    multiFactorPending: false,
-    pendingEmail: null,
-    theme: 'scanner-darkly',
-    userId: 'user-1',
-    welcomedAt: null,
-    ...overrides,
-  };
-}
-
-function makeAuthContext(overrides: Partial<{ user: User | null }> = {}) {
-  return {
-    loading: false,
-    login: vi.fn(),
-    loginWithToken: vi.fn(),
-    logout: vi.fn(),
-    markWelcomed: vi.fn(),
-    refreshUser: vi.fn(),
-    register: vi.fn(),
-    resendEmailChangeVerification: vi.fn(),
-    resendVerificationEmail: vi.fn(),
-    setPendingEmail: vi.fn(),
-    user: makeUser(),
-    ...overrides,
-  };
-}
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(useAuth).mockReturnValue(makeAuthContext());
+  vi.mocked(useAuth).mockReturnValue(makeAuthContext({ user: makeUser() }));
 });
 
 // ─── Tests ────────────────────────────────────────────────────────────────────

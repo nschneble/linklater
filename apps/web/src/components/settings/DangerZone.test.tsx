@@ -20,7 +20,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import DangerZone from './DangerZone';
 import { MemoryRouter } from 'react-router';
 import { useEffect, useState } from 'react';
-import type { User } from '../../auth/AuthContext/types';
 
 // ─── Module mocks ─────────────────────────────────────────────────────────────
 
@@ -40,52 +39,10 @@ vi.mock('../../auth/AuthContext', () => ({
 // ─── Imports after mocks ──────────────────────────────────────────────────────
 
 import * as apiModule from '../../lib/api';
+import { makeAuthContext, makeUser } from '../../../test/factories';
 import { useAuth } from '../../auth/AuthContext';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function makeUser(overrides: Partial<User> = {}): User {
-  return {
-    connectedProviders: [],
-    cvdMode: false,
-    dyslexicFont: false,
-    email: 'test@example.com',
-    emailVerifiedAt: null,
-    hasPassword: false,
-    pendingEmail: null,
-    mode: 'light',
-    theme: 'scanner-darkly',
-    multiFactorMethod: null,
-    multiFactorPending: false,
-    accountDeletionPending: false,
-    userId: 'user-1',
-    welcomedAt: null,
-    ...overrides,
-  };
-}
-
-function makeAuthContext(
-  overrides: Partial<{
-    logout: ReturnType<typeof vi.fn>;
-    user: User | null;
-    loading: boolean;
-  }> = {},
-) {
-  return {
-    loading: false,
-    logout: vi.fn(),
-    user: makeUser(),
-    login: vi.fn(),
-    loginWithToken: vi.fn(),
-    register: vi.fn(),
-    refreshUser: vi.fn(),
-    resendEmailChangeVerification: vi.fn(),
-    resendVerificationEmail: vi.fn(),
-    setPendingEmail: vi.fn(),
-    markWelcomed: vi.fn(),
-    ...overrides,
-  };
-}
 
 function renderDangerZone() {
   return render(
