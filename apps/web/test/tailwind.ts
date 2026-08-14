@@ -42,3 +42,17 @@ export async function compileClasses(classes: string[]): Promise<string> {
   });
   return compiler.build(classes);
 }
+
+/**
+ * The same, through the app's real `index.css`. Use this when the claim is
+ * about the project's own stylesheet — a layer position, a hand-written
+ * rule, a token cascade — rather than about a Tailwind utility.
+ */
+export async function compileIndexCss(classes: string[]): Promise<string> {
+  const source = resolve(process.cwd(), 'src', 'index.css');
+  const compiler = await compile(readFileSync(source, 'utf8'), {
+    base: dirname(source),
+    loadStylesheet,
+  });
+  return compiler.build(classes);
+}

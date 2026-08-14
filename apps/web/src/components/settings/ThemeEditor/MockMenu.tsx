@@ -49,7 +49,7 @@ function MockMenuRow({
  */
 export default function MockMenu() {
   return (
-    <div className="w-56 bg-[var(--orbit-bg)] border-shadow rounded-lg shadow-lg">
+    <div className="w-56 bg-[var(--orbit-bg)] border-shadow rounded-lg">
       <div className="px-3 pt-2.5 pb-2 border-b border-[var(--orbit-border)]">
         <p className="text-[var(--orbit-alt-text)] text-[0.55rem] uppercase tracking-wide">
           {MOCK_GLYPHS.loggedInAs}
