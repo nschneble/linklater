@@ -208,6 +208,27 @@ describe('tokenRefresh.ts', () => {
     expect(getStoredRefreshToken()).toBe('sibling-refresh');
   });
 
+  it('writes its recovered pair when the store holds what it spent', async () => {
+    setStoredToken('expired-jwt', 'spent-refresh');
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(respondWith(401, { message: 'Invalid refresh' }))
+      .mockImplementationOnce(() => {
+        // the sibling's rotation was answered with the shared nomination
+        const nomination = localStorage.getItem(NOMINATION_KEY) as string;
+        localStorage.setItem('linklater_token', 'sibling-jwt');
+        localStorage.setItem('linklater_refresh_token', nomination);
+        return Promise.resolve(rotatedPair());
+      });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    await expect(attemptTokenRefresh()).resolves.toBe(true);
+
+    // the store is behind this answer, so discarding leaves nothing live
+    expect(getStoredRefreshToken()).toBe('new-refresh');
+    expect(getStoredToken()).toBe('new-jwt');
+  });
+
   it('keeps a sibling rotation that lands as the answer is parsed', async () => {
     setStoredToken('expired-jwt', 'my-refresh');
     globalThis.fetch = vi.fn().mockResolvedValue({

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const TOKEN_KEY = 'linklater_token';
 const REFRESH_TOKEN_KEY = 'linklater_refresh_token';
+const NOMINATED_REFRESH_TOKEN_KEY = 'linklater_nominated_refresh_token';
 
 /**
  * Verifies that a token pair rotated in one tab reaches every other tab of
@@ -71,6 +72,32 @@ describe('storage.ts cross-tab token sync', () => {
 
     expect(module.getStoredToken()).toBe('rotated-access');
     expect(module.getStoredRefreshToken()).toBe('rotated-refresh');
+  });
+
+  it('drops the nomination a sibling rotation made moot', async () => {
+    const module = await loadStorageModule();
+    module.setStoredToken('boot-access', 'boot-refresh');
+    const nomination = module.nominateRefreshToken();
+
+    // the sibling's own setStoredToken removes the shared key it wrote
+    window.localStorage.removeItem(NOMINATED_REFRESH_TOKEN_KEY);
+    writeInAnotherTab(REFRESH_TOKEN_KEY, 'sibling-refresh');
+    breakStorageReads();
+
+    expect(nomination).not.toBe('');
+    expect(module.getNominatedRefreshToken()).toBeNull();
+  });
+
+  it('mints a fresh nomination rather than reusing one a sibling spent', async () => {
+    const module = await loadStorageModule();
+    module.setStoredToken('boot-access', 'boot-refresh');
+    const first = module.nominateRefreshToken();
+
+    window.localStorage.removeItem(NOMINATED_REFRESH_TOKEN_KEY);
+    writeInAnotherTab(REFRESH_TOKEN_KEY, 'sibling-refresh');
+
+    // reusing it would offer the next session a token another account holds
+    expect(module.nominateRefreshToken()).not.toBe(first);
   });
 
   it('lets another tab supersede a write this tab could not persist', async () => {

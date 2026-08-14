@@ -128,11 +128,20 @@ async function postRefresh(body: object): Promise<Response | null> {
  *
  * A pair minted from a token the store has since left is the older one,
  * however late it arrives, so the answer to a slow leg cannot be written
- * over a sibling's rotation. `refreshTokenAtDispatch` is what the store
- * held when this leg's request went out, which is not always what that
- * request carried: the replay spends a nomination, and a nomination is
- * never the stored refresh token, so asking about the value sent would
- * refuse every recovery.
+ * over a sibling's rotation. `accountedFor` is every refresh token whose
+ * presence in the store would not mean that: what it held when this leg's
+ * request went out, and what that request actually spent. They are one
+ * token for a renewal, which sends what it read, and two for a recovery,
+ * which sends a nomination instead.
+ *
+ * Both are needed on the recovery. The dispatch reading alone misses what
+ * the shared nomination makes possible: a sibling's rotation can be
+ * answered with the very token this leg is spending, which moves the
+ * store off the dispatch reading and onto a token this leg has since had
+ * revoked. The store is behind this answer there, not ahead of it, and
+ * discarding leaves the tab holding nothing live until its access token
+ * runs out. The token sent alone is no better, since on a recovery it
+ * never matches the store and would refuse every one.
  *
  * The reading is taken here rather than at the call sites so that it lands
  * after the body has parsed, leaving no await between the question and the
@@ -147,14 +156,14 @@ async function postRefresh(body: object): Promise<Response | null> {
  */
 async function storeRotatedPair(
   response: Response,
-  refreshTokenAtDispatch: string | null,
+  accountedFor: (string | null)[],
 ): Promise<RefreshOutcome> {
   try {
     const data = (await response.json()) as {
       accessToken: string;
       refreshToken: string;
     };
-    if (isRefreshTokenSuperseded(refreshTokenAtDispatch)) return 'renewed';
+    if (isRefreshTokenSuperseded(...accountedFor)) return 'renewed';
     setStoredToken(data.accessToken, data.refreshToken);
     return 'renewed';
   } catch {
@@ -186,7 +195,7 @@ async function performTokenRefresh(): Promise<RefreshOutcome> {
     return 'unresolved';
   }
 
-  return storeRotatedPair(response, spentRefreshToken);
+  return storeRotatedPair(response, [spentRefreshToken]);
 }
 
 /**
@@ -210,7 +219,7 @@ async function replayNominatedToken(): Promise<RefreshOutcome> {
     return 'unresolved';
   }
 
-  return storeRotatedPair(response, refreshTokenAtDispatch);
+  return storeRotatedPair(response, [refreshTokenAtDispatch, nominated]);
 }
 
 // dedup concurrent refreshes so N parallel callers share one refresh call
