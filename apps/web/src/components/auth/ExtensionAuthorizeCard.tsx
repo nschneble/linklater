@@ -15,6 +15,13 @@ import type { ReactNode } from 'react';
  * editable-theme tokens, so under the Custom theme they fall to the
  * synthetic default while the card and its alert keep the saved palette,
  * dropping the alert's text and border below their AA thresholds.
+ *
+ * It is wider than the theme that needed it. The pin declares all seven
+ * bundles here, so every signed-in user sees this route in branding navy,
+ * including the ten film themes that never had the bug. That is the
+ * trade taken on purpose: one appearance for a route that is a handoff
+ * rather than a place, against a per-theme carve-out that would have to
+ * be re-derived every time a bundle slot moves.
  */
 
 interface ExtensionAuthorizeCardProps {

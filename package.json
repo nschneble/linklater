@@ -1,7 +1,7 @@
 {
   "name": "linklater",
   "version": "1.5.0",
-  "description": "Linklater is an Instapaper-inspired “read it later” app.",
+  "description": "Linklater is an Instapaper-inspired \u201cread it later\u201d app.",
   "author": "Nick Schneble",
   "private": true,
   "license": "CC0-1.0",
@@ -22,6 +22,7 @@
     "tuffgal": "tuffgal run",
     "tuffgal:approve": "tuffgal approve",
     "tuffgal:setup": "node --experimental-strip-types tuffgal/setup.ts",
+    "typecheck": "npm run typecheck --workspace @linklater/api",
     "version:bump": "node scripts/bump-version.mjs"
   },
   "workspaces": [

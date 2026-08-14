@@ -27,9 +27,13 @@
   // Test files are excluded from `tsc -b` typecheck because they carry
   // long-standing type drift (stale `multiFactorMethod: 'email'`, missing
   // `markWelcomed`, partial `LoginResponse` mocks, etc). The runtime test
-  // suites still pass and ESLint catches obvious issues. Re-including these
-  // would surface ~150 errors that need a dedicated test-mock refresh pass
-  // before `tsc -b` can stay green. Track that as a separate cleanup.
+  // suites still pass and ESLint catches obvious issues. Re-including them
+  // surfaces 941 errors across 93 files, measured 2026-08-14, and needs a
+  // dedicated test-mock refresh pass before `tsc -b` could stay green.
+  // Track that as a separate cleanup, and re-measure rather than trusting
+  // this number: it was written as ~150 and had drifted six-fold before
+  // anyone checked. The API excludes its own specs for the same reason,
+  // so neither workspace type-checks its tests.
   //
   // bundles-color-utils.ts is a test-only shared helper (imports node:fs
   // for parsing bundles.css). Excluded for the same reason — it never

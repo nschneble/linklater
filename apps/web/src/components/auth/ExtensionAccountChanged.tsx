@@ -44,6 +44,16 @@
  * the user was reading is worth more than either.
  */
 
+/**
+ * The nodes the Authorize button names in its description. Exported
+ * because that button lives in another file, and a description pointing
+ * at an id nothing renders is silently empty.
+ */
+export const ACCOUNT_CHANGED_IDS = [
+  'extension-account-changed',
+  'extension-account-changed-next',
+] as const;
+
 interface ExtensionAccountChangedProps {
   mismatched: boolean;
 }
@@ -67,13 +77,13 @@ export default function ExtensionAccountChanged({
       className="absolute data-mismatched:static space-y-4"
     >
       <p
-        id="extension-account-changed"
+        id={ACCOUNT_CHANGED_IDS[0]}
         className="text-[var(--mount-text)] text-sm font-medium"
       >
         {mismatched && ACCOUNT_CHANGED_MESSAGE}
       </p>
       <p
-        id="extension-account-changed-next"
+        id={ACCOUNT_CHANGED_IDS[1]}
         className="text-[var(--mount-alt-text)] text-xs"
       >
         {mismatched && ACCOUNT_CHANGED_NEXT_STEP}

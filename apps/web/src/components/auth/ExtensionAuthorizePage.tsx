@@ -1,7 +1,9 @@
-import { accountIsVouchedFor } from './grantIdentity';
+import { accountIsVouchedFor } from './accountVouching';
 import Alert from '../common/Alert';
 import { AUTHORIZE_FAILURE_MESSAGES } from './extensionAuthorizeMessages';
-import ExtensionAccountChanged from './ExtensionAccountChanged';
+import ExtensionAccountChanged, {
+  ACCOUNT_CHANGED_IDS,
+} from './ExtensionAccountChanged';
 import ExtensionAuthorizeCard from './ExtensionAuthorizeCard';
 import { extensionDenialUrl } from './extensionDenialUrl';
 import ExtensionRequestUnreadable from './ExtensionRequestUnreadable';
@@ -42,10 +44,23 @@ import { useSearchParams } from 'react-router';
  * from the page for exactly the people who cannot glance back at it.
  * `LoginRegisterView` is the pattern to follow here.
  *
- * Nothing announces on success. A live region mutating in the same tick as
- * a top-level navigation is not reliably spoken before the document is
- * torn down, so prescribing one would be prescribing dead code.
+ * The wait has a polite region of its own, separate from the error's
+ * assertive one, because the control's own label changing is not a
+ * channel: VoiceOver does not reliably re-speak an accessible name on a
+ * focus that has not moved, and that focus is on the button the user just
+ * pressed.
+ *
+ * Nothing announces the success itself. A live region mutating in the
+ * same tick as a top-level navigation is not reliably spoken before the
+ * document is torn down, so prescribing one would be prescribing dead
+ * code.
  */
+const AUTHORIZE_ERROR_ID = 'extension-authorize-error';
+
+// not the button's own label: an identical string in both places is read
+// twice, once as the control's new name and once as the region's text
+const PENDING_MESSAGE = 'Sending your approval to the extension.';
+
 export default function ExtensionAuthorizePage() {
   const { user } = useAuth();
   const [searchParameters] = useSearchParams();
@@ -101,11 +116,11 @@ export default function ExtensionAuthorizePage() {
         className="sr-only"
         data-testid="extension-authorize-pending"
       >
-        {authorizing ? 'Authorizing…' : ''}
+        {authorizing ? PENDING_MESSAGE : ''}
       </p>
       {/* ahead of the pair so the explanation precedes the control */}
       <Alert
-        id="extension-authorize-error"
+        id={AUTHORIZE_ERROR_ID}
         icon="fa-triangle-exclamation"
         variant="error"
       >
@@ -118,7 +133,7 @@ export default function ExtensionAuthorizePage() {
           className="aria-disabled:active:scale-100 aria-disabled:cursor-not-allowed"
           onClick={() => void handleAuthorize()}
           aria-disabled={authorizing || mismatched}
-          aria-describedby="extension-account-changed extension-account-changed-next extension-authorize-error"
+          aria-describedby={`${ACCOUNT_CHANGED_IDS.join(' ')} ${AUTHORIZE_ERROR_ID}`}
         >
           {authorizing ? 'Authorizing…' : 'Authorize'}
         </PrimaryButton>

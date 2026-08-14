@@ -34,9 +34,12 @@
  * is asked here is when the hook looks and what it does with a landing
  * that has nothing to say.
  *
- * Every landing is asked to empty the region, including the two that
- * withhold. Withholding leaves the loading text sitting in the node
- * otherwise, which is worse than the message it declined to send.
+ * Only the landings that speak can be asked to empty the region. One that
+ * withholds resolves to the empty string, so the region reads empty on
+ * both sides of the clear and no assertion there can tell whether it ran.
+ * Those two are asked the question they can answer instead: that the
+ * withheld message still replaces the loading text, which otherwise sits
+ * in the node for the rest of the session.
  */
 
 import { act, renderHook } from '@testing-library/react';
@@ -271,8 +274,8 @@ describe('useBootStatus – what the boot landed on', () => {
 });
 
 describe('useBootStatus – emptying the region', () => {
-  // the loading text outlives a withheld message otherwise
-  it.each<BootLanding>(['app', 'signed-out', 'error'])(
+  // the loading text outlives a spoken message otherwise
+  it.each<BootLanding>(['app', 'signed-out'])(
     'empties the region after a boot that landed on %s',
     (landing) => {
       const { result } = bootPastTheThreshold(landing);
@@ -280,21 +283,40 @@ describe('useBootStatus – emptying the region', () => {
       expect(result.current.announcement).toBe('Loading Linklater…');
 
       advance(BOOT_READY_DELAY_MS);
+      expect(result.current.announcement).not.toBe('');
       // second advance: the clear is scheduled by an effect, not by a timer
       advance(BOOT_CLEAR_MS);
 
       expect(result.current.announcement).toBe('');
     },
   );
+});
 
-  it('empties it for a suppressed signed-out landing too', () => {
+/*
+ * A landing that withholds cannot observe the clear: its terminal message
+ * is the empty string, so the region reads empty on both sides of it. What
+ * these ask instead is that the withheld message still lands, because the
+ * loading text sits in the node until something replaces it, and leaving
+ * it there is worse than the sentence that was declined.
+ */
+describe('useBootStatus – landings with nothing to say', () => {
+  it('replaces the loading text on an error landing', () => {
+    const { result } = bootPastTheThreshold('error');
+
+    expect(result.current.announcement).toBe('Loading Linklater…');
+
+    advance(BOOT_READY_DELAY_MS);
+
+    expect(result.current.announcement).toBe('');
+  });
+
+  it('replaces it on a signed-out landing a notice already accounted for', () => {
     vi.mocked(noticeWasConsumed).mockReturnValue(true);
     const { result } = bootPastTheThreshold('signed-out');
 
     expect(result.current.announcement).toBe('Loading Linklater…');
 
     advance(BOOT_READY_DELAY_MS);
-    advance(BOOT_CLEAR_MS);
 
     expect(result.current.announcement).toBe('');
   });
