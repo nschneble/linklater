@@ -245,7 +245,7 @@ describe('VerifyLoginPage account-switch branch (logged in as B, link is for A)'
       callOrder.push('loginWithToken');
     });
     vi.mocked(useAuth).mockReturnValue(
-      makeAuthContext({ loginWithToken, user: { userId: 'user-b' } }),
+      makeAuthContext({ loginWithToken, user: makeUser({ userId: 'user-b' }) }),
     );
     vi.mocked(apiModule.verifyMagicLink).mockResolvedValue({
       accessToken: 'jwt-a',
@@ -265,7 +265,7 @@ describe('VerifyLoginPage account-switch branch (logged in as B, link is for A)'
 
   it("queues 'account-switched' pending notice when the link is for a different user", async () => {
     vi.mocked(useAuth).mockReturnValue(
-      makeAuthContext({ user: { userId: 'user-b' } }),
+      makeAuthContext({ user: makeUser({ userId: 'user-b' }) }),
     );
     vi.mocked(apiModule.verifyMagicLink).mockResolvedValue({
       accessToken: 'jwt-a',
@@ -286,7 +286,7 @@ describe('VerifyLoginPage account-switch branch (logged in as B, link is for A)'
 
   it('navigates to /unread after the account swap completes', async () => {
     vi.mocked(useAuth).mockReturnValue(
-      makeAuthContext({ user: { userId: 'user-b' } }),
+      makeAuthContext({ user: makeUser({ userId: 'user-b' }) }),
     );
     vi.mocked(apiModule.verifyMagicLink).mockResolvedValue({
       accessToken: 'jwt-a',

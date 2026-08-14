@@ -28,10 +28,8 @@
   // shipping code. They are not unchecked: `tsconfig.test.json` covers
   // them, and `npm run typecheck:test` runs it.
   //
-  // That config is not in the build or CI yet because it still reports
-  // 109 errors, genuine partial mocks against `MeResponse` and
-  // `LoginResponse` concentrated in a few files. Fix those and the two
-  // configs can merge.
+  // That config is green and gated, so a test file that stops type-checking
+  // fails the same way shipping code does.
   //
   // bundles-color-utils.ts is a test-only shared helper (imports node:fs
   // for parsing bundles.css). Excluded for the same reason — it never

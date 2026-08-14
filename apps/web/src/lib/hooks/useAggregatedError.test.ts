@@ -75,7 +75,12 @@ describe('useAggregatedError', () => {
   it('clears the error once every field is null again', () => {
     const { result, rerender } = renderHook(
       (errors: Errors) => useAggregatedError(errors),
-      { initialProps: { ...noErrors, randomError: 'Stumble failed' } },
+      {
+        initialProps: {
+          ...noErrors,
+          randomError: 'Stumble failed',
+        } as Errors,
+      },
     );
 
     expect(result.current).toBe('Stumble failed');

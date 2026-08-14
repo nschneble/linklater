@@ -12,11 +12,10 @@
   // exclusion note counted were that one gap, not the mock drift it
   // blamed.
   //
-  // NOT WIRED INTO `npm run build` OR CI YET. It reports 109 real errors,
-  // mostly partial `MeResponse` and `LoginResponse` mocks in a handful of
-  // files, and gating on it before those are fixed would just break the
-  // build. Run it by hand with `npm run typecheck:test`; fold it into the
-  // gate once it is green.
+  // Reached through the root `npm run typecheck`, so flintest and CI both
+  // gate on it. `tsconfig.app.json` still excludes the test files because
+  // the app build should fail on shipping code alone; this is the config
+  // that covers them.
   "extends": "./tsconfig.app.json",
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.test.tsbuildinfo",

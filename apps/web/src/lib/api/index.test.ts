@@ -354,7 +354,10 @@ describe('apiFetch', () => {
       id: 'retried',
     });
 
-    const [, refreshOptions] = fetchMock.mock.calls[1] as [string, RequestInit];
+    const [, refreshOptions] = fetchMock.mock.calls[1] as unknown as [
+      string,
+      RequestInit,
+    ];
     expect(JSON.parse(refreshOptions.body as string)).toEqual({
       refreshToken: 'rotated-refresh',
       nextRefreshToken: expect.stringMatching(/^[0-9a-f]{64}$/),
@@ -407,7 +410,10 @@ describe('apiFetch', () => {
     expect(getStoredToken()).toBe('sibling-jwt');
     expect(result).toEqual({ id: 'retried' });
 
-    const [, retryOptions] = fetchMock.mock.calls[2] as [string, RequestInit];
+    const [, retryOptions] = fetchMock.mock.calls[2] as unknown as [
+      string,
+      RequestInit,
+    ];
     expect((retryOptions.headers as Record<string, string>).Authorization).toBe(
       'Bearer sibling-jwt',
     );
@@ -495,7 +501,10 @@ describe('apiFetch', () => {
     );
 
     // the unpersisted pair is what got spent, not the older stored one
-    const [, refreshOptions] = fetchMock.mock.calls[1] as [string, RequestInit];
+    const [, refreshOptions] = fetchMock.mock.calls[1] as unknown as [
+      string,
+      RequestInit,
+    ];
     expect(JSON.parse(refreshOptions.body as string)).toEqual({
       refreshToken: 'my-refresh',
       nextRefreshToken: expect.stringMatching(/^[0-9a-f]{64}$/),
@@ -607,7 +616,10 @@ describe('apiFetch', () => {
       '/auth/refresh',
       '/auth/refresh',
     ]);
-    const [, refreshOptions] = fetchMock.mock.calls[1] as [string, RequestInit];
+    const [, refreshOptions] = fetchMock.mock.calls[1] as unknown as [
+      string,
+      RequestInit,
+    ];
     expect(JSON.parse(refreshOptions.body as string)).toEqual({
       refreshToken: 'cached-refresh',
       nextRefreshToken: expect.stringMatching(/^[0-9a-f]{64}$/),

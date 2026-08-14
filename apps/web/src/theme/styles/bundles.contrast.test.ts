@@ -40,7 +40,17 @@ import {
   resolveFg,
 } from './bundles-color-utils';
 import { describe, expect, it } from 'vitest';
-import type { Rgb, Slot } from './bundles-color-utils';
+import type { Rgb, Rgba, Slot } from './bundles-color-utils';
+
+/**
+ * Drops the alpha channel. Named rather than inlined because discarding it
+ * is only sound for a colour that is already opaque: a translucent one has
+ * to be composited over what sits behind it first, and every value below
+ * is a literal with no transparency.
+ */
+function opaque([red, green, blue]: Rgba): Rgb {
+  return [red, green, blue];
+}
 
 const AA_NORMAL = 4.5;
 const AA_NON_TEXT = 3;
@@ -534,8 +544,8 @@ describe('bundle contrast contract', () => {
    * pins the resting label against BOTH gradient stops at SC 1.4.3 (4.5:1).
    */
   describe('branding base-alt-text on both gradient stops', () => {
-    const BRANDING_TOP_STOP: Rgb = parseColor('#14103a');
-    const BRANDING_OUTER_STOP: Rgb = parseColor('#0a0812');
+    const BRANDING_TOP_STOP = opaque(parseColor('#14103a'));
+    const BRANDING_OUTER_STOP = opaque(parseColor('#0a0812'));
     const block = extractBlock(BUNDLES_CSS, "[data-theme='branding']");
     const declarations = parseDeclarations(block);
     const altText = declarations.get('base-alt-text');
@@ -887,7 +897,10 @@ describe('bundle contrast contract', () => {
           'school-of-rock dark cascade missing base-input-bg or base-bg',
         );
       }
-      const ratio = luminanceRatio(parseColor(inputBg), parseColor(baseBg));
+      const ratio = luminanceRatio(
+        opaque(parseColor(inputBg)),
+        opaque(parseColor(baseBg)),
+      );
       expect
         .soft(
           ratio,
@@ -909,7 +922,10 @@ describe('bundle contrast contract', () => {
           'boyhood dark cascade missing base-input-bg or base-bg',
         );
       }
-      const ratio = luminanceRatio(parseColor(inputBg), parseColor(baseBg));
+      const ratio = luminanceRatio(
+        opaque(parseColor(inputBg)),
+        opaque(parseColor(baseBg)),
+      );
       expect
         .soft(
           ratio,

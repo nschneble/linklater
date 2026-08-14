@@ -18,13 +18,14 @@ vi.mock('../../auth/AuthContext', () => ({
   useAuth: vi.fn(),
 }));
 
+import { makeUser } from '../../../test/factories';
 import PolicyDocumentPage from './PolicyDocumentPage';
 import { useAuth } from '../../auth/AuthContext';
 
 const useAuthMock = vi.mocked(useAuth);
 
 /** Minimal logged-in user; presence (non-null) drives the branch. */
-const loggedInUser = { id: 'user-1', email: 'nick@example.com' } as User;
+const loggedInUser = makeUser({ email: 'nick@example.com' });
 
 /** Two h2 sections (no h1) so the chrome heading stays the only level-1. */
 const fixtureMarkdown = [

@@ -25,6 +25,7 @@ import { renderHook } from '@testing-library/react';
 import { resolveContrastStatus, useContrastResults } from './contrastResults';
 import type { ContrastPair } from './contrastResults.pairs';
 import type { ContrastResults } from './contrastResults';
+import type { ThemeVariable } from '../../../theme/customThemeTokens';
 
 /** Every contract pair the live checker evaluates: per-bundle plus focus ring. */
 function allContractPairs(): ContrastPair[] {
@@ -72,8 +73,8 @@ function makePair(overrides: Partial<ContrastPair>): ContrastPair {
  * white background, which pins its relative luminance to roughly 0.175-0.3.
  * `#7c7c7c` sits at 0.2015, giving 5.03 and 4.18.
  */
-function passingPalette(): Record<string, string> {
-  const values: Record<string, string> = {};
+function passingPalette(): Record<ThemeVariable, string> {
+  const values = {} as Record<ThemeVariable, string>;
   for (const variable of EDITABLE_VARS) {
     if (variable.endsWith('-bg')) {
       values[variable] = '#ffffff';
@@ -196,7 +197,10 @@ describe('an unmeasurable pair is never rolled up as passing', () => {
   it.each(['#zzzzzz', 'rgb(999, 999, 999)'])(
     'reports %s as unmeasurable rather than as conforming',
     (unreadable) => {
-      const palette = { ...BRANDING_DEFAULTS, '--base-text': unreadable };
+      const palette = {
+        ...BRANDING_DEFAULTS,
+        '--base-text': unreadable,
+      } as Record<ThemeVariable, string>;
 
       const { result } = renderHook(() => useContrastResults(palette));
 
@@ -224,7 +228,7 @@ describe('worst-of scoring across the sites a surface renders in', () => {
   };
 
   it('reports the worse of two sites that measure differently', () => {
-    const resolve = (token: string) => divergent[token] ?? '';
+    const resolve = (token: string) => divergent[token as ThemeVariable] ?? '';
     const evaluation = evaluatePair('--mount-text', '--mount-bg', resolve);
 
     expect(evaluation.ratio).toBeCloseTo(5.317, 3);
@@ -296,7 +300,7 @@ describe('C1 differential: only pairs that READ a token move when it changes', (
 
   it('reads exactly the two endpoints when nothing is translucent', () => {
     const opaque = passingPalette();
-    const resolve = (token: string) => opaque[token] ?? '';
+    const resolve = (token: string) => opaque[token as ThemeVariable] ?? '';
 
     for (const pair of allPairs) {
       const evaluation = evaluatePair(

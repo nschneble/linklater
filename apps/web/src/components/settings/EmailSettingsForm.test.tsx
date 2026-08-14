@@ -48,6 +48,7 @@ import { ApiError } from '../../lib/api';
 import * as apiModule from '../../lib/api';
 import { makeAuthContext, makeUser } from '../../../test/factories';
 import { useAuth } from '../../auth/AuthContext';
+import type { AuthContextValue } from '../../auth/AuthContext/types';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -227,11 +228,7 @@ describe('EmailSettingsForm verified state', () => {
 });
 
 describe('EmailSettingsForm pending-email resend', () => {
-  function makePendingAuth(
-    overrides: Partial<{
-      resendEmailChangeVerification: ReturnType<typeof vi.fn>;
-    }> = {},
-  ) {
+  function makePendingAuth(overrides: Partial<AuthContextValue> = {}) {
     return makeAuthContext({
       user: makeUser({ pendingEmail: 'new@example.com' }),
       ...overrides,

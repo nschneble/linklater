@@ -22,7 +22,7 @@
     "tuffgal": "tuffgal run",
     "tuffgal:approve": "tuffgal approve",
     "tuffgal:setup": "node --experimental-strip-types tuffgal/setup.ts",
-    "typecheck": "npm run typecheck --workspace @linklater/api",
+    "typecheck": "npm run typecheck --workspace @linklater/api && npm run typecheck:test --workspace @linklater/web",
     "version:bump": "node scripts/bump-version.mjs"
   },
   "workspaces": [

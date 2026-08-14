@@ -18,7 +18,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRef } from 'react';
 import { MemoryRouter } from 'react-router';
 import { render, screen } from '@testing-library/react';
+import type { Dispatch, SetStateAction } from 'react';
 import type { MfaChallenge, Mode } from './useAuthForm';
+import type { NoticeEntry } from '../../lib/pendingNotice';
 import type { RefObject } from 'react';
 
 // ─── Module mocks ─────────────────────────────────────────────────────────────
@@ -40,7 +42,7 @@ interface MakeHookOverrides {
   mode?: Mode;
   mfaChallenge?: MfaChallenge | null;
   notice?: { message: string; variant: 'success' | 'error' } | null;
-  setNotice?: ReturnType<typeof vi.fn>;
+  setNotice?: Dispatch<SetStateAction<NoticeEntry | null>>;
 }
 
 function makeHookResult(
@@ -79,7 +81,7 @@ function makeHookResult(
     setMfaChallenge: vi.fn(),
     setMfaCode: vi.fn(),
     setError: vi.fn(),
-    setNotice: overrides.setNotice ?? vi.fn(),
+    setNotice: overrides.setNotice ?? vi.fn(() => undefined),
     setPassword: vi.fn(),
   };
 }

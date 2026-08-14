@@ -39,20 +39,33 @@ import { useAppShell } from './useAppShell';
 import { useAuth } from './auth/AuthContext';
 import { useLocation, useNavigate } from 'react-router';
 import { useTheme } from './theme/ThemeContext';
+import type { BaseTheme } from './theme/constants';
+import type { ThemeContextValue } from './theme/ThemeContext/types';
 
-
-function makeThemeContext(overrides = {}) {
+function makeThemeContext(
+  overrides: Partial<ThemeContextValue> = {},
+): ThemeContextValue {
   return {
-    applyServerMode: vi.fn(),
-    applyServerTheme: vi.fn(),
-    baseTheme: 'scanner-darkly' as const,
-    disableCvdMode: vi.fn(),
-    enableCvdMode: vi.fn(),
+    applyServerCustomTheme: vi.fn(() => undefined),
+    applyServerCustomThemeEnabled: vi.fn(() => undefined),
+    applyServerMode: vi.fn(() => undefined),
+    applyServerTheme: vi.fn(() => undefined),
+    baseTheme: 'scanner-darkly',
+    customTheme: null,
+    customThemeEnabled: false,
+    disableCvdMode: vi.fn((): BaseTheme => 'scanner-darkly'),
+    disableDyslexicFont: vi.fn(() => undefined),
+    enableCvdMode: vi.fn((): BaseTheme => 'scanner-darkly'),
+    enableDyslexicFont: vi.fn(() => undefined),
     isCvdMode: false,
-    mode: 'dark' as const,
-    setBaseTheme: vi.fn(),
-    setMode: vi.fn(),
-    toggleMode: vi.fn(),
+    isDyslexicFont: false,
+    mode: 'dark',
+    setBaseTheme: vi.fn(() => undefined),
+    setCustomTheme: vi.fn(() => undefined),
+    setCustomThemeEnabled: vi.fn(() => undefined),
+    setMode: vi.fn(() => undefined),
+    setPreviewTheme: vi.fn(() => undefined),
+    toggleMode: vi.fn(() => undefined),
     ...overrides,
   };
 }
