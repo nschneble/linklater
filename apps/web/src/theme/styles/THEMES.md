@@ -133,7 +133,7 @@ bundle it visually sits on:
 - `surface="base"` – page chrome (default for `FormInput` and
   `SlidingTabBar`; used by `LinkForm`, `LinksList`'s load-more button,
   `LinksToolbar`, `StumblePage`, `StumbleEmptyView`, and the
-  `PrimaryButton`s in `FailWhalePage`, `ErrorBoundary`, `NotFoundView`,
+  `PrimaryButton`s in `FailWhalePage`, `ErrorFallbackView`, `NotFoundView`,
   `LinksControls`, `LinksMobileControls`, `LinkForm`). `ApiDocsView`
   and `LandingPage` paint from the off-book `branding` theme (Section 7):
   their wrappers set `data-theme='branding'` so every bundle slot

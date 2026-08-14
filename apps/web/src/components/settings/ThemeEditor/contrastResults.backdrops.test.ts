@@ -261,7 +261,7 @@ const PAINTERS: ReadonlyArray<readonly [string, string, string]> = [
   ['components/common/SlidingTabBar.tsx', 'mount orbit', ''],
   ['components/common/StatusBadge.tsx', 'warn info success', ''],
   ['components/common/Toast.tsx', '', 'alert warn success'],
-  ['components/errors/ErrorBoundary.tsx', 'base', ''],
+  ['components/errors/ErrorFallbackView.tsx', 'base', ''],
   ['components/errors/NotFoundView.tsx', 'base', ''],
   ['components/legal/PolicyDocumentPage.tsx', '', 'base'],
   ['components/links/KeyboardShortcutsModal.tsx', 'orbit', ''],

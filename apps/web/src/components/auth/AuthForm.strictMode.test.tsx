@@ -25,6 +25,10 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import AuthForm from './AuthForm';
+import {
+  clearBootAnnouncementInbound,
+  markBootAnnouncementInbound,
+} from '../../lib/bootAnnouncementSignal';
 import { MemoryRouter } from 'react-router';
 import { setPendingNotice } from '../../lib/pendingNotice';
 
@@ -67,10 +71,12 @@ function mirrorText(): string | null {
 
 beforeEach(() => {
   sessionStorage.clear();
+  clearBootAnnouncementInbound();
 });
 
 afterEach(() => {
   sessionStorage.clear();
+  clearBootAnnouncementInbound();
 });
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -141,5 +147,39 @@ describe('AuthForm – a notice queued before the form mounted', () => {
     });
 
     expect(mirrorText()).toBe('');
+  });
+});
+
+/*
+ * A slow boot narrates itself out of a region above this form, and the
+ * form mounts under the tail of that announcement: the flag goes up a
+ * second in, and the app branch cannot appear before the threshold plus
+ * the dwell floor, so the arrival is at least four tenths of a second
+ * late to it. Nothing here is queued in the notice store, so the three
+ * arms already on the bail all answer no.
+ */
+describe('AuthForm – a boot still narrating itself overhead', () => {
+  it.each([false, true])(
+    'holds focus off the inputs while it finishes (strict mode: %s)',
+    async (reactStrictMode) => {
+      markBootAnnouncementInbound();
+
+      await arrive(reactStrictMode);
+
+      expect(document.activeElement).toBe(document.body);
+    },
+  );
+
+  // the arm has to let go, or every later mode switch is stranded too
+  it('lets a later mode change take focus once the boot has spoken', async () => {
+    markBootAnnouncementInbound();
+    await arrive(true);
+    clearBootAnnouncementInbound();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('tab', { name: 'Sign up' }));
+    });
+
+    expect(document.activeElement).toBe(screen.getByLabelText(/email/i));
   });
 });

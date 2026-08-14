@@ -8,18 +8,24 @@ import {
   readLocalStorage,
 } from './theme/storage';
 import ErrorBoundary from './components/errors/ErrorBoundary';
+import { resolveBootLanding } from './lib/hooks/useBootStatus.landing';
 import { Routes } from 'react-router';
 import { unauthenticatedRoutes } from './routes/Unauthenticated';
 import { useAuth } from './auth/AuthContext';
 import { useBootStatus } from './lib/hooks/useBootStatus';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { userRoutes } from './routes/User';
 import { useServerBooleanPrefSync } from './theme/useServerBooleanPrefSync';
 import { useTheme } from './theme/ThemeContext';
 
 export default function App() {
   const { user, loading } = useAuth();
-  const boot = useBootStatus(loading);
+  // one-way: this boundary has no resetKey, so a caught crash is the end
+  const [crashed, setCrashed] = useState(false);
+  const boot = useBootStatus(
+    loading,
+    resolveBootLanding(crashed, Boolean(user)),
+  );
   const {
     applyServerTheme,
     applyServerMode,
@@ -81,7 +87,7 @@ export default function App() {
       </p>
       {boot.phase === 'interstitial' && <BootInterstitial />}
       {boot.phase === 'app' && (
-        <ErrorBoundary>
+        <ErrorBoundary onError={() => setCrashed(true)}>
           <Routes>
             {commonRoutes()}
             {user ? userRoutes() : unauthenticatedRoutes()}

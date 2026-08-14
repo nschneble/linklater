@@ -25,6 +25,18 @@
  * The remaining two carry no such number. The ready stagger asks only to
  * be a task of its own after the handover, and nothing normative sets how
  * long a polite region must hold its text before being emptied.
+ *
+ * The landing arrives as a second argument and is read at speak time, so
+ * the cases below that change it mid-boot are the point rather than an
+ * edge: the crash that decides the answer arrives during the commit that
+ * hands over, after the timer carrying the message was already set. The
+ * copy each landing resolves to is `useBootStatus.landing.test.ts`; what
+ * is asked here is when the hook looks and what it does with a landing
+ * that has nothing to say.
+ *
+ * Every landing is asked to empty the region, including the two that
+ * withhold. Withholding leaves the loading text sitting in the node
+ * otherwise, which is worse than the message it declined to send.
  */
 
 import { act, renderHook } from '@testing-library/react';
@@ -36,11 +48,22 @@ import {
   BOOT_THRESHOLD_MS,
   useBootStatus,
 } from './useBootStatus';
+import {
+  clearBootAnnouncementInbound,
+  hasBootAnnouncementInbound,
+} from '../bootAnnouncementSignal';
+import { noticeWasConsumed } from '../pendingNotice';
+import type { BootLanding } from './useBootStatus.landing';
 
-function renderBoot() {
-  return renderHook(({ loading }) => useBootStatus(loading), {
-    initialProps: { loading: true },
-  });
+vi.mock('../pendingNotice', () => ({
+  noticeWasConsumed: vi.fn(() => false),
+}));
+
+function renderBoot(landing: BootLanding = 'app') {
+  return renderHook(
+    ({ loading, landing: current }) => useBootStatus(loading, current),
+    { initialProps: { loading: true, landing } },
+  );
 }
 
 function advance(milliseconds: number) {
@@ -49,8 +72,21 @@ function advance(milliseconds: number) {
   });
 }
 
+/** Runs a boot slow enough to speak, up to the moment before it does. */
+function bootPastTheThreshold(landing: BootLanding = 'app') {
+  const boot = renderBoot(landing);
+
+  advance(BOOT_THRESHOLD_MS);
+  act(() => boot.rerender({ loading: false, landing }));
+  advance(BOOT_DWELL_MS);
+
+  return boot;
+}
+
 beforeEach(() => {
   vi.useFakeTimers();
+  vi.mocked(noticeWasConsumed).mockReturnValue(false);
+  clearBootAnnouncementInbound();
 });
 
 afterEach(() => {
@@ -83,7 +119,7 @@ describe('useBootStatus', () => {
     const { result, rerender } = renderBoot();
 
     advance(BOOT_THRESHOLD_MS);
-    act(() => rerender({ loading: false }));
+    act(() => rerender({ loading: false, landing: 'app' }));
     advance(99);
 
     expect(result.current.phase).toBe('interstitial');
@@ -93,7 +129,7 @@ describe('useBootStatus', () => {
     const { result, rerender } = renderBoot();
 
     advance(BOOT_THRESHOLD_MS - 100);
-    act(() => rerender({ loading: false }));
+    act(() => rerender({ loading: false, landing: 'app' }));
 
     expect(result.current.phase).toBe('app');
     expect(result.current.announcement).toBe('');
@@ -108,7 +144,7 @@ describe('useBootStatus', () => {
     const { result, rerender } = renderBoot();
 
     advance(BOOT_THRESHOLD_MS);
-    act(() => rerender({ loading: false }));
+    act(() => rerender({ loading: false, landing: 'app' }));
 
     expect(result.current.phase).toBe('interstitial');
 
@@ -125,7 +161,7 @@ describe('useBootStatus', () => {
     const { result, rerender } = renderBoot();
 
     advance(BOOT_THRESHOLD_MS + BOOT_DWELL_MS + 500);
-    act(() => rerender({ loading: false }));
+    act(() => rerender({ loading: false, landing: 'app' }));
     advance(0);
 
     expect(result.current.phase).toBe('app');
@@ -135,7 +171,7 @@ describe('useBootStatus', () => {
     const { result, rerender } = renderBoot();
 
     advance(BOOT_THRESHOLD_MS);
-    act(() => rerender({ loading: false }));
+    act(() => rerender({ loading: false, landing: 'app' }));
     advance(BOOT_DWELL_MS);
 
     expect(result.current.announcement).toBe('Loading Linklater…');
@@ -168,5 +204,146 @@ describe('useBootStatus', () => {
     unmount();
 
     expect(vi.getTimerCount()).toBe(0);
+  });
+});
+
+describe('useBootStatus – what the boot landed on', () => {
+  it('says so when the boot finished with nobody signed in', () => {
+    const { result } = bootPastTheThreshold('signed-out');
+
+    advance(BOOT_READY_DELAY_MS);
+
+    expect(result.current.announcement).toBe(
+      "Linklater is ready. You're not signed in.",
+    );
+  });
+
+  it('stands down when a consumed notice already covered the landing', () => {
+    vi.mocked(noticeWasConsumed).mockReturnValue(true);
+    const { result } = bootPastTheThreshold('signed-out');
+
+    advance(BOOT_READY_DELAY_MS);
+
+    expect(result.current.announcement).toBe('');
+  });
+
+  it('goes on saying ready when the boot found somebody signed in', () => {
+    vi.mocked(noticeWasConsumed).mockReturnValue(true);
+    const { result } = bootPastTheThreshold('app');
+
+    advance(BOOT_READY_DELAY_MS);
+
+    expect(result.current.announcement).toBe('Linklater is ready.');
+  });
+
+  it('claims nothing when the boot ended on the error fallback', () => {
+    const { result } = bootPastTheThreshold('error');
+
+    advance(BOOT_READY_DELAY_MS);
+
+    expect(result.current.announcement).toBe('');
+  });
+
+  // the crash lands during the handover commit, after the timer is set
+  it('reads the landing when it speaks, not when it scheduled', () => {
+    const { result, rerender } = bootPastTheThreshold('signed-out');
+
+    act(() => rerender({ loading: false, landing: 'error' }));
+    advance(BOOT_READY_DELAY_MS);
+
+    expect(result.current.announcement).toBe('');
+  });
+
+  it('does not re-announce when a crash arrives long after the boot', () => {
+    const { result, rerender } = bootPastTheThreshold('app');
+
+    advance(BOOT_READY_DELAY_MS);
+    // second advance: the clear is scheduled by an effect, not by a timer
+    advance(BOOT_CLEAR_MS);
+
+    expect(result.current.announcement).toBe('');
+
+    act(() => rerender({ loading: false, landing: 'error' }));
+    advance(BOOT_READY_DELAY_MS + BOOT_CLEAR_MS);
+
+    expect(result.current.announcement).toBe('');
+  });
+});
+
+describe('useBootStatus – emptying the region', () => {
+  // the loading text outlives a withheld message otherwise
+  it.each<BootLanding>(['app', 'signed-out', 'error'])(
+    'empties the region after a boot that landed on %s',
+    (landing) => {
+      const { result } = bootPastTheThreshold(landing);
+
+      expect(result.current.announcement).toBe('Loading Linklater…');
+
+      advance(BOOT_READY_DELAY_MS);
+      // second advance: the clear is scheduled by an effect, not by a timer
+      advance(BOOT_CLEAR_MS);
+
+      expect(result.current.announcement).toBe('');
+    },
+  );
+
+  it('empties it for a suppressed signed-out landing too', () => {
+    vi.mocked(noticeWasConsumed).mockReturnValue(true);
+    const { result } = bootPastTheThreshold('signed-out');
+
+    expect(result.current.announcement).toBe('Loading Linklater…');
+
+    advance(BOOT_READY_DELAY_MS);
+    advance(BOOT_CLEAR_MS);
+
+    expect(result.current.announcement).toBe('');
+  });
+});
+
+describe('useBootStatus – the focus signal', () => {
+  it('leaves it down for a boot too fast to say anything', () => {
+    const { rerender } = renderBoot();
+
+    advance(BOOT_THRESHOLD_MS - 100);
+    act(() => rerender({ loading: false, landing: 'app' }));
+    advance(BOOT_READY_DELAY_MS + BOOT_CLEAR_MS);
+
+    expect(hasBootAnnouncementInbound()).toBe(false);
+  });
+
+  it('raises it as soon as the boot screen speaks', () => {
+    renderBoot();
+
+    advance(BOOT_THRESHOLD_MS);
+
+    expect(hasBootAnnouncementInbound()).toBe(true);
+  });
+
+  it('drops it once the terminal message has been resolved', () => {
+    bootPastTheThreshold('signed-out');
+
+    expect(hasBootAnnouncementInbound()).toBe(true);
+
+    advance(BOOT_READY_DELAY_MS);
+
+    expect(hasBootAnnouncementInbound()).toBe(false);
+  });
+
+  // a withheld message resolves the landing just the same
+  it('drops it even when the landing had nothing to say', () => {
+    bootPastTheThreshold('error');
+
+    advance(BOOT_READY_DELAY_MS);
+
+    expect(hasBootAnnouncementInbound()).toBe(false);
+  });
+
+  it('drops it when the hook goes away before it could speak', () => {
+    const { unmount } = renderBoot();
+
+    advance(BOOT_THRESHOLD_MS);
+    unmount();
+
+    expect(hasBootAnnouncementInbound()).toBe(false);
   });
 });

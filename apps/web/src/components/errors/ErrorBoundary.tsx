@@ -1,9 +1,17 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-import PrimaryButton from '../common/PrimaryButton';
+import ErrorFallbackView from './ErrorFallbackView';
 
 interface ErrorBoundaryProps {
   /** The subtree to protect from unhandled render errors. */
   children: ReactNode;
+  /**
+   * Told that a child threw, so an ancestor can stop describing the app
+   * as if it were still standing. Lifted rather than solved by moving the
+   * boundary up: above `App`'s phase branch it would wrap the live region
+   * that narrates the boot, and a catch would remount the one node the
+   * whole design rests on never being remounted.
+   */
+  onError?: () => void;
   /**
    * Custom fallback to render when a child throws. When omitted, the default
    * full-screen "Something went wrong" UI is shown. Pass `null` to render
@@ -31,12 +39,14 @@ interface ErrorBoundaryState {
  * Class-based error boundary that catches unhandled errors thrown during
  * rendering, in lifecycle methods, or in constructors of any child component.
  *
- * When an error is caught, it renders a full-screen fallback with a "Retry"
- * button that reloads the page. This covers the case where an unexpected
- * exception leaves the React tree in an unrecoverable state.
+ * When an error is caught, it renders `ErrorFallbackView` in place of the
+ * whole page. This covers the case where an unexpected exception leaves the
+ * React tree in an unrecoverable state.
  *
  * NOTE: Error boundaries must be class components – hooks cannot catch render
- * errors. This is the only class component in the codebase for this reason.
+ * errors. This is the only class component in the codebase for this reason,
+ * and it is why the fallback is a component of its own: the title and the
+ * focus move it owes are effects, which a class cannot hold.
  *
  * Placed at the root of the app (`App.tsx`) to catch any unhandled error
  * from the entire component tree. Also used at the route layer in
@@ -59,6 +69,7 @@ export default class ErrorBoundary extends Component<
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('ErrorBoundary caught:', error, info);
+    this.props.onError?.();
   }
 
   componentDidUpdate(previousProps: ErrorBoundaryProps) {
@@ -73,30 +84,7 @@ export default class ErrorBoundary extends Component<
       if (this.props.fallback !== undefined) {
         return this.props.fallback;
       }
-      return (
-        <div className="flex flex-col items-center justify-center min-h-svh px-4 bg-[var(--base-bg)] text-[var(--base-text)] text-center select-none">
-          <i
-            className="fa-solid fa-bug text-4xl text-[var(--base-subtle-text)] mb-4"
-            aria-hidden="true"
-          />
-          <h1 className="mb-2 text-lg font-semibold">Something went wrong</h1>
-          <p className="mb-6 text-[var(--base-alt-text)] text-sm">
-            An unexpected error occurred. Reloading the page{' '}
-            <span className="italic">usually</span> fixes it.
-          </p>
-
-          <PrimaryButton
-            surface="base"
-            onClick={() => window.location.reload()}
-          >
-            <i
-              className="fa-solid fa-arrow-rotate-right text-xs"
-              aria-hidden="true"
-            />
-            Reload page
-          </PrimaryButton>
-        </div>
-      );
+      return <ErrorFallbackView />;
     }
 
     return this.props.children;

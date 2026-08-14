@@ -45,6 +45,7 @@ const MIGRATED_FILES = [
   'src/components/common/ThemeRowContent.tsx',
   'src/components/common/Toast.tsx',
   'src/components/errors/ErrorBoundary.tsx',
+  'src/components/errors/ErrorFallbackView.tsx',
   'src/components/errors/NotFoundView.tsx',
   'src/components/legal/PolicyDocumentPage.tsx',
   'src/components/legal/policyMarkdownComponents.tsx',
