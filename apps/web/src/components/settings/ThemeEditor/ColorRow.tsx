@@ -1,3 +1,4 @@
+import { FOCUS_RING } from '../../../lib/styles';
 import { isAlphaValue, type ThemeVariable } from './useThemeOverrides';
 import {
   isSixDigitHex,
@@ -162,7 +163,7 @@ export default function ColorRow({
       </div>
 
       <label
-        className="relative shrink-0 focus-within:ring-2 focus-within:ring-[var(--focus-ring)] focus-within:ring-offset-1 focus-within:ring-offset-[var(--mount-bg)] rounded-md cursor-pointer aria-disabled:cursor-not-allowed"
+        className="relative shrink-0 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[var(--focus-ring)] rounded-md cursor-pointer aria-disabled:cursor-not-allowed"
         aria-disabled={pickerDisabled}
       >
         <span
@@ -190,7 +191,7 @@ export default function ColorRow({
         aria-invalid={debouncedFailure || valueRefused ? 'true' : undefined}
         aria-errormessage={valueRefused ? refusedNoteId : undefined}
         aria-describedby={debouncedFailure ? failureNoteId : undefined}
-        className="w-28 px-2 py-1 bg-[var(--mount-input-bg)] border border-[var(--mount-border)] aria-invalid:border-[var(--alert-border)] text-[var(--mount-text)] text-[0.65rem] font-mono focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring)] focus:border-transparent rounded-md"
+        className={`w-28 px-2 py-1 bg-[var(--mount-input-bg)] border border-[var(--mount-border)] aria-invalid:border-[var(--alert-border)] text-[var(--mount-text)] text-[0.65rem] font-mono ${FOCUS_RING} rounded-md`}
         placeholder="#000000"
         autoComplete="off"
         autoCapitalize="none"

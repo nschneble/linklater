@@ -79,19 +79,19 @@ describe('Toast', () => {
     expect(container.querySelector('.fa-circle-check')).toBeNull();
   });
 
-  it('dismiss button focus-ring is success-highlight-fg for success variant (Recovery A)', () => {
+  it('dismiss button outlines in success-highlight-fg, its own fill being the host', () => {
     render(<Toast message="x" onDismiss={() => {}} variant="success" />);
     const dismiss = screen.getByRole('button', { name: 'Dismiss' });
     expect(dismiss.className).toContain(
-      'focus-visible:ring-[var(--success-highlight-fg)]',
+      'focus-visible:outline-[var(--success-highlight-fg)]',
     );
   });
 
-  it('dismiss button focus-ring is alert-highlight-fg for error variant (Recovery A)', () => {
+  it('dismiss button outlines in alert-highlight-fg, its own fill being the host', () => {
     render(<Toast message="x" onDismiss={() => {}} variant="error" />);
     const dismiss = screen.getByRole('button', { name: 'Dismiss' });
     expect(dismiss.className).toContain(
-      'focus-visible:ring-[var(--alert-highlight-fg)]',
+      'focus-visible:outline-[var(--alert-highlight-fg)]',
     );
   });
 

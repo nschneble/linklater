@@ -60,13 +60,15 @@ const DESCRIPTION_CLASSES = {
  * attribute via a Tailwind `data-[active=true]:` variant so visual and data
  * state stay locked together.
  *
- * The active `outline` and the keyboard focus `ring-2` live on different
- * layers and never merge: `focus-visible:outline-none` drops the active
- * outline exactly when the focus ring renders (same `:focus-visible`
- * modality), so there is never a frame showing neither indicator; the active
- * outline returns once focus leaves. A `forced-colors` companion maps the
- * active outline to `Highlight` and the focus outline to `ButtonText` for
- * Windows High Contrast Mode, where box-shadow rings are ignored.
+ * Focus is an outline too, so the two now want the same property and the
+ * focused one has to win outright — otherwise tabbing onto the active
+ * section would change nothing on screen. The compound
+ * `data-[active=true]:focus-visible:` variants are that tiebreak: they
+ * outrank the active outline on specificity rather than on source order.
+ * The active outline returns once focus leaves.
+ *
+ * Under forced colors the active outline is `CanvasText` and the focused
+ * one `Highlight`, which is the pair that keeps them distinguishable.
  */
 export default function SettingsGroup({
   id,
@@ -84,7 +86,7 @@ export default function SettingsGroup({
       tabIndex={-1}
       aria-labelledby={headingId}
       data-active={activeSection === id}
-      className={`relative scroll-mt-[111px] p-5 sm:p-6 ${VARIANT_CLASSES[variant]} data-[active=true]:border-[var(--base-highlight)] data-[active=true]:outline data-[active=true]:outline-[3px] data-[active=true]:outline-[var(--base-highlight)] forced-colors:data-[active=true]:outline-[Highlight] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] forced-colors:focus-visible:outline forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-[ButtonText] rounded-2xl motion-safe:transition-[border-color,outline-color]`}
+      className={`relative scroll-mt-[111px] p-5 sm:p-6 ${VARIANT_CLASSES[variant]} data-[active=true]:border-[var(--base-highlight)] data-[active=true]:outline data-[active=true]:outline-[3px] data-[active=true]:outline-[var(--base-highlight)] forced-colors:data-[active=true]:outline-[CanvasText] focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] data-[active=true]:focus-visible:outline-[var(--focus-ring)] forced-colors:focus-visible:outline-[Highlight] forced-colors:data-[active=true]:focus-visible:outline-[Highlight] rounded-2xl motion-safe:transition-[border-color,outline-color]`}
     >
       <header className={description ? 'mb-5' : 'mb-4'}>
         <h2
