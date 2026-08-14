@@ -32,7 +32,7 @@ import { Test } from '@nestjs/testing';
 import { ValidationPipe } from '@nestjs/common';
 import type { INestApplication } from '@nestjs/common';
 
-// the strategy reads JWT_SECRET in its constructor, which the import runs
+// the strategy reads JWT_SECRET when Nest instantiates it, below
 process.env.JWT_SECRET = 'test-secret-for-extension-guard';
 
 import { CustomThrottlerGuard } from './custom-throttler.guard';

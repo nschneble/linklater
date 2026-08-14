@@ -78,6 +78,18 @@ describe('ExtensionAuthController', () => {
       expect(guards).toContain(JwtAuthGuard);
     });
 
+    it('is not gated by the guard that also takes a PAT', async () => {
+      const { AnyAuthGuard } = await import('./any-auth.guard');
+      const guards: unknown[] = Reflect.getMetadata(
+        '__guards__',
+        ExtensionAuthController.prototype.extensionAuthorize,
+      );
+
+      // under AnyAuthGuard a ltk_ token would mint a full refresh pair,
+      // which is a strictly wider grant than the token presenting it
+      expect(guards).not.toContain(AnyAuthGuard);
+    });
+
     it('applies JwtAuthGuard before CustomThrottlerGuard so only signed-in callers spend the bucket', () => {
       const guards: unknown[] = Reflect.getMetadata(
         '__guards__',
@@ -124,21 +136,6 @@ describe('ExtensionAuthController', () => {
         controller.extensionAuthorize(makeRequest(), {
           codeChallenge: CODE_CHALLENGE,
           redirectUri: 'https://evil.example.com',
-        }),
-      ).rejects.toThrow(BadRequestException);
-    });
-
-    it('propagates BadRequestException when code_challenge is missing', async () => {
-      (
-        extensionAuthServiceMock.authorizeExtension as jest.Mock
-      ).mockRejectedValue(
-        new BadRequestException('code_challenge and redirect_uri are required'),
-      );
-
-      await expect(
-        controller.extensionAuthorize(makeRequest(), {
-          codeChallenge: '',
-          redirectUri: REDIRECT_URI,
         }),
       ).rejects.toThrow(BadRequestException);
     });

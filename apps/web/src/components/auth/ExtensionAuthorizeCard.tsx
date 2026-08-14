@@ -16,13 +16,16 @@ import type { ReactNode } from 'react';
  * synthetic default while the card and its alert keep the saved palette,
  * dropping the alert's text and border below their AA thresholds.
  */
+
+interface ExtensionAuthorizeCardProps {
+  children: ReactNode;
+  className?: string;
+}
+
 export default function ExtensionAuthorizeCard({
   children,
   className = '',
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
+}: ExtensionAuthorizeCardProps) {
   return (
     <main
       data-theme="branding"
