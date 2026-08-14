@@ -29,6 +29,7 @@ export {
   verifyTotpSetup,
 } from './auth';
 export {
+  API_BASE_URL,
   apiFetch,
   apiFetchRequired,
   clearStoredToken,

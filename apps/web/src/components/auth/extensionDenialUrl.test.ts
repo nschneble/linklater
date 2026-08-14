@@ -1,65 +1,58 @@
 /*
- * The refusal half of the check matters more than the acceptance half.
- * `redirect_uri` arrives on this page's own URL, so anything that reaches
- * `window.location.href` unchecked is an open redirect a phishing link can
- * aim anywhere it likes.
+ * What this builds is a link to the decline endpoint, not a decision about
+ * where the browser ends up. The decision moved to the server with the
+ * allowlist it needs, and the arms that used to live here moved with it:
+ * `extension-auth.service.spec.ts` holds the refusals, including the
+ * arbitrary https destination, the forged web-auth host, the javascript
+ * URL and the empty value, and `extension-deny.http.spec.ts` holds the
+ * redirect they produce.
+ *
+ * What is left is the property the server cannot enforce from where it
+ * sits: that this answers with a usable href for every input, including
+ * the ones the server is going to turn down. An anchor whose href is
+ * missing has no link role, takes no focus and cannot be operated from a
+ * keyboard, and it goes on looking exactly like a link that can.
  */
 
+import { API_BASE_URL } from '../../lib/api';
 import { describe, expect, it } from 'vitest';
 import { extensionDenialUrl } from './extensionDenialUrl';
 
+const DENY_PATH = `${API_BASE_URL}/auth/extension/deny`;
+
 describe('extensionDenialUrl', () => {
-  it('appends the RFC 6749 denial code to a chrome extension callback', () => {
+  it('points at the decline endpoint, carrying the callback to be judged', () => {
     expect(extensionDenialUrl('chrome-extension://abc/callback')).toBe(
-      'chrome-extension://abc/callback?error=access_denied',
+      `${DENY_PATH}?redirect_uri=chrome-extension%3A%2F%2Fabc%2Fcallback`,
     );
   });
 
-  it('accepts a Firefox extension callback', () => {
-    expect(extensionDenialUrl('moz-extension://a-b-c/callback')).toBe(
-      'moz-extension://a-b-c/callback?error=access_denied',
+  it('encodes a callback that already carries query parameters', () => {
+    const built = new URL(
+      extensionDenialUrl('https://abc.chromiumapp.org/cb?flow=save&n=1'),
+      'https://base.example',
+    );
+
+    // the extension's own parameters must not become this URL's parameters
+    expect(built.searchParams.get('redirect_uri')).toBe(
+      'https://abc.chromiumapp.org/cb?flow=save&n=1',
+    );
+    expect(built.searchParams.get('flow')).toBeNull();
+  });
+
+  it('still answers with a URL for a destination the server will refuse', () => {
+    expect(extensionDenialUrl('https://evil.example.com/steal')).toBe(
+      `${DENY_PATH}?redirect_uri=https%3A%2F%2Fevil.example.com%2Fsteal`,
     );
   });
 
-  it('accepts the host chrome.identity mints for a web auth flow', () => {
-    expect(extensionDenialUrl('https://abcdef.chromiumapp.org/')).toBe(
-      'https://abcdef.chromiumapp.org/?error=access_denied',
+  it('still answers with a URL for a value that is not a URL at all', () => {
+    expect(extensionDenialUrl('not a url')).toBe(
+      `${DENY_PATH}?redirect_uri=not+a+url`,
     );
   });
 
-  it('keeps query parameters the extension already put there', () => {
-    expect(extensionDenialUrl('chrome-extension://abc/cb?flow=7')).toBe(
-      'chrome-extension://abc/cb?flow=7&error=access_denied',
-    );
-  });
-
-  it('refuses an arbitrary https destination', () => {
-    expect(extensionDenialUrl('https://evil.example.com/steal')).toBeNull();
-  });
-
-  it('refuses a host merely containing the web auth suffix', () => {
-    expect(
-      extensionDenialUrl('https://abcdef.chromiumapp.org.evil.example.com/'),
-    ).toBeNull();
-  });
-
-  it('refuses the web auth host over plain http, which any hop can forge', () => {
-    expect(extensionDenialUrl('http://abcdef.chromiumapp.org/')).toBeNull();
-  });
-
-  it('refuses a host ending in the suffix without the label boundary', () => {
-    expect(extensionDenialUrl('https://evilchromiumapp.org/')).toBeNull();
-  });
-
-  it('refuses a javascript URL, which parses but has no host', () => {
-    expect(extensionDenialUrl('javascript:alert(1)')).toBeNull();
-  });
-
-  it('refuses a value that is not a URL at all', () => {
-    expect(extensionDenialUrl('not-a-url')).toBeNull();
-  });
-
-  it('refuses an empty value, which is what a missing parameter reads as', () => {
-    expect(extensionDenialUrl('')).toBeNull();
+  it('still answers with a URL for an empty value', () => {
+    expect(extensionDenialUrl('')).toBe(`${DENY_PATH}?redirect_uri=`);
   });
 });

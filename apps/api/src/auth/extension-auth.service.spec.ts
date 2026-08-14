@@ -48,6 +48,100 @@ describe('ExtensionAuthService', () => {
     service = await buildService();
   });
 
+  describe('denialRedirect', () => {
+    const CHROME_URI = 'chrome-extension://abc/callback';
+    const FIREFOX_URI = 'moz-extension://def/callback';
+    const WEB_FLOW_URI = 'https://abcdef.chromiumapp.org/';
+    const WITH_QUERY = 'chrome-extension://abc/callback?flow=save';
+    const APP_URL = 'https://app.example.com';
+
+    beforeEach(async () => {
+      process.env.APP_URL = APP_URL;
+      process.env.EXTENSION_REDIRECT_URIS = [
+        CHROME_URI,
+        FIREFOX_URI,
+        WEB_FLOW_URI,
+        WITH_QUERY,
+      ].join(',');
+      service = await buildService();
+    });
+
+    afterEach(() => {
+      delete process.env.EXTENSION_REDIRECT_URIS;
+      delete process.env.APP_URL;
+    });
+
+    it('appends the RFC 6749 denial code to an allowed chrome callback', () => {
+      expect(service.denialRedirect(CHROME_URI)).toBe(
+        `${CHROME_URI}?error=access_denied`,
+      );
+    });
+
+    it('appends it to an allowed Firefox callback', () => {
+      expect(service.denialRedirect(FIREFOX_URI)).toBe(
+        `${FIREFOX_URI}?error=access_denied`,
+      );
+    });
+
+    it('appends it to the host chrome.identity mints for a web auth flow', () => {
+      expect(service.denialRedirect(WEB_FLOW_URI)).toBe(
+        `${WEB_FLOW_URI}?error=access_denied`,
+      );
+    });
+
+    it('keeps query parameters the extension already put there', () => {
+      expect(service.denialRedirect(WITH_QUERY)).toBe(
+        `${WITH_QUERY}&error=access_denied`,
+      );
+    });
+
+    it('sends an https callback nobody registered back into the app', () => {
+      expect(service.denialRedirect('https://evil.example.com/steal')).toBe(
+        `${APP_URL}/unread`,
+      );
+    });
+
+    it('sends an extension scheme nobody registered back into the app', () => {
+      expect(service.denialRedirect('chrome-extension://zzz/callback')).toBe(
+        `${APP_URL}/unread`,
+      );
+    });
+
+    it('matches the allowlist exactly, so a longer path is a different URI', () => {
+      expect(service.denialRedirect(`${CHROME_URI}/deeper`)).toBe(
+        `${APP_URL}/unread`,
+      );
+    });
+
+    it('refuses a javascript URL, which parses but has no host', () => {
+      expect(service.denialRedirect('javascript:alert(1)')).toBe(
+        `${APP_URL}/unread`,
+      );
+    });
+
+    it('refuses a value that is not a URL at all', () => {
+      expect(service.denialRedirect('not a url')).toBe(`${APP_URL}/unread`);
+    });
+
+    it('refuses an empty value, which is what a missing parameter reads as', () => {
+      expect(service.denialRedirect('')).toBe(`${APP_URL}/unread`);
+    });
+
+    it('refuses everything when no allowlist is configured', async () => {
+      delete process.env.EXTENSION_REDIRECT_URIS;
+      service = await buildService();
+
+      expect(service.denialRedirect(CHROME_URI)).toBe(`${APP_URL}/unread`);
+    });
+
+    it('touches no storage, since a declined grant records nothing', () => {
+      service.denialRedirect(CHROME_URI);
+      service.denialRedirect('https://evil.example.com/steal');
+
+      expect(prismaServiceMock.extensionAuthCode.create).not.toHaveBeenCalled();
+    });
+  });
+
   describe('authorizeExtension', () => {
     const ALLOWED_URI = 'chrome-extension://abc/callback';
 

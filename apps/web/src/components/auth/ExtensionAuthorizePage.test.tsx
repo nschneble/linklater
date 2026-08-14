@@ -46,6 +46,7 @@ import {
   setStoredToken,
 } from '../../lib/api';
 import ExtensionAuthorizePage from './ExtensionAuthorizePage';
+import { extensionDenialUrl } from './extensionDenialUrl';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { restoreLocation, standOnPath } from '../../../test/locationMock';
@@ -613,21 +614,22 @@ describe('ExtensionAuthorizePage account switched underneath it', () => {
 });
 
 describe('ExtensionAuthorizePage cancel', () => {
-  it('hands the extension an explicit denial it can close its own window on', () => {
+  it('sends the refusal to the endpoint holding the allowlist', () => {
     renderPage();
     expect(screen.getByRole('link', { name: 'Cancel' })).toHaveAttribute(
       'href',
-      `${REDIRECT_URI}?error=access_denied`,
+      extensionDenialUrl(REDIRECT_URI),
     );
   });
 
-  it('falls back in-app rather than forwarding a destination it cannot vouch for', () => {
+  it('keeps an operable control for a destination the server will refuse', () => {
     renderPage(
       `?code_challenge=${CODE_CHALLENGE}&redirect_uri=${encodeURIComponent('https://evil.example.com/steal')}`,
     );
+
+    // an anchor with no href is not a link and cannot be reached by Tab
     expect(screen.getByRole('link', { name: 'Cancel' })).toHaveAttribute(
       'href',
-      '/unread',
     );
   });
 });

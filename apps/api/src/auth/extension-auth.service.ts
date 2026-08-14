@@ -58,6 +58,32 @@ export class ExtensionAuthService implements OnModuleInit {
     return { code, callbackUrl: redirectUri };
   }
 
+  /**
+   * Where the browser goes when the user declines, which is the extension's
+   * own callback carrying the refusal RFC 6749 4.1.2.1 specifies.
+   *
+   * It lives here rather than in the web client because the allowlist does.
+   * The client cannot hold a copy without the two drifting, and the shape
+   * test it used instead disagreed with this list in both directions: it
+   * turned away plain https callbacks the server would have granted on, and
+   * it would have forwarded any `chromiumapp.org` host nobody registered.
+   *
+   * Anything this cannot vouch for goes to the app instead, built from
+   * `APP_URL` rather than from anything the caller sent. That is the whole
+   * safety property of an unauthenticated endpoint that answers with a
+   * `Location`: the only caller-supplied string that can reach the header
+   * is one already in the allowlist, matched whole.
+   */
+  denialRedirect(redirectUri: string): string {
+    if (!this.allowedRedirectUris.has(redirectUri)) {
+      return `${process.env.APP_URL}/unread`;
+    }
+
+    const destination = new URL(redirectUri);
+    destination.searchParams.set('error', 'access_denied');
+    return destination.toString();
+  }
+
   async createExtensionAuthCode(
     userId: string,
     codeChallenge: string,

@@ -7,8 +7,11 @@ import {
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   Post,
+  Query,
+  Redirect,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -32,6 +35,18 @@ import type { AuthRequest } from './auth-request.type.js';
  * to a `fetch`. A redirecting endpoint would be reached by a top-level
  * navigation instead, which carries no Authorization header, so the guard
  * would refuse every caller.
+ *
+ * Declining redirects for the same reason inverted. It is a plain link the
+ * user follows, so it arrives as a navigation and can carry no header, and
+ * it needs none: a refusal grants nothing and reveals nothing the
+ * allowlist does not already publish to whoever holds a callback. Requiring
+ * a session would take the exit away from the user who most needs it, the
+ * one whose session died partway through the flow.
+ *
+ * It is not rate limited and it must stay that way, because it must not
+ * acquire a reason to be. Nothing is written and nothing is read, so
+ * there is no cost to spend; a limit would only turn a declined grant into
+ * a 429 for a user pressing Cancel twice.
  */
 @ApiTags('auth')
 @Controller('auth')
@@ -74,6 +89,21 @@ export class ExtensionAuthController {
     const destination = new URL(callbackUrl);
     destination.searchParams.set('code', code);
     return { redirectUrl: destination.toString() };
+  }
+
+  @ApiOperation({ summary: 'Decline a browser-extension authorization' })
+  @ApiResponse({
+    status: 302,
+    description:
+      'Redirects to the extension callback with error=access_denied, or' +
+      ' back into the app when the callback is not on the allowlist.',
+  })
+  @Get('extension/deny')
+  @Redirect()
+  extensionDeny(@Query('redirect_uri') redirectUri?: string): {
+    url: string;
+  } {
+    return { url: this.extensionAuthService.denialRedirect(redirectUri ?? '') };
   }
 
   @ApiOperation({ summary: 'Exchange extension auth code for token pair' })

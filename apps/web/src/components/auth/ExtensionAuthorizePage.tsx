@@ -125,7 +125,7 @@ export default function ExtensionAuthorizePage() {
         {/* an anchor: declining is a navigation, per primaryActionClasses */}
         <a
           className={iconActionClasses('elevated')}
-          href={extensionDenialUrl(redirectUri) ?? '/unread'}
+          href={extensionDenialUrl(redirectUri)}
         >
           Cancel
         </a>
