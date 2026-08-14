@@ -61,7 +61,7 @@ import {
  * network failure, an abort).
  *
  * `renewed` is not a promise that the token now stored is a fresh one.
- * The supersession branch stores nothing, because the sibling that
+ * The supersession branches store nothing, because the sibling that
  * rotated is the one writing, and its access token can still be in
  * flight; the retry then 401s and renews normally, as the header above
  * describes. Only `refused` can end a session, and only for a caller
@@ -125,13 +125,36 @@ async function postRefresh(body: object): Promise<Response | null> {
  * and a body that will not parse establishes no more than a dead socket
  * does, so it has to leave the pair alone rather than throw out through
  * every caller waiting on this leg.
+ *
+ * A pair minted from a token the store has since left is the older one,
+ * however late it arrives, so the answer to a slow leg cannot be written
+ * over a sibling's rotation. `refreshTokenAtDispatch` is what the store
+ * held when this leg's request went out, which is not always what that
+ * request carried: the replay spends a nomination, and a nomination is
+ * never the stored refresh token, so asking about the value sent would
+ * refuse every recovery.
+ *
+ * The reading is taken here rather than at the call sites so that it lands
+ * after the body has parsed, leaving no await between the question and the
+ * write. Only another tab can still land a write in that gap, since
+ * `localStorage` has no compare-and-swap, and it is a gap of microseconds
+ * against the network flight this guards.
+ *
+ * Discarding the pair still reports `renewed`, for the reason given above
+ * the outcome type: the sibling wrote both halves, so the store is worth
+ * re-reading and the request worth sending. It is the same answer the
+ * refusal path reaches through the same question.
  */
-async function storeRotatedPair(response: Response): Promise<RefreshOutcome> {
+async function storeRotatedPair(
+  response: Response,
+  refreshTokenAtDispatch: string | null,
+): Promise<RefreshOutcome> {
   try {
     const data = (await response.json()) as {
       accessToken: string;
       refreshToken: string;
     };
+    if (isRefreshTokenSuperseded(refreshTokenAtDispatch)) return 'renewed';
     setStoredToken(data.accessToken, data.refreshToken);
     return 'renewed';
   } catch {
@@ -163,7 +186,7 @@ async function performTokenRefresh(): Promise<RefreshOutcome> {
     return 'unresolved';
   }
 
-  return storeRotatedPair(response);
+  return storeRotatedPair(response, spentRefreshToken);
 }
 
 /**
@@ -178,6 +201,7 @@ async function replayNominatedToken(): Promise<RefreshOutcome> {
   const nominated = getNominatedRefreshToken();
   if (!nominated) return 'refused';
 
+  const refreshTokenAtDispatch = getStoredRefreshToken();
   const response = await postRefresh({ refreshToken: nominated });
   if (!response) return 'unresolved';
 
@@ -186,7 +210,7 @@ async function replayNominatedToken(): Promise<RefreshOutcome> {
     return 'unresolved';
   }
 
-  return storeRotatedPair(response);
+  return storeRotatedPair(response, refreshTokenAtDispatch);
 }
 
 // dedup concurrent refreshes so N parallel callers share one refresh call
