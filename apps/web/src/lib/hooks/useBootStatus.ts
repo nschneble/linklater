@@ -37,7 +37,10 @@ export const BOOT_CLEAR_MS = 1000;
 
 const LOADING_MESSAGE = 'Loading Linklater…';
 
-type BootMessage = { kind: 'none' | 'loading' | 'terminal'; text: string };
+interface BootMessage {
+  kind: 'none' | 'loading' | 'terminal';
+  text: string;
+}
 
 export type BootPhase = 'blank' | 'interstitial' | 'app';
 
@@ -73,6 +76,14 @@ export type BootPhase = 'blank' | 'interstitial' | 'app';
  *
  * `shownAt` and the latch are refs so the dev-only double invoke of effects
  * cannot produce a phantom announcement or a second dwell.
+ *
+ * Every argument above rests on one thing the code cannot state for
+ * itself: nothing here runs backwards. `loading` falls once and is never
+ * raised again, the phase only advances, and both latches only rise. Six
+ * effects reading each other's state would need a far more careful order
+ * if any of that could reverse, and the one that clears the inbound
+ * signal on unmount is unreachable in the app for the same reason: `App`
+ * unmounts only when the document is going away.
  */
 export function useBootStatus(
   loading: boolean,

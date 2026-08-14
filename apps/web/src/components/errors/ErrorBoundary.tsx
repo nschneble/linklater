@@ -13,11 +13,11 @@ interface ErrorBoundaryProps {
    */
   onError?: () => void;
   /**
-   * Custom fallback to render when a child throws. When omitted, the default
-   * full-screen "Something went wrong" UI is shown. Pass `null` to render
-   * nothing – useful for scoped boundaries whose subtree is already on its
-   * way out (e.g. wrapping a third-party widget that throws during unmount
-   * while the user navigates away).
+   * Custom fallback to render when a child throws. When omitted, the
+   * default full-screen "Something went wrong" UI is shown. Pass `null` to
+   * render nothing, useful for scoped boundaries whose subtree is already
+   * on its way out (e.g. wrapping a third-party widget that throws during
+   * unmount while the user navigates away).
    */
   fallback?: ReactNode;
   /**
@@ -37,22 +37,23 @@ interface ErrorBoundaryState {
 
 /**
  * Class-based error boundary that catches unhandled errors thrown during
- * rendering, in lifecycle methods, or in constructors of any child component.
+ * rendering, in lifecycle methods, or in the constructor of any child
+ * component.
  *
  * When an error is caught, it renders `ErrorFallbackView` in place of the
- * whole page. This covers the case where an unexpected exception leaves the
- * React tree in an unrecoverable state.
+ * whole page. This covers the case where an unexpected exception leaves
+ * the React tree in an unrecoverable state.
  *
- * NOTE: Error boundaries must be class components – hooks cannot catch render
- * errors. This is the only class component in the codebase for this reason,
- * and it is why the fallback is a component of its own: the title and the
- * focus move it owes are effects, which a class cannot hold.
+ * Error boundaries must be class components, since hooks cannot catch a
+ * render error. This is the only class component in the codebase for that
+ * reason, and it is why the fallback is a component of its own: the title
+ * and the focus move it owes are effects, which a class cannot hold.
  *
  * Placed at the root of the app (`App.tsx`) to catch any unhandled error
  * from the entire component tree. Also used at the route layer in
- * `AppShell.tsx` to scope errors from heavier route-level subtrees (e.g. the
- * custom API docs page and its OpenAPI parse layer) so they cannot tip the
- * whole app into the full-screen fallback during route unmount.
+ * `AppShell.tsx` to scope errors from heavier route-level subtrees (e.g.
+ * the custom API docs page and its OpenAPI parse layer) so they cannot tip
+ * the whole app into the full-screen fallback during route unmount.
  */
 export default class ErrorBoundary extends Component<
   ErrorBoundaryProps,
@@ -80,7 +81,7 @@ export default class ErrorBoundary extends Component<
 
   render() {
     if (this.state.hasError) {
-      // honor an explicit null fallback; only default when the prop is omitted
+      // honor an explicit null fallback, defaulting only when omitted
       if (this.props.fallback !== undefined) {
         return this.props.fallback;
       }
