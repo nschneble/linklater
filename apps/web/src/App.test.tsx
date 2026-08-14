@@ -87,8 +87,8 @@ function ConsumesNotice() {
 
 /**
  * Puts an element under `Routes`, where the boundary can reach it. The
- * route builders themselves run during App's own render, above the
- * boundary, so a throw from one of those escapes it entirely.
+ * builders run there too now, in a render of their own, which is what the
+ * throwing-builder case below is asking about.
  */
 function landOn(element: React.ReactNode) {
   vi.mocked(unauthenticatedRoutes).mockReturnValue(
@@ -259,5 +259,19 @@ describe('App boot – what the region says it landed on', () => {
     advance(BOOT_CLEAR_MS);
 
     expect(region(container)?.textContent).toBe('');
+  });
+});
+
+describe('App boot – a route table that will not build', () => {
+  it('catches a throw from route construction itself', () => {
+    vi.mocked(unauthenticatedRoutes).mockImplementation(() => {
+      throw new Error('route table exploded');
+    });
+    setLoading(false);
+
+    // called during a render below the boundary, or nothing catches it
+    render(<App />);
+
+    expect(screen.getByText('Something went wrong')).toBeInTheDocument();
   });
 });

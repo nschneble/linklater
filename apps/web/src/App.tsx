@@ -18,6 +18,29 @@ import { userRoutes } from './routes/User';
 import { useServerBooleanPrefSync } from './theme/useServerBooleanPrefSync';
 import { useTheme } from './theme/ThemeContext';
 
+interface AppRoutesProps {
+  signedIn: boolean;
+}
+
+/**
+ * The route table, built inside a render of its own.
+ *
+ * The three builders are ordinary function calls, so wherever they are
+ * written is where they run. Written inline under `<ErrorBoundary>` they
+ * would still run during `App`'s render, which is above the boundary and
+ * therefore outside anything it can catch: a throw while the table is
+ * being assembled would take the whole document down with no fallback.
+ * A component moves the calls into a render the boundary does cover.
+ */
+function AppRoutes({ signedIn }: AppRoutesProps) {
+  return (
+    <Routes>
+      {commonRoutes()}
+      {signedIn ? userRoutes() : unauthenticatedRoutes()}
+    </Routes>
+  );
+}
+
 export default function App() {
   const { user, loading } = useAuth();
   // one-way: this boundary has no resetKey, so a caught crash is the end
@@ -88,10 +111,7 @@ export default function App() {
       {boot.phase === 'interstitial' && <BootInterstitial />}
       {boot.phase === 'app' && (
         <ErrorBoundary onError={() => setCrashed(true)}>
-          <Routes>
-            {commonRoutes()}
-            {user ? userRoutes() : unauthenticatedRoutes()}
-          </Routes>
+          <AppRoutes signedIn={Boolean(user)} />
         </ErrorBoundary>
       )}
     </>

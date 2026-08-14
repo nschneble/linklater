@@ -65,10 +65,6 @@ describe('ExtensionAuthController', () => {
     expect(controller).toBeDefined();
   });
 
-  // ──────────────────────────────────────────────
-  // extensionAuthorize
-  // ──────────────────────────────────────────────
-
   describe('extensionAuthorize', () => {
     it('is gated by JwtAuthGuard', () => {
       const guards: unknown[] = Reflect.getMetadata(
@@ -85,8 +81,7 @@ describe('ExtensionAuthController', () => {
         ExtensionAuthController.prototype.extensionAuthorize,
       );
 
-      // under AnyAuthGuard a ltk_ token would mint a full refresh pair,
-      // which is a strictly wider grant than the token presenting it
+      // a ltk_ token would otherwise mint a full session refresh pair
       expect(guards).not.toContain(AnyAuthGuard);
     });
 
@@ -140,10 +135,6 @@ describe('ExtensionAuthController', () => {
       ).rejects.toThrow(BadRequestException);
     });
   });
-
-  // ──────────────────────────────────────────────
-  // extensionToken
-  // ──────────────────────────────────────────────
 
   describe('extensionToken', () => {
     it('delegates to ExtensionAuthService.exchangeExtensionCode and returns the token pair', async () => {
