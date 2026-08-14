@@ -300,6 +300,6 @@ import { useEffect, useState } from 'react';
 
 ## Gotchas
 
-- **Front-end type checking lives in the build**: `apps/web` has no `typecheck` script; `npm run build` runs `tsc -b` first and it is clean. The long-standing errors are in the test files `tsconfig.app.json` deliberately excludes, so validate front-end code with `npm run build`.
+- **Front-end type checking is split in two**: `npm run build` runs `tsc -b` over `src` (the app config excludes test files), and `npm run typecheck:test --workspace @linklater/web` covers the tests. The root `npm run typecheck` chains the back-end and that second one, so validate front-end source with `npm run build` and everything else with `npm run typecheck`.
 - **ESM Jest on the backend**: API test runner uses `--experimental-vm-modules`. No mock `bcryptjs` — use real low-round hashes (`bcrypt.hash('password', 1)`) to avoid ESM interop issues.
 - **Prisma `P2025` in tests**: Prisma throws typed error class, not plain object. Mock with `Object.assign(new Error('...'), { code: 'P2025' })` so `instanceof` checks work correctly.

@@ -175,7 +175,7 @@ describe('useLinksData initial fetch', () => {
     const { result, rerender } = renderHook(
       ({ filter, search }: { filter: 'unread' | 'read'; search: string }) =>
         useLinksData(filter, search),
-      { initialProps: { filter: 'unread' as const, search: '' } },
+      { initialProps: { filter: 'unread' as 'unread' | 'read', search: '' } },
     );
 
     await waitFor(() =>
@@ -223,7 +223,7 @@ describe('useLinksData re-fetch on filter change', () => {
     const { result, rerender } = renderHook(
       ({ filter, search }: { filter: 'unread' | 'read'; search: string }) =>
         useLinksData(filter, search),
-      { initialProps: { filter: 'unread' as const, search: '' } },
+      { initialProps: { filter: 'unread' as 'unread' | 'read', search: '' } },
     );
 
     await waitFor(() => expect(result.current.links).toHaveLength(1));
@@ -271,7 +271,7 @@ describe('useLinksData hasSettledOnce', () => {
     const { result, rerender } = renderHook(
       ({ filter, search }: { filter: 'unread' | 'read'; search: string }) =>
         useLinksData(filter, search),
-      { initialProps: { filter: 'unread' as const, search: '' } },
+      { initialProps: { filter: 'unread' as 'unread' | 'read', search: '' } },
     );
 
     await waitFor(() => expect(result.current.hasSettledOnce).toBe(true));
@@ -314,7 +314,7 @@ describe('useLinksData hasSettledOnce', () => {
     const { result, rerender } = renderHook(
       ({ filter, search }: { filter: 'unread' | 'read'; search: string }) =>
         useLinksData(filter, search),
-      { initialProps: { filter: 'unread' as const, search: '' } },
+      { initialProps: { filter: 'unread' as 'unread' | 'read', search: '' } },
     );
 
     await waitFor(() => expect(result.current.links).toHaveLength(3));
@@ -617,7 +617,7 @@ describe('useLinksData settled metadata survives a page-1 refetch', () => {
     const { result, rerender } = renderHook(
       ({ filter, search }: { filter: 'unread' | 'read'; search: string }) =>
         useLinksData(filter, search),
-      { initialProps: { filter: 'unread' as const, search: '' } },
+      { initialProps: { filter: 'unread' as 'unread' | 'read', search: '' } },
     );
 
     await waitFor(() => expect(result.current.links).toHaveLength(1));

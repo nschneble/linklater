@@ -2,6 +2,7 @@ import { act, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setActiveSettingsSection } from './settingsScroll';
 import { useReanchorOnLoad } from './useReanchorOnLoad';
+import type { Mock } from 'vitest';
 
 function ReanchorHarness({ loaded }: { loaded: boolean }) {
   useReanchorOnLoad(loaded);
@@ -16,13 +17,13 @@ function renderHarness(loaded: boolean) {
   return render(harnessTree(loaded));
 }
 
-let scrollIntoViewMock: ReturnType<typeof vi.fn>;
+let scrollIntoViewMock: Mock<typeof Element.prototype.scrollIntoView>;
 
 beforeEach(() => {
   vi.clearAllMocks();
   // active section is module-level state; reset so it can't leak across tests
   setActiveSettingsSection('');
-  scrollIntoViewMock = vi.fn();
+  scrollIntoViewMock = vi.fn(() => undefined);
   Element.prototype.scrollIntoView = scrollIntoViewMock;
   const target = document.createElement('section');
   target.id = 'integrations';

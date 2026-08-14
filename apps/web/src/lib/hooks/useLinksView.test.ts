@@ -148,7 +148,7 @@ describe('useLinksView save-link dialog reporting (onLinkFormOpenChange)', () =>
 describe('useLinksView keyboard-shortcuts preference', () => {
   afterEach(() => {
     window.localStorage.clear();
-    linksStub.handleRandom.mockClear();
+    vi.mocked(linksStub.handleRandom).mockClear();
   });
 
   function fireKey(key: string) {

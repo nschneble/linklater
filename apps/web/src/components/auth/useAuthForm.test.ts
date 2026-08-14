@@ -43,6 +43,7 @@ import {
   hasCarriedEmail,
   takeCarriedEmail,
 } from '../../auth/AuthContext/carriedEmail';
+import { makeAuthContext } from '../../../test/factories';
 import * as pendingNoticeModule from '../../lib/pendingNotice';
 import * as standingOfferModule from './standingSessionOffer';
 import { useAuth } from '../../auth/AuthContext';
@@ -53,28 +54,6 @@ import type { NoticeEntry } from '../../lib/pendingNotice';
 
 const USER_EMAIL = 'test@example.com';
 const USER_PASSWORD = 'strong-password-123';
-
-function makeAuthContext(
-  overrides: Partial<{
-    login: ReturnType<typeof vi.fn>;
-    register: ReturnType<typeof vi.fn>;
-    refreshUser: ReturnType<typeof vi.fn>;
-  }> = {},
-) {
-  return {
-    loading: false,
-    login: vi.fn().mockResolvedValue(undefined),
-    loginWithToken: vi.fn(),
-    logout: vi.fn(),
-    refreshUser: vi.fn().mockResolvedValue(undefined),
-    register: vi.fn().mockResolvedValue(undefined),
-    resendEmailChangeVerification: vi.fn(),
-    resendVerificationEmail: vi.fn(),
-    setPendingEmail: vi.fn(),
-    user: null,
-    ...overrides,
-  };
-}
 
 /** Renders useAuthForm inside a MemoryRouter at the given path. */
 function renderAuthFormHook(initialPath = '/login', reactStrictMode = false) {

@@ -46,29 +46,11 @@ vi.mock('react-router', async () => {
 // ─── Imports after mocks ──────────────────────────────────────────────────────
 
 import * as apiModule from '../../lib/api';
+import { makeAuthContext } from '../../../test/factories';
 import * as pendingNoticeModule from '../../lib/pendingNotice';
 import { useAuth } from '../../auth/AuthContext';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function makeAuthContext(
-  overrides: Partial<{ logout: ReturnType<typeof vi.fn> }> = {},
-) {
-  return {
-    loading: false,
-    login: vi.fn(),
-    loginWithToken: vi.fn(),
-    logout: vi.fn(),
-    register: vi.fn(),
-    refreshUser: vi.fn(),
-    resendEmailChangeVerification: vi.fn(),
-    resendVerificationEmail: vi.fn(),
-    setPendingEmail: vi.fn(),
-    markWelcomed: vi.fn(),
-    user: null,
-    ...overrides,
-  };
-}
 
 function renderPage(search = '?token=valid-token') {
   return render(

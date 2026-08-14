@@ -17,37 +17,13 @@
  * browser; that half is Tuffgal's.
  */
 
-import { compile } from 'tailwindcss';
-import { createRequire } from 'node:module';
+import { compileClasses } from '../../../test/tailwind';
 import { describe, expect, it } from 'vitest';
-import { dirname, resolve } from 'node:path';
 import ExtensionAccountChanged from './ExtensionAccountChanged';
-import { readFileSync } from 'node:fs';
 import { render, screen } from '@testing-library/react';
-
-const requireFromHere = createRequire(import.meta.url);
 
 const STATEMENT_ID = 'extension-account-changed';
 const NEXT_STEP_ID = 'extension-account-changed-next';
-
-function loadStylesheet(id: string, base: string) {
-  const path =
-    id === 'tailwindcss'
-      ? resolve(
-          dirname(requireFromHere.resolve('tailwindcss/package.json')),
-          'index.css',
-        )
-      : resolve(base, id);
-  return { base: dirname(path), content: readFileSync(path, 'utf8'), path };
-}
-
-async function compileClasses(classes: string[]): Promise<string> {
-  const compiler = await compile('@import "tailwindcss";', {
-    base: process.cwd(),
-    loadStylesheet,
-  });
-  return compiler.build(classes);
-}
 
 /**
  * The declarations Tailwind emitted for one selector, whitespace

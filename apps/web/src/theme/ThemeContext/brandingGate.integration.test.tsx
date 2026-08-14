@@ -29,33 +29,9 @@ vi.mock('../../lib/api', () => ({
 
 import * as apiModule from '../../lib/api';
 import { AuthProvider, useAuth } from '../../auth/AuthContext';
+import { makeMeResponse } from '../../../test/factories';
 import { THEME_STORAGE_KEY } from '../storage';
 import { ThemeProvider } from './index';
-
-const makeMe = (
-  overrides: Partial<{
-    theme: string;
-    mode: string;
-    customTheme: unknown;
-  }> = {},
-) => ({
-  cvdMode: false,
-  connectedProviders: [],
-  customTheme: null as unknown,
-  customThemeEnabled: false,
-  email: 'user@example.com',
-  emailVerifiedAt: '2024-01-01T00:00:00Z',
-  hasPassword: true,
-  mode: 'dark',
-  pendingEmail: null,
-  theme: 'school-of-rock',
-  multiFactorMethod: null as 'totp' | null,
-  multiFactorPending: false,
-  accountDeletionPending: false,
-  userId: 'user-1',
-  welcomedAt: '2024-01-01T00:00:00Z' as string | null,
-  ...overrides,
-});
 
 /** Exposes the auth `logout` action so a test can trigger it via a click. */
 function LogoutTrigger() {
@@ -96,7 +72,7 @@ describe('logged-out branding paint (full provider stack)', () => {
     // authenticated on load, stored film theme
     window.localStorage.setItem(THEME_STORAGE_KEY, 'school-of-rock');
     vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
-    vi.mocked(apiModule.getMe).mockResolvedValue(makeMe());
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeMeResponse());
 
     const { getByTestId } = render(<Stack />);
 
@@ -131,7 +107,7 @@ describe('logged-out branding paint (full provider stack)', () => {
     // a stateless JWT still resolves post DB-wipe; visitor stays authed
     window.localStorage.setItem(THEME_STORAGE_KEY, 'school-of-rock');
     vi.mocked(apiModule.getStoredToken).mockReturnValue('stale-jwt');
-    vi.mocked(apiModule.getMe).mockResolvedValue(makeMe());
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeMeResponse());
 
     render(<Stack />);
 

@@ -28,34 +28,11 @@ vi.mock('../../lib/api', () => ({
 
 import * as apiModule from '../../lib/api';
 import { hasCarriedEmail } from './carriedEmail';
+import { makeLoginResponse, makeMeResponse } from '../../../test/factories';
 import { readRenderedIdentity } from './renderedIdentity';
 import { restoreLocation, standOnPath } from '../../../test/locationMock';
 import { useAuthState } from './useAuthState';
-
-const makeUser = (
-  overrides: Partial<{
-    pendingEmail: string | null;
-    welcomedAt: string | null;
-    customTheme: unknown;
-    dyslexicFont: boolean;
-  }> = {},
-) => ({
-  cvdMode: false,
-  dyslexicFont: false,
-  connectedProviders: [],
-  customTheme: null as unknown,
-  email: 'user@example.com',
-  emailVerifiedAt: '2024-01-01T00:00:00Z',
-  hasPassword: true,
-  mode: 'dark',
-  pendingEmail: null,
-  theme: 'scanner-darkly',
-  multiFactorMethod: null as 'totp' | 'email' | null,
-  multiFactorPending: false,
-  userId: 'user-1',
-  welcomedAt: '2024-01-01T00:00:00Z' as string | null,
-  ...overrides,
-});
+import type { MeResponse } from '../../lib/api';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -86,7 +63,7 @@ describe('initial state – no stored token', () => {
 describe('initial state – stored token present', () => {
   it('populates user from the stored token on mount', async () => {
     vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
-    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeMeResponse());
 
     const { result } = renderHook(() => useAuthState());
 
@@ -149,7 +126,7 @@ describe('initial state – stored token present', () => {
     vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
     vi.mocked(apiModule.getMe)
       .mockRejectedValueOnce(new TypeError('Failed to fetch'))
-      .mockResolvedValue(makeUser());
+      .mockResolvedValue(makeMeResponse());
 
     const { result } = renderHook(() => useAuthState());
 
@@ -171,8 +148,10 @@ describe('initial state – stored token present', () => {
 describe('login', () => {
   it('populates user state after a successful login', async () => {
     vi.mocked(apiModule.getStoredToken).mockReturnValue(null);
-    vi.mocked(apiModule.login).mockResolvedValue({ accessToken: 'new-jwt' });
-    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());
+    vi.mocked(apiModule.login).mockResolvedValue(
+      makeLoginResponse({ accessToken: 'new-jwt' }),
+    );
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeMeResponse());
 
     const { result } = renderHook(() => useAuthState());
 
@@ -196,7 +175,8 @@ describe('login', () => {
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    let mfaResult: { mfaToken: string; mfaMethod: 'totp' } | void;
+    // act's callback is opaque to the compiler, so seed the binding
+    let mfaResult: { mfaToken: string; mfaMethod: 'totp' } | void = undefined;
 
     await act(async () => {
       mfaResult = await result.current.login('user@example.com', 'pass');
@@ -212,7 +192,7 @@ describe('loginWithToken', () => {
   it('stores the token, fetches the user, and populates user state', async () => {
     vi.mocked(apiModule.getStoredToken).mockReturnValue(null);
     vi.mocked(apiModule.setStoredToken).mockImplementation(() => undefined);
-    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeMeResponse());
 
     const { result } = renderHook(() => useAuthState());
 
@@ -229,41 +209,47 @@ describe('loginWithToken', () => {
     expect(result.current.user?.email).toBe('user@example.com');
   });
 
-  it('forwards rememberMe=true to setStoredToken', async () => {
+  it('forwards the refresh token to the store', async () => {
     vi.mocked(apiModule.getStoredToken).mockReturnValue(null);
     vi.mocked(apiModule.setStoredToken).mockImplementation(() => undefined);
-    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeMeResponse());
 
     const { result } = renderHook(() => useAuthState());
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     await act(async () => {
-      await result.current.loginWithToken('oauth-jwt', true);
+      await result.current.loginWithToken('oauth-jwt', 'oauth-refresh');
     });
 
-    expect(apiModule.setStoredToken).toHaveBeenCalledWith('oauth-jwt', true);
+    expect(apiModule.setStoredToken).toHaveBeenCalledWith(
+      'oauth-jwt',
+      'oauth-refresh',
+    );
   });
 
-  it('forwards rememberMe=false to setStoredToken', async () => {
+  it('stores an access token alone when the caller has no refresh token', async () => {
     vi.mocked(apiModule.getStoredToken).mockReturnValue(null);
     vi.mocked(apiModule.setStoredToken).mockImplementation(() => undefined);
-    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeMeResponse());
 
     const { result } = renderHook(() => useAuthState());
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     await act(async () => {
-      await result.current.loginWithToken('oauth-jwt', false);
+      await result.current.loginWithToken('oauth-jwt');
     });
 
-    expect(apiModule.setStoredToken).toHaveBeenCalledWith('oauth-jwt', false);
+    expect(apiModule.setStoredToken).toHaveBeenCalledWith(
+      'oauth-jwt',
+      undefined,
+    );
   });
 });
 
 describe('logout', () => {
   it('clears user state and calls apiLogout', async () => {
     vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
-    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeMeResponse());
 
     const { result } = renderHook(() => useAuthState());
 
@@ -284,8 +270,10 @@ describe('register', () => {
   it('calls apiRegister then logs in automatically', async () => {
     vi.mocked(apiModule.getStoredToken).mockReturnValue(null);
     vi.mocked(apiModule.register).mockResolvedValue(undefined);
-    vi.mocked(apiModule.login).mockResolvedValue({ accessToken: 'jwt' });
-    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());
+    vi.mocked(apiModule.login).mockResolvedValue(
+      makeLoginResponse({ accessToken: 'jwt' }),
+    );
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeMeResponse());
 
     const { result } = renderHook(() => useAuthState());
 
@@ -303,7 +291,7 @@ describe('register', () => {
 describe('setPendingEmail', () => {
   it('updates pendingEmail optimistically without a refetch', async () => {
     vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
-    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeMeResponse());
 
     const { result } = renderHook(() => useAuthState());
 
@@ -338,8 +326,11 @@ describe('refreshUser', () => {
   it('re-fetches the user profile and updates auth state', async () => {
     vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
     vi.mocked(apiModule.getMe)
-      .mockResolvedValueOnce(makeUser())
-      .mockResolvedValueOnce({ ...makeUser(), email: 'refreshed@example.com' });
+      .mockResolvedValueOnce(makeMeResponse())
+      .mockResolvedValueOnce({
+        ...makeMeResponse(),
+        email: 'refreshed@example.com',
+      });
 
     const { result } = renderHook(() => useAuthState());
 
@@ -357,7 +348,7 @@ describe('refreshUser', () => {
   it('logs an error and leaves state unchanged when getMe fails', async () => {
     vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
     vi.mocked(apiModule.getMe)
-      .mockResolvedValueOnce(makeUser())
+      .mockResolvedValueOnce(makeMeResponse())
       .mockRejectedValueOnce(new Error('Network error'));
 
     const { result } = renderHook(() => useAuthState());
@@ -382,7 +373,7 @@ describe('markWelcomed', () => {
   it('optimistically sets welcomedAt and calls the welcome endpoint', async () => {
     vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
     vi.mocked(apiModule.getMe).mockResolvedValue(
-      makeUser({ welcomedAt: null }),
+      makeMeResponse({ welcomedAt: null }),
     );
     vi.mocked(apiModule.acknowledgeWelcome).mockResolvedValue(undefined);
 
@@ -401,7 +392,7 @@ describe('markWelcomed', () => {
   it('swallows API errors and still updates welcomedAt optimistically', async () => {
     vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
     vi.mocked(apiModule.getMe).mockResolvedValue(
-      makeUser({ welcomedAt: null }),
+      makeMeResponse({ welcomedAt: null }),
     );
     vi.mocked(apiModule.acknowledgeWelcome).mockRejectedValue(
       new Error('Network error'),
@@ -426,14 +417,14 @@ describe('markWelcomed', () => {
 describe('a getMe that lands after the user signed out', () => {
   /** Hands back the promise `getMe` is stuck on, plus its resolver. */
   function deferGetMe() {
-    let release!: (me: ReturnType<typeof makeUser>) => void;
+    let release!: (me: MeResponse) => void;
     vi.mocked(apiModule.getMe).mockImplementation(
       () =>
         new Promise((resolve) => {
-          release = resolve as (me: ReturnType<typeof makeUser>) => void;
+          release = resolve as (me: MeResponse) => void;
         }),
     );
-    return () => release(makeUser());
+    return () => release(makeMeResponse());
   }
 
   it('is discarded rather than throwing the user back into the app', async () => {
@@ -481,7 +472,7 @@ describe('a getMe that lands after the user signed out', () => {
 describe('recording who this tab is rendering', () => {
   it('notes the identity on mount hydration', async () => {
     vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
-    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeMeResponse());
 
     const { result } = renderHook(() => useAuthState());
     await waitFor(() => expect(result.current.user).not.toBeNull());
@@ -491,8 +482,10 @@ describe('recording who this tab is rendering', () => {
 
   it('notes the identity after a login', async () => {
     vi.mocked(apiModule.getStoredToken).mockReturnValue(null);
-    vi.mocked(apiModule.login).mockResolvedValue({ accessToken: 'jwt' });
-    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());
+    vi.mocked(apiModule.login).mockResolvedValue(
+      makeLoginResponse({ accessToken: 'jwt' }),
+    );
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeMeResponse());
 
     const { result } = renderHook(() => useAuthState());
     await waitFor(() => expect(result.current.loading).toBe(false));
@@ -505,7 +498,7 @@ describe('recording who this tab is rendering', () => {
 
   it('forgets it on logout, because a signed-out tab renders nobody', async () => {
     vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
-    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeMeResponse());
 
     const { result } = renderHook(() => useAuthState());
     await waitFor(() => expect(readRenderedIdentity()).toBe('user-1'));
@@ -528,7 +521,7 @@ describe('an offer whose link landed', () => {
   it('drops the carried email once a user is rendered', async () => {
     sessionStorage.setItem('linklater_carried_email', 'half-typed@test.com');
     vi.mocked(apiModule.getStoredToken).mockReturnValue('stored-jwt');
-    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeMeResponse());
 
     const { result } = renderHook(() => useAuthState());
     await waitFor(() => expect(result.current.user).not.toBeNull());
@@ -578,7 +571,7 @@ describe('booting on a token that belongs to somebody else', () => {
       exp: null,
       subject: 'user-1',
     });
-    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeMeResponse());
 
     const { result } = renderHook(() => useAuthState());
 
@@ -606,7 +599,7 @@ describe('the mirror the identity guard reads the rendered user through', () => 
       exp: null,
       subject: 'user-1',
     });
-    vi.mocked(apiModule.getMe).mockResolvedValue(makeUser());
+    vi.mocked(apiModule.getMe).mockResolvedValue(makeMeResponse());
 
     const { result } = renderHook(() => useAuthState());
     await waitFor(() => expect(result.current.user?.userId).toBe('user-1'));

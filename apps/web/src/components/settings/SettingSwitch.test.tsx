@@ -21,39 +21,10 @@
  * makes the on state win when checked.
  */
 
-import { compile } from 'tailwindcss';
-import { createRequire } from 'node:module';
+import { compileClasses } from '../../../test/tailwind';
 import { describe, expect, it, vi } from 'vitest';
-import { dirname, resolve } from 'node:path';
-import { readFileSync } from 'node:fs';
 import { render, screen } from '@testing-library/react';
 import SettingSwitch from './SettingSwitch';
-
-const requireFromHere = createRequire(import.meta.url);
-
-/**
- * Resolves `@import "tailwindcss";` (and its relative sub-imports) off disk so
- * the compiler can register core variants + utilities.
- */
-function loadStylesheet(id: string, base: string) {
-  const path =
-    id === 'tailwindcss'
-      ? resolve(
-          dirname(requireFromHere.resolve('tailwindcss/package.json')),
-          'index.css',
-        )
-      : resolve(base, id);
-  return { base: dirname(path), content: readFileSync(path, 'utf8'), path };
-}
-
-/** Compiles a set of utility classes through the real Tailwind pipeline. */
-async function compileClasses(classes: string[]): Promise<string> {
-  const compiler = await compile('@import "tailwindcss";', {
-    base: process.cwd(),
-    loadStylesheet,
-  });
-  return compiler.build(classes);
-}
 
 function renderSwitch(checked: boolean) {
   return render(

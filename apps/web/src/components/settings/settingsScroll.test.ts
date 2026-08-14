@@ -3,6 +3,7 @@ import {
   reanchorSettingsSection,
   scrollToSettingsSection,
 } from './settingsScroll';
+import type { Mock } from 'vitest';
 
 function createSection(
   id: string,
@@ -26,15 +27,15 @@ function createSection(
   return element;
 }
 
-let scrollIntoViewMock: ReturnType<typeof vi.fn>;
+let scrollIntoViewMock: Mock<typeof Element.prototype.scrollIntoView>;
 let scrollToMock: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
-  scrollIntoViewMock = vi.fn();
+  scrollIntoViewMock = vi.fn(() => undefined);
   scrollToMock = vi.fn();
   Element.prototype.scrollIntoView = scrollIntoViewMock;
   // jsdom defines focus on HTMLElement.prototype; stub it to a no-op
-  HTMLElement.prototype.focus = vi.fn();
+  HTMLElement.prototype.focus = vi.fn(() => undefined);
   window.scrollTo = scrollToMock as unknown as typeof window.scrollTo;
   Object.defineProperty(window, 'scrollY', {
     configurable: true,

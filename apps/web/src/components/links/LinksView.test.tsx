@@ -76,7 +76,7 @@ function makeViewResult(
     onSearch: vi.fn(),
     onToggleShortcuts: vi.fn(),
     page: 1,
-    pagination: { total: 0, hasMore: false } as ReturnType<
+    pagination: { total: 0, hasMore: false } as unknown as ReturnType<
       typeof useLinksView
     >['pagination'],
     randomError: null,

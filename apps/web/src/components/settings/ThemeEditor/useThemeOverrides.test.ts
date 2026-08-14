@@ -13,7 +13,17 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { isAlphaValue, useThemeOverrides } from './useThemeOverrides';
+import type { CSSProperties } from 'react';
 import type { CustomTheme } from '../../../theme/customTheme';
+
+/**
+ * Reads a custom property off the inline style object. `CSSProperties`
+ * has no index signature for them, so the cast is what lets a test ask
+ * about the tokens this hook exists to set.
+ */
+function contentValue(style: CSSProperties, token: string): string | undefined {
+  return (style as Record<string, string | undefined>)[token];
+}
 
 const mockTheme = {
   baseTheme: 'apollo-10-1-2',
@@ -69,8 +79,12 @@ describe('useThemeOverrides – enabled (editing the custom theme)', () => {
   it('contentThemeStyle carries the full resolved palette (branding fallback)', () => {
     const { result } = renderHook(() => useThemeOverrides('light'));
     // an empty custom theme resolves to the branding defaults for every var
-    expect(result.current.contentThemeStyle['--mount-bg']).toBeTruthy();
-    expect(result.current.contentThemeStyle['--base-text']).toBeTruthy();
+    expect(
+      contentValue(result.current.contentThemeStyle, '--mount-bg'),
+    ).toBeTruthy();
+    expect(
+      contentValue(result.current.contentThemeStyle, '--base-text'),
+    ).toBeTruthy();
     expect(
       Object.keys(result.current.contentThemeStyle).length,
     ).toBeGreaterThan(10);
@@ -80,7 +94,9 @@ describe('useThemeOverrides – enabled (editing the custom theme)', () => {
     const { result } = renderHook(() => useThemeOverrides('light'));
     act(() => result.current.setOverride('--mount-bg', '#ffffff'));
     expect(result.current.colorValues['--mount-bg']).toBe('#ffffff');
-    expect(result.current.contentThemeStyle['--mount-bg']).toBe('#ffffff');
+    expect(contentValue(result.current.contentThemeStyle, '--mount-bg')).toBe(
+      '#ffffff',
+    );
   });
 
   it('accumulates multiple overrides without dropping prior keys', () => {

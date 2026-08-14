@@ -29,7 +29,7 @@ const WEB_SRC = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
  * SettingSwitch.test.tsx, but is pointed at the real index.css so the
  * `--animate-meta-pulse-*` tokens exist during compilation.
  */
-function loadStylesheet(id: string, base: string) {
+async function loadStylesheet(id: string, base: string) {
   const path =
     id === 'tailwindcss'
       ? resolve(

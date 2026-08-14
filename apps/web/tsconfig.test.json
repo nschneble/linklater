@@ -1,0 +1,26 @@
+{
+  // The test files, type-checked. `tsconfig.app.json` excludes them from
+  // `tsc -b`, so nothing checked them at all; this is where that changes.
+  //
+  // Two differences from the app config carry all the weight. `test` joins
+  // the include, which is what loads `test/setup.ts` and with it the
+  // `@testing-library/jest-dom` augmentation that teaches vitest's
+  // `Assertion` type about `toBeInTheDocument` and its siblings. The same
+  // package is named in `types` so the matchers resolve even for a file
+  // the setup import has not reached. Without those, every matcher in the
+  // suite reads as a missing property: 832 of the 941 errors the old
+  // exclusion note counted were that one gap, not the mock drift it
+  // blamed.
+  //
+  // Reached through the root `npm run typecheck`, so flintest and CI both
+  // gate on it. `tsconfig.app.json` still excludes the test files because
+  // the app build should fail on shipping code alone; this is the config
+  // that covers them.
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.test.tsbuildinfo",
+    "types": ["vite/client", "@testing-library/jest-dom"]
+  },
+  "exclude": [],
+  "include": ["src", "test"]
+}

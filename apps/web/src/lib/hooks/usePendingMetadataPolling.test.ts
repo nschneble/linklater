@@ -254,7 +254,7 @@ describe('usePendingMetadataPolling', () => {
       vi.mocked(apiModule.getLink).mockImplementation((id, signal) => {
         if (id === 'stalled') {
           // never settles on its own; only the deadline's abort rejects it
-          return new Promise<Link>((resolve, reject) => {
+          return new Promise<Link>((_resolve, reject) => {
             signal?.addEventListener('abort', () =>
               reject(
                 new DOMException('The operation was aborted', 'AbortError'),
