@@ -36,7 +36,13 @@ export class ExtensionAuthService implements OnModuleInit {
       );
       return;
     }
-    this.allowedRedirectUris = new Set(raw.split(',').map((uri) => uri.trim()));
+    // a trailing comma would otherwise register the empty string
+    this.allowedRedirectUris = new Set(
+      raw
+        .split(',')
+        .map((uri) => uri.trim())
+        .filter(Boolean),
+    );
   }
 
   async authorizeExtension(

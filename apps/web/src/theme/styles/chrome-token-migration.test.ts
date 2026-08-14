@@ -85,6 +85,7 @@ const MIGRATED_FILES = [
   'src/components/api-docs/SchemaTable.tsx',
   'src/components/api-docs/WelcomePanel.tsx',
   'src/components/auth/ConfirmAccountDeletionPage.tsx',
+  'src/components/auth/ExtensionAccountChanged.tsx',
   'src/components/auth/ExtensionAuthorizeCard.tsx',
   'src/components/auth/ExtensionAuthorizePage.tsx',
   'src/components/auth/ExtensionRequestUnreadable.tsx',

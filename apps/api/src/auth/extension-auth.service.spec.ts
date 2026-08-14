@@ -127,6 +127,14 @@ describe('ExtensionAuthService', () => {
       expect(service.denialRedirect('')).toBe(`${APP_URL}/unread`);
     });
 
+    it('answers rather than throwing when the allowlist holds a blank segment', async () => {
+      process.env.EXTENSION_REDIRECT_URIS = `${CHROME_URI},`;
+      service = await buildService();
+
+      // a trailing comma is an operator typo, not a registered callback
+      expect(service.denialRedirect('')).toBe(`${APP_URL}/unread`);
+    });
+
     it('refuses everything when no allowlist is configured', async () => {
       delete process.env.EXTENSION_REDIRECT_URIS;
       service = await buildService();
