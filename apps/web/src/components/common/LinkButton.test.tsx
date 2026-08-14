@@ -86,7 +86,7 @@ describe('LinkButton', () => {
     );
     const button = screen.getByRole('button', { name: 'link' });
     expect(button).toBeDisabled();
-    expect(button.className).toContain('disabled:opacity-50');
+    expect(button.className).toContain('disabled:cursor-not-allowed');
     fireEvent.click(button);
     expect(handleClick).not.toHaveBeenCalled();
   });

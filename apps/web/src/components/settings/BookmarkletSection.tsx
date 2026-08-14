@@ -95,7 +95,7 @@ export default function BookmarkletSection() {
         aria-disabled={Boolean(loadError) || undefined}
         aria-describedby={loadError ? 'bookmarklet-load-error' : undefined}
         aria-label="Save to Linklater – drag to your bookmarks bar, or click on any page to save that link"
-        className={`inline-flex items-center justify-center gap-1.5 pl-3.5 pr-4 py-2 bg-[var(--orbit-bg)] hover:bg-[var(--mount-bg)] border-shadow hover:border-shadow text-[var(--orbit-text)] text-xs no-underline! font-semibold ring-1 ring-[var(--orbit-border)] ${FOCUS_RING} rounded-full cursor-grab active:cursor-grabbing active:scale-[0.96] transition duration-200 aria-busy:opacity-50 aria-busy:cursor-wait aria-busy:pointer-events-none aria-disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:pointer-events-none`}
+        className={`inline-flex items-center justify-center gap-1.5 pl-3.5 pr-4 py-2 bg-[var(--orbit-bg)] hover:bg-[var(--mount-bg)] border-shadow hover:border-shadow text-[var(--orbit-text)] text-xs no-underline! font-semibold ring-1 ring-[var(--orbit-border)] ${FOCUS_RING} rounded-full cursor-grab active:cursor-grabbing active:scale-[0.96] transition duration-200 aria-busy:opacity-50 aria-busy:cursor-wait aria-busy:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:pointer-events-none`}
         draggable={!loadError}
         onClick={(event) => event.preventDefault()}
       >

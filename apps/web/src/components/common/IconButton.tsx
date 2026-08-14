@@ -119,7 +119,6 @@ export default function IconButton({
     ? 'opacity-0 scale-95 pointer-events-none'
     : 'opacity-100 scale-100';
 
-  // skip disabled when hidden (disabled:opacity-60 outranks opacity-0)
   const disabledClasses = hidden ? '' : DISABLED;
 
   return (

@@ -101,8 +101,9 @@ describe('FOCUS_RING', () => {
 });
 
 describe('DISABLED', () => {
-  it('contains disabled:opacity-60', () => {
-    expect(DISABLED).toContain('disabled:opacity-60');
+  // dimming retired: the hatch is the disabled cue, and it needs full contrast
+  it('no longer dims, which would have fought the hatch', () => {
+    expect(DISABLED).not.toContain('opacity');
   });
 
   it('contains disabled:cursor-not-allowed', () => {

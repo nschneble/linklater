@@ -286,10 +286,12 @@ body {
 
 /* currentColor, because a selector keyed on :disabled cannot know its host
    bundle: the base-tier tokens this used to name are pinned against
-   --base-bg, and these controls are filled from mount, orbit or alert. */
-[data-cvd='on'] :disabled,
-[data-cvd='on'] [aria-disabled='true'] {
-  opacity: 1;
+   --base-bg, and these controls are filled from mount, orbit or alert.
+   The controls carry no dimming of their own, so the stripes keep that
+   contrast without this rule forcing an opacity a hidden button would
+   inherit. */
+:disabled,
+[aria-disabled='true'] {
   background-image: repeating-linear-gradient(
     51deg,
     transparent,

@@ -16,7 +16,7 @@ import type { CSSProperties } from 'react';
 export const FOCUS_RING =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] forced-colors:focus-visible:outline-[Highlight]';
 
-export const DISABLED = 'disabled:opacity-60 disabled:cursor-not-allowed';
+export const DISABLED = 'disabled:cursor-not-allowed';
 
 // closing runs faster than opening so the panel feels snappy
 export function menuRevealStyle(

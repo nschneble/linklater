@@ -15,8 +15,8 @@
  */
 
 import { describe, expect, it, vi } from 'vitest';
+import { DISABLED, FOCUS_RING } from '../../lib/styles';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { FOCUS_RING } from '../../lib/styles';
 import IconButton from './IconButton';
 
 describe('IconButton', () => {
@@ -185,10 +185,11 @@ describe('IconButton', () => {
     expect(button.className).toContain('opacity-0');
   });
 
-  it('hidden=true suppresses the disabled:opacity-60 rule so opacity-0 wins specificity', () => {
+  it('hidden=true keeps opacity-0 unopposed', () => {
     render(<IconButton hidden>secret</IconButton>);
     const button = screen.getByRole('button', { hidden: true });
-    expect(button.className).not.toContain('disabled:opacity-60');
+    expect(button.className).toContain('opacity-0');
+    expect(button.className).not.toContain('disabled:opacity');
   });
 
   it('disabled (but not hidden) keeps the DISABLED utility on the className', () => {
@@ -196,7 +197,7 @@ describe('IconButton', () => {
     const button = screen.getByRole('button', { name: 'blocked' });
     expect(button).toBeDisabled();
     expect(button.getAttribute('aria-hidden')).toBe(null);
-    expect(button.className).toContain('disabled:opacity-60');
+    expect(button.className).toContain(DISABLED);
   });
 
   it('hidden=false leaves the button focusable and announced', () => {
