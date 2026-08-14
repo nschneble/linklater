@@ -31,7 +31,12 @@ import {
   BOOT_READY_DELAY_MS,
   BOOT_THRESHOLD_MS,
 } from './lib/hooks/useBootStatus';
-import { resetNoticeConsumed, setPendingNotice } from './lib/pendingNotice';
+import { hasBootAnnouncementInbound } from './lib/bootAnnouncementSignal';
+import {
+  noticeWasConsumed,
+  resetNoticeConsumed,
+  setPendingNotice,
+} from './lib/pendingNotice';
 import { StrictMode } from 'react';
 import { unauthenticatedRoutes } from './routes/Unauthenticated';
 import { useAuth } from './auth/AuthContext';
@@ -90,10 +95,8 @@ function ConsumesNotice() {
  * builders run there too now, in a render of their own, which is what the
  * throwing-builder case below is asking about.
  */
-function landOn(element: React.ReactNode) {
-  vi.mocked(unauthenticatedRoutes).mockReturnValue(
-    element as unknown as ReturnType<typeof unauthenticatedRoutes>,
-  );
+function landOn(element: React.ReactElement) {
+  vi.mocked(unauthenticatedRoutes).mockReturnValue([element]);
 }
 
 /** A boot slow enough to speak, up to the moment before it does. */
@@ -131,9 +134,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   // the real module runs here, and its latch outlives the test that raised it
   resetNoticeConsumed();
-  vi.mocked(unauthenticatedRoutes).mockReturnValue(
-    null as unknown as ReturnType<typeof unauthenticatedRoutes>,
-  );
+  vi.mocked(unauthenticatedRoutes).mockReturnValue([]);
   setLoading(true);
 });
 
@@ -273,5 +274,53 @@ describe('App boot – a route table that will not build', () => {
     render(<App />);
 
     expect(screen.getByText('Something went wrong')).toBeInTheDocument();
+  });
+});
+
+/*
+ * Both pieces of module state this route added outlive the component that
+ * writes them, so the dev-only double invoke of effects is the case that
+ * can leave one stuck. The flag has a mount effect that raises it and an
+ * unmount effect that lowers it; run twice, those interleave.
+ */
+describe('App boot - module state under a double invoke', () => {
+  it('leaves the announcement flag down after a boot too fast to speak', () => {
+    const { rerender } = render(strictApp());
+
+    advance(BOOT_THRESHOLD_MS - 100);
+    setLoading(false);
+    act(() => rerender(strictApp()));
+    advance(10_000);
+
+    expect(hasBootAnnouncementInbound()).toBe(false);
+  });
+
+  it('leaves it down again once a boot that did speak has finished', () => {
+    const { rerender } = render(strictApp());
+
+    advance(BOOT_THRESHOLD_MS);
+    expect(hasBootAnnouncementInbound()).toBe(true);
+
+    setLoading(false);
+    act(() => rerender(strictApp()));
+    advance(BOOT_DWELL_MS);
+    advance(BOOT_READY_DELAY_MS);
+
+    expect(hasBootAnnouncementInbound()).toBe(false);
+  });
+
+  it('stands the terminal message down for a notice consumed twice over', () => {
+    setPendingNotice('session-unavailable');
+    landOn(<ConsumesNotice />);
+    const { container, rerender } = render(strictApp());
+
+    advance(BOOT_THRESHOLD_MS);
+    setLoading(false);
+    act(() => rerender(strictApp()));
+    advance(BOOT_DWELL_MS);
+    advance(BOOT_READY_DELAY_MS);
+
+    expect(noticeWasConsumed()).toBe(true);
+    expect(region(container)?.textContent).toBe('');
   });
 });

@@ -1100,6 +1100,7 @@ describe('revokeAllSessions', () => {
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toContain('/auth/sessions');
     expect((options as { method: string }).method).toBe('DELETE');
+    expect(readAuthorization(fetchMock.mock.calls[0])).toBe('Bearer my-jwt');
   });
 
   it('does not throw when the server returns an error', async () => {
@@ -1126,6 +1127,7 @@ describe('getMe', () => {
 
     const [url] = fetchMock.mock.calls[0] as [string];
     expect(url).toContain('/auth/me');
+    expect(readAuthorization(fetchMock.mock.calls[0])).toBe('Bearer my-jwt');
   });
 });
 
@@ -1455,8 +1457,7 @@ describe('setupTotp', () => {
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toContain('/auth/mfa/totp/setup');
     expect((options as { method: string }).method).toBe('POST');
-    const headers = (options as { headers: Record<string, string> }).headers;
-    expect(headers['Authorization']).toBe('Bearer my-jwt');
+    expect(readAuthorization(fetchMock.mock.calls[0])).toBe('Bearer my-jwt');
   });
 });
 
@@ -1632,6 +1633,7 @@ describe('stumbleLink', () => {
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toContain('/links/stumble');
     expect((options as { method: string }).method).toBe('POST');
+    expect(readAuthorization(fetchMock.mock.calls[0])).toBe('Bearer my-jwt');
     expect(result).toEqual({ url: 'https://example.com' });
   });
 

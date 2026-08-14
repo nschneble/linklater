@@ -22,7 +22,6 @@
  */
 
 import { getStoredToken, readTokenClaims } from '../../lib/api';
-import type { AuthorizeFailure } from './extensionAuthorizeMessages';
 
 export interface GrantIdentity {
   /** Empty when nothing is stored; never a token this read did not see. */
@@ -38,23 +37,4 @@ export function readGrantIdentity(userId: string | null): GrantIdentity {
     token: token ?? '',
     mismatched: userId !== null && subject !== null && subject !== userId,
   };
-}
-
-/**
- * The states that leave the account on screen vouched for. An allowlist
- * rather than a refusal to name it on the one failure that unseats it:
- * a verdict added to the union later goes unnamed here and closes the
- * line, where a denylist would leave the wrong address painted.
- */
-const VOUCHED_FAILURES: ReadonlySet<AuthorizeFailure> = new Set([
-  'request-invalid',
-  'unavailable',
-]);
-
-export function accountIsVouchedFor(
-  failure: AuthorizeFailure | null,
-  mismatched: boolean,
-): boolean {
-  if (mismatched) return false;
-  return failure === null || VOUCHED_FAILURES.has(failure);
 }
