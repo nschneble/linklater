@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# flintest – run install, format, lint, test, and build with optional updates
+# flintest – run install, format, lint, typecheck, test, build, with options
 
 set -uo pipefail
 
@@ -18,6 +18,7 @@ Default runs the project quality gate in order:
   npm run subset-fa --workspace @linklater/web
   npm run format
   npm run lint
+  npm run typecheck
   npm run lint:migrations
   npm run test:cov
   npm run build
@@ -87,9 +88,9 @@ TICK=✓  CROSS=✗  CIRC=○
 if [[ "$RUN_TUFFGAL" == true ]]; then
   STEPS=(Install Playwright Database Test Report)
 elif [[ "$RUN_UPDATE" == true ]]; then
-  STEPS=(Update Install Generate Subset\ FA Format Lint Lint\ Migrations Test Build)
+  STEPS=(Update Install Generate Subset\ FA Format Lint Typecheck Lint\ Migrations Test Build)
 else
-  STEPS=(Install Generate Subset\ FA Format Lint Lint\ Migrations Test Build)
+  STEPS=(Install Generate Subset\ FA Format Lint Typecheck Lint\ Migrations Test Build)
 fi
 NS=${#STEPS[@]}
 
@@ -395,21 +396,28 @@ if [[ -z "$FAILED_STEP" ]]; then
 fi
 
 if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step $(( STEP_OFFSET + 5 )) npm run lint:migrations; then
+  if ! run_step $(( STEP_OFFSET + 5 )) npm run typecheck; then
+    FAILED_STEP="Typecheck"
+    FAILED_OUTPUT="$STEP_OUTPUT"
+  fi
+fi
+
+if [[ -z "$FAILED_STEP" ]]; then
+  if ! run_step $(( STEP_OFFSET + 6 )) npm run lint:migrations; then
     FAILED_STEP="Lint Migrations"
     FAILED_OUTPUT="$STEP_OUTPUT"
   fi
 fi
 
 if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step $(( STEP_OFFSET + 6 )) npm run test:cov; then
+  if ! run_step $(( STEP_OFFSET + 7 )) npm run test:cov; then
     FAILED_STEP="Test"
     FAILED_OUTPUT="$STEP_OUTPUT"
   fi
 fi
 
 if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step $(( STEP_OFFSET + 7 )) npm run build; then
+  if ! run_step $(( STEP_OFFSET + 8 )) npm run build; then
     FAILED_STEP="Build"
     FAILED_OUTPUT="$STEP_OUTPUT"
   fi

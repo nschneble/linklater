@@ -68,13 +68,13 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # SWC strips types without checking them, and vite does the same for the
+      # front-end, which is why the build below is its only type gate
+      - name: Type check
+        run: npm run typecheck
+
       - name: Test
         run: npm run test
-
-      # type checks since SWC strips types without checking them
-      - name: Type check (api)
-        working-directory: apps/api
-        run: npm run typecheck
 
       - name: Build
         run: npm run build

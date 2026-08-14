@@ -150,18 +150,21 @@ Linklater uses `concurrently` to run NestJS on port 3000 and Vite on port 5173. 
 
 ### Linting, tests, and CI
 
-Both the front and back-end use ESLint and Prettier. Vitest is used to test the front-end and Jest is used to test the back-end. GitHub Actions lint and test on pushes and PRs to `main`.
+Both the front and back-end use ESLint and Prettier. Vitest is used to test the front-end and Jest is used to test the back-end. GitHub Actions lint, type-check, and test on pushes and PRs to `main`.
+
+`npm run typecheck` covers the back-end, where SWC strips types without checking them. The front-end has no equivalent script: `npm run build` is its type gate, since vite strips types the same way.
 
 ```bash
 # cd /path/to/your/repo
 
 npm run format
 npm run lint
+npm run typecheck
 npm run test
 
 # -OR-
 
-# install, format, lint, test, and build in one TUI
+# install, format, lint, type-check, test, and build in one TUI
 bin/flintest
 bin/flintest --help
 bin/flintest --update
