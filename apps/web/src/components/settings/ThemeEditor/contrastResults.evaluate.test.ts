@@ -11,6 +11,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { evaluatePair } from './contrastResults.evaluate';
+import { MODAL_SCRIM } from './contrastResults.backdrops';
 
 function resolverFor(values: Record<string, string>) {
   return (token: string) => values[token] ?? '';
@@ -193,5 +194,113 @@ describe('an opaque palette short-circuits to its two endpoints', () => {
     ]);
     expect(evaluation.ratio).toBeCloseTo(21, 5);
     expect(evaluation.unmeasurable).toBe(0);
+  });
+});
+
+/*
+ * The modal scrim. Every overlay paints a 50%-black layer between the page
+ * and its panel, and that layer is a literal in a Tailwind utility rather
+ * than a token, so a chain of token names could not express it. A
+ * translucent orbit panel therefore composited straight onto the page and
+ * the editor reported a number no dialog renders.
+ *
+ * The fixture is the shipped before-midnight light palette with its own
+ * orbit background taken to 20% alpha, which is a palette a user can build
+ * in the editor today. In light mode the omitted scrim always flatters the
+ * result, so the failure direction is a pass reported over a real failure.
+ */
+describe('an orbit surface inside a dialog', () => {
+  const beforeMidnightLight = {
+    '--orbit-text': '#20303d',
+    '--orbit-bg': '#e3d9b933',
+    '--base-bg': '#ccc095',
+  };
+
+  it('composites the panel through the scrim, not straight onto the page', () => {
+    const evaluation = evaluatePair(
+      '--orbit-text',
+      '--orbit-bg',
+      resolverFor(beforeMidnightLight),
+    );
+    expect(evaluation.ratio).toBeCloseTo(3.07, 1);
+  });
+
+  it('scores the dialog, which is worse than the same panel on the page', () => {
+    const evaluation = evaluatePair(
+      '--orbit-text',
+      '--orbit-bg',
+      resolverFor(beforeMidnightLight),
+    );
+    expect(evaluation.ratio).toBeLessThan(4.5);
+  });
+});
+
+/*
+ * The ten shipped themes declare every background as opaque hex, so
+ * `flatten` breaks before it reads a single backdrop and every chain
+ * collapses to the same number. That is what makes adding a chain safe: it
+ * can only move a palette that was already being measured wrongly.
+ */
+describe('adding a render site to an opaque palette', () => {
+  const opaque = {
+    '--orbit-text': '#20303d',
+    '--orbit-bg': '#e3d9b9',
+    '--base-bg': '#ccc095',
+  };
+
+  it('reads neither the page nor anything under it', () => {
+    const evaluation = evaluatePair(
+      '--orbit-text',
+      '--orbit-bg',
+      resolverFor(opaque),
+    );
+    expect([...evaluation.reads].sort()).toEqual([
+      '--orbit-bg',
+      '--orbit-text',
+    ]);
+  });
+
+  it('measures every site, so none of them is a dash', () => {
+    const evaluation = evaluatePair(
+      '--orbit-text',
+      '--orbit-bg',
+      resolverFor(opaque),
+    );
+    expect(evaluation.unmeasurable).toBe(0);
+  });
+});
+
+/*
+ * The completeness invariant keys a row's note off the tokens the
+ * measurement consumed, so an edit to one token can only move pairs that
+ * declared it. A literal is editable by nobody, and keying it would invent
+ * a row that does not exist.
+ */
+describe('the read set with a literal layer in the chain', () => {
+  const evaluation = evaluatePair(
+    '--orbit-text',
+    '--orbit-bg',
+    resolverFor({
+      '--orbit-text': '#20303d',
+      '--orbit-bg': '#e3d9b933',
+      '--mount-bg': '#d8cfa9',
+      '--base-bg': '#ccc095',
+    }),
+  );
+
+  it('keys nothing but token names', () => {
+    const foreign = [...evaluation.reads].filter(
+      (read) => !read.startsWith('--'),
+    );
+    expect(foreign).toEqual([]);
+  });
+
+  it('keys neither the literal colour nor the class that paints it', () => {
+    expect(evaluation.reads).not.toContain(MODAL_SCRIM.color);
+    expect(evaluation.reads).not.toContain(MODAL_SCRIM.className);
+  });
+
+  it('still keys the page background the scrim sits on', () => {
+    expect(evaluation.reads).toContain('--base-bg');
   });
 });

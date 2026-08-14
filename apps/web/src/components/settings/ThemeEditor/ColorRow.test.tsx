@@ -311,3 +311,36 @@ describe('ColorRow – swatch shows transparency over a checkerboard', () => {
     );
   });
 });
+
+/*
+ * A palette can fail only behind an overlay. From the row alone that reads
+ * exactly like a palette failing in the chrome the user just checked and
+ * found fine, so the note names where to look.
+ */
+describe('ColorRow – naming the site a failure renders in', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  function noteFor(failure: TokenContrastFailure): string {
+    render(rowWith(failure));
+    act(() => {
+      vi.advanceTimersByTime(FAILURE_NOTE_DEBOUNCE_MS);
+    });
+    return screen.getByText(/contrast is too low/i).textContent ?? '';
+  }
+
+  it('names the site when the worst instance is behind an overlay', () => {
+    expect(noteFor(makeFailure({ site: 'a dialog' }))).toBe(
+      'Text contrast is too low inside a dialog (2.8:1)',
+    );
+  });
+
+  it('names no site when the failure is on the surface in front of them', () => {
+    expect(noteFor(makeFailure())).toBe('Text contrast is too low (2.8:1)');
+  });
+});

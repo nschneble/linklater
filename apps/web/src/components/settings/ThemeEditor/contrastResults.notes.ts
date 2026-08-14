@@ -1,3 +1,4 @@
+import { isLiteralLayer } from './contrastResults.backdrops';
 import { VAR_GROUPS, type Bundle } from './useThemeOverrides';
 import type { ContrastPair } from './contrastResults.pairs';
 import type { ContrastResults } from './contrastResults';
@@ -31,6 +32,13 @@ export interface TokenContrastFailure {
    * sentence and appends the ratio.
    */
   noteSubject: string;
+  /**
+   * Where the worst site renders, when that is somewhere a user would not
+   * find by looking at the screen they are on. A palette that fails only
+   * behind an overlay reads, from the row alone, exactly like one failing
+   * in the chrome they just checked and found fine.
+   */
+  site?: string;
 }
 
 /**
@@ -117,7 +125,12 @@ export function pairsTouchingToken(
   results: ContrastResults,
 ): Map<string, TokenContrastFailure> {
   const failures = new Map<string, TokenContrastFailure>();
-  const consider = (token: string, ratio: number, pair: ContrastPair) => {
+  const consider = (
+    token: string,
+    ratio: number,
+    pair: ContrastPair,
+    site: string | undefined,
+  ) => {
     const deficit = pair.threshold - ratio;
     const existing = failures.get(token);
     if (existing && existing.threshold - existing.ratio >= deficit) return;
@@ -125,14 +138,16 @@ export function pairsTouchingToken(
       ratio,
       threshold: pair.threshold,
       noteSubject: noteSubjectFor(token, pair),
+      site,
     });
   };
   for (const group of results.groups) {
-    for (const { pair, ratio, reads } of group.pairs) {
+    for (const { pair, ratio, reads, backdrop } of group.pairs) {
       if (ratio === null || ratio >= pair.threshold) continue;
+      const site = backdrop?.find(isLiteralLayer)?.label;
       // any token the ratio read can fix it, backdrops included
       for (const token of reads ?? [pair.foreground, pair.background]) {
-        consider(token, ratio, pair);
+        consider(token, ratio, pair, site);
       }
     }
   }

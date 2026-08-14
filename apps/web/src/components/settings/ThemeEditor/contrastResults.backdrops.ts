@@ -1,5 +1,40 @@
 import { BUNDLES, type Bundle } from './useThemeOverrides';
 
+/**
+ * A painted layer that is not a theme token, so it can never be edited and
+ * never resolves through `colorValues`.
+ *
+ * It carries its own colour because the editor's resolver is a lookup on the
+ * editable set rather than a CSS read, so promoting the value to a custom
+ * property would not make it reachable — it would only turn a wrong number
+ * into a dash. `className` is what lets the backdrops suite hold the citation
+ * to account the same way it does for a token.
+ */
+export interface LiteralLayer {
+  readonly color: string;
+  /** Names the render site in a user-facing note. */
+  readonly label: string;
+  /** The utility that paints it, for the citation check. */
+  readonly className: string;
+}
+
+export type BackdropLayer = string | LiteralLayer;
+
+export function isLiteralLayer(layer: BackdropLayer): layer is LiteralLayer {
+  return typeof layer !== 'string';
+}
+
+/**
+ * The overlay scrim, from the `scrim` utility in `bundles.css`. Every overlay
+ * paints it between the page and its panel.
+ */
+export const MODAL_SCRIM: LiteralLayer = {
+  // the utility's own byte, not a rounded 0.5: 0x80 of 0xff is 0.50196
+  color: '#00000080',
+  label: 'a dialog',
+  className: 'scrim',
+};
+
 /*
  * Where each bundle's surfaces actually render, nearest backdrop first.
  *
@@ -23,29 +58,32 @@ import { BUNDLES, type Bundle } from './useThemeOverrides';
  * The longest chain has three backdrops, so four painted layers: an Alert
  * inside a PAT row inside a settings card inside the page.
  */
-export const BUNDLE_BACKDROPS: Record<Bundle, readonly (readonly string[])[]> =
-  {
-    base: [[], ['--base-bg']],
-    mount: [['--base-bg'], ['--mount-bg', '--base-bg']],
-    orbit: [
-      ['--base-bg'],
-      ['--mount-bg', '--base-bg'],
-      ['--orbit-bg', '--base-bg'],
-    ],
-    alert: [
-      ['--base-bg'],
-      ['--mount-bg', '--base-bg'],
-      ['--alert-bg', '--base-bg'],
-      ['--orbit-bg', '--mount-bg', '--base-bg'],
-    ],
-    warn: [['--base-bg'], ['--mount-bg', '--base-bg']],
-    info: [['--base-bg'], ['--mount-bg', '--base-bg']],
-    success: [
-      ['--base-bg'],
-      ['--mount-bg', '--base-bg'],
-      ['--alert-bg', '--base-bg'],
-    ],
-  };
+export const BUNDLE_BACKDROPS: Record<
+  Bundle,
+  readonly (readonly BackdropLayer[])[]
+> = {
+  base: [[], ['--base-bg']],
+  mount: [['--base-bg'], ['--mount-bg', '--base-bg']],
+  orbit: [
+    ['--base-bg'],
+    ['--mount-bg', '--base-bg'],
+    ['--orbit-bg', '--base-bg'],
+    [MODAL_SCRIM, '--base-bg'],
+  ],
+  alert: [
+    ['--base-bg'],
+    ['--mount-bg', '--base-bg'],
+    ['--alert-bg', '--base-bg'],
+    ['--orbit-bg', '--mount-bg', '--base-bg'],
+  ],
+  warn: [['--base-bg'], ['--mount-bg', '--base-bg']],
+  info: [['--base-bg'], ['--mount-bg', '--base-bg']],
+  success: [
+    ['--base-bg'],
+    ['--mount-bg', '--base-bg'],
+    ['--alert-bg', '--base-bg'],
+  ],
+};
 
 /*
  * Where each bundle's HIGHLIGHT fill renders. Separate from the table above
@@ -92,7 +130,7 @@ export const BUNDLE_BACKDROPS: Record<Bundle, readonly (readonly string[])[]> =
  */
 export const HIGHLIGHT_BACKDROPS: Record<
   Bundle,
-  readonly (readonly string[])[]
+  readonly (readonly BackdropLayer[])[]
 > = {
   base: [['--base-bg']],
   mount: [
@@ -102,6 +140,7 @@ export const HIGHLIGHT_BACKDROPS: Record<
   orbit: [
     ['--orbit-bg', '--base-bg'],
     ['--mount-bg', '--base-bg'],
+    ['--orbit-bg', MODAL_SCRIM, '--base-bg'],
   ],
   alert: [
     ['--base-bg'],
@@ -129,7 +168,7 @@ function bundleOf(token: string): Bundle | null {
  */
 export function chainsFor(
   backgroundToken: string,
-): readonly (readonly string[])[] {
+): readonly (readonly BackdropLayer[])[] {
   const bundle = bundleOf(backgroundToken);
   if (bundle === null) return [[]];
   if (backgroundToken === `--${bundle}-bg`) return BUNDLE_BACKDROPS[bundle];

@@ -2,6 +2,7 @@ import { BUNDLES, VAR_GROUPS, type Bundle } from './useThemeOverrides';
 import { evaluatePair } from './contrastResults.evaluate';
 import { focusRingPairs, pairsForBundle } from './contrastResults.pairs';
 import { useMemo } from 'react';
+import type { BackdropLayer } from './contrastResults.backdrops';
 import type { ContrastPair } from './contrastResults.pairs';
 import type { ThemeVariable } from './useThemeOverrides';
 
@@ -41,6 +42,8 @@ export interface PairResult {
   reads?: ReadonlySet<string>;
   /** Render sites that could not be measured; absent means none. */
   unmeasurable?: number;
+  /** The chain the worst ratio came from, for naming its site in a note. */
+  backdrop?: readonly BackdropLayer[];
 }
 
 /** Render sites of `entry` that could not be measured. */
@@ -135,6 +138,7 @@ export function useContrastResults(
         ratio: evaluation.ratio,
         reads: evaluation.reads,
         unmeasurable: evaluation.unmeasurable,
+        backdrop: evaluation.backdrop,
       };
     };
 
