@@ -92,6 +92,16 @@
   src: url('/fonts/OpenDyslexicMono-Regular.otf') format('opentype');
 }
 
+/* Reaches scrollbars, native widgets and the canvas, none of which a
+   [color-scheme:dark] on a page-root div can touch. */
+[data-mode='dark'] {
+  color-scheme: dark;
+}
+
+[data-mode='light'] {
+  color-scheme: light;
+}
+
 body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
