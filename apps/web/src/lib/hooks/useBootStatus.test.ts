@@ -321,3 +321,51 @@ describe('useBootStatus – landings with nothing to say', () => {
     expect(result.current.announcement).toBe('');
   });
 });
+
+describe('useBootStatus – the focus signal', () => {
+  it('leaves it down for a boot too fast to say anything', () => {
+    const { rerender } = renderBoot();
+
+    advance(BOOT_THRESHOLD_MS - 100);
+    act(() => rerender({ loading: false, landing: 'app' }));
+    advance(BOOT_READY_DELAY_MS + BOOT_CLEAR_MS);
+
+    expect(hasBootAnnouncementInbound()).toBe(false);
+  });
+
+  it('raises it as soon as the boot screen speaks', () => {
+    renderBoot();
+
+    advance(BOOT_THRESHOLD_MS);
+
+    expect(hasBootAnnouncementInbound()).toBe(true);
+  });
+
+  it('drops it once the terminal message has been resolved', () => {
+    bootPastTheThreshold('signed-out');
+
+    expect(hasBootAnnouncementInbound()).toBe(true);
+
+    advance(BOOT_READY_DELAY_MS);
+
+    expect(hasBootAnnouncementInbound()).toBe(false);
+  });
+
+  // a withheld message resolves the landing just the same
+  it('drops it even when the landing had nothing to say', () => {
+    bootPastTheThreshold('error');
+
+    advance(BOOT_READY_DELAY_MS);
+
+    expect(hasBootAnnouncementInbound()).toBe(false);
+  });
+
+  it('drops it when the hook goes away before it could speak', () => {
+    const { unmount } = renderBoot();
+
+    advance(BOOT_THRESHOLD_MS);
+    unmount();
+
+    expect(hasBootAnnouncementInbound()).toBe(false);
+  });
+});
