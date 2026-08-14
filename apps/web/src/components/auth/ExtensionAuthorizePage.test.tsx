@@ -84,6 +84,18 @@ function errorNode(): HTMLElement {
   return node;
 }
 
+/*
+ * The live region is mounted from the first paint so it is registered
+ * before it fills, which means its presence settles nothing. Waiting for
+ * a failure is waiting for its text.
+ */
+async function findFailure(): Promise<HTMLElement> {
+  await waitFor(() => {
+    expect(errorNode().textContent).not.toBe('');
+  });
+  return errorNode();
+}
+
 /** A grant whose outcome the test decides, one tick at a time. */
 function deferGrant(): {
   reject: (caught: unknown) => void;
@@ -124,6 +136,12 @@ describe('ExtensionAuthorizePage', () => {
   it('exposes a main landmark, as every other Common route does', () => {
     renderPage();
     expect(screen.getByRole('main')).toBeInTheDocument();
+  });
+
+  // unpinned, a Custom theme drops the alert's contrast under AA
+  it('pins branding, so no saved palette reaches the gradient', () => {
+    renderPage();
+    expect(screen.getByRole('main')).toHaveAttribute('data-theme', 'branding');
   });
 
   it('Authorize PrimaryButton declares surface="mount" – card is --mount-bg (default)', () => {
@@ -184,19 +202,29 @@ describe('ExtensionAuthorizePage pending state', () => {
     });
   });
 
-  it('marks the control busy and un-marks it, without ever removing it', async () => {
+  it('marks the control pending and un-marks it, without ever removing it', async () => {
     const grant = deferGrant();
     renderPage();
 
     fireEvent.click(authorizeButton());
-    expect(authorizeButton()).toHaveAttribute('aria-busy', 'true');
     expect(authorizeButton()).toHaveAttribute('aria-disabled', 'true');
 
     grant.reject(new ApiError('Bad gateway', 502));
     await waitFor(() => {
       expect(authorizeButton()).toHaveAttribute('aria-disabled', 'false');
     });
-    expect(authorizeButton()).toHaveAttribute('aria-busy', 'false');
+  });
+
+  // aria-busy would defer the label change it is the only candidate for
+  it('never asks a reader to defer the one update the control exposes', async () => {
+    const grant = deferGrant();
+    renderPage();
+
+    fireEvent.click(authorizeButton());
+    expect(authorizeButton()).not.toHaveAttribute('aria-busy');
+
+    grant.reject(new ApiError('Bad gateway', 502));
+    await findFailure();
   });
 
   it('keeps the pending control focusable, so focus is never dropped to body', async () => {
@@ -210,7 +238,7 @@ describe('ExtensionAuthorizePage pending state', () => {
     expect(document.activeElement).toBe(authorizeButton());
 
     grant.reject(new ApiError('Bad gateway', 502));
-    await screen.findByRole('alert');
+    await findFailure();
   });
 
   it('swallows a second activation while the first grant is out', async () => {
@@ -225,7 +253,7 @@ describe('ExtensionAuthorizePage pending state', () => {
     });
 
     grant.reject(new ApiError('Bad gateway', 502));
-    await screen.findByRole('alert');
+    await findFailure();
   });
 });
 
@@ -250,7 +278,7 @@ describe('ExtensionAuthorizePage failures', () => {
       renderPage();
       fireEvent.click(authorizeButton());
 
-      const alert = await screen.findByRole('alert');
+      const alert = await findFailure();
       expect(alert).toHaveTextContent(message);
       expect(alert).not.toHaveTextContent('Invalid redirect_uri');
     },
@@ -261,7 +289,7 @@ describe('ExtensionAuthorizePage failures', () => {
     renderPage();
     fireEvent.click(authorizeButton());
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(
+    expect(await findFailure()).toHaveTextContent(
       "We couldn't authorize the extension right now.",
     );
   });
@@ -270,11 +298,11 @@ describe('ExtensionAuthorizePage failures', () => {
     authorizeExtensionMock.mockRejectedValue(new ApiError('Nope', 502));
     renderPage();
     fireEvent.click(authorizeButton());
-    await screen.findByRole('alert');
+    await findFailure();
 
     const retry = deferGrant();
     fireEvent.click(authorizeButton());
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('alert')).toBe(errorNode());
     expect(errorNode()).toHaveTextContent('');
 
     retry.reject(new ApiError('Nope', 502));
@@ -316,7 +344,7 @@ describe('ExtensionAuthorizePage failures', () => {
     renderPage();
     fireEvent.click(authorizeButton());
 
-    await screen.findByRole('alert');
+    await findFailure();
     expect(screen.getByText(SIGNED_IN_USER.email)).toBeInTheDocument();
   });
 
@@ -326,7 +354,7 @@ describe('ExtensionAuthorizePage failures', () => {
     authorizeButton().focus();
     fireEvent.click(authorizeButton());
 
-    await screen.findByRole('alert');
+    await findFailure();
     expect(document.activeElement).toBe(authorizeButton());
   });
 });
@@ -363,12 +391,16 @@ describe('ExtensionAuthorizePage arrival without a request', () => {
 
   it('replaces the prompt when only the challenge is missing', () => {
     renderPage(`?redirect_uri=${encodeURIComponent(REDIRECT_URI)}`);
-    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      "We couldn't read the request the extension sent.",
+    );
   });
 
+  // the consent branch mounts a region too, so emptiness is the tell
   it('offers the grant when both parameters are present', () => {
     renderPage();
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('alert')).toHaveTextContent('');
     expect(authorizeButton()).toBeInTheDocument();
   });
 

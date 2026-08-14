@@ -124,9 +124,10 @@ describe('LoginRegisterView error display', () => {
 
   it('alert element is always mounted (empty but in DOM) when there is no error', () => {
     renderView({ error: null });
-    // the alert stays mounted but aria-hidden and sr-only
+    // sr-only and empty, but registered ahead of the text that fills it
     const errorElement = document.getElementById('auth-form-error');
     expect(errorElement).toBeInTheDocument();
+    expect(errorElement).toHaveAttribute('role', 'alert');
   });
 
   // an error that arrived on the URL is announced by AuthForm's own region

@@ -7,7 +7,9 @@
  * repaint the control as ready in the moment before the document unloads.
  *
  * The failure arm empties the pending state in the same commit that fills
- * the error, so a screen reader is never left holding both.
+ * the error, so the document never carries both at once. An utterance the
+ * pending region already queued still finishes on its own; what the single
+ * commit rules out is a page that reads as pending and failed together.
  *
  * Failure is kept as a kind rather than a rendered string because the two
  * differ where it matters: the same failure twice writes the same text

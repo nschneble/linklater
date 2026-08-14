@@ -43,6 +43,11 @@ const variantRoles: Record<AlertProps['variant'], string> = {
 /**
  * Inline alert banner for form-level error and success messages. Paints a
  * variant icon alongside the color so meaning never rests on color alone.
+ *
+ * An empty message renders a bare node rather than nothing, which keeps a
+ * caller's `aria-describedby` from dangling and keeps the live region in
+ * the accessibility tree ahead of the text that fills it. A region born
+ * populated in a single commit is the shape screen readers miss.
  */
 export default function Alert({
   announce = true,
@@ -55,15 +60,15 @@ export default function Alert({
   tabIndex,
   variant,
 }: AlertProps) {
-  // keep an empty node in the DOM so aria-describedby to id never dangles
+  let role: string | undefined;
+  if (announce) role = variantRoles[variant];
+
+  // registered before it fills, or the first message goes unspoken
   if (!children) {
-    return <p id={id} inert={inert} aria-hidden="true" className="sr-only" />;
+    return <p id={id} inert={inert} className="sr-only" role={role} />;
   }
 
   const resolvedIcon = icon ?? defaultIcons[variant];
-
-  let role: string | undefined;
-  if (announce) role = variantRoles[variant];
 
   return (
     <p

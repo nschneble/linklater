@@ -51,7 +51,7 @@ describe('Alert', () => {
     expect(container.querySelector('i.fa-circle-exclamation')).toBeFalsy();
   });
 
-  it('keeps a hidden placeholder when children is empty', () => {
+  it('keeps a silent placeholder when children is empty', () => {
     const { container } = render(
       <Alert variant="error" id="form-error">
         {null}
@@ -59,8 +59,39 @@ describe('Alert', () => {
     );
     const placeholder = container.querySelector('#form-error');
     expect(placeholder).toBeTruthy();
-    expect(placeholder?.getAttribute('aria-hidden')).toBe('true');
     expect(placeholder?.className).toContain('sr-only');
+    expect(placeholder).toHaveTextContent('');
+  });
+
+  /*
+   * A region registered in the same commit that fills it is the shape
+   * NVDA and JAWS miss, so the empty branch has to be in the tree with
+   * its role already on it.
+   */
+  it('registers the empty error branch as a live region', () => {
+    const { getByRole } = render(
+      <Alert variant="error" id="form-error">
+        {null}
+      </Alert>,
+    );
+    const placeholder = getByRole('alert');
+    expect(placeholder).toHaveAttribute('id', 'form-error');
+    expect(placeholder).not.toHaveAttribute('aria-hidden');
+  });
+
+  it('registers the empty success branch as a live region', () => {
+    const { getByRole } = render(<Alert variant="success">{null}</Alert>);
+    expect(getByRole('status')).not.toHaveAttribute('aria-hidden');
+  });
+
+  it('leaves the empty branch roleless when announce is false', () => {
+    const { container, queryByRole } = render(
+      <Alert variant="error" announce={false} id="form-error">
+        {null}
+      </Alert>,
+    );
+    expect(queryByRole('alert')).toBeNull();
+    expect(container.querySelector('#form-error')).toBeTruthy();
   });
 
   it('forwards inert to the rendered alert when set', () => {

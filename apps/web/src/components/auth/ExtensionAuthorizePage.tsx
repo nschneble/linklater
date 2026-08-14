@@ -23,12 +23,13 @@ import { useSearchParams } from 'react-router';
  * server's answer, not this page's.
  *
  * Failures speak through a single always-mounted `Alert`, which carries
- * `role="alert"`. Deliberately not the hidden-paint-plus-sr-only-mirror
- * shape `AlreadySignedInNotice` and `PendingNoticeAnnouncer` use: those
- * notices are inert and spoken once, whereas an error is consultable, and
- * an `aria-hidden` error is absent from the page for exactly the people
- * who cannot glance back at it. `LoginRegisterView` is the pattern to
- * follow here.
+ * `role="alert"` while it is still empty, so the region is in the tree
+ * ahead of the text rather than arriving with it. Deliberately not the
+ * hidden-paint-plus-sr-only-mirror shape `AlreadySignedInNotice` and
+ * `PendingNoticeAnnouncer` use: those notices are inert and spoken once,
+ * whereas an error is consultable, and an `aria-hidden` error is absent
+ * from the page for exactly the people who cannot glance back at it.
+ * `LoginRegisterView` is the pattern to follow here.
  *
  * Nothing announces on success. A live region mutating in the same tick as
  * a top-level navigation is not reliably spoken before the document is
@@ -101,7 +102,6 @@ export default function ExtensionAuthorizePage() {
           type="button"
           className="aria-disabled:active:scale-100 aria-disabled:cursor-not-allowed"
           onClick={() => void handleAuthorize()}
-          aria-busy={authorizing}
           aria-disabled={authorizing}
           aria-describedby="extension-authorize-error"
         >

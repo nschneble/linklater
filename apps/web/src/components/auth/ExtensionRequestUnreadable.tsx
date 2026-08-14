@@ -9,9 +9,12 @@ import { useEffect, useRef } from 'react';
  * and a screen that looks ready to work is worse than one that says so.
  *
  * Focus moves to the message because this branch renders no control at
- * all. `role="alert"` would announce it either way, so the move is not
- * what makes it heard; what it buys is a keyboard user having somewhere to
- * be other than `<body>`, and a Tab that starts from the explanation.
+ * all, and because on the arrival that matters the move is what makes the
+ * message heard. The extension opens this URL directly, so the alert is
+ * in the document before the page finishes loading, and an alert already
+ * present by then is not announced. The move also leaves a keyboard user
+ * somewhere other than `<body>`, with a Tab that starts from the
+ * explanation.
  */
 export default function ExtensionRequestUnreadable() {
   const messageReference = useRef<HTMLParagraphElement>(null);
