@@ -300,6 +300,6 @@ import { useEffect, useState } from 'react';
 
 ## Gotchas
 
-- **TypeScript build errors on the frontend**: pre-existing `tsc` errors exist in `apps/web`. `vite build` (not `tsc`) is true correctness check — use to validate frontend code.
+- **Front-end type checking lives in the build**: `apps/web` has no `typecheck` script; `npm run build` runs `tsc -b` first and it is clean. The long-standing errors are in the test files `tsconfig.app.json` deliberately excludes, so validate front-end code with `npm run build`.
 - **ESM Jest on the backend**: API test runner uses `--experimental-vm-modules`. No mock `bcryptjs` — use real low-round hashes (`bcrypt.hash('password', 1)`) to avoid ESM interop issues.
 - **Prisma `P2025` in tests**: Prisma throws typed error class, not plain object. Mock with `Object.assign(new Error('...'), { code: 'P2025' })` so `instanceof` checks work correctly.

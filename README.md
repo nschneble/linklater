@@ -152,7 +152,7 @@ Linklater uses `concurrently` to run NestJS on port 3000 and Vite on port 5173. 
 
 Both the front and back-end use ESLint and Prettier. Vitest is used to test the front-end and Jest is used to test the back-end. GitHub Actions lint, type-check, and test on pushes and PRs to `main`.
 
-`npm run typecheck` covers the back-end, where SWC strips types without checking them. The front-end has no equivalent script: `npm run build` is its type gate, since vite strips types the same way.
+Both sides are type-checked, by different commands. `npm run typecheck` covers the back-end, where SWC strips types without checking them. The front-end is checked by `npm run build`, which runs `tsc -b` before vite. Neither checks its own test files: `tsconfig.build.json` and `tsconfig.app.json` each exclude them.
 
 ```bash
 # cd /path/to/your/repo
