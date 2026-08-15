@@ -1,4 +1,8 @@
-import { chainsFor } from './contrastResults.backdrops';
+import {
+  chainsFor,
+  isLiteralLayer,
+  type BackdropLayer,
+} from './contrastResults.backdrops';
 import {
   compositeOver,
   contrastRatio,
@@ -28,7 +32,7 @@ export interface PairEvaluation {
   /** The subset of `reads` no site could resolve. */
   unresolved: ReadonlySet<string>;
   /** The chain the worst ratio came from, for naming it in a note. */
-  backdrop: readonly string[];
+  backdrop: readonly BackdropLayer[];
 }
 
 /** What the evaluation touched, accumulated across every chain. */
@@ -56,7 +60,7 @@ function parseOrNull(value: string): Rgba | null {
  */
 function flatten(
   token: string,
-  chain: readonly string[],
+  chain: readonly BackdropLayer[],
   resolve: (token: string) => string,
   trace: Trace,
 ): Rgb | null {
@@ -67,12 +71,19 @@ function flatten(
     return null;
   }
 
-  for (const backdropToken of chain) {
+  for (const layer of chain) {
     if (color[3] >= 1) break;
-    trace.reads.add(backdropToken);
-    const backdrop = parseOrNull(resolve(backdropToken));
+    if (isLiteralLayer(layer)) {
+      // no row edits a literal, so keying it would break the read invariant
+      const literal = parseOrNull(layer.color);
+      if (literal === null) return null;
+      color = compositeOver(color, literal);
+      continue;
+    }
+    trace.reads.add(layer);
+    const backdrop = parseOrNull(resolve(layer));
     if (backdrop === null) {
-      trace.unresolved.add(backdropToken);
+      trace.unresolved.add(layer);
       return null;
     }
     color = compositeOver(color, backdrop);
@@ -106,7 +117,7 @@ export function evaluatePair(
 ): PairEvaluation {
   const trace: Trace = { reads: new Set(), unresolved: new Set() };
   let ratio: number | null = null;
-  let backdrop: readonly string[] = [];
+  let backdrop: readonly BackdropLayer[] = [];
   let unmeasurable = 0;
 
   for (const chain of chainsFor(background)) {

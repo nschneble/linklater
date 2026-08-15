@@ -147,8 +147,12 @@ export default function ColorRow({
   const rowId = variable.replace(/^--/, '');
   const failureNoteId = `theme-editor-failure-${rowId}`;
   const refusedNoteId = `theme-editor-refused-${rowId}`;
+  // named only when the worst instance is off the screen the row is on
+  const failureSite = debouncedFailure?.site
+    ? ` inside ${debouncedFailure.site}`
+    : '';
   const failureNote = debouncedFailure
-    ? `${debouncedFailure.noteSubject} is too low (${debouncedFailure.ratio.toFixed(1)}:1)`
+    ? `${debouncedFailure.noteSubject} is too low${failureSite} (${debouncedFailure.ratio.toFixed(1)}:1)`
     : '';
 
   return (

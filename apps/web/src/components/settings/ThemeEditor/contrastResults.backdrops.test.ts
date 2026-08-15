@@ -35,6 +35,9 @@ import { basename, dirname, join, relative, resolve } from 'node:path';
 import {
   BUNDLE_BACKDROPS,
   HIGHLIGHT_BACKDROPS,
+  isLiteralLayer,
+  MODAL_SCRIM,
+  type BackdropLayer,
 } from './contrastResults.backdrops';
 import { BUNDLES, type Bundle } from './useThemeOverrides';
 import { describe, expect, it } from 'vitest';
@@ -54,7 +57,7 @@ const SOURCE_ROOT = join(WEB_ROOT, 'src');
  * with no citation is an assertion nobody can follow.
  */
 interface RenderSite {
-  chain: readonly string[];
+  chain: readonly BackdropLayer[];
   surface: string;
   hosts: readonly string[];
 }
@@ -70,6 +73,7 @@ const PRIMARY_BUTTON = 'components/common/PrimaryButton.tsx';
 const SWITCH = 'components/settings/SettingSwitch.tsx';
 const TOAST = 'components/common/Toast.tsx';
 const TOKEN_ROW = 'components/settings/ApiTokensList/ApiTokenRow.tsx';
+const MODAL = 'components/common/Modal.tsx';
 
 /** Where each bundle's `-bg` renders, with the walk that found it. */
 const SURFACE_SITES: Record<Bundle, readonly RenderSite[]> = {
@@ -104,6 +108,11 @@ const SURFACE_SITES: Record<Bundle, readonly RenderSite[]> = {
       chain: ['--orbit-bg', '--base-bg'],
       surface: 'components/UserMenu/index.tsx',
       hosts: ['components/Header.tsx', APP_SHELL],
+    },
+    {
+      chain: [MODAL_SCRIM, '--base-bg'],
+      surface: MODAL,
+      hosts: [MODAL, APP_SHELL],
     },
   ],
   alert: [
@@ -190,6 +199,11 @@ const HIGHLIGHT_SITES: Record<Bundle, readonly RenderSite[]> = {
       chain: ['--mount-bg', '--base-bg'],
       surface: SWITCH,
       hosts: [SETTINGS_GROUP, APP_SHELL],
+    },
+    {
+      chain: ['--orbit-bg', MODAL_SCRIM, '--base-bg'],
+      surface: PRIMARY_BUTTON,
+      hosts: [MODAL, MODAL, APP_SHELL],
     },
   ],
   alert: [
@@ -393,9 +407,14 @@ function mutedToastBundles(): Bundle[] {
   return BUNDLES.filter((bundle) => declared[1].includes(`'${bundle}'`));
 }
 
-function paints(path: string, token: string): boolean {
+function paints(path: string, layer: BackdropLayer): boolean {
   const source = SOURCES.get(path);
   if (source === undefined) return false;
+  // a literal is painted by a utility class, so cite it the same way
+  if (isLiteralLayer(layer)) {
+    return new RegExp(`\\b${layer.className}\\b`).test(source);
+  }
+  const token = layer;
   if (source.includes(`bg-[var(${token})]`)) return true;
   if (token.endsWith('-bg')) return source.includes(DYNAMIC_BG);
   return source.includes(DYNAMIC_HIGHLIGHT);
@@ -412,12 +431,19 @@ function paintedBundles(path: string, slot: 'bg' | 'highlight'): Bundle[] {
   });
 }
 
-function chainKeys(sites: readonly RenderSite[]): string[] {
-  return [...new Set(sites.map((site) => site.chain.join(' > ')))].sort();
+/** A chain as one comparable string. A literal layer prints as its class. */
+function chainKey(chain: readonly BackdropLayer[]): string {
+  return chain
+    .map((layer) => (isLiteralLayer(layer) ? layer.className : layer))
+    .join(' > ');
 }
 
-function tableKeys(chains: readonly (readonly string[])[]): string[] {
-  return [...new Set(chains.map((chain) => chain.join(' > ')))].sort();
+function chainKeys(sites: readonly RenderSite[]): string[] {
+  return [...new Set(sites.map((site) => chainKey(site.chain)))].sort();
+}
+
+function tableKeys(chains: readonly (readonly BackdropLayer[])[]): string[] {
+  return [...new Set(chains.map(chainKey))].sort();
 }
 
 describe('the backdrop table is exactly what its render sites derive', () => {
@@ -447,8 +473,8 @@ describe('every cited render site paints what it is cited for', () => {
   it.each(cases)('$bundle $slot on [$site.chain]', ({ bundle, site, slot }) => {
     expect(paints(site.surface, `--${bundle}-${slot}`)).toBe(true);
     expect(site.hosts).toHaveLength(site.chain.length);
-    site.chain.forEach((token, index) => {
-      expect(paints(site.hosts[index], token)).toBe(true);
+    site.chain.forEach((layer, index) => {
+      expect(paints(site.hosts[index], layer)).toBe(true);
     });
   });
 });
@@ -481,11 +507,16 @@ describe('a background replaced on one element is not a layer beneath it', () =>
           slot === 'highlight'
             ? [`--${bundle}-highlight`, `--${bundle}-highlight-hover`]
             : [`--${bundle}-bg`];
+        // a utility class paints it, so no element can have replaced it
+        if (isLiteralLayer(layer)) return false;
         return painted.some(
           (token) => replaced.get(token)?.has(layer) ?? false,
         );
       })
-      .map(({ bundle, slot, layer }) => `${bundle} ${slot} over ${layer}`);
+      .map(
+        ({ bundle, slot, layer }) =>
+          `${bundle} ${slot} over ${isLiteralLayer(layer) ? layer.className : layer}`,
+      );
 
     expect(invented).toEqual([]);
   });
@@ -548,9 +579,17 @@ describe('every chain layer is a bundle background token', () => {
 
   it('names nothing a backdrop that is not a surface', () => {
     const foreign = chains.flatMap((chain) =>
-      chain.filter((token) => !backgroundTokens.has(token)),
+      chain.filter(
+        (layer) => !isLiteralLayer(layer) && !backgroundTokens.has(layer),
+      ),
     );
     expect(foreign).toEqual([]);
+  });
+
+  // amended, not dropped: a second literal is how the next one slips in
+  it('admits one sanctioned literal layer and no other', () => {
+    const literals = chains.flatMap((chain) => chain.filter(isLiteralLayer));
+    expect(new Set(literals)).toEqual(new Set([MODAL_SCRIM]));
   });
 
   it('bottoms out at the page background', () => {

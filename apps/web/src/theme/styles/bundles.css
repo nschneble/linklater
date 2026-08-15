@@ -226,9 +226,12 @@
 
 /* Modal backdrop. Single source of truth for the universal scrim used
  * by every overlay (WelcomeModal, KeyboardShortcutsModal, LinksView
- * link-form backdrop, MobileBottomSheet). Today the literal value is
- * theme-independent; promote to `var(--scrim, rgb(0 0 0 / 0.5))` when
- * a theme needs to opt out. */
+ * link-form backdrop, MobileBottomSheet). The theme editor composites
+ * through it from a constant of its own, pinned to this value by
+ * contrastResults.scrim.test.ts, because its resolver reads the editable
+ * token record rather than CSS — so a custom property here would reach
+ * the page but not the checker, and a per-theme scrim needs that
+ * resolver to change first. */
 @utility scrim {
   background-color: #00000080;
 }
