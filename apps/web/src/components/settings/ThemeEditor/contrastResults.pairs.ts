@@ -83,10 +83,10 @@ const INPUT_FILL_SPECS: readonly SlotSpec[] = [
  * (page, card, menu); the static suite covers the remaining state-bundle
  * backgrounds.
  *
- * The input fills belong here because a focused input hides its own border
- * and draws the ring where that border was, so for as long as the input
- * has focus the ring is its only boundary and its inner edge meets the
- * fill. For the Custom theme the ring is an editable, injected token (W1),
+ * The input fills belong here because a focused text input hides its own
+ * border and draws the outline where that border was, so for as long as the
+ * input has focus the outline is its only boundary and its inner edge meets
+ * the fill. For the Custom theme the ring is an editable, injected token (W1),
  * so these pairs resolve from live values like any other slot instead of
  * reading as unverified.
  */

@@ -163,7 +163,7 @@ export default function ColorRow({
       </div>
 
       <label
-        className="relative shrink-0 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[var(--focus-ring)] rounded-md cursor-pointer aria-disabled:cursor-not-allowed"
+        className="relative shrink-0 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[var(--focus-ring)] forced-colors:focus-within:outline-[Highlight] rounded-md cursor-pointer aria-disabled:cursor-not-allowed"
         aria-disabled={pickerDisabled}
       >
         <span

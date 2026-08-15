@@ -16,6 +16,21 @@ import type { CSSProperties } from 'react';
 export const FOCUS_RING =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] forced-colors:focus-visible:outline-[Highlight]';
 
+/**
+ * The same indicator, sat flush and taking the border's place.
+ *
+ * For text-entry inputs only, and only where two things hold: the fill is one
+ * the bundle contract pins `--focus-ring` against, and the border carries no
+ * state of its own, since this erases it. The hex row in the theme editor
+ * fails the second test — its border turns alert-coloured on an invalid
+ * value, exactly while the user is typing one.
+ *
+ * Written out rather than derived from `FOCUS_RING`, because Tailwind scans
+ * source text: a class assembled at runtime is a class it never compiles.
+ */
+export const FOCUS_RING_FLUSH =
+  'focus-visible:border-transparent focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-[var(--focus-ring)] forced-colors:focus-visible:outline-[Highlight]';
+
 export const DISABLED = 'disabled:cursor-not-allowed';
 
 // closing runs faster than opening so the panel feels snappy

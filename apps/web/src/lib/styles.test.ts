@@ -1,6 +1,11 @@
 import { compileClasses } from '../../test/tailwind';
 import { describe, expect, it } from 'vitest';
-import { DISABLED, FOCUS_RING, menuRevealStyle } from './styles';
+import {
+  DISABLED,
+  FOCUS_RING,
+  FOCUS_RING_FLUSH,
+  menuRevealStyle,
+} from './styles';
 
 describe('menuRevealStyle', () => {
   describe('when isOpen is true', () => {
@@ -53,14 +58,14 @@ describe('menuRevealStyle', () => {
 });
 
 /**
- * FOCUS_RING's own output, from the utilities layer alone.
+ * One constant's own output, from the utilities layer alone.
  *
  * Tailwind's preflight and `@property` blocks name `box-shadow` whatever is
  * compiled, so a whole-sheet assertion about it would pass on boilerplate
  * rather than on what the constant emits.
  */
-async function compileFocusRingUtilities(): Promise<string> {
-  const css = await compileClasses(FOCUS_RING.split(' '));
+async function compileUtilities(constant: string): Promise<string> {
+  const css = await compileClasses(constant.split(' '));
   const start = css.indexOf('@layer utilities {');
   return css.slice(start, css.indexOf('\n}', start));
 }
@@ -75,7 +80,7 @@ async function compileFocusRingUtilities(): Promise<string> {
  */
 describe('FOCUS_RING', () => {
   it('paints an outline rather than a ring', async () => {
-    const css = await compileFocusRingUtilities();
+    const css = await compileUtilities(FOCUS_RING);
     expect(css).toContain('outline-width: 2px');
     expect(css).toContain('outline-offset: 2px');
     expect(css).toContain('outline-color: var(--focus-ring)');
@@ -83,18 +88,57 @@ describe('FOCUS_RING', () => {
 
   // .border-shadow writes box-shadow too, so a ring on it is discarded
   it('writes no box-shadow, which an elevation shadow could overwrite', async () => {
-    const css = await compileFocusRingUtilities();
+    const css = await compileUtilities(FOCUS_RING);
     expect(css).not.toContain('box-shadow');
   });
 
   it('never suppresses outline-style, which would strand outline-width', async () => {
-    const css = await compileFocusRingUtilities();
+    const css = await compileUtilities(FOCUS_RING);
     expect(css).not.toContain('--tw-outline-style: none');
     expect(css).not.toContain('outline-style: none');
   });
 
   it('keeps the outline in forced-colors, where a color token means nothing', async () => {
-    const css = await compileFocusRingUtilities();
+    const css = await compileUtilities(FOCUS_RING);
+    const forcedColors = css.slice(css.indexOf('@media (forced-colors'));
+    expect(forcedColors).toContain('outline-color: Highlight');
+  });
+});
+
+/*
+ * The flush variant exists because the offset the shared constant carries
+ * is load-bearing on a filled control and pure cost on an input. An input's
+ * fill is pinned against --focus-ring by the bundle contract, so the band
+ * can sit where the border was, which is where it sat before it was an
+ * outline at all.
+ */
+describe('FOCUS_RING_FLUSH', () => {
+  it('sits the band where the border was, not clear of it', async () => {
+    const css = await compileUtilities(FOCUS_RING_FLUSH);
+    expect(css).toContain('outline-width: 2px');
+    expect(css).toContain('outline-offset: 0px');
+    expect(css).toContain('outline-color: var(--focus-ring)');
+  });
+
+  // the border would otherwise stay and read as a second line
+  it('takes the border out of the way', async () => {
+    const css = await compileUtilities(FOCUS_RING_FLUSH);
+    expect(css).toContain('border-color: transparent');
+  });
+
+  it('writes no box-shadow, which an elevation shadow could overwrite', async () => {
+    const css = await compileUtilities(FOCUS_RING_FLUSH);
+    expect(css).not.toContain('box-shadow');
+  });
+
+  it('never suppresses outline-style, which would strand outline-width', async () => {
+    const css = await compileUtilities(FOCUS_RING_FLUSH);
+    expect(css).not.toContain('--tw-outline-style: none');
+    expect(css).not.toContain('outline-style: none');
+  });
+
+  it('keeps the outline in forced-colors, where a color token means nothing', async () => {
+    const css = await compileUtilities(FOCUS_RING_FLUSH);
     const forcedColors = css.slice(css.indexOf('@media (forced-colors'));
     expect(forcedColors).toContain('outline-color: Highlight');
   });
