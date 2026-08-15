@@ -1,3 +1,4 @@
+import { FOCUS_RING_FLUSH } from '../../lib/styles';
 import { forwardRef, type InputHTMLAttributes } from 'react';
 
 /**
@@ -44,7 +45,7 @@ const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
     return (
       <input
         ref={reference}
-        className={`block w-full mt-1 px-3 py-2 ${surfaceClasses} text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] focus:border-transparent rounded-lg ${className}`}
+        className={`block w-full mt-1 px-3 py-2 ${surfaceClasses} text-base sm:text-sm focus-visible:border-transparent ${FOCUS_RING_FLUSH} rounded-lg ${className}`}
         {...props}
       />
     );

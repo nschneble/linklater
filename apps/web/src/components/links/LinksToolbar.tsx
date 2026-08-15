@@ -1,3 +1,4 @@
+import { FOCUS_RING_FLUSH } from '../../lib/styles';
 import IconButton from '../common/IconButton';
 import { LINKS_LIST_ID } from './LinksList';
 import LinksControls from './LinksControls';
@@ -121,7 +122,7 @@ export default function LinksToolbar({
         <div className="relative flex-1 min-w-0">
           <input
             ref={searchInputReference}
-            className="w-full min-w-0 pl-3 pr-10 py-2 bg-[var(--base-input-bg)] border border-[var(--base-border)] text-[var(--base-text)] text-base sm:text-sm placeholder:text-[var(--base-alt-text)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] focus:border-[var(--focus-ring)] rounded-lg [&::-webkit-search-cancel-button]:appearance-none"
+            className={`w-full min-w-0 pl-3 pr-10 py-2 bg-[var(--base-input-bg)] border border-[var(--base-border)] text-[var(--base-text)] text-base sm:text-sm placeholder:text-[var(--base-alt-text)] focus-visible:border-transparent ${FOCUS_RING_FLUSH} rounded-lg [&::-webkit-search-cancel-button]:appearance-none`}
             type="search"
             placeholder={
               filter === 'unread' ? 'Search unread links' : 'Search read links'

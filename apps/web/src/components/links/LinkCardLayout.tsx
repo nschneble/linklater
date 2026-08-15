@@ -309,8 +309,8 @@ export default function LinkCardLayout({
     <div
       ref={cardReference}
       aria-busy={isMetadataPending(link) || undefined}
-      /* border-shadow is unlayered, so withheld while pending; else it outranks the selection ring-2 */
-      className={`group relative overflow-visible pl-10 pr-8 py-4 bg-[var(--mount-bg)] border-l-4 border-[var(--mount-highlight)] aria-busy:border-[var(--mount-border)] rounded-r-xl ${isMetadataSettled(link) ? 'border-shadow hover:border-shadow' : ''} aria-busy:animate-meta-pulse-border ${isSelected ? 'ring-2 ring-[var(--mount-highlight)]/60' : ''}`}
+      aria-current={isSelected ? 'true' : undefined}
+      className={`group relative overflow-visible pl-10 pr-8 py-4 bg-[var(--mount-bg)] border-l-4 border-[var(--mount-highlight)] aria-busy:border-[var(--mount-border)] aria-[current]:ring-2 aria-[current]:ring-[var(--mount-highlight)]/60 rounded-r-xl ${isMetadataSettled(link) ? 'border-shadow hover:border-shadow' : ''} aria-busy:animate-meta-pulse-border`}
     >
       {isMetadataSettled(link) ? (
         <div className="absolute left-0 top-4 -translate-x-1/2 z-20 pointer-events-none">

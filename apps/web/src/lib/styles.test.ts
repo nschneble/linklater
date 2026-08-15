@@ -1,9 +1,9 @@
+import { compileClasses } from '../../test/tailwind';
 import { describe, expect, it } from 'vitest';
 import {
   DISABLED,
   FOCUS_RING,
-  FOCUS_RING_DANGER,
-  FOCUS_RING_DANGER_FILLED,
+  FOCUS_RING_FLUSH,
   menuRevealStyle,
 } from './styles';
 
@@ -57,78 +57,90 @@ describe('menuRevealStyle', () => {
   });
 });
 
+/**
+ * One constant's own output, from the utilities layer alone.
+ *
+ * Tailwind's preflight and `@property` blocks name `box-shadow` whatever is
+ * compiled, so a whole-sheet assertion about it would pass on boilerplate
+ * rather than on what the constant emits.
+ */
+async function compileUtilities(constant: string): Promise<string> {
+  const css = await compileClasses(constant.split(' '));
+  const start = css.indexOf('@layer utilities {');
+  return css.slice(start, css.indexOf('\n}', start));
+}
+
+/*
+ * Compiled declarations, not substrings. The suite this replaced asserted
+ * that FOCUS_RING contained `focus-visible:outline-none` and
+ * `forced-colors:focus-visible:outline-2`, and passed for months while that
+ * exact pairing compiled to nothing: the first sets `--tw-outline-style:
+ * none` and the second resolves `outline-style` through it, so the fallback
+ * it claimed to pin was inert. A substring check cannot see that.
+ */
 describe('FOCUS_RING', () => {
-  it('contains focus-visible:outline-none', () => {
-    expect(FOCUS_RING).toContain('focus-visible:outline-none');
+  it('paints an outline rather than a ring', async () => {
+    const css = await compileUtilities(FOCUS_RING);
+    expect(css).toContain('outline-width: 2px');
+    expect(css).toContain('outline-offset: 2px');
+    expect(css).toContain('outline-color: var(--focus-ring)');
   });
 
-  it('contains focus-visible:ring-2', () => {
-    expect(FOCUS_RING).toContain('focus-visible:ring-2');
+  // .border-shadow writes box-shadow too, so a ring on it is discarded
+  it('writes no box-shadow, which an elevation shadow could overwrite', async () => {
+    const css = await compileUtilities(FOCUS_RING);
+    expect(css).not.toContain('box-shadow');
   });
 
-  it('contains the focus-ring color', () => {
-    expect(FOCUS_RING).toContain('focus-visible:ring-[var(--focus-ring)]');
+  it('never suppresses outline-style, which would strand outline-width', async () => {
+    const css = await compileUtilities(FOCUS_RING);
+    expect(css).not.toContain('--tw-outline-style: none');
+    expect(css).not.toContain('outline-style: none');
   });
 
-  it('carries the Windows HCM outline fallback (forced-colors)', () => {
-    // forced-colors strips the ring; outline is the HCM focus channel (2.4.7)
-    expect(FOCUS_RING).toContain('forced-colors:focus-visible:outline-2');
-    expect(FOCUS_RING).toContain(
-      'forced-colors:focus-visible:outline-[ButtonText]',
-    );
-  });
-});
-
-describe('FOCUS_RING_DANGER', () => {
-  it('contains focus-visible:outline-none', () => {
-    expect(FOCUS_RING_DANGER).toContain('focus-visible:outline-none');
-  });
-
-  it('contains focus-visible:ring-2', () => {
-    expect(FOCUS_RING_DANGER).toContain('focus-visible:ring-2');
-  });
-
-  it('contains the alert highlight color', () => {
-    expect(FOCUS_RING_DANGER).toContain(
-      'focus-visible:ring-[var(--alert-highlight)]',
-    );
-  });
-
-  it('carries the Windows HCM outline fallback (forced-colors)', () => {
-    expect(FOCUS_RING_DANGER).toContain(
-      'forced-colors:focus-visible:outline-2',
-    );
-    expect(FOCUS_RING_DANGER).toContain(
-      'forced-colors:focus-visible:outline-[ButtonText]',
-    );
+  it('keeps the outline in forced-colors, where a color token means nothing', async () => {
+    const css = await compileUtilities(FOCUS_RING);
+    const forcedColors = css.slice(css.indexOf('@media (forced-colors'));
+    expect(forcedColors).toContain('outline-color: Highlight');
   });
 });
 
-describe('FOCUS_RING_DANGER_FILLED', () => {
-  it('contains focus-visible:outline-none', () => {
-    expect(FOCUS_RING_DANGER_FILLED).toContain('focus-visible:outline-none');
+/*
+ * The flush variant exists because the offset the shared constant carries
+ * is load-bearing on a filled control and pure cost on an input. An input's
+ * fill is pinned against --focus-ring by the bundle contract, so the band
+ * can sit where the border was, which is where it sat before it was an
+ * outline at all.
+ */
+describe('FOCUS_RING_FLUSH', () => {
+  it('sits the band where the border was, not clear of it', async () => {
+    const css = await compileUtilities(FOCUS_RING_FLUSH);
+    expect(css).toContain('outline-width: 2px');
+    expect(css).toContain('outline-offset: 0px');
+    expect(css).toContain('outline-color: var(--focus-ring)');
   });
 
-  it('contains focus-visible:ring-2', () => {
-    expect(FOCUS_RING_DANGER_FILLED).toContain('focus-visible:ring-2');
+  // erasing the border is a separate opt-in, spelled at the call site
+  it('leaves the border alone, which some controls need kept', async () => {
+    const css = await compileUtilities(FOCUS_RING_FLUSH);
+    expect(css).not.toContain('border-color: transparent');
   });
 
-  it('uses --alert-highlight-fg (NOT --alert-highlight) for the ring color', () => {
-    expect(FOCUS_RING_DANGER_FILLED).toContain(
-      'focus-visible:ring-[var(--alert-highlight-fg)]',
-    );
-    expect(FOCUS_RING_DANGER_FILLED).not.toContain(
-      'focus-visible:ring-[var(--alert-highlight)]',
-    );
+  it('writes no box-shadow, which an elevation shadow could overwrite', async () => {
+    const css = await compileUtilities(FOCUS_RING_FLUSH);
+    expect(css).not.toContain('box-shadow');
   });
 
-  it('carries the Windows HCM outline fallback (forced-colors)', () => {
-    expect(FOCUS_RING_DANGER_FILLED).toContain(
-      'forced-colors:focus-visible:outline-2',
-    );
-    expect(FOCUS_RING_DANGER_FILLED).toContain(
-      'forced-colors:focus-visible:outline-[ButtonText]',
-    );
+  it('never suppresses outline-style, which would strand outline-width', async () => {
+    const css = await compileUtilities(FOCUS_RING_FLUSH);
+    expect(css).not.toContain('--tw-outline-style: none');
+    expect(css).not.toContain('outline-style: none');
+  });
+
+  it('keeps the outline in forced-colors, where a color token means nothing', async () => {
+    const css = await compileUtilities(FOCUS_RING_FLUSH);
+    const forcedColors = css.slice(css.indexOf('@media (forced-colors'));
+    expect(forcedColors).toContain('outline-color: Highlight');
   });
 });
 

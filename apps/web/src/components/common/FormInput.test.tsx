@@ -16,6 +16,7 @@
 import { createRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render } from '@testing-library/react';
+import { FOCUS_RING_FLUSH } from '../../lib/styles';
 import FormInput from './FormInput';
 
 describe('FormInput', () => {
@@ -114,11 +115,10 @@ describe('FormInput', () => {
     expect(handleChange).toHaveBeenCalledTimes(1);
   });
 
-  it('renders a focus ring class so keyboard focus is visible on every theme', () => {
+  it('sits the focus outline flush, where its own border was', () => {
     const { getByRole } = render(<FormInput type="text" aria-label="x" />);
     const className = getByRole('textbox').className;
-    expect(className).toContain('focus:ring-2');
-    expect(className).toContain('focus:ring-[var(--focus-ring)]');
+    expect(className).toContain(FOCUS_RING_FLUSH);
   });
 
   it('ships a 16px mobile font to avoid iOS Safari auto-zoom on focus', () => {

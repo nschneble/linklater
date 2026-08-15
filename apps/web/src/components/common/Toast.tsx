@@ -77,13 +77,13 @@ const variantContainerClasses: Record<
   error: 'bg-[var(--alert-highlight)] text-[var(--alert-highlight-fg)]',
 };
 
-const variantDismissRingClasses: Record<
+const variantDismissOutlineClasses: Record<
   NonNullable<ToastProps['variant']>,
   string
 > = {
-  success: 'focus-visible:ring-[var(--success-highlight-fg)]',
-  warning: 'focus-visible:ring-[var(--warn-highlight-fg)]',
-  error: 'focus-visible:ring-[var(--alert-highlight-fg)]',
+  success: 'focus-visible:outline-[var(--success-highlight-fg)]',
+  warning: 'focus-visible:outline-[var(--warn-highlight-fg)]',
+  error: 'focus-visible:outline-[var(--alert-highlight-fg)]',
 };
 
 const variantDismissDelayMs: Record<
@@ -161,7 +161,7 @@ export default function Toast({
         type="button"
         aria-label="Dismiss"
         onClick={handleDismiss}
-        className={`p-1.5 -m-1.5 ml-0.5 opacity-60 hover:opacity-100 transition-opacity active:scale-[0.96] cursor-pointer focus-visible:outline-none focus-visible:ring-2 ${variantDismissRingClasses[variant]} forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-[ButtonText] rounded-full`}
+        className={`p-1.5 -m-1.5 ml-0.5 opacity-60 hover:opacity-100 transition-opacity active:scale-[0.96] cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 ${variantDismissOutlineClasses[variant]} forced-colors:focus-visible:outline-[Highlight] rounded-full`}
       >
         <i className="fa-solid fa-xmark text-xs" aria-hidden="true" />
       </button>

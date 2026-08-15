@@ -1,4 +1,4 @@
-import { FOCUS_RING } from '../../lib/styles';
+import { FOCUS_RING_FLUSH } from '../../lib/styles';
 import type { SettingsSection } from './settingsSections';
 
 interface SettingsSectionNavProps {
@@ -37,7 +37,7 @@ export default function SettingsSectionNav({
               type="button"
               aria-current={activeSection === section.hash ? 'page' : undefined}
               onClick={() => onSelectSection(section.hash)}
-              className={`group inline-flex items-center gap-1.5 min-h-10 px-3.5 py-2 bg-transparent text-[var(--base-alt-text)] hover:text-[var(--base-text)] ring-1 ring-[var(--base-border)]/60 font-medium aria-[current]:bg-[var(--orbit-bg)] aria-[current]:text-[var(--orbit-text)] aria-[current]:ring-[var(--orbit-border)] aria-[current]:font-semibold text-xs ${FOCUS_RING} rounded-full cursor-pointer motion-safe:active:scale-[0.96] motion-safe:[transition:background-color_150ms,color_150ms,scale_150ms] whitespace-nowrap`}
+              className={`group inline-flex items-center gap-1.5 min-h-10 px-3.5 py-2 bg-transparent text-[var(--base-alt-text)] hover:text-[var(--base-text)] ring-1 ring-[var(--base-border)]/60 font-medium aria-[current]:bg-[var(--orbit-bg)] aria-[current]:text-[var(--orbit-text)] aria-[current]:ring-[var(--orbit-border)] aria-[current]:font-semibold text-xs ${FOCUS_RING_FLUSH} rounded-full cursor-pointer motion-safe:active:scale-[0.96] motion-safe:[transition:background-color_150ms,color_150ms,scale_150ms] whitespace-nowrap`}
             >
               <i
                 className={`fa-solid ${section.icon} text-[var(--base-subtle-text)] group-aria-[current]:text-[var(--orbit-highlight)] text-[0.65rem]`}

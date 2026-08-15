@@ -16,6 +16,7 @@
 
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { FOCUS_RING, FOCUS_RING_FLUSH } from '../../lib/styles';
 import IconButton from './IconButton';
 
 describe('IconButton', () => {
@@ -117,53 +118,56 @@ describe('IconButton', () => {
     expect(button.className).toContain('text-[var(--alert-highlight-fg)]');
   });
 
-  it('default variant carries the universal --focus-ring', () => {
-    render(<IconButton>label</IconButton>);
-    const button = screen.getByRole('button', { name: 'label' });
-    expect(button.className).toContain(
-      'focus-visible:ring-[var(--focus-ring)]',
-    );
-  });
+  /*
+   * A variant with a ring-1 boundary sits the band on it, so the edge
+   * thickens. The filled ones have no boundary and a fill --focus-ring
+   * often matches, so theirs is held clear or it reads as a size change.
+   */
+  it.each(['default', 'ghost', 'danger'] as const)(
+    '%s variant sits the band on its own boundary',
+    (variant) => {
+      render(<IconButton variant={variant}>label</IconButton>);
+      const button = screen.getByRole('button', { name: 'label' });
+      expect(button.className).toContain('ring-1');
+      expect(button.className).toContain(FOCUS_RING_FLUSH);
+    },
+  );
 
-  it('ghost variant carries the universal --focus-ring', () => {
-    render(<IconButton variant="ghost">cancel</IconButton>);
-    const button = screen.getByRole('button', { name: 'cancel' });
-    expect(button.className).toContain(
-      'focus-visible:ring-[var(--focus-ring)]',
-    );
-  });
+  it.each(['elevated', 'danger-filled'] as const)(
+    '%s variant holds the band clear, having no boundary of its own',
+    (variant) => {
+      render(<IconButton variant={variant}>label</IconButton>);
+      const button = screen.getByRole('button', { name: 'label' });
+      expect(button.className).toContain(FOCUS_RING);
+    },
+  );
 
-  it('elevated variant carries the universal --focus-ring alongside its border-shadow', () => {
-    // elevated needs the ring: OAuth buttons had no focus indicator outside CVD mode (universal outline is [data-cvd='on'] only)
+  /*
+   * The danger variants used to ring in --alert-highlight and
+   * --alert-highlight-fg so a red ring would not vanish into a red fill.
+   * The shared outline is held clear of the fill by its offset, so both
+   * of its edges sit on the host surface instead — where those two tokens
+   * measure between 1.05:1 and 2.48:1 across the themes, and --focus-ring
+   * is the one the bundle contract pins.
+   */
+  it.each(['danger', 'danger-filled'] as const)(
+    '%s variant no longer rings in an alert token',
+    (variant) => {
+      render(<IconButton variant={variant}>delete</IconButton>);
+      const button = screen.getByRole('button', { name: 'delete' });
+      expect(button.className).not.toContain(
+        'focus-visible:ring-[var(--alert-',
+      );
+      expect(button.className).not.toContain(
+        'focus-visible:outline-[var(--alert-',
+      );
+    },
+  );
+
+  it('keeps its elevation shadow, which the outline no longer competes with', () => {
     render(<IconButton variant="elevated">go</IconButton>);
     const button = screen.getByRole('button', { name: 'go' });
     expect(button.className).toContain('border-shadow');
-    expect(button.className).toContain(
-      'focus-visible:ring-[var(--focus-ring)]',
-    );
-  });
-
-  it('danger variant carries the alert-highlight focus-ring (FOCUS_RING_DANGER)', () => {
-    render(<IconButton variant="danger">delete</IconButton>);
-    const button = screen.getByRole('button', { name: 'delete' });
-    expect(button.className).toContain(
-      'focus-visible:ring-[var(--alert-highlight)]',
-    );
-    expect(button.className).not.toContain(
-      'focus-visible:ring-[var(--focus-ring)]',
-    );
-  });
-
-  it('danger-filled variant carries the alert-highlight-fg focus-ring (Recovery A)', () => {
-    // danger-filled fill IS --alert-highlight, so Recovery A rings with --alert-highlight-fg (4.5:1) not an invisible same-color ring
-    render(<IconButton variant="danger-filled">confirm</IconButton>);
-    const button = screen.getByRole('button', { name: 'confirm' });
-    expect(button.className).toContain(
-      'focus-visible:ring-[var(--alert-highlight-fg)]',
-    );
-    expect(button.className).not.toContain(
-      'focus-visible:ring-[var(--focus-ring)]',
-    );
   });
 
   it('elevated variant on mount host lifts to orbit bg + mount on hover', () => {

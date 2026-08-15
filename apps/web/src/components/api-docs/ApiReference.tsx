@@ -114,7 +114,7 @@ function Reference({ api }: ReferenceProps) {
       <button
         type="button"
         onClick={handleSkipToDetails}
-        className="sr-only focus:not-sr-only focus:inline-flex focus:items-center focus:mb-2 focus:px-3 focus:py-1.5 focus:bg-[var(--mount-bg)] focus:text-[var(--mount-text)] focus:text-xs focus:font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] focus:rounded-lg"
+        className="sr-only focus:not-sr-only focus:inline-flex focus:items-center focus:mb-2 focus:px-3 focus:py-1.5 focus:bg-[var(--mount-bg)] focus:text-[var(--mount-text)] focus:text-xs focus:font-semibold focus:outline-2 focus:outline-offset-2 focus:outline-[var(--focus-ring)] forced-colors:focus:outline-[Highlight] focus:rounded-lg"
       >
         Skip to endpoint details
       </button>

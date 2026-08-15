@@ -1,4 +1,4 @@
-import { FOCUS_RING } from '../../lib/styles';
+import { FOCUS_RING_FLUSH } from '../../lib/styles';
 
 /**
  * Static, labelled JSON code block: a visible `<p>` label paired with a
@@ -48,7 +48,7 @@ export default function CodeBlock({ label, code, labelId }: CodeBlockProps) {
         // SC 2.1.1: focusable scroll stop; role="group" = non-landmark nameable
         // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
         tabIndex={0}
-        className={`overflow-x-auto px-3 py-2.5 bg-[var(--mount-input-bg)] border border-[var(--mount-border)] text-[var(--mount-text)] text-xs leading-relaxed select-text ${FOCUS_RING} rounded-lg`}
+        className={`overflow-x-auto px-3 py-2.5 bg-[var(--mount-input-bg)] border border-[var(--mount-border)] text-[var(--mount-text)] text-xs leading-relaxed select-text ${FOCUS_RING_FLUSH} rounded-lg`}
       >
         <code>{code}</code>
       </pre>

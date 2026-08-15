@@ -7,9 +7,9 @@
  * `ml-auto` to stay pinned to the right edge. That is the bug this guards.
  */
 
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { compile } from 'tailwindcss';
 import { createRequire } from 'node:module';
-import { describe, expect, it, vi } from 'vitest';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fireEvent, render, screen } from '@testing-library/react';
@@ -755,5 +755,50 @@ describe('LinkCard "Mark unread" accessible name (WCAG 2.5.3 Label in Name)', ()
       .getAttribute('aria-label');
     expect(label).toContain('(No title)');
     expect(label).toContain('news.example.org');
+  });
+});
+
+/*
+ * `isSelected` is the keyboard cursor over the list, and it scrolls the card
+ * into view. It reached production carrying no ARIA at all, so a screen
+ * reader had nothing to announce about which card the cursor was on, and no
+ * test named it. The ring alone cannot carry that.
+ */
+describe('LinkCard keyboard selection', () => {
+  // jsdom ships no scrollIntoView, and selecting a card calls it on mount
+  beforeEach(() => {
+    Element.prototype.scrollIntoView = vi.fn();
+  });
+
+  it('marks the selected card as the current item in the list', () => {
+    const { container } = renderWithProviders(
+      <LinkCard link={makeLink()} isSelected onReadToggle={vi.fn()} />,
+    );
+    expect(container.firstChild).toHaveAttribute('aria-current', 'true');
+  });
+
+  it('leaves every other card with no current-item state', () => {
+    const { container } = renderWithProviders(
+      <LinkCard link={makeLink()} onReadToggle={vi.fn()} />,
+    );
+    expect(container.firstChild).not.toHaveAttribute('aria-current');
+  });
+
+  it('drives the selection ring off that attribute rather than a class swap', () => {
+    const { container } = renderWithProviders(
+      <LinkCard link={makeLink()} isSelected onReadToggle={vi.fn()} />,
+    );
+    expect((container.firstChild as HTMLElement).className).toContain(
+      'aria-[current]:ring-2',
+    );
+  });
+
+  it('keeps the elevation shadow on a selected card', () => {
+    const { container } = renderWithProviders(
+      <LinkCard link={makeLink()} isSelected onReadToggle={vi.fn()} />,
+    );
+    expect((container.firstChild as HTMLElement).className).toContain(
+      'border-shadow',
+    );
   });
 });

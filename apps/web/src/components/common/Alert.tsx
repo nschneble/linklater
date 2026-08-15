@@ -1,3 +1,4 @@
+import { FOCUS_RING_FLUSH } from '../../lib/styles';
 import type { ReactNode, Ref } from 'react';
 
 interface AlertProps {
@@ -76,7 +77,7 @@ export default function Alert({
       ref={ref}
       inert={inert}
       tabIndex={tabIndex}
-      className={`px-3 py-2 border text-xs rounded-lg flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] ${variantClasses[variant]} ${className}`}
+      className={`px-3 py-2 border text-xs rounded-lg flex items-center justify-center gap-2 ${FOCUS_RING_FLUSH} ${variantClasses[variant]} ${className}`}
       role={role}
     >
       <i className={`fa-solid ${resolvedIcon} text-xs`} aria-hidden="true" />

@@ -403,11 +403,14 @@ describe('bundle contrast contract', () => {
    * surface a focused element can sit on: base-bg, mount-bg, orbit-bg,
    * each state bundle's composited bg, and both input fills.
    *
-   * The two input fills are here because a focused input has no border
-   * left to separate them from the ring. Both painters drop the border
-   * to transparent on focus, so the ring is the whole boundary and its
-   * inner edge meets the fill. Tightest is the base fill on
-   * before-sunrise dark at 3.455:1, so the headroom is real but thin.
+   * The two input fills are here because a text input has no border left
+   * to separate them from the outline: it drops the border to transparent
+   * on focus and sits the band flush, so the band is the whole boundary
+   * and its inner edge meets the fill. The theme editor's hex row is the
+   * exception, keeping its border and holding the band clear, because
+   * that border turns alert-coloured on an invalid value. Tightest is the
+   * base fill on before-sunrise dark at 3.455:1, so the headroom is real
+   * but thin.
    *
    * Every per-theme cascade ships an explicit `--focus-ring: #...` hex;
    * the `:root` synthetic fallback omits the slot, so the resolver

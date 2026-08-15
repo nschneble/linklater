@@ -9,6 +9,7 @@
 import { createRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { FOCUS_RING } from '../../lib/styles';
 import LinkButton from './LinkButton';
 
 describe('LinkButton', () => {
@@ -50,13 +51,10 @@ describe('LinkButton', () => {
     expect(button.className).toContain('underline');
   });
 
-  it('renders a focus-visible ring so keyboard focus is detectable', () => {
+  it('renders the shared focus outline so keyboard focus is detectable', () => {
     render(<LinkButton onClick={() => {}}>link</LinkButton>);
     const button = screen.getByRole('button', { name: 'link' });
-    expect(button.className).toContain('focus-visible:ring-2');
-    expect(button.className).toContain(
-      'focus-visible:ring-[var(--focus-ring)]',
-    );
+    expect(button.className).toContain(FOCUS_RING);
   });
 
   it('drops the accent flair on hover – no longer reads --accent', () => {

@@ -68,7 +68,7 @@ export default function SettingsLayout({
           <a
             href={`#${firstHash}`}
             onClick={handleSkipClick}
-            className="sr-only focus:not-sr-only focus:inline-flex focus:items-center focus:px-3 focus:py-1.5 focus:bg-[var(--mount-bg)] focus:text-[var(--mount-text)] focus:text-xs focus:font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] focus:rounded-lg"
+            className="sr-only focus:not-sr-only focus:inline-flex focus:items-center focus:px-3 focus:py-1.5 focus:bg-[var(--mount-bg)] focus:text-[var(--mount-text)] focus:text-xs focus:font-semibold focus:outline-2 focus:outline-offset-2 focus:outline-[var(--focus-ring)] forced-colors:focus:outline-[Highlight] focus:rounded-lg"
           >
             Skip settings navigation
           </a>
@@ -77,7 +77,7 @@ export default function SettingsLayout({
           <h1
             id={HEADING_ID}
             tabIndex={-1}
-            className="text-[var(--base-text)] text-2xl font-semibold text-balance focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] rounded-lg"
+            className="text-[var(--base-text)] text-2xl font-semibold text-balance focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] forced-colors:focus-visible:outline-[Highlight] rounded-lg"
           >
             Settings
           </h1>

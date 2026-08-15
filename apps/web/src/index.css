@@ -92,6 +92,16 @@
   src: url('/fonts/OpenDyslexicMono-Regular.otf') format('opentype');
 }
 
+/* Reaches scrollbars, native widgets and the canvas, none of which a
+   [color-scheme:dark] on a page-root div can touch. */
+[data-mode='dark'] {
+  color-scheme: dark;
+}
+
+[data-mode='light'] {
+  color-scheme: light;
+}
+
 body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -264,17 +274,19 @@ body {
   }
 }
 
+/* Still declares the whole outline rather than only thickening the shared
+   one, because a bare focusable carries no outline-style and width alone
+   paints nothing. The halo dropped here painted 5px of --base-bg
+   immediately outside controls sitting on --mount-bg, --orbit-bg or
+   --alert-highlight, so on every one of them it was the wrong surface. */
 [data-cvd='on'] *:focus-visible {
   outline: 3px solid var(--focus-ring);
-  outline-offset: 2px;
-  /* Anchor the outer halo to --base-bg so the CVD focus ring reads through
-     the bundle vocabulary, consistent with the chrome bundle migration.
-     Most themes set --base-bg identical to the historical flat --bg
-     (retired); hit-man light intentionally diverges (--base-bg
-     #ecdcb0 vs the per-theme --base-input-bg #f0c870; see hit-man.css). */
-  box-shadow: 0 0 0 5px var(--base-bg);
+  outline-offset: 3px;
 }
 
+/* currentColor, because a selector keyed on :disabled cannot know its host
+   bundle: the base-tier tokens this used to name are pinned against
+   --base-bg, and these controls are filled from mount, orbit or alert. */
 [data-cvd='on'] :disabled,
 [data-cvd='on'] [aria-disabled='true'] {
   opacity: 1;
@@ -282,10 +294,9 @@ body {
     51deg,
     transparent,
     transparent 4px,
-    var(--base-border) 4px,
-    var(--base-border) 5px
+    currentColor 4px,
+    currentColor 5px
   );
-  color: var(--base-alt-text);
 }
 
 [data-cvd='on'] a {

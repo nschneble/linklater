@@ -1,3 +1,4 @@
+import { FOCUS_RING, FOCUS_RING_FLUSH } from '../../lib/styles';
 import { Link } from 'react-router';
 
 export default function HeroSection() {
@@ -29,14 +30,14 @@ export default function HeroSection() {
       <div className="flex items-center gap-3 select-none">
         <Link
           to="/signup"
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--base-highlight)] hover:bg-[var(--base-highlight-hover)] text-[var(--base-highlight-fg)] text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] rounded-full transition duration-200 active:scale-[0.96] cursor-pointer"
+          className={`inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--base-highlight)] hover:bg-[var(--base-highlight-hover)] text-[var(--base-highlight-fg)] text-sm font-semibold ${FOCUS_RING} rounded-full transition duration-200 active:scale-[0.96] cursor-pointer`}
         >
           <i className="fa-solid fa-arrow-right text-xs" aria-hidden="true" />
           Get started
         </Link>
         <Link
           to="/login"
-          className="inline-flex items-center gap-2 px-5 py-2.5 border border-[var(--base-border)] hover:border-[var(--base-text)] text-[var(--base-subtle-text)] hover:text-[var(--base-text)] text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] rounded-full transition duration-200 active:scale-[0.96] cursor-pointer"
+          className={`inline-flex items-center gap-2 px-5 py-2.5 border border-[var(--base-border)] hover:border-[var(--base-text)] text-[var(--base-subtle-text)] hover:text-[var(--base-text)] text-sm font-semibold ${FOCUS_RING_FLUSH} rounded-full transition duration-200 active:scale-[0.96] cursor-pointer`}
         >
           Log in
         </Link>
