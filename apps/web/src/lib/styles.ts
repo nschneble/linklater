@@ -31,7 +31,7 @@ export const FOCUS_RING =
 export const FOCUS_RING_FLUSH =
   'focus-visible:border-transparent focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-[var(--focus-ring)] forced-colors:focus-visible:outline-[Highlight]';
 
-export const DISABLED = 'disabled:cursor-not-allowed';
+export const DISABLED = 'disabled:opacity-60 disabled:cursor-not-allowed';
 
 // closing runs faster than opening so the panel feels snappy
 export function menuRevealStyle(

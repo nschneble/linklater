@@ -167,7 +167,7 @@ export default function ColorRow({
         aria-disabled={pickerDisabled}
       >
         <span
-          className="block w-7 h-7 border border-[var(--mount-border)] forced-colors:border-[CanvasText] rounded-md shadow-sm"
+          className="block w-7 h-7 border border-[var(--mount-border)] forced-colors:border-[CanvasText] rounded-md shadow-sm aria-disabled:opacity-60"
           style={swatchStyle}
           aria-disabled={pickerDisabled}
         />

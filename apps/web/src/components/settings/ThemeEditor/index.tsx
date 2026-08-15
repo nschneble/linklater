@@ -319,7 +319,7 @@ export default function ThemeEditor() {
             onClick={handleCopyFromBaseTheme}
             aria-disabled={copyDisabled || undefined}
             aria-describedby={copyDisabled ? COPY_REDUNDANT_HINT_ID : undefined}
-            className="aria-disabled:cursor-not-allowed aria-disabled:active:scale-100"
+            className="aria-disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:active:scale-100"
           >
             <i className="fa-solid fa-clone" aria-hidden="true" />
             Copy {baseThemeLabel}
