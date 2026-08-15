@@ -1,6 +1,6 @@
 import { buildCurlCommand } from '../../lib/apiDocs/buildCurlCommand';
 import CopyButton from '../common/CopyButton';
-import { FOCUS_RING } from '../../lib/styles';
+import { FOCUS_RING_FLUSH } from '../../lib/styles';
 import { useState } from 'react';
 import { useTransientState } from '../../lib/hooks/useTransientState';
 
@@ -97,7 +97,7 @@ export default function CurlExample({
         // SC 2.1.1: pre is the scroll container, so it must be keyboard-focusable
         // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
         tabIndex={0}
-        className={`max-h-80 overflow-auto px-3 py-2.5 bg-[var(--mount-input-bg)] border border-[var(--mount-border)] text-[var(--mount-text)] text-xs leading-relaxed select-text ${FOCUS_RING} rounded-lg`}
+        className={`max-h-80 overflow-auto px-3 py-2.5 bg-[var(--mount-input-bg)] border border-[var(--mount-border)] text-[var(--mount-text)] text-xs leading-relaxed select-text ${FOCUS_RING_FLUSH} rounded-lg`}
       >
         {command}
       </pre>

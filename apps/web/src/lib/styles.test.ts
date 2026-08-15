@@ -120,10 +120,10 @@ describe('FOCUS_RING_FLUSH', () => {
     expect(css).toContain('outline-color: var(--focus-ring)');
   });
 
-  // the border would otherwise stay and read as a second line
-  it('takes the border out of the way', async () => {
+  // erasing the border is a separate opt-in, spelled at the call site
+  it('leaves the border alone, which some controls need kept', async () => {
     const css = await compileUtilities(FOCUS_RING_FLUSH);
-    expect(css).toContain('border-color: transparent');
+    expect(css).not.toContain('border-color: transparent');
   });
 
   it('writes no box-shadow, which an elevation shadow could overwrite', async () => {

@@ -16,7 +16,7 @@
 
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { FOCUS_RING } from '../../lib/styles';
+import { FOCUS_RING, FOCUS_RING_FLUSH } from '../../lib/styles';
 import IconButton from './IconButton';
 
 describe('IconButton', () => {
@@ -118,8 +118,23 @@ describe('IconButton', () => {
     expect(button.className).toContain('text-[var(--alert-highlight-fg)]');
   });
 
-  it.each(['default', 'ghost', 'elevated', 'danger', 'danger-filled'] as const)(
-    '%s variant carries the shared focus outline',
+  /*
+   * A variant with a ring-1 boundary sits the band on it, so the edge
+   * thickens. The filled ones have no boundary and a fill --focus-ring
+   * often matches, so theirs is held clear or it reads as a size change.
+   */
+  it.each(['default', 'ghost', 'danger'] as const)(
+    '%s variant sits the band on its own boundary',
+    (variant) => {
+      render(<IconButton variant={variant}>label</IconButton>);
+      const button = screen.getByRole('button', { name: 'label' });
+      expect(button.className).toContain('ring-1');
+      expect(button.className).toContain(FOCUS_RING_FLUSH);
+    },
+  );
+
+  it.each(['elevated', 'danger-filled'] as const)(
+    '%s variant holds the band clear, having no boundary of its own',
     (variant) => {
       render(<IconButton variant={variant}>label</IconButton>);
       const button = screen.getByRole('button', { name: 'label' });

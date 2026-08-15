@@ -1,5 +1,5 @@
 import ColorRow from './ColorRow';
-import { FOCUS_RING } from '../../../lib/styles';
+import { FOCUS_RING_FLUSH } from '../../../lib/styles';
 import { useRef } from 'react';
 import {
   VAR_GROUPS,
@@ -144,7 +144,7 @@ export default function BundleTabs({
               tabIndex={group.bundle === activeBundle ? 0 : -1}
               onClick={() => onBundleChange(group.bundle)}
               onKeyDown={handleTabKeyDown}
-              className={`group flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-[var(--mount-bg)] aria-selected:bg-[var(--mount-text)] border border-[var(--mount-border)] hover:border-[var(--mount-text)] aria-selected:border-[var(--mount-text)] text-[var(--mount-alt-text)] aria-selected:text-[var(--mount-bg)] text-xs aria-selected:font-semibold ${FOCUS_RING} hover:border-shadow rounded-full transition-colors cursor-pointer`}
+              className={`group flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-[var(--mount-bg)] aria-selected:bg-[var(--mount-text)] border border-[var(--mount-border)] hover:border-[var(--mount-text)] aria-selected:border-[var(--mount-text)] text-[var(--mount-alt-text)] aria-selected:text-[var(--mount-bg)] text-xs aria-selected:font-semibold ${FOCUS_RING_FLUSH} hover:border-shadow rounded-full transition-colors cursor-pointer`}
             >
               {group.bundle === activeBundle && (
                 <i

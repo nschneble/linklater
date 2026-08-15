@@ -1,54 +1,45 @@
 /*
- * Who may sit the focus band flush.
+ * Who may erase their own border while focused.
  *
- * `FOCUS_RING_FLUSH` erases the control's border for as long as it has
- * focus, and puts the band's inner edge against the fill. That is only safe
- * where the bundle contract pins `--focus-ring` against that fill AND the
- * border carries no state of its own. Both clauses are real: the theme
- * editor's hex row turns its border alert-coloured on an invalid value, so
- * erasing it would hide the refusal exactly while the user is typing one,
- * and the bundle tab fills from `--mount-text` when selected, which the
- * contract does not pin the ring against.
+ * This used to guard the flush variant itself, on a rule that tied flush to
+ * the control's FILL. That rule measured the wrong edge: the adjacency SC
+ * 1.4.11 asks about is the band's outer one, which sits on the host surface
+ * at any offset, and every host here is a surface the bundle contract pins
+ * `--focus-ring` against. Flush is a perceptual choice, not a contrast one,
+ * so a dozen-odd controls take it and the list stopped being interesting.
  *
- * A bounded allowlist rather than a scan for correctness: the rule lives in
- * a docstring, and without this it is only a suggestion. Same shape as
- * `chrome-token-migration.test.ts`.
+ * Erasing the border is the clause that carries real risk, and it has two
+ * consumers. A control whose border carries state — the theme editor's hex
+ * row turns its border alert-coloured on an invalid value — would blank
+ * that state for as long as it had focus.
  */
 
 import { describe, expect, it } from 'vitest';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { globSync } from 'node:fs';
-import { readFileSync } from 'node:fs';
+import { globSync, readFileSync } from 'node:fs';
 
 const SOURCE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const ERASE = 'focus-visible:border-transparent';
 
-/** Text-entry inputs whose fill is pinned and whose border holds no state. */
+/** Text-entry inputs whose old treatment already put the band on the border. */
 const ALLOWED = [
   'components/common/FormInput.tsx',
   'components/links/LinksToolbar.tsx',
 ];
 
-function sourcesNaming(symbol: string): string[] {
-  return globSync('**/*.{ts,tsx}', { cwd: SOURCE_ROOT })
-    .filter((path) => !path.endsWith('.test.ts') && !path.endsWith('.test.tsx'))
-    .filter((path) => path !== 'lib/styles.ts')
-    .filter((path) =>
-      readFileSync(join(SOURCE_ROOT, path), 'utf8').includes(symbol),
-    );
-}
-
-describe('FOCUS_RING_FLUSH consumers', () => {
-  it('is used by the allowlisted inputs and nothing else', () => {
-    expect(sourcesNaming('FOCUS_RING_FLUSH').sort()).toEqual(ALLOWED.sort());
+describe('erasing a border while focused', () => {
+  it('happens in the allowlisted inputs and nowhere else', () => {
+    const found = globSync('**/*.{ts,tsx}', { cwd: SOURCE_ROOT })
+      .filter((path) => !path.includes('.test.'))
+      .filter((path) =>
+        readFileSync(join(SOURCE_ROOT, path), 'utf8').includes(ERASE),
+      );
+    expect(found.sort()).toEqual(ALLOWED.sort());
   });
 
-  it('leaves the hex row on the offset variant, its border being stateful', () => {
-    const hexRow = readFileSync(
-      join(SOURCE_ROOT, 'components/settings/ThemeEditor/ColorRow.tsx'),
-      'utf8',
-    );
-    expect(hexRow).toContain('aria-invalid:border-[var(--alert-border)]');
-    expect(hexRow).not.toContain('FOCUS_RING_FLUSH');
+  it('is spelled at the call site, not hidden in the shared constant', () => {
+    const styles = readFileSync(join(SOURCE_ROOT, 'lib/styles.ts'), 'utf8');
+    expect(styles).not.toContain(ERASE);
   });
 });

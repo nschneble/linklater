@@ -1,4 +1,4 @@
-import { FOCUS_RING } from '../../../lib/styles';
+import { FOCUS_RING_FLUSH } from '../../../lib/styles';
 import { isAlphaValue, type ThemeVariable } from './useThemeOverrides';
 import {
   isSixDigitHex,
@@ -191,7 +191,7 @@ export default function ColorRow({
         aria-invalid={debouncedFailure || valueRefused ? 'true' : undefined}
         aria-errormessage={valueRefused ? refusedNoteId : undefined}
         aria-describedby={debouncedFailure ? failureNoteId : undefined}
-        className={`w-28 px-2 py-1 bg-[var(--mount-input-bg)] border border-[var(--mount-border)] aria-invalid:border-[var(--alert-border)] text-[var(--mount-text)] text-[0.65rem] font-mono ${FOCUS_RING} rounded-md`}
+        className={`w-28 px-2 py-1 bg-[var(--mount-input-bg)] border border-[var(--mount-border)] aria-invalid:border-[var(--alert-border)] text-[var(--mount-text)] text-[0.65rem] font-mono ${FOCUS_RING_FLUSH} rounded-md`}
         placeholder="#000000"
         autoComplete="off"
         autoCapitalize="none"

@@ -1,6 +1,6 @@
 import CodeBlock from './CodeBlock';
 import { describe, expect, it } from 'vitest';
-import { FOCUS_RING } from '../../lib/styles';
+import { FOCUS_RING_FLUSH } from '../../lib/styles';
 import { render, screen } from '@testing-library/react';
 
 const props = {
@@ -50,6 +50,6 @@ describe('CodeBlock', () => {
     expect(group).toHaveClass('text-[var(--mount-text)]');
     expect(group).toHaveClass('select-text');
     // shared focus outline so the focus stop is visible under keyboard nav
-    expect(group).toHaveClass(...FOCUS_RING.split(' '));
+    expect(group).toHaveClass(...FOCUS_RING_FLUSH.split(' '));
   });
 });
