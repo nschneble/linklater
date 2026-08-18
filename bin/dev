@@ -36,6 +36,7 @@ Keys:
   2  Web logs
   3  Mailpit logs (when installed)
   4  Tunnel logs (--public only)
+  q  Quit
 
 See README.md for setup and usage notes.
 USAGE
@@ -179,38 +180,79 @@ fi
 VIEW="status"
 FRAME=0
 
-# ── Terminal setup ────────────────────────────────────────────────────────────
+# ── Cleanup ───────────────────────────────────────────────────────────────────
 OLD_STTY=$(stty -g </dev/tty)
-stty -echo -icanon </dev/tty
+CLEANUP_POLL_SECONDS=0.1
+CLEANUP_POLL_LIMIT=50
 
 hide_cursor() { printf '\033[?25l'; }
 show_cursor()  { printf '\033[?25h'; }
 
-# ── Cleanup ───────────────────────────────────────────────────────────────────
-_cleanup() {
-  trap '' EXIT INT TERM HUP
-  [[ -n "$KEY_READER_PID" ]] && kill "$KEY_READER_PID" 2>/dev/null || true
-  [[ -n "$API_PID" ]]        && kill "$API_PID"        2>/dev/null || true
-  [[ -n "$WEB_PID" ]]        && kill "$WEB_PID"        2>/dev/null || true
-  [[ -n "$MAILPIT_PID" ]]    && kill "$MAILPIT_PID"    2>/dev/null || true
-  [[ -n "$TUNNEL_PID" ]]     && kill "$TUNNEL_PID"     2>/dev/null || true
-  wait 2>/dev/null || true
+_any_service_failed() {
+  [[ "$API_STATE" == "error" || "$WEB_STATE" == "error" || \
+     "$MAILPIT_STATE" == "error" || "$TUNNEL_STATE" == "error" ]]
+}
+
+_kill_children() {
+  local signal=$1 pid
+  for pid in "$KEY_READER_PID" "$API_PID" "$WEB_PID" "$MAILPIT_PID" "$TUNNEL_PID"; do
+    if [[ -n "$pid" ]]; then
+      kill "$signal" "$pid" 2>/dev/null || true
+    fi
+  done
+}
+
+_children_alive() {
+  local pid
+  for pid in "$KEY_READER_PID" "$API_PID" "$WEB_PID" "$MAILPIT_PID" "$TUNNEL_PID"; do
+    if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+_await_children() {
+  local polls=0
+  while _children_alive; do
+    (( polls >= CLEANUP_POLL_LIMIT )) && return 1
+    sleep "$CLEANUP_POLL_SECONDS" || return 1
+    polls=$(( polls + 1 ))
+  done
+  return 0
+}
+
+_quit() {
+  local status=130
+  _any_service_failed && status=1
   rm -f "$API_LOG" "$WEB_LOG" "$MAILPIT_LOG" "$TUNNEL_LOG" "$KEY_FILE"
   stty "$OLD_STTY" </dev/tty 2>/dev/null || true
   show_cursor
   printf '\n'
-  exit 0
+  exit "$status"
+}
+
+_cleanup() {
+  trap '' EXIT TERM HUP
+  trap ':' INT
+  printf '\n  Stopping services. Press Control+C again to stop them immediately.\n' >&2
+  _kill_children -TERM
+  _await_children || _kill_children -KILL
+  _quit
 }
 trap _cleanup EXIT INT TERM HUP
 
+# ── Terminal setup ────────────────────────────────────────────────────────────
+stty -echo -icanon </dev/tty
+
 # ── Background key reader ─────────────────────────────────────────────────────
-# Blocking single-char reads from the terminal; writes each char to KEY_FILE.
+# Blocking single-char reads from the terminal; queues each char in KEY_FILE.
 # Runs independently so the main loop can use plain sleep for animation timing.
 (
   while true; do
     char=''
     IFS= read -r -n 1 char </dev/tty 2>/dev/null || break
-    [[ -n "$char" ]] && printf '%s' "$char" > "$KEY_FILE"
+    [[ -n "$char" ]] && printf '%s' "$char" >> "$KEY_FILE"
   done
 ) &
 KEY_READER_PID=$!
@@ -251,6 +293,37 @@ render_tunnel_line() {
   render_service_line "$TUNNEL_STATE" "$TUNNEL_URL" "$1" "Tunnel"
 }
 
+# ── Key list ──────────────────────────────────────────────────────────────────
+render_key_list() {
+  local current=$1
+  local out=''
+  if [[ "$current" == "API" ]]; then
+    out+="  →  API logs"$'\n'
+  else
+    out+="  1. API logs"$'\n'
+  fi
+  if [[ "$current" == "Web" ]]; then
+    out+="  →  Web logs"$'\n'
+  else
+    out+="  2. Web logs"$'\n'
+  fi
+  if [[ "$MAILPIT_STATE" != "skipped" ]]; then
+    if [[ "$current" == "Mailpit" ]]; then
+      out+="  →  Mailpit logs"$'\n'
+    else
+      out+="  3. Mailpit logs"$'\n'
+    fi
+  fi
+  if [[ -n "$TUNNEL_STATE" && "$TUNNEL_STATE" != "skipped" ]]; then
+    if [[ "$current" == "Tunnel" ]]; then
+      out+="  →  Tunnel logs"$'\n'
+    else
+      out+="  4. Tunnel logs"$'\n'
+    fi
+  fi
+  printf '%s' "$out"
+}
+
 # ── Status view ───────────────────────────────────────────────────────────────
 render_status_view() {
   local frame_char=$1
@@ -272,32 +345,15 @@ render_status_view() {
         ("$MAILPIT_STATE" == "ready" || "$MAILPIT_STATE" == "skipped") && \
         ("$TUNNEL_STATE" == "" || "$TUNNEL_STATE" == "ready" || "$TUNNEL_STATE" == "skipped") ]]; then
     out+="  ${GRN}${BLD}Ready.${RST}"$'\n'$'\n'
-    out+="  1. API logs"$'\n'
-    out+="  2. Web logs"$'\n'
-    if [[ "$MAILPIT_STATE" == "ready" ]]; then
-      out+="  3. Mailpit logs"$'\n'
-    fi
-    if [[ "$TUNNEL_STATE" == "ready" ]]; then
-      out+="  4. Tunnel logs"$'\n'
-    fi
-    out+=$'\n'
-    out+="  Press Control+C to stop"
-  elif [[ "$API_STATE" == "error" || "$WEB_STATE" == "error" || \
-          "$MAILPIT_STATE" == "error" || "$TUNNEL_STATE" == "error" ]]; then
+  elif _any_service_failed; then
     out+="  ${RED}${BLD}An error occurred.${RST}"$'\n'$'\n'
-    out+="  1. API logs"$'\n'
-    out+="  2. Web logs"$'\n'
-    if [[ "$MAILPIT_STATE" != "skipped" ]]; then
-      out+="  3. Mailpit logs"$'\n'
-    fi
-    if [[ -n "$TUNNEL_STATE" && "$TUNNEL_STATE" != "skipped" ]]; then
-      out+="  4. Tunnel logs"$'\n'
-    fi
-    out+=$'\n'
-    out+="  Press Control+C to stop"
   else
-    out+="  Starting up…"
+    out+="  Starting up…"$'\n'$'\n'
   fi
+
+  out+="  Viewing: status"$'\n'$'\n'
+  out+="$(render_key_list '')"$'\n'$'\n'
+  out+="  Press q or Control+C to stop"
 
   printf '%s' "$out"
 }
@@ -312,9 +368,9 @@ render_log_view() {
   (( content_width < 20 )) && content_width=20
   local available
   if [[ "$MAILPIT_STATE" == "skipped" ]]; then
-    available=$(( rows - 16 ))
+    available=$(( rows - 18 ))
   else
-    available=$(( rows - 17 ))
+    available=$(( rows - 19 ))
   fi
   [[ -n "$REMOTE_URL" ]] && available=$(( available - 1 ))
   [[ -n "$TUNNEL_STATE" ]] && available=$(( available - 1 ))
@@ -337,36 +393,8 @@ render_log_view() {
   fi
   out+=$'\n'
   out+="  0. (back to status)"$'\n'$'\n'
-
-  if [[ "$label" == "API" ]]; then
-    out+="  →  API logs"$'\n'
-  else
-    out+="  1. API logs"$'\n'
-  fi
-
-  if [[ "$label" == "Web" ]]; then
-    out+="  →  Web logs"$'\n'
-  else
-    out+="  2. Web logs"$'\n'
-  fi
-
-  if [[ "$MAILPIT_STATE" != "skipped" ]]; then
-    if [[ "$label" == "Mailpit" ]]; then
-      out+="  →  Mailpit logs"$'\n'
-    else
-      out+="  3. Mailpit logs"$'\n'
-    fi
-  fi
-
-  if [[ -n "$TUNNEL_STATE" && "$TUNNEL_STATE" != "skipped" ]]; then
-    if [[ "$label" == "Tunnel" ]]; then
-      out+="  →  Tunnel logs"$'\n'
-    else
-      out+="  4. Tunnel logs"$'\n'
-    fi
-  fi
-
-  out+=$'\n'
+  out+="  Viewing: ${label} logs"$'\n'$'\n'
+  out+="$(render_key_list "$label")"$'\n'$'\n'
 
   local prefix_len=$(( ${#label} + 8 ))
   local divider_width=$(( content_width - prefix_len ))
@@ -464,20 +492,26 @@ while true; do
   PREV_TUNNEL_STATE="$TUNNEL_STATE"
   PREV_VIEW="$VIEW"
 
-  # Poll for keypress written by background reader
-  key=''
+  # Drain the keypress queue written by the background reader
+  KEY_BATCH=''
   if [[ -s "$KEY_FILE" ]]; then
-    key=$(< "$KEY_FILE")
+    KEY_BATCH=$(< "$KEY_FILE")
     : > "$KEY_FILE"
   fi
 
-  case "$key" in
-    0) VIEW="status" ;;
-    1) VIEW="api" ;;
-    2) VIEW="web" ;;
-    3) [[ "$MAILPIT_STATE" != "skipped" ]] && VIEW="mailpit" ;;
-    4) [[ -n "$TUNNEL_STATE" && "$TUNNEL_STATE" != "skipped" ]] && VIEW="tunnel" ;;
-  esac
+  PENDING_KEYS="$KEY_BATCH"
+  while [[ -n "$PENDING_KEYS" ]]; do
+    key="${PENDING_KEYS:0:1}"
+    PENDING_KEYS="${PENDING_KEYS:1}"
+    case "$key" in
+      0) VIEW="status" ;;
+      1) VIEW="api" ;;
+      2) VIEW="web" ;;
+      3) [[ "$MAILPIT_STATE" != "skipped" ]] && VIEW="mailpit" ;;
+      4) [[ -n "$TUNNEL_STATE" && "$TUNNEL_STATE" != "skipped" ]] && VIEW="tunnel" ;;
+      q) exit ;;
+    esac
+  done
 
   # Detect ready signals
   if [[ "$API_STATE" == "starting" ]] && \
@@ -544,7 +578,7 @@ while true; do
   # Mark dirty when state changed, key pressed, or spinner is animating
   if [[ "$API_STATE"  != "$PREV_API_STATE"  || "$WEB_STATE"  != "$PREV_WEB_STATE"  || \
         "$MAILPIT_STATE" != "$PREV_MAILPIT_STATE" || "$TUNNEL_STATE" != "$PREV_TUNNEL_STATE" || \
-        "$VIEW" != "$PREV_VIEW" || -n "$key" || \
+        "$VIEW" != "$PREV_VIEW" || -n "$KEY_BATCH" || \
         "$API_STATE" == "starting" || "$WEB_STATE" == "starting" || \
         "$MAILPIT_STATE" == "starting" || "$TUNNEL_STATE" == "starting" ]]; then
     DIRTY=true
