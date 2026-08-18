@@ -29,19 +29,19 @@
     "apps/*"
   ],
   "devDependencies": {
-    "@eslint/js": "^9.39.1",
+    "@eslint/js": "^10.0.1",
     "@swc/cli": "^0.8.1",
     "@swc/core": "^1.15.47",
-    "@types/pg": "^8.20.4",
+    "@types/pg": "^8.21.0",
     "bcryptjs": "^3.0.3",
     "concurrently": "^10.0.3",
-    "eslint": "^9.39.1",
+    "eslint": "^10.8.1",
     "eslint-config-prettier": "^10.1.8",
-    "pg": "^8.11.0",
+    "pg": "^8.23.0",
     "prettier": "^3.9.5",
-    "squawk-cli": "^2.60.0",
+    "squawk-cli": "^2.62.0",
     "tuffgal": "^0.2.0-alpha.7",
-    "typescript-eslint": "^8.66.0"
+    "typescript-eslint": "^8.67.0"
   },
   "overrides": {
     "@hono/node-server": "^2.0.5",
@@ -50,7 +50,14 @@
     },
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
+    "deepmerge-ts": "^8.0.1",
     "esbuild": "0.27.2",
+    "eslint-plugin-jsx-a11y": {
+      "eslint": "$eslint"
+    },
+    "eslint-plugin-react": {
+      "eslint": "$eslint"
+    },
     "find-my-way": "^9.7.0",
     "js-yaml": "^4.2.0",
     "multer": "^2.2.0",
