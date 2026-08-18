@@ -160,10 +160,10 @@ _cleanup() {
 }
 
 trap _cleanup EXIT
-trap 'trap - EXIT INT TERM HUP
-      printf "\n  Stopping %s.\n" "$CURRENT_STEP" >&2
+trap 'printf "\n  Stopping %s.\n" "$CURRENT_STEP" >&2
       stop_spinner
       show_cursor
+      trap - EXIT INT TERM HUP
       exit 130' INT TERM HUP
 
 # ── Draw initial UI ─────────────────────────────────────────────────────────────
@@ -254,6 +254,7 @@ run_step() {
   local output rc=0
   output=$("$@" 2>&1) || rc=$?
   stop_spinner
+  CURRENT_STEP="the run"
   STEP_OUTPUT="$output"
   if [[ $rc -eq 0 ]]; then
     mark_done "$idx"

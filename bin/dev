@@ -13,7 +13,7 @@ usage() {
 Usage: bin/dev [options]
 
 Starts the API and web development servers with a live status/log view.
-Runs npm run dev instead when the terminal cannot host that view.
+Runs npm run dev instead when that view cannot be shown.
 
 Examples:
   bin/dev            Start the development servers
@@ -85,8 +85,12 @@ if [[ "$NO_INPUT" == true ]] || [[ ! -t 1 ]] || [[ "${TERM:-dumb}" == "dumb" ]] 
    ! stty -g </dev/tty >/dev/null 2>&1; then
   if [[ "$NO_INPUT" == true ]]; then
     printf 'Not starting the status view: --no-input was passed.\n' >&2
+  elif [[ ! -t 1 ]]; then
+    printf 'Not starting the status view: output is being redirected.\n' >&2
+  elif [[ "${TERM:-dumb}" == "dumb" ]]; then
+    printf 'Not starting the status view: TERM is dumb or unset.\n' >&2
   else
-    printf 'Not starting the status view: this terminal cannot host it.\n' >&2
+    printf 'Not starting the status view: no controlling terminal is available.\n' >&2
   fi
   printf 'Running npm run dev, which starts the API and web servers only.\n' >&2
   printf 'Skipped: the stale port check and Mailpit.\n' >&2
@@ -94,6 +98,9 @@ if [[ "$NO_INPUT" == true ]] || [[ ! -t 1 ]] || [[ "${TERM:-dumb}" == "dumb" ]] 
     printf 'Skipped: --public, so no Cloudflare tunnel and no access from other devices.\n' >&2
   elif [[ "$REMOTE" == true ]]; then
     printf 'Skipped: --remote, so no access from other devices.\n' >&2
+  fi
+  if [[ "$USE_COLOR" == false ]]; then
+    export NO_COLOR=1
   fi
   exec npm run dev
 fi
@@ -223,7 +230,7 @@ _await_children() {
 }
 
 _quit() {
-  local status=130
+  local status=$1
   _any_service_failed && status=1
   rm -f "$API_LOG" "$WEB_LOG" "$MAILPIT_LOG" "$TUNNEL_LOG" "$KEY_FILE"
   stty "$OLD_STTY" </dev/tty 2>/dev/null || true
@@ -233,14 +240,21 @@ _quit() {
 }
 
 _cleanup() {
+  local route=$1 status=$2
   trap '' EXIT TERM HUP
   trap ':' INT
-  printf '\n  Stopping services. Press Control+C again to stop them immediately.\n' >&2
+  if [[ "$route" == interrupt ]]; then
+    printf '\n  Stopping services. Press Control+C again to stop them immediately.\n' >&2
+  else
+    printf '\n  Stopping services. Press Control+C to stop them immediately.\n' >&2
+  fi
   _kill_children -TERM
   _await_children || _kill_children -KILL
-  _quit
+  _quit "$status"
 }
-trap _cleanup EXIT INT TERM HUP
+trap '_cleanup quit $?' EXIT
+trap '_cleanup interrupt 130' INT
+trap '_cleanup signal 130' TERM HUP
 
 # ── Terminal setup ────────────────────────────────────────────────────────────
 stty -echo -icanon </dev/tty
@@ -509,7 +523,7 @@ while true; do
       2) VIEW="web" ;;
       3) [[ "$MAILPIT_STATE" != "skipped" ]] && VIEW="mailpit" ;;
       4) [[ -n "$TUNNEL_STATE" && "$TUNNEL_STATE" != "skipped" ]] && VIEW="tunnel" ;;
-      q) exit ;;
+      q) exit 0 ;;
     esac
   done
 
