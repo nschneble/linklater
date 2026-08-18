@@ -21,7 +21,7 @@ Examples:
 Options:
   --reset      Wipe the database and re-run all migrations from scratch.
   --force      Answer the --reset confirmation up front.
-  --no-input   Never prompt. Refuses --reset unless --force is passed too.
+  --no-input   Refuse --reset rather than ask for confirmation.
   --no-color   Disable colored output.
   --version    Print the version and exit.
   -h, --help   Show this help.
@@ -91,23 +91,30 @@ else
   BLD='' DIM='' RST=''
 fi
 
-if [[ "$TARGET" == "migrate:reset" && "$FORCE" == false ]]; then
-  if [[ "$NO_INPUT" == true || ! -t 0 || ! -t 1 ]]; then
-    printf 'Refusing to reset the database without confirmation. Pass --force to proceed.\n' >&2
+TTY_AVAILABLE=false
+if : 2>/dev/null > /dev/tty; then
+  TTY_AVAILABLE=true
+fi
+
+if [[ "$TARGET" == "migrate:reset" && "$FORCE" == true ]]; then
+  TARGET="migrate:reset:force"
+elif [[ "$TARGET" == "migrate:reset" ]]; then
+  if [[ "$NO_INPUT" == true || "$TTY_AVAILABLE" == false ]]; then
+    printf 'Refusing to reset the database without confirmation. --force resets without asking.\n' >&2
     exit 66
   fi
 
-  printf '%sThis wipes the database and re-runs every migration.%s\n' "$BLD" "$RST"
-  printf 'Type reset to continue: '
+  printf '%sThis wipes the database and re-runs every migration.%s\n' "$BLD" "$RST" > /dev/tty
+  printf 'Type reset to continue: ' > /dev/tty
   CONFIRMATION=""
-  read -r CONFIRMATION || true
+  read -r CONFIRMATION < /dev/tty || true
   CONFIRMATION=$(printf '%s' "$CONFIRMATION" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')
 
   if [[ "$CONFIRMATION" != "reset" ]]; then
     printf 'Cancelled. The database was not touched.\n' >&2
-    exit 1
+    exit 130
   fi
 fi
 
-printf '%sRunning npm run %s --workspace @linklater/api%s\n' "$DIM" "$TARGET" "$RST"
+printf '%sRunning npm run %s --workspace @linklater/api%s\n' "$DIM" "$TARGET" "$RST" >&2
 exec npm run "$TARGET" --workspace @linklater/api
