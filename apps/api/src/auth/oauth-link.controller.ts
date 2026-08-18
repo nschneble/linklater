@@ -5,6 +5,10 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import {
+  AUTH_ROUTE_PREFIX,
+  GOOGLE_LINK_CALLBACK_ROUTE,
+} from './oauth-callback-urls.js';
+import {
   ConflictException,
   Controller,
   Delete,
@@ -28,7 +32,7 @@ import type { Response } from 'express';
  * auth controllers so linking callback URLs remain stable.
  */
 @ApiTags('auth')
-@Controller('auth')
+@Controller(AUTH_ROUTE_PREFIX)
 export class OAuthLinkController {
   private readonly logger = new Logger(OAuthLinkController.name);
 
@@ -56,7 +60,7 @@ export class OAuthLinkController {
       'Redirects to settings on success, or back to settings with a code when the user declines, the provider fails, or the link state has expired.',
   })
   @UseGuards(createOAuthLinkCallbackGuard('google-link'))
-  @Get('google/link/callback')
+  @Get(GOOGLE_LINK_CALLBACK_ROUTE)
   async googleLinkCallback(
     @Req()
     request: {

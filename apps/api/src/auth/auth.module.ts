@@ -34,13 +34,7 @@ import { UsersModule } from '../users/users.module.js';
 const googleEnabled = !!(
   process.env.GOOGLE_CLIENT_ID &&
   process.env.GOOGLE_CLIENT_SECRET &&
-  process.env.GOOGLE_CALLBACK_URL
-);
-
-const googleLinkEnabled = !!(
-  process.env.GOOGLE_CLIENT_ID &&
-  process.env.GOOGLE_CLIENT_SECRET &&
-  process.env.GOOGLE_LINK_CALLBACK_URL
+  process.env.API_URL
 );
 
 const appleEnabled = !!(
@@ -48,12 +42,12 @@ const appleEnabled = !!(
   process.env.APPLE_TEAM_ID &&
   process.env.APPLE_KEY_ID &&
   process.env.APPLE_PRIVATE_KEY &&
-  process.env.APPLE_CALLBACK_URL
+  process.env.API_URL
 );
 
 const oauthProviders: Provider[] = [
   ...(googleEnabled ? [GoogleStrategy] : []),
-  ...(googleLinkEnabled ? [GoogleLinkStrategy] : []),
+  ...(googleEnabled ? [GoogleLinkStrategy] : []),
   ...(appleEnabled ? [AppleStrategy] : []),
 ];
 

@@ -5,8 +5,7 @@ import { jest } from '@jest/globals';
 // set env before GoogleLinkStrategy import; constructor reads it eagerly
 process.env.GOOGLE_CLIENT_ID = 'test-client-id';
 process.env.GOOGLE_CLIENT_SECRET = 'test-client-secret';
-process.env.GOOGLE_LINK_CALLBACK_URL =
-  'http://localhost/auth/google/link/callback';
+process.env.API_URL = 'http://localhost';
 process.env.JWT_SECRET = 'test-jwt-secret-for-link-strategy';
 
 import { GoogleLinkStrategy } from './google-link.strategy';
@@ -64,16 +63,14 @@ describe('GoogleLinkStrategy', () => {
       }
     });
 
-    it('throws when GOOGLE_LINK_CALLBACK_URL is not set', () => {
-      const original = process.env.GOOGLE_LINK_CALLBACK_URL;
-      delete process.env.GOOGLE_LINK_CALLBACK_URL;
+    it('throws when API_URL is not set', () => {
+      const original = process.env.API_URL;
+      delete process.env.API_URL;
 
       try {
-        expect(() => new GoogleLinkStrategy()).toThrow(
-          'GOOGLE_LINK_CALLBACK_URL must be set',
-        );
+        expect(() => new GoogleLinkStrategy()).toThrow('API_URL must be set');
       } finally {
-        process.env.GOOGLE_LINK_CALLBACK_URL = original;
+        process.env.API_URL = original;
       }
     });
   });

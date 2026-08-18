@@ -318,5 +318,5 @@ bin/dev --public
 
 #### Known limitations
 
-- Google and Apple SSO won't work; OAuth callback URLs are pinned to localhost
+- Google and Apple SSO won't work; OAuth callback URLs derive from `API_URL`, which points at localhost
 - The bookmarklet generated on the Settings page won't work

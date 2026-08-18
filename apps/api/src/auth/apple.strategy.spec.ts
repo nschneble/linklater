@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals';
 
 // env must be set before AppleStrategy import; constructor reads eagerly
-process.env.APPLE_CALLBACK_URL = 'http://localhost/auth/apple/callback';
+process.env.API_URL = 'http://localhost';
 process.env.APPLE_CLIENT_ID = 'test-client-id';
 process.env.APPLE_KEY_ID = 'test-key-id';
 process.env.APPLE_PRIVATE_KEY = 'test-private-key';
@@ -40,16 +40,16 @@ describe('AppleStrategy', () => {
   });
 
   describe('constructor env var guards', () => {
-    it('throws when APPLE_CALLBACK_URL is not set', () => {
-      const original = process.env.APPLE_CALLBACK_URL;
-      delete process.env.APPLE_CALLBACK_URL;
+    it('throws when API_URL is not set', () => {
+      const original = process.env.API_URL;
+      delete process.env.API_URL;
 
       try {
         expect(() => new AppleStrategy(oauthSignInServiceMock)).toThrow(
-          'APPLE_CALLBACK_URL must be set',
+          'API_URL must be set',
         );
       } finally {
-        process.env.APPLE_CALLBACK_URL = original;
+        process.env.API_URL = original;
       }
     });
 

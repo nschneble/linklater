@@ -27,8 +27,7 @@ import type { INestApplication } from '@nestjs/common';
 // set env before the strategy import; its constructor reads it eagerly
 process.env.GOOGLE_CLIENT_ID = 'test-client-id';
 process.env.GOOGLE_CLIENT_SECRET = 'test-client-secret';
-process.env.GOOGLE_LINK_CALLBACK_URL =
-  'http://localhost/auth/google/link/callback';
+process.env.API_URL = 'http://localhost';
 process.env.JWT_SECRET = 'test-jwt-secret-for-link-guard';
 
 import { createOAuthLinkCallbackGuard } from './oauth-link.guard';

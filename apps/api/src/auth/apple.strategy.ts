@@ -1,16 +1,14 @@
+import {
+  APPLE_SIGN_IN_CALLBACK_ROUTE,
+  publicCallbackUrl,
+} from './oauth-callback-urls.js';
 import AppleStrategyLib from '@nicokaiser/passport-apple';
 import { Injectable } from '@nestjs/common';
 import { OAuthSignInService } from './oauth-sign-in.service.js';
 import { PassportStrategy } from '@nestjs/passport';
 import { requireEnv } from '../common/index.js';
 
-const APPLE_PARAMS = [
-  'CALLBACK_URL',
-  'CLIENT_ID',
-  'KEY_ID',
-  'PRIVATE_KEY',
-  'TEAM_ID',
-] as const;
+const APPLE_PARAMS = ['CLIENT_ID', 'KEY_ID', 'PRIVATE_KEY', 'TEAM_ID'] as const;
 
 interface AppleProfile {
   id: string;
@@ -32,7 +30,7 @@ export class AppleStrategy extends PassportStrategy(
     }
 
     super({
-      callbackURL: process.env.APPLE_CALLBACK_URL,
+      callbackURL: publicCallbackUrl(APPLE_SIGN_IN_CALLBACK_ROUTE),
       clientID: process.env.APPLE_CLIENT_ID,
       key: process.env.APPLE_PRIVATE_KEY,
       keyID: process.env.APPLE_KEY_ID,

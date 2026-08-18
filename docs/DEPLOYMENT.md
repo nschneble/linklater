@@ -317,6 +317,9 @@ automation should not (and in some cases cannot) perform.
   - `APP_URL`: the public origin, for example `https://linklater.example.com`.
     Every transactional email and OAuth redirect embeds this, so an unset or
     wrong value ships dead links to users.
+  - `API_URL`: the origin browsers reach the API on, including the proxy path
+    prefix — `https://linklater.example.com/api`. Every OAuth callback URL is
+    derived from it, so SSO stays off until it is set.
   - `SMTP_*` (optional): host, port, credentials, and from-address if you want
     verification, password-reset, magic-link, and deletion emails to send.
   - `BACKUP_ENCRYPTION_PASSPHRASE`: a long random string
@@ -336,10 +339,12 @@ automation should not (and in some cases cannot) perform.
 - **SSO callback re-registration.** OAuth callback URLs are pinned to localhost
   in development (the known-limitations note in the top-level `README.md` is
   explicit about this). For production, re-register the callback URLs with each
-  SSO provider (Google, Apple) against the real domain, and set the corresponding
-  `GOOGLE_*` / `APPLE_*` credentials. Providers are only enabled when their full
-  credential set is present, so an un-reconfigured provider is simply off rather
-  than broken. [GOOGLE-SSO.md](./GOOGLE-SSO.md) is the step-by-step for
+  SSO provider (Google, Apple) against the real domain, set `API_URL`
+  to the production API origin, and set the corresponding `GOOGLE_*` /
+  `APPLE_*` credentials. The callback URLs themselves are derived from
+  `API_URL`, so the domain is the only part you change. Providers are
+  only enabled when their full credential set is present, so an
+  un-reconfigured provider is simply off rather than broken. [GOOGLE-SSO.md](./GOOGLE-SSO.md) is the step-by-step for
   Google, including the Cloud Console client, both redirect URIs, the API
   variables, and the build-time flag that renders the login button.
 

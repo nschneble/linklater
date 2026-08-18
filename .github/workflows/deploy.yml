@@ -19,18 +19,16 @@
 #   PRODUCTION_ENV     Full list of env variables as key-value pairs
 #
 #                      Required:
-#                      APP_URL, BACKUP_ENCRYPTION_PASSPHRASE, CORS_ORIGIN,
-#                      DATABASE_URL, DOMAIN, JWT_SECRET, POSTGRES_DB,
-#                      POSTGRES_PASSWORD, POSTGRES_USER, SMTP_FROM,
-#                      SMTP_HOST, SMTP_PASS, SMTP_PORT, SMTP_SECURE,
-#                      SMTP_USER, TOTP_ENCRYPTION_KEY
+#                      API_URL, APP_URL, BACKUP_ENCRYPTION_PASSPHRASE,
+#                      CORS_ORIGIN, DATABASE_URL, DOMAIN, JWT_SECRET,
+#                      POSTGRES_DB, POSTGRES_PASSWORD, POSTGRES_USER,
+#                      SMTP_FROM, SMTP_HOST, SMTP_PASS, SMTP_PORT,
+#                      SMTP_SECURE, SMTP_USER, TOTP_ENCRYPTION_KEY
 #
 #                      Optional:
-#                      APPLE_CALLBACK_URL, APPLE_CLIENT_ID, APPLE_KEY_ID,
-#                      APPLE_PRIVATE_KEY, APPLE_TEAM_ID,
-#                      EXTENSION_REDIRECT_URIS, GOOGLE_CALLBACK_URL,
-#                      GOOGLE_LINK_CALLBACK_URL, GOOGLE_CLIENT_ID,
-#                      GOOGLE_CLIENT_SECRET
+#                      APPLE_CLIENT_ID, APPLE_KEY_ID, APPLE_PRIVATE_KEY,
+#                      APPLE_TEAM_ID, EXTENSION_REDIRECT_URIS,
+#                      GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
 #
 # Optional GitHub repository variables:
 #

@@ -19,9 +19,10 @@
  *   - email sending is optional in development (`SMTP_PORT` defaults to 587,
  *   `SMTP_FROM` defaults to a noreply address); run Mailpit locally to catch
  *   mail.
- * - `GOOGLE_*` / `APPLE_*` / `GOOGLE_LINK_CALLBACK_URL` - SSO providers are
- *   registered only when their full credential set is present
- *   (`auth.module.ts`); absent means that provider is simply disabled.
+ * - `API_URL` / `GOOGLE_*` / `APPLE_*` - SSO providers are registered
+ *   only when their full credential set is present (`auth.module.ts`); absent
+ *   means that provider is simply disabled. `API_URL` is the origin
+ *   every OAuth callback URL is derived from (`oauth-callback-urls.ts`).
  * - `EXTENSION_REDIRECT_URIS` - browser-extension auth redirect allowlist;
  *   empty means no extension origins are trusted.
  */
