@@ -9,6 +9,7 @@ import {
   encrypt,
   generateRecoveryCodes,
   hashRecoveryCodes,
+  requireEnv,
 } from '../common/index.js';
 import { generateSecret, generateURI, verify } from 'otplib';
 import QRCode from 'qrcode';
@@ -66,10 +67,7 @@ export class TotpService {
 
     // return the pending QR so a concurrent call can't void an in-progress scan
     if (user.totpSecret && !user.totpEnabledAt) {
-      const existingSecret = decrypt(
-        user.totpSecret,
-        process.env.TOTP_ENCRYPTION_KEY!,
-      );
+      const existingSecret = decrypt(user.totpSecret, this.encryptionKey());
       return {
         qrCodeDataUrl: await QRCode.toDataURL(
           this.buildTotpUri(existingSecret, userEmail),
@@ -83,7 +81,7 @@ export class TotpService {
       this.buildTotpUri(secret, userEmail),
     );
 
-    const encryptedSecret = encrypt(secret, process.env.TOTP_ENCRYPTION_KEY!);
+    const encryptedSecret = encrypt(secret, this.encryptionKey());
     await this.userMfaService.saveTotpSecret(userId, encryptedSecret);
 
     return { qrCodeDataUrl, secret };
@@ -110,7 +108,7 @@ export class TotpService {
       throw new BadRequestException('No pending TOTP setup found');
     }
 
-    const secret = decrypt(user.totpSecret, process.env.TOTP_ENCRYPTION_KEY!);
+    const secret = decrypt(user.totpSecret, this.encryptionKey());
     const result = await verify({ token: code, secret, epochTolerance: 30 });
 
     if (!result.valid) {
@@ -180,7 +178,7 @@ export class TotpService {
       throw new BadRequestException('TOTP is not configured for this account');
     }
 
-    const secret = decrypt(user.totpSecret, process.env.TOTP_ENCRYPTION_KEY!);
+    const secret = decrypt(user.totpSecret, this.encryptionKey());
     const result = await verify({
       token: code,
       secret,
@@ -199,6 +197,10 @@ export class TotpService {
     }
 
     return false;
+  }
+
+  private encryptionKey(): string {
+    return requireEnv('TOTP_ENCRYPTION_KEY');
   }
 
   private buildTotpUri(secret: string, userEmail: string): string {
