@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# dev – start the Linklater development servers with a live status TUI
+# dev – start the Linklater development servers
 
 set -uo pipefail
 
@@ -10,15 +10,25 @@ cd "$ROOT_DIR" || exit
 # ── Arguments ────────────────────────────────────────────────────────────────
 usage() {
   cat <<'USAGE'
-Usage: bin/dev [--remote] [--public]
+Usage: bin/dev [options]
 
-Starts the API and web development servers with a live status/log TUI.
+Starts the API and web development servers with a live status/log view.
+Runs npm run dev instead when the terminal cannot host that view.
+
+Examples:
+  bin/dev            Start the development servers
+  bin/dev --remote   Start them and expose them on the Wi-Fi network
+  bin/dev --public   Start them and expose them through a Cloudflare tunnel
 
 Options:
-  --remote   Allows the app to be reachable from other devices on the same
-             Wi-Fi network. Prints the LAN url in the status view.
-  --public   Allows the app to be reachable publicly using a Cloudflare
-             TryCloudflare tunnel. Prints the CF url in the status view.
+  --remote     Allows the app to be reachable from other devices on the same
+               Wi-Fi network. Prints the LAN url in the status view.
+  --public     Allows the app to be reachable publicly using a Cloudflare
+               TryCloudflare tunnel. Prints the CF url in the status view.
+  --no-input   Run npm run dev instead of the interactive status view.
+  --no-color   Disable colored output.
+  --version    Print the version and exit.
+  -h, --help   Show this help.
 
 Keys:
   0  Status
@@ -26,18 +36,25 @@ Keys:
   2  Web logs
   3  Mailpit logs (when installed)
   4  Tunnel logs (--public only)
+
+See README.md for setup and usage notes.
 USAGE
 }
 
+for argument in "$@"; do
+  if [[ "$argument" == "-h" || "$argument" == "--help" ]]; then
+    usage
+    exit 0
+  fi
+done
+
 REMOTE=false
 PUBLIC=false
+NO_INPUT=false
+USE_COLOR=true
 
-for arg in "$@"; do
-  case "$arg" in
-    -h|--help)
-      usage
-      exit 0
-      ;;
+for argument in "$@"; do
+  case "$argument" in
     --remote)
       REMOTE=true
       ;;
@@ -45,26 +62,55 @@ for arg in "$@"; do
       PUBLIC=true
       REMOTE=true
       ;;
+    --no-input)
+      NO_INPUT=true
+      ;;
+    --no-color)
+      USE_COLOR=false
+      ;;
+    --version)
+      node -p "require('./package.json').version"
+      exit 0
+      ;;
     *)
-      printf 'Unknown option: %s\n\n' "$arg" >&2
+      printf 'Unknown option: %s\n\n' "$argument" >&2
       usage >&2
       exit 64
       ;;
   esac
 done
 
-# Fall back to the package script when stdout is redirected or /dev/tty is not
-# available. The interactive UI needs a controlling terminal for keypresses.
-if [[ ! -t 1 ]] || ! stty -g </dev/tty >/dev/null 2>&1; then
+if [[ "$NO_INPUT" == true ]] || [[ ! -t 1 ]] || [[ "${TERM:-dumb}" == "dumb" ]] || \
+   ! stty -g </dev/tty >/dev/null 2>&1; then
+  if [[ "$NO_INPUT" == true ]]; then
+    printf 'Not starting the status view: --no-input was passed.\n' >&2
+  else
+    printf 'Not starting the status view: this terminal cannot host it.\n' >&2
+  fi
+  printf 'Running npm run dev, which starts the API and web servers only.\n' >&2
+  printf 'Skipped: the stale port check and Mailpit.\n' >&2
+  if [[ "$PUBLIC" == true ]]; then
+    printf 'Skipped: --public, so no Cloudflare tunnel and no access from other devices.\n' >&2
+  elif [[ "$REMOTE" == true ]]; then
+    printf 'Skipped: --remote, so no access from other devices.\n' >&2
+  fi
   exec npm run dev
 fi
 
 # ── Colors & symbols ─────────────────────────────────────────────────────────
-RED=$'\033[31m' GRN=$'\033[32m' YLW=$'\033[33m' CYN=$'\033[36m'
-BLD=$'\033[1m'  DIM=$'\033[2m'  RST=$'\033[0m'
+if [[ ! -t 1 || -n "${NO_COLOR:-}" || "${TERM:-}" == dumb ]]; then
+  USE_COLOR=false
+fi
+
+if [[ "$USE_COLOR" == true ]]; then
+  RED=$'\033[31m' GRN=$'\033[32m' YLW=$'\033[33m' CYN=$'\033[36m'
+  BLD=$'\033[1m'  DIM=$'\033[2m'  RST=$'\033[0m'
+else
+  RED='' GRN='' YLW='' CYN='' BLD='' DIM='' RST=''
+fi
 
 SPIN=(⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏)
-TICK=✓  CROSS=✗
+TICK=✓  CROSS=✗  CIRC=○
 
 # ── Mailpit binary detection ──────────────────────────────────────────────────
 MAILPIT_BIN=""
@@ -187,10 +233,10 @@ draw_header() {
 render_service_line() {
   local state=$1 url=$2 frame_char=$3 label=$4
   case "$state" in
-    starting) printf "${YLW}%s${RST} %-7s  ${DIM}starting${RST}"      "$frame_char" "$label" ;;
-    ready)    printf "${GRN}%s${RST} %-7s  ${GRN}%s${RST}"          "$TICK"       "$label" "$url" ;;
+    starting) printf "${YLW}%s${RST} %-7s  starting"                "$frame_char" "$label" ;;
+    ready)    printf "${GRN}%s${RST} %-7s  ${GRN}ready  %s${RST}"   "$TICK"       "$label" "$url" ;;
     error)    printf "${RED}%s${RST} %-7s  ${RED}error${RST}"       "$CROSS"      "$label" ;;
-    skipped)  printf "${DIM}– %-7s  not installed${RST}"             "$label" ;;
+    skipped)  printf "%s %-7s  not installed"                       "$CIRC"       "$label" ;;
   esac
 }
 
@@ -226,7 +272,7 @@ render_status_view() {
         ("$MAILPIT_STATE" == "ready" || "$MAILPIT_STATE" == "skipped") && \
         ("$TUNNEL_STATE" == "" || "$TUNNEL_STATE" == "ready" || "$TUNNEL_STATE" == "skipped") ]]; then
     out+="  ${GRN}${BLD}Ready.${RST}"$'\n'$'\n'
-    out+="  ${DIM}1. API logs"$'\n'
+    out+="  1. API logs"$'\n'
     out+="  2. Web logs"$'\n'
     if [[ "$MAILPIT_STATE" == "ready" ]]; then
       out+="  3. Mailpit logs"$'\n'
@@ -234,12 +280,12 @@ render_status_view() {
     if [[ "$TUNNEL_STATE" == "ready" ]]; then
       out+="  4. Tunnel logs"$'\n'
     fi
-    out+="${RST}"$'\n'
+    out+=$'\n'
     out+="  Press Control+C to stop"
   elif [[ "$API_STATE" == "error" || "$WEB_STATE" == "error" || \
           "$MAILPIT_STATE" == "error" || "$TUNNEL_STATE" == "error" ]]; then
     out+="  ${RED}${BLD}An error occurred.${RST}"$'\n'$'\n'
-    out+="  ${DIM}1. API logs"$'\n'
+    out+="  1. API logs"$'\n'
     out+="  2. Web logs"$'\n'
     if [[ "$MAILPIT_STATE" != "skipped" ]]; then
       out+="  3. Mailpit logs"$'\n'
@@ -247,10 +293,10 @@ render_status_view() {
     if [[ -n "$TUNNEL_STATE" && "$TUNNEL_STATE" != "skipped" ]]; then
       out+="  4. Tunnel logs"$'\n'
     fi
-    out+="${RST}"$'\n'
+    out+=$'\n'
     out+="  Press Control+C to stop"
   else
-    out+="  ${DIM}Starting up…${RST}"
+    out+="  Starting up…"
   fi
 
   printf '%s' "$out"
@@ -290,25 +336,25 @@ render_log_view() {
     out+="  $(render_lan_line)"$'\n'
   fi
   out+=$'\n'
-  out+="  ${DIM}0. (back to status)${RST}"$'\n'$'\n'
+  out+="  0. (back to status)"$'\n'$'\n'
 
   if [[ "$label" == "API" ]]; then
     out+="  →  API logs"$'\n'
   else
-    out+="  ${DIM}1. API logs${RST}"$'\n'
+    out+="  1. API logs"$'\n'
   fi
 
   if [[ "$label" == "Web" ]]; then
     out+="  →  Web logs"$'\n'
   else
-    out+="  ${DIM}2. Web logs${RST}"$'\n'
+    out+="  2. Web logs"$'\n'
   fi
 
   if [[ "$MAILPIT_STATE" != "skipped" ]]; then
     if [[ "$label" == "Mailpit" ]]; then
       out+="  →  Mailpit logs"$'\n'
     else
-      out+="  ${DIM}3. Mailpit logs${RST}"$'\n'
+      out+="  3. Mailpit logs"$'\n'
     fi
   fi
 
@@ -316,7 +362,7 @@ render_log_view() {
     if [[ "$label" == "Tunnel" ]]; then
       out+="  →  Tunnel logs"$'\n'
     else
-      out+="  ${DIM}4. Tunnel logs${RST}"$'\n'
+      out+="  4. Tunnel logs"$'\n'
     fi
   fi
 
@@ -346,16 +392,16 @@ render_log_view() {
     if [[ -n "$error_line" && "$error_line" -gt 2 ]]; then
       local start=$(( error_line - 2 ))
       while IFS= read -r line; do
-        out+="  ${DIM}${line:0:$content_width}${RST}"$'\n'
+        out+="  ${line:0:$content_width}"$'\n'
       done < <(sed -n "${start},$((start + available - 1))p" "$log_file" 2>/dev/null | strip_ansi || true)
     else
       while IFS= read -r line; do
-        out+="  ${DIM}${line:0:$content_width}${RST}"$'\n'
+        out+="  ${line:0:$content_width}"$'\n'
       done < <(tail -n "$available" "$log_file" 2>/dev/null | strip_ansi || true)
     fi
   else
     while IFS= read -r line; do
-      out+="  ${DIM}${line:0:$content_width}${RST}"$'\n'
+      out+="  ${line:0:$content_width}"$'\n'
     done < <(tail -n "$available" "$log_file" 2>/dev/null | strip_ansi || true)
   fi
 
@@ -436,9 +482,9 @@ while true; do
   # Detect ready signals
   if [[ "$API_STATE" == "starting" ]] && \
      grep -q "Nest application successfully started" "$API_LOG" 2>/dev/null; then
-    PORT=$(grep -oE 'Listening on port [0-9]+' "$API_LOG" 2>/dev/null \
-           | grep -oE '[0-9]+$' | tail -1 || true)
-    API_URL="https://localhost:${PORT:-3000}"
+    LISTEN_PORT=$(grep -oE 'Listening on port [0-9]+' "$API_LOG" 2>/dev/null \
+                  | grep -oE '[0-9]+$' | tail -1 || true)
+    API_URL="https://localhost:${LISTEN_PORT:-$API_PORT}"
     API_STATE="ready"
   fi
 
