@@ -10,9 +10,9 @@ cd "$ROOT_DIR" || exit
 # ── Arguments ───────────────────────────────────────────────────────────────────
 usage() {
   cat <<'USAGE'
-Usage: bin/flintest [--update | --tuffgal]
+Usage: bin/flintest [options]
 
-Default runs the project quality gate in order:
+Runs the project quality gate in order:
   npm install
   node scripts/generate-email-palette.mjs
   npm run subset-fa --workspace @linklater/web
@@ -23,38 +23,69 @@ Default runs the project quality gate in order:
   npm run test:cov
   npm run build
 
+Examples:
+  bin/flintest             Run the quality gate
+  bin/flintest --update    Update dependencies first, then run the gate
+  bin/flintest --tuffgal   Run the local visual regression check instead
+
 Options:
-  --update   Run npm update before npm install.
-  --tuffgal  Replace the default chain with a local visual regression run that
-             self-diffs against the per-machine, git-ignored cache:
-               npm install
-               npx playwright install chromium
-               npm run tuffgal:setup
-               npx tuffgal run --local --manage-servers
-             Opens the HTML report. When the run finds new or changed stories,
-             it then prompts to approve them into the local cache. Committed
-             baselines (tuffgal/baselines) are still CI-only; approving here
-             only refreshes your local reference so the next run is clean.
-  -h, --help Show this help.
+  --update    Run npm update before npm install.
+  --tuffgal   Replace the default chain with a local visual regression run that
+              self-diffs against the per-machine, git-ignored cache:
+                npm install
+                npx --no playwright install chromium
+                npm run tuffgal:setup
+                npx tuffgal run --local --manage-servers
+              Opens the HTML report. When the run finds new or changed stories,
+              it then prompts to approve them into the local cache. Committed
+              baselines (tuffgal/baselines) are still CI-only; approving here
+              only refreshes your local reference so the next run is clean.
+  --no-input  Skip the approval prompt instead of asking.
+  --no-pager  Print failure output in full instead of paging it.
+  --no-color  Disable colored output.
+  --version   Print the version and exit.
+  -h, --help  Show this help.
+
+See README.md for setup and usage notes.
 USAGE
 }
 
+for argument in "$@"; do
+  if [[ "$argument" == "-h" || "$argument" == "--help" ]]; then
+    usage
+    exit 0
+  fi
+done
+
 RUN_UPDATE=false
 RUN_TUFFGAL=false
-for arg in "$@"; do
-  case "$arg" in
+NO_INPUT=false
+NO_PAGER=false
+USE_COLOR=true
+
+for argument in "$@"; do
+  case "$argument" in
     --update)
       RUN_UPDATE=true
       ;;
     --tuffgal)
       RUN_TUFFGAL=true
       ;;
-    -h|--help)
-      usage
+    --no-input)
+      NO_INPUT=true
+      ;;
+    --no-pager)
+      NO_PAGER=true
+      ;;
+    --no-color)
+      USE_COLOR=false
+      ;;
+    --version)
+      node -p "require('./package.json').version"
       exit 0
       ;;
     *)
-      printf 'Unknown option: %s\n\n' "$arg" >&2
+      printf 'Unknown option: %s\n\n' "$argument" >&2
       usage >&2
       exit 64
       ;;
@@ -68,17 +99,31 @@ if [[ "$RUN_UPDATE" == true && "$RUN_TUFFGAL" == true ]]; then
 fi
 
 # ── Terminal capability ─────────────────────────────────────────────────────────
+TERMINAL_REACHABLE=false
+if : 2>/dev/null > /dev/tty; then
+  TERMINAL_REACHABLE=true
+fi
+
 TTY_AVAILABLE=false
-if [[ -t 1 ]] && [[ -w /dev/tty ]]; then
+if [[ -t 1 ]] && [[ "$TERMINAL_REACHABLE" == true ]]; then
   TTY_AVAILABLE=true
 fi
 
+PAGER_COMMAND=(less -FIRX)
+if [[ -n "${PAGER:-}" ]]; then
+  read -r -a PAGER_COMMAND <<< "$PAGER"
+fi
+
 # ── Colors & symbols ────────────────────────────────────────────────────────────
-if [[ "$TTY_AVAILABLE" == true ]]; then
-  RED=$'\033[31m' GRN=$'\033[32m' CYN=$'\033[36m'
+if [[ ! -t 1 || -n "${NO_COLOR:-}" || "${TERM:-}" == dumb ]]; then
+  USE_COLOR=false
+fi
+
+if [[ "$USE_COLOR" == true ]]; then
+  RED=$'\033[31m' GRN=$'\033[32m' YLW=$'\033[33m' CYN=$'\033[36m'
   BLD=$'\033[1m'  DIM=$'\033[2m'  RST=$'\033[0m'
 else
-  RED='' GRN='' CYN='' BLD='' DIM='' RST=''
+  RED='' GRN='' YLW='' CYN='' BLD='' DIM='' RST=''
 fi
 
 SPIN=(⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏)
@@ -105,13 +150,21 @@ hide_cursor() { [[ "$TTY_AVAILABLE" == true ]] && printf '\033[?25l'; }
 show_cursor()  { [[ "$TTY_AVAILABLE" == true ]] && printf '\033[?25h'; }
 
 # ── Cleanup on exit ─────────────────────────────────────────────────────────────
+CURRENT_STEP="the run"
+
 # shellcheck disable=SC2329 # Invoked by trap.
 _cleanup() {
   stop_spinner
   show_cursor
   printf '\n'
 }
-trap _cleanup EXIT INT TERM HUP
+
+trap _cleanup EXIT
+trap 'trap - EXIT INT TERM HUP
+      printf "\n  Stopping %s.\n" "$CURRENT_STEP" >&2
+      stop_spinner
+      show_cursor
+      exit 130' INT TERM HUP
 
 # ── Draw initial UI ─────────────────────────────────────────────────────────────
 draw_ui() {
@@ -171,8 +224,8 @@ start_spinner() {
     local i=0
     while true; do
       local frame="${SPIN[$((i % ${#SPIN[@]}))]}"
-      printf '\033[%dA\033[2K\r  \033[33m%s %s\033[0m\033[%dB\033[2K\r' \
-        "$up" "$frame" "$name" "$up" > /dev/tty
+      printf '\033[%dA\033[2K\r  %s%s %s%s\033[%dB\033[2K\r' \
+        "$up" "$YLW" "$frame" "$name" "$RST" "$up" > /dev/tty
       sleep 0.08
       i=$(( i + 1 ))
     done
@@ -196,6 +249,7 @@ stop_spinner() {
 STEP_OUTPUT=""
 run_step() {
   local idx=$1; shift
+  CURRENT_STEP="${STEPS[$idx]}"
   start_spinner "$idx"
   local output rc=0
   output=$("$@" 2>&1) || rc=$?
@@ -210,6 +264,20 @@ run_step() {
   fi
 }
 
+dump_failure() {
+  local verdict=$1 body=$2
+  local rows body_lines
+  rows=$(stty size 2>/dev/null < /dev/tty | cut -d ' ' -f 1)
+  body_lines=$(printf '%s\n' "$body" | wc -l)
+  if [[ "$NO_PAGER" != true && "$TTY_AVAILABLE" == true && ${rows:-0} -gt 0 ]] \
+    && [[ $body_lines -gt $rows ]]; then
+    printf '%s\n' "$body" | sed 's/^/  /' | "${PAGER_COMMAND[@]}"
+  else
+    printf '%s\n' "$body" | sed 's/^/  /' >&2
+  fi
+  printf '\n  %s%s%s%s\n' "$RED" "$BLD" "$verdict" "$RST" >&2
+}
+
 # ── Visual regression summary ───────────────────────────────────────────────────
 # Mirrors the "Parse harness outcome" step in tuffgal-action: pulls the totals
 # out of results.json so the final status line can show passed/new/changed/failed
@@ -220,6 +288,7 @@ tuffgal_summary() {
   if [[ ! -f "$results" ]]; then
     return
   fi
+  # shellcheck disable=SC2016 # ${} below are JS template literals, not shell
   node -e '
     const path = process.argv[1];
     const raw = require("fs").readFileSync(path, "utf8");
@@ -239,6 +308,7 @@ tuffgal_drift_counts() {
   if [[ ! -f "$results" ]]; then
     return
   fi
+  # shellcheck disable=SC2016 # ${} below are JS template literals, not shell
   node -e '
     const path = process.argv[1];
     const totals = JSON.parse(require("fs").readFileSync(path, "utf8")).totals ?? {};
@@ -270,7 +340,7 @@ if [[ "$RUN_TUFFGAL" == true ]]; then
   fi
 
   if [[ -z "$FAILED_STEP" ]]; then
-    if ! run_step 1 npx playwright install chromium; then
+    if ! run_step 1 npx --no playwright install chromium; then
       FAILED_STEP="Playwright"
       FAILED_OUTPUT="$STEP_OUTPUT"
     fi
@@ -303,8 +373,7 @@ if [[ "$RUN_TUFFGAL" == true ]]; then
     fi
     [[ "$TTY_AVAILABLE" == true ]] && printf '\n'
     printf '\n'
-    printf '%s\n' "$FAILED_OUTPUT" | sed 's/^/  /'
-    printf '\n'
+    dump_failure "${FAILED_STEP} failed." "$FAILED_OUTPUT"
     exit 1
   fi
 
@@ -322,11 +391,10 @@ if [[ "$RUN_TUFFGAL" == true ]]; then
     set_status "${GRN}${BLD}Visual regression complete${RST}"
   fi
 
-  if [[ "$TTY_AVAILABLE" == true && $(( TUFFGAL_NEW + TUFFGAL_CHANGED )) -gt 0 ]]; then
+  if [[ "$NO_INPUT" != true && "$TERMINAL_REACHABLE" == true && $(( TUFFGAL_NEW + TUFFGAL_CHANGED )) -gt 0 ]]; then
     show_cursor
-    printf '\n\n'
-    printf '  %sApprove %s new + %s changed into the local cache?%s [y/N] ' \
-      "$BLD" "$TUFFGAL_NEW" "$TUFFGAL_CHANGED" "$RST"
+    printf '\n\n  %sApprove %s new + %s changed into the local cache?%s [y/N] ' \
+      "$BLD" "$TUFFGAL_NEW" "$TUFFGAL_CHANGED" "$RST" > /dev/tty
     APPROVE_REPLY=""
     read -r APPROVE_REPLY < /dev/tty || true
     if [[ "$APPROVE_REPLY" =~ ^[Yy]([Ee][Ss])?$ ]]; then
@@ -334,9 +402,8 @@ if [[ "$RUN_TUFFGAL" == true ]]; then
       if APPROVE_OUTPUT=$(npx tuffgal approve 2>&1); then
         printf '  %s%s Local cache refreshed – next run will be clean.%s\n' "$GRN" "$TICK" "$RST"
       else
-        printf '  %s%s tuffgal approve failed – see below.%s\n\n' "$RED" "$CROSS" "$RST"
-        printf '%s\n' "$APPROVE_OUTPUT" | sed 's/^/  /'
-        printf '\n'
+        printf '  %s%s tuffgal approve failed – see below.%s\n\n' "$RED" "$CROSS" "$RST" >&2
+        dump_failure "tuffgal approve failed." "$APPROVE_OUTPUT"
         exit 1
       fi
     else
@@ -431,7 +498,6 @@ else
   set_status "${RED}${BLD}${FAILED_STEP} failed – see below.${RST}"
   [[ "$TTY_AVAILABLE" == true ]] && printf '\n'
   printf '\n'
-  printf '%s\n' "$FAILED_OUTPUT" | sed 's/^/  /'
-  printf '\n'
+  dump_failure "${FAILED_STEP} failed." "$FAILED_OUTPUT"
   exit 1
 fi
