@@ -3,9 +3,13 @@
 
 set -uo pipefail
 
-SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+SCRIPT_DIR=$(cd -- "$(dirname -- "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)
 ROOT_DIR=$(cd -- "$SCRIPT_DIR/.." && pwd)
 cd "$ROOT_DIR" || exit
+
+# shellcheck source=lib/cli.sh disable=SC1091
+. "$SCRIPT_DIR/lib/cli.sh" 2>/dev/null ||
+  { printf 'Cannot load %s/lib/cli.sh\n' "$SCRIPT_DIR" >&2; exit 70; }
 
 # ── Arguments ───────────────────────────────────────────────────────────────────
 usage() {
@@ -29,33 +33,28 @@ Examples:
   bin/flintest --tuffgal   Run the local visual regression check instead
 
 Options:
-  --update    Run npm update before npm install.
-  --tuffgal   Replace the default chain with a local visual regression run that
-              self-diffs against the per-machine, git-ignored cache:
-                npm install
-                npx --no playwright install chromium
-                npm run tuffgal:setup
-                npx tuffgal run --local --manage-servers
-              Opens the HTML report. When the run finds new or changed stories,
-              it then prompts to approve them into the local cache. Committed
-              baselines (tuffgal/baselines) are still CI-only; approving here
-              only refreshes your local reference so the next run is clean.
-  --no-input  Skip the approval prompt instead of asking.
-  --no-pager  Print failure output in full instead of paging it.
-  --no-color  Disable colored output.
-  --version   Print the version and exit.
-  -h, --help  Show this help.
+  --update     Run npm update before npm install.
+  --tuffgal    Replace the default chain with a local visual regression run that
+               self-diffs against the per-machine, git-ignored cache:
+                 npm install
+                 npx --no playwright install chromium
+                 npm run tuffgal:setup
+                 npx tuffgal run --local --manage-servers
+               Opens the HTML report. When the run finds new or changed stories,
+               it then prompts to approve them into the local cache. Committed
+               baselines (tuffgal/baselines) are still CI-only; approving here
+               only refreshes your local reference so the next run is clean.
+  --no-input   Skip the approval prompt instead of asking.
+  --no-pager   Print failure output in full instead of paging it.
+  --no-color   Disable colored output.
+  --version    Print the version and exit.
+  -h, --help   Show this help.
 
 See README.md for setup and usage notes.
 USAGE
 }
 
-for argument in "$@"; do
-  if [[ "$argument" == "-h" || "$argument" == "--help" ]]; then
-    usage
-    exit 0
-  fi
-done
+scan_help "$@"
 
 RUN_UPDATE=false
 RUN_TUFFGAL=false
@@ -81,13 +80,10 @@ for argument in "$@"; do
       USE_COLOR=false
       ;;
     --version)
-      node -p "require('./package.json').version"
-      exit 0
+      print_version
       ;;
     *)
-      printf 'Unknown option: %s\n\n' "$argument" >&2
-      usage >&2
-      exit 64
+      unknown_flag "$argument"
       ;;
   esac
 done
@@ -99,15 +95,7 @@ if [[ "$RUN_UPDATE" == true && "$RUN_TUFFGAL" == true ]]; then
 fi
 
 # ── Terminal capability ─────────────────────────────────────────────────────────
-TERMINAL_REACHABLE=false
-if : 2>/dev/null > /dev/tty; then
-  TERMINAL_REACHABLE=true
-fi
-
-TTY_AVAILABLE=false
-if [[ -t 1 ]] && [[ "$TERMINAL_REACHABLE" == true ]]; then
-  TTY_AVAILABLE=true
-fi
+probe_terminal
 
 PAGER_COMMAND=(less -FIRX)
 if [[ -n "${PAGER:-}" ]]; then
@@ -115,19 +103,10 @@ if [[ -n "${PAGER:-}" ]]; then
 fi
 
 # ── Colors & symbols ────────────────────────────────────────────────────────────
-if [[ ! -t 1 || -n "${NO_COLOR:-}" || "${TERM:-}" == dumb ]]; then
-  USE_COLOR=false
-fi
-
-if [[ "$USE_COLOR" == true ]]; then
-  RED=$'\033[31m' GRN=$'\033[32m' YLW=$'\033[33m' CYN=$'\033[36m'
-  BLD=$'\033[1m'  DIM=$'\033[2m'  RST=$'\033[0m'
-else
-  RED='' GRN='' YLW='' CYN='' BLD='' DIM='' RST=''
-fi
+resolve_color "$USE_COLOR"
 
 SPIN=(⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏)
-TICK=✓  CROSS=✗  CIRC=○
+TICK=✓  CROSS=✗  CIRCLE=○
 
 # ── Layout constants ────────────────────────────────────────────────────────────
 if [[ "$RUN_TUFFGAL" == true ]]; then
@@ -179,7 +158,7 @@ draw_ui() {
   printf '  %s%s╚═════════════════╝%s\n' "$BLD" "$CYN" "$RST"
   printf '\n'
   for name in "${STEPS[@]}"; do
-    printf "  ${DIM}${CIRC} %s${RST}\n" "$name"
+    printf "  ${DIM}${CIRCLE} %s${RST}\n" "$name"
   done
   printf '\n'
   printf '  %sInitializing…%s' "$DIM" "$RST"

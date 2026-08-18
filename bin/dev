@@ -3,9 +3,13 @@
 
 set -uo pipefail
 
-SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+SCRIPT_DIR=$(cd -- "$(dirname -- "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)
 ROOT_DIR=$(cd -- "$SCRIPT_DIR/.." && pwd)
 cd "$ROOT_DIR" || exit
+
+# shellcheck source=lib/cli.sh disable=SC1091
+. "$SCRIPT_DIR/lib/cli.sh" 2>/dev/null ||
+  { printf 'Cannot load %s/lib/cli.sh\n' "$SCRIPT_DIR" >&2; exit 70; }
 
 # ── Arguments ────────────────────────────────────────────────────────────────
 usage() {
@@ -42,12 +46,7 @@ See README.md for setup and usage notes.
 USAGE
 }
 
-for argument in "$@"; do
-  if [[ "$argument" == "-h" || "$argument" == "--help" ]]; then
-    usage
-    exit 0
-  fi
-done
+scan_help "$@"
 
 REMOTE=false
 PUBLIC=false
@@ -70,19 +69,17 @@ for argument in "$@"; do
       USE_COLOR=false
       ;;
     --version)
-      node -p "require('./package.json').version"
-      exit 0
+      print_version
       ;;
     *)
-      printf 'Unknown option: %s\n\n' "$argument" >&2
-      usage >&2
-      exit 64
+      unknown_flag "$argument"
       ;;
   esac
 done
 
-if [[ "$NO_INPUT" == true ]] || [[ ! -t 1 ]] || [[ "${TERM:-dumb}" == "dumb" ]] || \
-   ! stty -g </dev/tty >/dev/null 2>&1; then
+probe_terminal
+
+if [[ "$NO_INPUT" == true || "$TTY_AVAILABLE" != true || "${TERM:-dumb}" == "dumb" ]]; then
   if [[ "$NO_INPUT" == true ]]; then
     printf 'Not starting the status view: --no-input was passed.\n' >&2
   elif [[ ! -t 1 ]]; then
@@ -106,19 +103,10 @@ if [[ "$NO_INPUT" == true ]] || [[ ! -t 1 ]] || [[ "${TERM:-dumb}" == "dumb" ]] 
 fi
 
 # ── Colors & symbols ─────────────────────────────────────────────────────────
-if [[ ! -t 1 || -n "${NO_COLOR:-}" || "${TERM:-}" == dumb ]]; then
-  USE_COLOR=false
-fi
-
-if [[ "$USE_COLOR" == true ]]; then
-  RED=$'\033[31m' GRN=$'\033[32m' YLW=$'\033[33m' CYN=$'\033[36m'
-  BLD=$'\033[1m'  DIM=$'\033[2m'  RST=$'\033[0m'
-else
-  RED='' GRN='' YLW='' CYN='' BLD='' DIM='' RST=''
-fi
+resolve_color "$USE_COLOR"
 
 SPIN=(⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏)
-TICK=✓  CROSS=✗  CIRC=○
+TICK=✓  CROSS=✗  CIRCLE=○
 
 # ── Mailpit binary detection ──────────────────────────────────────────────────
 MAILPIT_BIN=""
@@ -195,7 +183,7 @@ CLEANUP_POLL_LIMIT=50
 hide_cursor() { printf '\033[?25l'; }
 show_cursor()  { printf '\033[?25h'; }
 
-_any_service_failed() {
+any_service_failed() {
   [[ "$API_STATE" == "error" || "$WEB_STATE" == "error" || \
      "$MAILPIT_STATE" == "error" || "$TUNNEL_STATE" == "error" ]]
 }
@@ -231,7 +219,7 @@ _await_children() {
 
 _quit() {
   local status=$1
-  _any_service_failed && status=1
+  any_service_failed && status=1
   rm -f "$API_LOG" "$WEB_LOG" "$MAILPIT_LOG" "$TUNNEL_LOG" "$KEY_FILE"
   stty "$OLD_STTY" </dev/tty 2>/dev/null || true
   show_cursor
@@ -292,7 +280,7 @@ render_service_line() {
     starting) printf "${YLW}%s${RST} %-7s  starting"                "$frame_char" "$label" ;;
     ready)    printf "${GRN}%s${RST} %-7s  ${GRN}ready  %s${RST}"   "$TICK"       "$label" "$url" ;;
     error)    printf "${RED}%s${RST} %-7s  ${RED}error${RST}"       "$CROSS"      "$label" ;;
-    skipped)  printf "%s %-7s  not installed"                       "$CIRC"       "$label" ;;
+    skipped)  printf "%s %-7s  not installed"                       "$CIRCLE"     "$label" ;;
   esac
 }
 
@@ -359,7 +347,7 @@ render_status_view() {
         ("$MAILPIT_STATE" == "ready" || "$MAILPIT_STATE" == "skipped") && \
         ("$TUNNEL_STATE" == "" || "$TUNNEL_STATE" == "ready" || "$TUNNEL_STATE" == "skipped") ]]; then
     out+="  ${GRN}${BLD}Ready.${RST}"$'\n'$'\n'
-  elif _any_service_failed; then
+  elif any_service_failed; then
     out+="  ${RED}${BLD}An error occurred.${RST}"$'\n'$'\n'
   else
     out+="  Starting up…"$'\n'$'\n'

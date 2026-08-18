@@ -3,9 +3,13 @@
 
 set -euo pipefail
 
-SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+SCRIPT_DIR=$(cd -- "$(dirname -- "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)
 ROOT_DIR=$(cd -- "$SCRIPT_DIR/.." && pwd)
 cd "$ROOT_DIR" || exit
+
+# shellcheck source=lib/cli.sh disable=SC1091
+. "$SCRIPT_DIR/lib/cli.sh" 2>/dev/null ||
+  { printf 'Cannot load %s/lib/cli.sh\n' "$SCRIPT_DIR" >&2; exit 70; }
 
 usage() {
   cat <<'USAGE'
@@ -36,18 +40,13 @@ suggest_flag() {
   local candidate
   for candidate in "${KNOWN_FLAGS[@]}"; do
     if [[ "$candidate" == "$1"* || "$1" == "$candidate"* ]]; then
-      printf 'Did you mean %s?\n\n' "$candidate" >&2
+      printf 'Did you mean %s?' "$candidate"
       return
     fi
   done
 }
 
-for argument in "$@"; do
-  if [[ "$argument" == "-h" || "$argument" == "--help" ]]; then
-    usage
-    exit 0
-  fi
-done
+scan_help "$@"
 
 TARGET="migrate"
 FORCE=false
@@ -69,37 +68,21 @@ for argument in "$@"; do
       USE_COLOR=false
       ;;
     --version)
-      node -p "require('./package.json').version"
-      exit 0
+      print_version
       ;;
     *)
-      printf 'Unknown option: %s\n\n' "$argument" >&2
-      suggest_flag "$argument"
-      usage >&2
-      exit 64
+      unknown_flag "$argument" "$(suggest_flag "$argument")"
       ;;
   esac
 done
 
-if [[ ! -t 1 || ! -t 2 || -n "${NO_COLOR:-}" || "${TERM:-}" == dumb ]]; then
-  USE_COLOR=false
-fi
-
-if [[ "$USE_COLOR" == true ]]; then
-  BLD=$'\033[1m' DIM=$'\033[2m' RST=$'\033[0m'
-else
-  BLD='' DIM='' RST=''
-fi
-
-TTY_AVAILABLE=false
-if : 2>/dev/null > /dev/tty; then
-  TTY_AVAILABLE=true
-fi
+resolve_color "$USE_COLOR"
+probe_terminal
 
 if [[ "$TARGET" == "migrate:reset" && "$FORCE" == true ]]; then
   TARGET="migrate:reset:force"
 elif [[ "$TARGET" == "migrate:reset" ]]; then
-  if [[ "$NO_INPUT" == true || "$TTY_AVAILABLE" == false ]]; then
+  if [[ "$NO_INPUT" == true || "$TERMINAL_REACHABLE" == false ]]; then
     printf 'Refusing to reset the database without confirmation. --force resets without asking.\n' >&2
     exit 66
   fi
