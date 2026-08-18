@@ -8,7 +8,7 @@ import tseslint from 'typescript-eslint';
 import importIdentifierOrder from '../../eslint-rules/import-identifier-order.mjs';
 import noCommentBlockInBody from '../../eslint-rules/no-comment-block-in-body.mjs';
 import typeImportsAfterValue from '../../eslint-rules/type-imports-after-value.mjs';
-import vitest from 'eslint-plugin-vitest';
+import vitest from '@vitest/eslint-plugin';
 
 export default tseslint.config(
   {
@@ -64,6 +64,8 @@ export default tseslint.config(
       'react-hooks/rules-of-hooks': 'error',
       'react-refresh/only-export-components': 'off',
       'vitest/no-focused-tests': 'error',
+      // vitest takes a message as expect's second argument; jest does not
+      'vitest/valid-expect': ['error', { maxArgs: 2 }],
     },
     settings: {
       react: {
