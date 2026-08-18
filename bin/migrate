@@ -9,32 +9,105 @@ cd "$ROOT_DIR" || exit
 
 usage() {
   cat <<'USAGE'
-Usage: bin/migrate [--reset]
+Usage: bin/migrate [options]
 
 Runs Prisma migrations for the @linklater/api workspace.
 
+Examples:
+  bin/migrate                  Apply pending migrations
+  bin/migrate --reset          Wipe the database and re-run every migration
+  bin/migrate --reset --force  Wipe the database without confirming first
+
 Options:
-  --reset    Wipe the database and re-run all migrations from scratch.
-  -h, --help Show this help.
+  --reset      Wipe the database and re-run all migrations from scratch.
+  --force      Answer the --reset confirmation up front.
+  --no-input   Never prompt. Refuses --reset unless --force is passed too.
+  --no-color   Disable colored output.
+  --version    Print the version and exit.
+  -h, --help   Show this help.
+
+See README.md for setup and usage notes.
 USAGE
 }
 
+KNOWN_FLAGS=(--reset --force --no-input --no-color --version --help -h)
+
+suggest_flag() {
+  local candidate
+  for candidate in "${KNOWN_FLAGS[@]}"; do
+    if [[ "$candidate" == "$1"* || "$1" == "$candidate"* ]]; then
+      printf 'Did you mean %s?\n\n' "$candidate" >&2
+      return
+    fi
+  done
+}
+
+for argument in "$@"; do
+  if [[ "$argument" == "-h" || "$argument" == "--help" ]]; then
+    usage
+    exit 0
+  fi
+done
+
 TARGET="migrate"
+FORCE=false
+NO_INPUT=false
+USE_COLOR=true
+
 for argument in "$@"; do
   case "$argument" in
     --reset)
       TARGET="migrate:reset"
       ;;
-    -h|--help)
-      usage
+    --force)
+      FORCE=true
+      ;;
+    --no-input)
+      NO_INPUT=true
+      ;;
+    --no-color)
+      USE_COLOR=false
+      ;;
+    --version)
+      node -p "require('./package.json').version"
       exit 0
       ;;
     *)
       printf 'Unknown option: %s\n\n' "$argument" >&2
+      suggest_flag "$argument"
       usage >&2
       exit 64
       ;;
   esac
 done
 
+if [[ ! -t 1 || ! -t 2 || -n "${NO_COLOR:-}" || "${TERM:-}" == dumb ]]; then
+  USE_COLOR=false
+fi
+
+if [[ "$USE_COLOR" == true ]]; then
+  BLD=$'\033[1m' DIM=$'\033[2m' RST=$'\033[0m'
+else
+  BLD='' DIM='' RST=''
+fi
+
+if [[ "$TARGET" == "migrate:reset" && "$FORCE" == false ]]; then
+  if [[ "$NO_INPUT" == true || ! -t 0 || ! -t 1 ]]; then
+    printf 'Refusing to reset the database without confirmation. Pass --force to proceed.\n' >&2
+    exit 66
+  fi
+
+  printf '%sThis wipes the database and re-runs every migration.%s\n' "$BLD" "$RST"
+  printf 'Type reset to continue: '
+  CONFIRMATION=""
+  read -r CONFIRMATION || true
+  CONFIRMATION=$(printf '%s' "$CONFIRMATION" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')
+
+  if [[ "$CONFIRMATION" != "reset" ]]; then
+    printf 'Cancelled. The database was not touched.\n' >&2
+    exit 1
+  fi
+fi
+
+printf '%sRunning npm run %s --workspace @linklater/api%s\n' "$DIM" "$TARGET" "$RST"
 exec npm run "$TARGET" --workspace @linklater/api
