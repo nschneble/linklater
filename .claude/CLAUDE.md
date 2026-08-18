@@ -34,8 +34,9 @@ npm run dev                                       # Start development server
 
 # Linting + formatting
 npm run format                                    # Format code using Prettier
-npm run lint                                      # Lint code for consistent style
+npm run lint                                      # Lint code for consistent style (includes lint:shell)
 npm run lint:migrations                           # Lint migrations using Squawk
+npm run lint:shell                                # Lint bin/ using ShellCheck
 npm run lint --workspace @linklater/web           # Lint front-end only
 npm run lint --workspace @linklater/api           # Lint back-end only
 npm run typecheck                                 # Type-check back-end (front-end: use build)
@@ -211,7 +212,7 @@ works.
 - Form state sequence: clear error → set loading → attempt action → handle result
 - Extract errors: `error instanceof Error ? error.message : 'Something went wrong'`
 - Sort imports alphabetically by the **first identifier each import binds**, case-insensitively: the default binding, the namespace alias, or the first named specifier. A renamed import (`{ alpha as zulu }`) sorts under `alpha`, the name written first. The names inside the braces sort the same way, with value specifiers ahead of `type` ones, and `import {}` comes before `import type {}`.
-- Enforced by `local/import-identifier-order` (autofixable). Pass `--fix` per workspace, e.g. `npm run lint --workspace @linklater/web -- --fix`; the root script chains two commands with `&&`, so a trailing `--fix` lands on npm rather than on eslint and is silently dropped. It never reorders four things: anything across a blank line or a non-import statement (group boundaries you drew), side-effect imports like `import './polyfill'` (evaluation order is observable, so they act as barriers), whole value imports against whole type imports (that partition is `local/type-imports-after-value`'s job, though inside the braces this rule owns it), and a default binding or namespace alias, which is not a named specifier. It reports without fixing rather than move a file-level directive (an `eslint-disable` block, `@ts-nocheck`, a test-environment pragma, a license header, a hashbang) or strand a comment sitting among the named specifiers.
+- Enforced by `local/import-identifier-order` (autofixable). Pass `--fix` per workspace, e.g. `npm run lint --workspace @linklater/web -- --fix`; the root script chains several commands with `&&`, so a trailing `--fix` lands on npm rather than on eslint and is silently dropped. It never reorders four things: anything across a blank line or a non-import statement (group boundaries you drew), side-effect imports like `import './polyfill'` (evaluation order is observable, so they act as barriers), whole value imports against whole type imports (that partition is `local/type-imports-after-value`'s job, though inside the braces this rule owns it), and a default binding or namespace alias, which is not a named specifier. It reports without fixing rather than move a file-level directive (an `eslint-disable` block, `@ts-nocheck`, a test-environment pragma, a license header, a hashbang) or strand a comment sitting among the named specifiers.
 
 ```typescript
 // Example of poor import organization
