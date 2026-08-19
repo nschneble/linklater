@@ -351,7 +351,9 @@ KEY_READER_PID=$!
 
 # ── Strip ANSI escape codes (BSD sed compatible) ──────────────────────────────
 strip_ansi() {
-  sed $'s/\033\\[[0-9;]*[mGKHFJ]//g'
+  LC_ALL=C sed -e $'s/\033\\[[0-9;:<=>?]*[@-~]//g' \
+               -e $'s/\033][^\033\007]*\007//g' \
+               -e $'s/\033][^\033\007]*\033\\\\//g'
 }
 
 # ── Static header (lines 1–4, never redrawn) ─────────────────────────────────
@@ -651,6 +653,15 @@ free_port() {
 }
 
 # ── Launch services ───────────────────────────────────────────────────────────
+launch_tunnel() {
+  local port=$1
+  printf 'Starting the tunnel to https://localhost:%s\n' "$port" >>"$TUNNEL_LOG"
+  "$CLOUDFLARED_BIN" tunnel --no-tls-verify --url "https://localhost:$port" \
+    </dev/null >>"$TUNNEL_LOG" 2>&1 &
+  TUNNEL_PID=$!
+  TUNNEL_LAUNCH_SECONDS=$SECONDS
+}
+
 hide_cursor
 draw_header
 
@@ -675,15 +686,14 @@ else
 fi
 
 if [[ "$TUNNEL_STATE" == "starting" ]]; then
-  "$CLOUDFLARED_BIN" tunnel --no-tls-verify --url https://localhost:5173 \
-    </dev/null >"$TUNNEL_LOG" 2>&1 &
-  TUNNEL_PID=$!
+  printf 'Waiting for the web server before starting the tunnel.\n' >>"$TUNNEL_LOG"
 fi
 
 # ── Live update loop ──────────────────────────────────────────────────────────
 DIRTY=true  # always draw on first tick
 STARTING_TIMEOUT_SECONDS=90
 LAUNCH_SECONDS=$SECONDS
+TUNNEL_LAUNCH_SECONDS=0
 
 while true; do
   PREV_API_STATE="$API_STATE"
@@ -732,9 +742,9 @@ while true; do
       WEB_URL="${EXTRACTED%/}"
       WEB_STATE="ready"
       WEB_PORT="${WEB_URL##*:}"
-      if [[ -n "$LAN_HOSTNAME" && "$WEB_PORT" =~ ^[0-9]+$ ]]; then
-        REMOTE_URL="https://${LAN_HOSTNAME}.local:${WEB_PORT}"
-      fi
+      [[ "$WEB_PORT" =~ ^[0-9]+$ ]] || WEB_PORT=5173
+      [[ -n "$LAN_HOSTNAME" ]] && REMOTE_URL="https://${LAN_HOSTNAME}.local:${WEB_PORT}"
+      [[ "$TUNNEL_STATE" == "starting" ]] && launch_tunnel "$WEB_PORT"
     fi
   fi
 
@@ -757,6 +767,10 @@ while true; do
     _time_out_service API_STATE "$API_LOG" 'Nest application successfully started' api
     _time_out_service WEB_STATE "$WEB_LOG" 'the Vite Local: address' web
     _time_out_service MAILPIT_STATE "$MAILPIT_LOG" 'Mailpit starting on' mailpit
+  fi
+
+  if [[ -n "$TUNNEL_PID" ]] && \
+     (( SECONDS - TUNNEL_LAUNCH_SECONDS >= STARTING_TIMEOUT_SECONDS )); then
     _time_out_service TUNNEL_STATE "$TUNNEL_LOG" 'a trycloudflare.com address' tunnel
   fi
 
@@ -787,6 +801,10 @@ while true; do
       TUNNEL_STATE="error"
       VIEW="tunnel"
     fi
+  fi
+  if [[ -z "$TUNNEL_PID" && "$TUNNEL_STATE" == "starting" && "$WEB_STATE" == "error" ]]; then
+    printf 'Not starting the tunnel: the web server never became ready.\n' >>"$TUNNEL_LOG"
+    TUNNEL_STATE="error"
   fi
 
   if [[ "$API_STATE"  != "$PREV_API_STATE"  || "$WEB_STATE"  != "$PREV_WEB_STATE"  || \
