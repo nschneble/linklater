@@ -28,7 +28,7 @@ import { ApiError } from './responses';
 
 const REQUEST_DEADLINE_MS = 10_000;
 
-const DEADLINE_MESSAGE = 'The server took too long to answer. Try again.';
+const DEADLINE_MESSAGE = 'That took too long. Try again.';
 
 export async function fetchWithinDeadline(
   url: string,

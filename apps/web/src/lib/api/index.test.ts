@@ -695,7 +695,7 @@ describe('apiFetch request deadline', () => {
 
     expect(caught).toBeInstanceOf(ApiError);
     expect((caught as ApiError).message).toBe(
-      'The server took too long to answer. Try again.',
+      'That took too long. Try again.',
     );
   });
 
