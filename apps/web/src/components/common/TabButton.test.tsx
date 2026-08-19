@@ -19,6 +19,7 @@
  *   not jump width when font-weight changes between idle and active.
  */
 
+import { compileClasses } from '../../../test/tailwind';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import TabButton from './TabButton';
@@ -206,6 +207,19 @@ describe('TabButton isDisabled', () => {
     );
     fireEvent.click(screen.getByRole('tab', { name: 'Label' }));
     expect(handleClick).not.toHaveBeenCalled();
+  });
+
+  it('spares a focused refusal the dim, so its outline is not composited', async () => {
+    render(
+      <TabButton isActive={false} isDisabled onClick={() => {}}>
+        Label
+      </TabButton>,
+    );
+    const button = screen.getByRole('tab', { name: 'Label' });
+    const css = await compileClasses(button.className.split(' '));
+    expect(css).toMatch(
+      /\[aria-disabled="true"\].*:not\(:focus-visible\)\s*\{\s*opacity:\s*60%/,
+    );
   });
 
   it('stays focusable while isDisabled so arrow keys can still reach it', () => {

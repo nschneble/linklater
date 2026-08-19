@@ -54,17 +54,17 @@ const MAX_INTERVAL_MS = 16_000;
 const MAX_POLLS_PER_TICK = 3;
 
 /**
- * Per-request deadline for a metadata poll. apiFetch imposes no timeout of its
- * own, so a hung socket (a dead network mid-request) would leave a getLink
- * pending until the browser's socket-level timeout, which can run to minutes.
- * Because a tick re-arms the shared timer only once its whole Promise.all
- * settles, one such stall would freeze the rotation for every other pending
- * card. Aborting at this deadline bounds the stall: the abort rejects like any
- * other request error and the next tick schedules normally. The signal bounds
- * the poll request itself; a 401 that sends apiFetch through a token refresh
- * runs that refresh leg on the refresh's own deadline (see REFRESH_DEADLINE_MS
- * in the api token-refresh module), so that leg is bounded too, just not by
- * this signal.
+ * Per-request deadline for a metadata poll. apiFetch carries a deadline of its
+ * own, but it is per-leg: a 401 that refreshes and retries gets a fresh one on
+ * each leg, so a slow round of both outlasts this window twice over. This
+ * signal rides both legs, so the pair shares one window measured from the tick
+ * instead of taking one apiece. That matters because a tick re-arms the shared
+ * timer only once its whole Promise.all settles: one stalled poll would freeze
+ * the rotation for every other pending card. Aborting at this deadline bounds
+ * the stall, since the abort rejects like any other request error and the next
+ * tick schedules normally. What it does not reach is the refresh itself, which
+ * runs on its own deadline (see REFRESH_DEADLINE_MS in the api token-refresh
+ * module), so that leg is bounded too, just not by this signal.
  *
  * The value sits above any healthy round-trip (a slow mobile connection
  * included, so a working-but-slow poll is not falsely aborted and left to

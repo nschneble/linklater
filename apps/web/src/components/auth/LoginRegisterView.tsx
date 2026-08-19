@@ -32,11 +32,6 @@ function ignoreWhileLoading(loading: boolean, action: () => void): () => void {
 }
 
 interface LoginRegisterViewProps {
-  /**
-   * `false` when the error arrived on the URL: AuthForm announces that one
-   * itself, and two regions holding one message race each other.
-   */
-  announceError?: boolean;
   appleSsoEnabled?: boolean;
   email: string;
   emailReference: RefObject<HTMLInputElement | null>;
@@ -56,7 +51,6 @@ interface LoginRegisterViewProps {
 }
 
 export default function LoginRegisterView({
-  announceError = true,
   appleSsoEnabled = import.meta.env.VITE_APPLE_SSO_ENABLED === 'true',
   email,
   emailReference,
@@ -158,8 +152,9 @@ export default function LoginRegisterView({
         />
 
         {/* always mounted: the inputs' aria-describedby cannot dangle */}
+        {/* AuthForm focuses this, and a focused alert is announced twice */}
         <Alert
-          announce={announceError}
+          announce={false}
           id="auth-form-error"
           ref={errorReference}
           icon="fa-triangle-exclamation"
@@ -209,7 +204,6 @@ export default function LoginRegisterView({
             {googleSsoEnabled && (
               <IconButton
                 variant="elevated"
-                title="Continue with Google"
                 className="w-full py-2.5 rounded-lg"
                 onClick={ignoreWhileLoading(loading, () => {
                   window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/google`;
@@ -227,7 +221,6 @@ export default function LoginRegisterView({
             {appleSsoEnabled && (
               <IconButton
                 variant="elevated"
-                title="Continue with Apple"
                 className="w-full py-2.5 rounded-lg"
                 onClick={ignoreWhileLoading(loading, () => {
                   window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/apple`;
@@ -251,7 +244,7 @@ export default function LoginRegisterView({
         </>
       )}
 
-      <div className="flex flex-col items-center mt-4 text-center transition-opacity duration-200 aria-hidden:opacity-0 aria-hidden:pointer-events-none">
+      <div className="flex flex-col items-center mt-4 text-center transition-opacity duration-200">
         {mode === 'login' && (
           <LinkButton
             onClick={ignoreWhileLoading(loading, onForgotPassword)}

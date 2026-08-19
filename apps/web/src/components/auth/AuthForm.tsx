@@ -27,10 +27,11 @@ function authDocumentTitle(
  *
  * The sr-only live region is the announcement channel for an error that
  * arrived on the URL, which is how a refused OAuth callback lands here.
- * The visible Alert paints the same text with its own live semantics off,
- * so exactly one region announces it; submit errors take the opposite
- * split. A second, polite region names the wait a submit opens, and
- * `useBusyAnnouncement` owns when it speaks and when it empties.
+ * The visible Alert paints every error and announces none: a submit error
+ * is spoken by the focus move onto it, which is the one channel that also
+ * puts the user a Tab from retrying. A second, polite region names the
+ * wait a submit opens, and `useBusyAnnouncement` owns when it speaks and
+ * when it empties.
  *
  * The pending notice comes first because a standing one paints in the
  * flow, and a message explaining why this form is on screen has to be
@@ -38,7 +39,6 @@ function authDocumentTitle(
  */
 export default function AuthForm() {
   const {
-    announceError,
     email,
     emailReference,
     error,
@@ -110,7 +110,6 @@ export default function AuthForm() {
   } else {
     view = (
       <LoginRegisterView
-        announceError={announceError}
         email={email}
         emailReference={emailReference}
         error={error}

@@ -73,6 +73,15 @@ describe('PrimaryButton', () => {
     expect(fills[refused].token).toBe('--mount-highlight');
   });
 
+  it('spares a focused refusal the dim, so its outline is not composited', async () => {
+    render(<PrimaryButton aria-disabled>save</PrimaryButton>);
+    const button = screen.getByRole('button', { name: 'save' });
+    const css = await compileClasses(button.className.split(' '));
+    expect(css).toMatch(
+      /\[aria-disabled="true"\].*:not\(:focus-visible\)\s*\{\s*opacity:\s*60%/,
+    );
+  });
+
   it('hidden=true seals AT exposure: disabled, aria-hidden, tabIndex=-1, pointer-events-none', () => {
     render(<PrimaryButton hidden>secret</PrimaryButton>);
     const button = screen.getByRole('button', { hidden: true });

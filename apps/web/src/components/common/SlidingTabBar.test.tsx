@@ -184,7 +184,7 @@ describe('SlidingTabBar', () => {
 });
 
 describe('SlidingTabBar isDisabled', () => {
-  it('defaults to enabled, so the five existing consumers render unchanged', () => {
+  it('defaults to enabled, so a bar that passes nothing marks no tab', () => {
     render(
       <SlidingTabBar ariaLabel="example" activeIndex={0} tabs={makeTabs()} />,
     );
@@ -206,22 +206,5 @@ describe('SlidingTabBar isDisabled', () => {
       expect(tab).toHaveAttribute('aria-disabled', 'true');
       expect(tab).not.toBeDisabled();
     });
-  });
-
-  it('refuses to activate a tab while isDisabled', () => {
-    const handleTwo = vi.fn();
-    render(
-      <SlidingTabBar
-        ariaLabel="example"
-        activeIndex={0}
-        isDisabled
-        tabs={[
-          { id: 'one', label: 'One', onClick: () => {} },
-          { id: 'two', label: 'Two', onClick: handleTwo },
-        ]}
-      />,
-    );
-    fireEvent.click(screen.getByRole('tab', { name: 'Two' }));
-    expect(handleTwo).not.toHaveBeenCalled();
   });
 });

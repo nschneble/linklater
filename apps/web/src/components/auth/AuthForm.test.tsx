@@ -36,7 +36,6 @@ import { useAuthForm } from './useAuthForm';
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 interface MakeHookOverrides {
-  announceError?: boolean;
   error?: string | null;
   errorAnnouncement?: string;
   loading?: boolean;
@@ -59,7 +58,6 @@ function makeHookResult(
     createRef<HTMLInputElement | null>() as RefObject<HTMLInputElement | null>;
 
   return {
-    announceError: overrides.announceError ?? true,
     email: '',
     emailReference,
     error: overrides.error ?? null,
@@ -209,11 +207,7 @@ describe('AuthForm – OAuth arrival-error surface', () => {
 
   it('keeps the announcement region mounted and empty before the announcement fires', () => {
     vi.mocked(useAuthForm).mockReturnValue(
-      makeHookResult({
-        announceError: false,
-        error: ARRIVAL_MESSAGE,
-        errorAnnouncement: '',
-      }),
+      makeHookResult({ error: ARRIVAL_MESSAGE, errorAnnouncement: '' }),
     );
 
     renderAuthForm();
@@ -228,7 +222,6 @@ describe('AuthForm – OAuth arrival-error surface', () => {
   it('announces the arrival error through exactly one live region', () => {
     vi.mocked(useAuthForm).mockReturnValue(
       makeHookResult({
-        announceError: false,
         error: ARRIVAL_MESSAGE,
         errorAnnouncement: ARRIVAL_MESSAGE,
       }),
@@ -253,7 +246,8 @@ describe('AuthForm – OAuth arrival-error surface', () => {
     );
   });
 
-  it('leaves the form Alert announcing submit errors itself', () => {
+  // the focus move onto the Alert is what speaks a submit error
+  it('leaves a submit error to the focus move, with no region holding it', () => {
     vi.mocked(useAuthForm).mockReturnValue(
       makeHookResult({ error: 'Invalid credentials' }),
     );
@@ -261,7 +255,7 @@ describe('AuthForm – OAuth arrival-error surface', () => {
     renderAuthForm();
 
     const painted = screen.getByText('Invalid credentials', { selector: 'p' });
-    expect(painted).toHaveAttribute('role', 'alert');
+    expect(painted).not.toHaveAttribute('role');
     expect(screen.getByTestId('auth-error-announcement').textContent).toBe('');
   });
 });
@@ -423,6 +417,32 @@ describe('AuthForm – busy announcement', () => {
     expect(screen.getByTestId(BUSY_REGION).textContent).not.toBe(
       submit.textContent,
     );
+  });
+
+  // a stale "still going" line beside "that failed" is what a reader hears
+  it('empties as soon as the wait ends, not eight seconds later', () => {
+    vi.mocked(useAuthForm).mockReturnValue(makeHookResult({ loading: true }));
+    const { rerender } = render(
+      <MemoryRouter initialEntries={['/login']}>
+        <AuthForm />
+      </MemoryRouter>,
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(screen.getByTestId(BUSY_REGION).textContent).toBe('Signing you in…');
+
+    vi.mocked(useAuthForm).mockReturnValue(
+      makeHookResult({ error: 'Invalid credentials', loading: false }),
+    );
+    rerender(
+      <MemoryRouter initialEntries={['/login']}>
+        <AuthForm />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByTestId(BUSY_REGION).textContent).toBe('');
   });
 
   it('empties itself on its own timer so the next wait announces again', () => {

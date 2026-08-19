@@ -1,8 +1,8 @@
 /**
- * The deadline every application request runs under. A caller's signal is
- * composed in rather than replaced, so a poller handing its abort down
- * stays cancellable; `AbortSignal.any` would say that in a line but lands
- * above the Safari 16.4 targeted here, and throws outright where absent.
+ * The deadline every application request runs under, one leg at a time. A
+ * caller's signal is composed in, not replaced, so a poller handing its
+ * abort down stays cancellable. `AbortSignal.any` would say that in a line
+ * but throws where absent, and no build target rules it out.
  */
 
 import { ApiError } from './responses';

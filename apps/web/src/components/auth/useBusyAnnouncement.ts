@@ -6,8 +6,7 @@ import type { MfaChallenge, Mode } from './useAuthForm';
 // the wait; the same threshold `useOAuthArrivalError` announces on
 const ANNOUNCE_DELAY_MS = 1000;
 
-// AuthForm survives mode changes, so an uncleared announcement outlives
-// the submit it belongs to
+// backstop for a wait that never reports an outcome; 8s outlasts reading it
 const CLEAR_DELAY_MS = 8000;
 
 /*
@@ -33,10 +32,11 @@ function busyMessage(mode: Mode, mfaChallenge: MfaChallenge | null): string {
  * Empty until the submit has been out for a full second, so a request that
  * resolves inside that window says nothing at all.
  *
- * The clear runs on a timer of its own rather than off `loading` going
- * false: a `catch`/`finally` batches into one commit with `setError`, and
- * two live regions mutating in one batch may coalesce into one
- * announcement.
+ * Emptied when the wait ends, so the line cannot sit beside the error that
+ * ended it. Emptying is silent: `aria-relevant` defaults to `additions
+ * text`, which the spec says excludes the removed text from what is
+ * spoken, so the clear costs no announcement of its own. The timer behind
+ * it stays as the backstop for a wait that never ends.
  *
  * `aria-busy` is deliberately absent everywhere it could sit. It tells a
  * reader to WITHHOLD updates, and the update it would withhold is the
@@ -51,9 +51,9 @@ export function useBusyAnnouncement(
   const message = busyMessage(mode, mfaChallenge);
 
   useEffect(() => {
-    if (!loading) return;
     // a region only announces on a change, so a retry must start empty
     setAnnouncement('');
+    if (!loading) return;
     const timeoutId = window.setTimeout(
       () => setAnnouncement(message),
       ANNOUNCE_DELAY_MS,

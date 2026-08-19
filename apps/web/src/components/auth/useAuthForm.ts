@@ -246,8 +246,6 @@ export function useAuthForm() {
   };
 
   return {
-    // an arrival error has a live region already, a second would race it
-    announceError: !errorFromArrival,
     email,
     emailReference,
     error,

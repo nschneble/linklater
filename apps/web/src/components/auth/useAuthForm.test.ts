@@ -451,6 +451,27 @@ describe('useAuthForm', () => {
 
       expect(apiModule.verifyOtp).toHaveBeenCalledTimes(1);
     });
+
+    // aria-disabled, unlike disabled, does not block an implicit submit
+    it('refuses a submit fired during the magic-link cooldown', async () => {
+      vi.mocked(apiModule.requestMagicLink).mockResolvedValue(undefined);
+
+      const { result } = renderAuthFormHook('/login');
+      act(() => result.current.setEmail(USER_EMAIL));
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        await result.current.handleSubmit(event);
+      });
+      expect(result.current.magicLinkSentJustNow).toBe(true);
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        await result.current.handleSubmit(event);
+      });
+
+      expect(apiModule.requestMagicLink).toHaveBeenCalledTimes(1);
+    });
   });
 
   /*
@@ -1314,26 +1335,16 @@ describe('useAuthForm', () => {
       expect(focusSpy).not.toHaveBeenCalled();
     });
 
-    it('leaves the Alert without a live region while it holds the arrival error', async () => {
-      const { result } = renderAuthFormHook(ARRIVAL_PATH);
-
-      await waitFor(() => {
-        expect(result.current.error).toBe(ARRIVAL_MESSAGE);
-      });
-      expect(result.current.announceError).toBe(false);
-    });
-
     it('announces nothing on a clean arrival (negative control)', async () => {
       const { result } = renderAuthFormHook('/login');
 
       await act(async () => {});
 
       expect(result.current.error).toBeNull();
-      expect(result.current.announceError).toBe(true);
       expect(result.current.errorAnnouncement).toBe('');
     });
 
-    it('gives the Alert back its live region and its focus on the next submit', async () => {
+    it('focuses the Alert on the next submit error, having spared the arrival one', async () => {
       const loginMock = vi
         .fn()
         .mockRejectedValue(new Error('Invalid credentials'));
@@ -1361,14 +1372,13 @@ describe('useAuthForm', () => {
       });
 
       expect(result.current.error).toBe('Invalid credentials');
-      expect(result.current.announceError).toBe(true);
       expect(focusSpy).toHaveBeenCalled();
     });
 
     // the catalog copy and the API's error strings are two vocabularies
     // with nothing keeping them disjoint, and an overlap fails silently:
-    // the Alert drops its role, the focus effect skips it, and the submit
-    // has already dismissed the mirror
+    // the focus effect skips the error, and the submit has already
+    // dismissed the mirror that would otherwise have spoken it
     it('announces a submit error that repeats the arrival copy', async () => {
       const loginMock = vi.fn().mockRejectedValue(new Error(ARRIVAL_MESSAGE));
       vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
@@ -1395,9 +1405,8 @@ describe('useAuthForm', () => {
         await result.current.handleSubmit(event);
       });
 
-      // same string, different channel: the Alert speaks for this one
+      // same string, different channel: focus speaks for this one
       expect(result.current.error).toBe(ARRIVAL_MESSAGE);
-      expect(result.current.announceError).toBe(true);
       expect(focusSpy).toHaveBeenCalled();
     });
 
@@ -1456,8 +1465,6 @@ describe('useAuthForm', () => {
 
         expect(result.current.error).toBe('Invalid credentials');
         expect(result.current.errorAnnouncement).toBe('');
-        // the Alert takes its own live region back for the submit error
-        expect(result.current.announceError).toBe(true);
       });
 
       // a mode change inside the hold window sends focus into the new

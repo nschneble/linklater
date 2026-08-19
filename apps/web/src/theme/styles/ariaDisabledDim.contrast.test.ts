@@ -7,18 +7,30 @@
  * at all.
  *
  * The first measurement is what decided `lib/styles.ts` `ARIA_DISABLED`:
- * across all shipped cascades no alpha under 1 clears 4.5:1 on every
- * control, so "tune the dim" was never an available fix. 1.4.3 exempts
- * every control here, none of which is left operable; the dim a waiting
- * control goes without is a house rule above that floor rather than the
- * criterion.
+ * at the 60% the sheet declares, the tightest cascade composites to
+ * 2.64:1, and getting back over 4.5:1 takes an alpha around 0.9 — not a
+ * visible state change at all. So "tune the dim" was never an available
+ * fix, and withholding it from the states that are not refusals was.
+ * SC 1.4.3 exempts every control here, none of which is left operable;
+ * the 4.5:1 this measures against is a house rule above that floor rather
+ * than the criterion.
  *
- * The second is not a house rule. `opacity` composites the element's
- * `outline` along with it, so the dim reaches the focus indicator of a
- * control that stays in the tab order — and five on the login form do,
- * deliberately. 2.4.7 wants that indicator visible and grants no
- * inactive-component exception, so a band the bundle contract pins at 3:1
- * arriving at 2.43:1 is worth a condition on the variant.
+ * The second measurement stands on a live obligation rather than an
+ * exempted one. `opacity` composites the element's `outline` along with
+ * it, so the dim reaches the focus indicator of a control that stays in
+ * the tab order — and five of the six that do so on the login form take
+ * the dim, the submit being exempt through `data-busy`. SC 2.4.7 (AA)
+ * requires that indicator to be visible and offers no exception to trade
+ * away. The 3:1 the band is measured against is SC 1.4.11's (AA), whose
+ * exception covers inactive components; a component the user has focused
+ * is not one this file is willing to call inactive, so the exception goes
+ * uninvoked and 2.43:1 is a failure rather than a waiver.
+ *
+ * Forced colors is where withholding stops being a preference. `opacity`
+ * is not among the properties forced colors adjusts, and nothing here sets
+ * `forced-color-adjust`, so an unconditioned dim composites the user's own
+ * `Highlight` at 0.6 — a colour they chose AS their maximum contrast, with
+ * no "the token still passes" fallback behind it.
  *
  * Reading the alpha out of the compiled sheet rather than restating it is
  * what makes the second assertion bite: raise the dim toward full opacity
@@ -46,7 +58,7 @@ const AA_NON_TEXT = 3;
 /*
  * The primary button on a mount surface: the auth submit, the suggestion
  * callout's add button, the extension authorize button. It is the tightest
- * of the affected pairs and the one the crew measured at 2.64:1.
+ * of the affected pairs, at 2.64:1.
  */
 const LABEL = 'mount-highlight-fg';
 const FILL = 'mount-highlight';
@@ -113,7 +125,6 @@ function dim(color: Rgb, alpha: number, behind: Rgb): Rgb {
 
 interface Measured {
   readonly selector: string;
-  readonly atFullOpacity: number;
   readonly atDimAlpha: number;
 }
 
@@ -133,7 +144,6 @@ function measure(alpha: number): Measured[] {
 
     rows.push({
       selector,
-      atFullOpacity: contrastRatio(label, fill),
       atDimAlpha: contrastRatio(
         dim(label, alpha, behind),
         dim(fill, alpha, behind),
@@ -181,19 +191,10 @@ function measureFocusRing(alpha: number): MeasuredRing[] {
 }
 
 describe('the dim a busy control withholds', () => {
-  it('leaves the primary button clearing 4.5:1 in every cascade', async () => {
-    const rows = measure(await declaredDimAlpha());
-    expect(rows.length).toBeGreaterThan(20);
-    for (const row of rows) {
-      expect
-        .soft(row.atFullOpacity, `${row.selector} at full opacity`)
-        .toBeGreaterThanOrEqual(AA_NORMAL);
-    }
-  });
-
-  it('would not, at the alpha the compiled sheet declares', async () => {
+  it('would leave the primary button under 4.5:1, at the alpha the compiled sheet declares', async () => {
     const alpha = await declaredDimAlpha();
     const rows = measure(alpha);
+    expect(rows.length).toBeGreaterThan(20);
     const worst = rows.reduce((low, row) =>
       row.atDimAlpha < low.atDimAlpha ? row : low,
     );

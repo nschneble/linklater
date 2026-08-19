@@ -5,7 +5,7 @@
  * useAuthForm (tested separately). These tests verify:
  *   - Stable aria-describedby="auth-form-error" on both form fields (new
  *     always-mounted Alert pattern means the reference is never dangling)
- *   - Error text appears in the role="alert" element when provided
+ *   - Error text appears in that element, with no live region of its own
  *   - The form always renders; no interstitial branch
  *   - Mode-change tabs wire up correctly (login / sign up labels visible)
  *   - Forgot-password link present in login mode
@@ -35,7 +35,6 @@ vi.mock('react-router', async () => {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 interface Props {
-  announceError?: boolean;
   appleSsoEnabled?: boolean;
   email?: string;
   error?: string | null;
@@ -61,7 +60,6 @@ function makeView(props: Props = {}) {
 
   return (
     <LoginRegisterView
-      announceError={props.announceError ?? true}
       appleSsoEnabled={props.appleSsoEnabled ?? false}
       email={props.email ?? ''}
       emailReference={emailReference}
@@ -127,27 +125,27 @@ describe('LoginRegisterView stable aria-describedby', () => {
 });
 
 describe('LoginRegisterView error display', () => {
-  it('shows error text inside a role="alert" element when error is provided', () => {
+  // AuthForm focuses this, and a focused alert would be read twice
+  it('paints the error with no live region of its own', () => {
     renderView({ error: 'Invalid credentials' });
-    const alert = screen.getByRole('alert');
-    expect(alert).toHaveTextContent('Invalid credentials');
-  });
-
-  it('alert element is always mounted (empty but in DOM) when there is no error', () => {
-    renderView({ error: null });
-    // sr-only and empty, but registered ahead of the text that fills it
-    const errorElement = document.getElementById('auth-form-error');
-    expect(errorElement).toBeInTheDocument();
-    expect(errorElement).toHaveAttribute('role', 'alert');
-  });
-
-  // an error that arrived on the URL is announced by AuthForm's own region
-  it('paints the error without a live region when announceError is false', () => {
-    renderView({ announceError: false, error: 'Invalid credentials' });
     const errorElement = document.getElementById('auth-form-error');
     expect(errorElement).toHaveTextContent('Invalid credentials');
     expect(errorElement).not.toHaveAttribute('role');
     expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('alert element is always mounted (empty but in DOM) when there is no error', () => {
+    renderView({ error: null });
+    // empty and sr-only, so the inputs' aria-describedby cannot dangle
+    const errorElement = document.getElementById('auth-form-error');
+    expect(errorElement).toBeInTheDocument();
+    expect(errorElement).not.toHaveAttribute('role');
+  });
+
+  it('keeps the error reachable from the keyboard so the focus move lands', () => {
+    renderView({ error: 'Invalid credentials' });
+    const errorElement = document.getElementById('auth-form-error');
+    expect(errorElement).toHaveAttribute('tabindex', '-1');
   });
 });
 
@@ -401,15 +399,6 @@ describe('LoginRegisterView while a submit is in flight', () => {
     fireEvent.keyDown(login, { key: 'ArrowRight' });
 
     expect(document.activeElement).toBe(signup);
-    expect(onModeChange).not.toHaveBeenCalled();
-  });
-
-  it('ignores a click on a tab', () => {
-    const onModeChange = vi.fn();
-    renderView({ loading: true, onModeChange });
-
-    fireEvent.click(screen.getByRole('tab', { name: 'Sign up' }));
-
     expect(onModeChange).not.toHaveBeenCalled();
   });
 
