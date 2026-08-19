@@ -198,6 +198,7 @@ fi
 
 # ── LAN hostname (remote mode) ────────────────────────────────────────────────
 REMOTE_URL=""
+LAN_HOSTNAME=""
 if [[ "$REMOTE" == true ]]; then
   LAN_HOSTNAME=$(scutil --get LocalHostName 2>/dev/null || hostname -s 2>/dev/null || true)
   if [[ -n "$LAN_HOSTNAME" ]]; then
@@ -225,6 +226,9 @@ OLD_STTY=$(stty -g </dev/tty)
 CLEANUP_POLL_SECONDS=0.1
 CLEANUP_POLL_LIMIT=50
 CLEANUP_FEEDBACK_POLL=20
+CLEANUP_ESCALATE=false
+DESCENDANT_PIDS=""
+STOP_ROUTE=""
 
 hide_cursor() { printf '\033[?25l'; }
 show_cursor()  { printf '\033[?25h'; }
@@ -239,8 +243,35 @@ any_service_starting() {
      "$MAILPIT_STATE" == "starting" || "$TUNNEL_STATE" == "starting" ]]
 }
 
+_time_out_service() {
+  local state_name=$1 log=$2 waited_for=$3 view=$4
+  [[ "${!state_name}" != "starting" ]] && return
+  printf 'Gave up after %s seconds waiting for: %s\n' \
+    "$STARTING_TIMEOUT_SECONDS" "$waited_for" >>"$log"
+  eval "$state_name=error"
+  VIEW="$view"
+}
+
+_escalate() {
+  CLEANUP_ESCALATE=true
+}
+
+_collect_descendants() {
+  local pid child
+  for pid in "$@"; do
+    [[ -z "$pid" ]] && continue
+    for child in $(pgrep -P "$pid" 2>/dev/null); do
+      _collect_descendants "$child"
+      DESCENDANT_PIDS="$DESCENDANT_PIDS $child"
+    done
+  done
+}
+
 _kill_children() {
   local signal=$1 pid
+  for pid in $DESCENDANT_PIDS; do
+    kill "$signal" "$pid" 2>/dev/null || true
+  done
   for pid in "$KEY_READER_PID" "$API_PID" "$WEB_PID" "$MAILPIT_PID" "$TUNNEL_PID"; do
     if [[ -n "$pid" ]]; then
       kill "$signal" "$pid" 2>/dev/null || true
@@ -250,6 +281,9 @@ _kill_children() {
 
 _children_alive() {
   local pid
+  for pid in $DESCENDANT_PIDS; do
+    kill -0 "$pid" 2>/dev/null && return 0
+  done
   for pid in "$KEY_READER_PID" "$API_PID" "$WEB_PID" "$MAILPIT_PID" "$TUNNEL_PID"; do
     if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
       return 0
@@ -261,8 +295,9 @@ _children_alive() {
 _await_children() {
   local polls=0
   while _children_alive; do
+    # the sleep return misses a signal landing between polls, hence the flag
+    [[ "$CLEANUP_ESCALATE" == true ]] && return 1
     (( polls >= CLEANUP_POLL_LIMIT )) && return 1
-    # a second stop key interrupts this sleep, escalating to SIGKILL
     sleep "$CLEANUP_POLL_SECONDS" || return 1
     polls=$(( polls + 1 ))
     (( polls == CLEANUP_FEEDBACK_POLL )) && printf '  Still stopping the services.\n' >&2
@@ -283,20 +318,23 @@ _quit() {
 
 _cleanup() {
   local route=$1 status=$2
-  trap '' EXIT TERM HUP
-  trap ':' INT QUIT
+  trap '' EXIT
+  trap '_escalate' INT QUIT TERM HUP
   if [[ "$route" == interrupt ]]; then
     printf '\n  Stopping services. Press Control+C again to stop them immediately.\n' >&2
   else
     printf '\n  Stopping services. Press Control+C to stop them immediately.\n' >&2
   fi
+  # snapshot first: a reparented grandchild is invisible to pgrep -P
+  _collect_descendants "$KEY_READER_PID" "$API_PID" "$WEB_PID" "$MAILPIT_PID" "$TUNNEL_PID"
   _kill_children -TERM
   _await_children || _kill_children -KILL
   _quit "$status"
 }
 trap '_cleanup quit $?' EXIT
-trap '_cleanup interrupt 130' INT
-trap '_cleanup signal 130' TERM HUP QUIT
+# the loop calls _cleanup: bash defers a signal while its own handler runs
+trap 'STOP_ROUTE=interrupt' INT
+trap 'STOP_ROUTE=signal' TERM HUP QUIT
 
 # ── Terminal setup ────────────────────────────────────────────────────────────
 stty -echo -icanon </dev/tty
@@ -644,6 +682,8 @@ fi
 
 # ── Live update loop ──────────────────────────────────────────────────────────
 DIRTY=true  # always draw on first tick
+STARTING_TIMEOUT_SECONDS=90
+LAUNCH_SECONDS=$SECONDS
 
 while true; do
   PREV_API_STATE="$API_STATE"
@@ -674,6 +714,8 @@ while true; do
     esac
   done
 
+  [[ -n "$STOP_ROUTE" ]] && _cleanup "$STOP_ROUTE" 130
+
   # Detect ready signals
   if [[ "$API_STATE" == "starting" ]] && \
      grep -q "Nest application successfully started" "$API_LOG" 2>/dev/null; then
@@ -689,6 +731,10 @@ while true; do
     if [[ -n "$EXTRACTED" ]]; then
       WEB_URL="${EXTRACTED%/}"
       WEB_STATE="ready"
+      WEB_PORT="${WEB_URL##*:}"
+      if [[ -n "$LAN_HOSTNAME" && "$WEB_PORT" =~ ^[0-9]+$ ]]; then
+        REMOTE_URL="https://${LAN_HOSTNAME}.local:${WEB_PORT}"
+      fi
     fi
   fi
 
@@ -705,6 +751,13 @@ while true; do
       TUNNEL_URL="$EXTRACTED"
       TUNNEL_STATE="ready"
     fi
+  fi
+
+  if any_service_starting && (( SECONDS - LAUNCH_SECONDS >= STARTING_TIMEOUT_SECONDS )); then
+    _time_out_service API_STATE "$API_LOG" 'Nest application successfully started' api
+    _time_out_service WEB_STATE "$WEB_LOG" 'the Vite Local: address' web
+    _time_out_service MAILPIT_STATE "$MAILPIT_LOG" 'Mailpit starting on' mailpit
+    _time_out_service TUNNEL_STATE "$TUNNEL_LOG" 'a trycloudflare.com address' tunnel
   fi
 
   # Detect crashes – process death or fatal error in log
