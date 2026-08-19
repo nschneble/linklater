@@ -14,6 +14,10 @@
 
 - `bin/migrate --reset` asks before it wipes, and refuses when no terminal can be asked
 
+### Removed
+
+- `bin/flintest --update`, which ran `npm update` ahead of the gate and could un-pin a security override
+
 ### Fixed
 
 - A rotation the server commits but never delivers ends the session
