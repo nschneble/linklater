@@ -30,6 +30,7 @@ jobs:
          contains(github.event.comment.body, '[x] <!-- tuffgal-approve-box'))
       )
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: write # commit baselines to the PR head branch
       pull-requests: write # react + reply on the comment

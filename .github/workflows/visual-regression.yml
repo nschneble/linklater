@@ -14,6 +14,7 @@ permissions:
 jobs:
   visual-regression:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
 
     services:
       postgres:
@@ -52,10 +53,12 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y libnss3-tools
           # Pin to a GitHub release asset instead of the dl.filippo.io "latest"
-          # redirector, which 500'd and wedged main on 2026-07-16. Retry to ride
-          # out transient CDN blips.
+          # redirector, which 500'd and wedged main on 2026-07-16. Retry rides
+          # out a transient CDN blip; the timeouts catch a stalled transfer,
+          # which retry alone does not.
           MKCERT_VERSION="v1.4.4"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 \
+            --connect-timeout 10 --max-time 60 \
             "https://github.com/FiloSottile/mkcert/releases/download/${MKCERT_VERSION}/mkcert-${MKCERT_VERSION}-linux-amd64" \
             -o mkcert
           chmod +x mkcert
