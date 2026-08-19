@@ -13,6 +13,8 @@
 ### Changed
 
 - `bin/migrate --reset` asks before it wipes, and refuses when no terminal can be asked
+- OAuth callback URLs come from `API_URL` and the route, so set that one and drop `APPLE_CALLBACK_URL`, `GOOGLE_CALLBACK_URL` and `GOOGLE_LINK_CALLBACK_URL`
+- The `bin/` commands take the standard flags, report standard exit codes, and explain what they are doing
 
 ### Fixed
 
