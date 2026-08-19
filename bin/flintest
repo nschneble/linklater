@@ -60,6 +60,8 @@ NO_INPUT=false
 NO_PAGER=false
 USE_COLOR=true
 
+KNOWN_FLAGS=(--tuffgal --no-input --no-pager --no-color --version --help -h)
+
 for argument in "$@"; do
   case "$argument" in
     --tuffgal)
@@ -78,7 +80,7 @@ for argument in "$@"; do
       print_version
       ;;
     *)
-      unknown_flag "$argument"
+      unknown_flag "$argument" "${KNOWN_FLAGS[@]}"
       ;;
   esac
 done
