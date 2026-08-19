@@ -65,6 +65,24 @@ jobs:
         working-directory: apps/api
         run: npx prisma migrate deploy
 
+      - name: Install ShellCheck
+        run: |
+          # `npm run lint` chains lint:shell, which stops when shellcheck is
+          # missing. The runner image happens to ship one today, so install it
+          # here rather than inherit whatever an image bump leaves behind.
+          # Pinned to the version developers run locally: 0.9.0 reports an
+          # indirectly invoked function as SC2317 on every command in its body
+          # and 0.11.0 reports it once as SC2329, so the two disagree about the
+          # directives in bin/. Same release-asset download as actionlint below.
+          SHELLCHECK_VERSION="0.11.0"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 \
+            "https://github.com/koalaman/shellcheck/releases/download/v${SHELLCHECK_VERSION}/shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz" \
+            -o shellcheck.tar.xz
+          tar -xJf shellcheck.tar.xz "shellcheck-v${SHELLCHECK_VERSION}/shellcheck"
+          sudo install -m 0755 "shellcheck-v${SHELLCHECK_VERSION}/shellcheck" /usr/local/bin/shellcheck
+          rm -rf shellcheck.tar.xz "shellcheck-v${SHELLCHECK_VERSION}"
+          shellcheck --version
+
       - name: Lint
         run: npm run lint
 

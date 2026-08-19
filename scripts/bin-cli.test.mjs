@@ -24,8 +24,8 @@ import {
   accessSync,
   constants,
   mkdtempSync,
-  readFileSync,
   readdirSync,
+  readFileSync,
   rmSync,
   writeFileSync,
 } from 'node:fs';
@@ -38,6 +38,7 @@ import { tmpdir } from 'node:os';
 const repoRoot = resolve(import.meta.dirname, '..');
 const shimDirectory = join(import.meta.dirname, 'bin-cli-shims');
 const captureRoot = mkdtempSync(join(tmpdir(), 'linklater-bin-cli-'));
+// eslint-disable-next-line no-control-regex -- deliberate ANSI escape
 const escapeSequence = /\x1b\[/;
 
 const baseEnvironment = { ...process.env };

@@ -14,9 +14,9 @@
  */
 
 import { describe, it } from 'node:test';
+import rule from './no-comment-block-in-body.mjs';
 import { RuleTester } from 'eslint';
 import tseslint from 'typescript-eslint';
-import rule from './no-comment-block-in-body.mjs';
 
 RuleTester.describe = describe;
 RuleTester.it = it;
