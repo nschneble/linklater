@@ -36,7 +36,7 @@ npm run dev                                       # Start development server
 npm run format                                    # Format code using Prettier
 npm run lint                                      # Lint code for consistent style (includes lint:shell)
 npm run lint:migrations                           # Lint migrations using Squawk
-npm run lint:shell                                # Lint bin/ using ShellCheck
+npm run lint:shell                                # Lint every shell file in bin/ + scripts/ using ShellCheck
 npm run lint --workspace @linklater/web           # Lint front-end only
 npm run lint --workspace @linklater/api           # Lint back-end only
 npm run typecheck                                 # Type-check back-end (front-end: use build)
@@ -49,7 +49,8 @@ npm run test apps/web/src/path/to/file.test.tsx   # Run a single front-end test 
 npm run test --workspace @linklater/api           # Test back-end only
 npm run test apps/api/src/path/to/file.spec.ts    # Run a single back-end test file
 node --test 'scripts/**/*.test.mjs'               # Run the bin/ command tests on their own
-npm run test:cov                                  # Coverage for api + web ONLY, no root lane
+npm run test:root                                 # Run the root node --test lane on its own
+npm run test:cov                                  # Coverage for api + web, then the root lane uninstrumented
 
 # Tuffgal (v2) visual regression tests
 npm run dev:test                                  # Run dev server in test mode (TESTING_UI=1)
@@ -303,7 +304,8 @@ import { useEffect, useState } from 'react';
 
 ## Gotchas
 
-- **Testing is split in three, coverage in two**: `npm run test` runs the api suite, the web suite, then `node --test` over `eslint-rules/**/*.test.mjs` + `scripts/**/*.test.mjs`, which is where the `bin/` command tests live. `npm run test:cov` chains the two workspaces only, so a green coverage run has not touched `bin/` at all.
+- **Testing is split in three, coverage in two**: `npm run test` runs the api suite, the web suite, then the `test:root` lane, which is `node --test` over `eslint-rules/**/*.test.mjs` + `scripts/**/*.test.mjs` and is where the `bin/` command tests live. `npm run test:cov` chains the same three, but only the two workspaces are instrumented; the root lane runs its tests without a coverage report, since nothing gates on one.
+- **Root `.mjs` files are linted and formatted by nothing**: `lint` and `format` are workspace-scoped to `apps/api` + `apps/web`, so the 19 `.mjs` files under `scripts/` and `eslint-rules/` are covered by neither. Measured 2026-08-19 against a candidate root flat config: 11 ESLint errors (9 autofixable import ordering, plus one comment run in `import-statement-order.mjs` and one deliberate control-character regex in `bin-cli.test.mjs`) and 1 Prettier diff, `scripts/bump-version.mjs`. Wiring the config in needs those fixed first, as its own change.
 - **Front-end type checking is split in two**: `npm run build` runs `tsc -b` over `src` (the app config excludes test files), and `npm run typecheck:test --workspace @linklater/web` covers the tests. The root `npm run typecheck` chains the back-end and that second one, so validate front-end source with `npm run build` and everything else with `npm run typecheck`.
 - **ESM Jest on the backend**: API test runner uses `--experimental-vm-modules`. No mock `bcryptjs` — use real low-round hashes (`bcrypt.hash('password', 1)`) to avoid ESM interop issues.
 - **Prisma `P2025` in tests**: Prisma throws typed error class, not plain object. Mock with `Object.assign(new Error('...'), { code: 'P2025' })` so `instanceof` checks work correctly.

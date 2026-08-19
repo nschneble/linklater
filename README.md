@@ -188,7 +188,7 @@ Linklater uses `concurrently` to run NestJS on port 3000 and Vite on port 5173. 
 
 ### Linting, tests, and CI
 
-Both the front and back-end use ESLint and Prettier. The shell scripts in `bin/` use ShellCheck. Vitest is used to test the front-end and Jest is used to test the back-end. The commands in `bin/` and the local ESLint rules sit outside both workspaces, so their tests run on Node's own test runner as a third step of `npm run test`. GitHub Actions lint, type-check, and test on pushes and PRs to `main`.
+Both the front and back-end use ESLint and Prettier. The shell scripts in `bin/` and `scripts/` use ShellCheck. Vitest is used to test the front-end and Jest is used to test the back-end. The commands in `bin/` and the local ESLint rules sit outside both workspaces, so their tests run on Node's own test runner as a third step of `npm run test`. GitHub Actions lint, type-check, and test on pushes and PRs to `main`.
 
 ```bash
 # cd /path/to/your/repo
@@ -198,7 +198,7 @@ npm run lint
 npm run typecheck
 npm run test
 
-# lint bin/ on its own
+# lint the shell scripts on their own
 npm run lint:shell
 
 # -OR-
@@ -217,7 +217,7 @@ bin/flintest --no-pager
 bin/flintest --no-input
 ```
 
-`npm run lint:shell` runs ShellCheck over every file under `bin/`. `npm run lint` runs it last, after both workspaces, so it also covers CI and `bin/flintest`. It needs ShellCheck on your `PATH`; without it the command stops and names what to install.
+`npm run lint:shell` runs ShellCheck over every shell file under `bin/` and `scripts/`, which includes the production backup script and the test shims. Files are picked by their shebang rather than by folder, so the `.mjs` files sitting alongside them are left alone and a new shell script is covered the day it lands. `npm run lint` runs it last, after both workspaces, so it also covers CI and `bin/flintest`. It needs ShellCheck on your `PATH`; without it the command stops and names what to install. CI installs the same version this repo is developed against, since older releases report an indirectly invoked function differently.
 
 `bin/flintest --no-pager` prints failure output in full instead of paging it through `less`. `--no-input` skips the prompt that a `--tuffgal` run ends with.
 
