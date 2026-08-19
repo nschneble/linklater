@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# stands in for cloudflared so no test opens a tunnel to the public internet
+
+set -uo pipefail
+
+: "${BIN_TEST_SHIM_DIR:?}" "${BIN_TEST_CAPTURE:?}"
+
+# shellcheck source=record.sh disable=SC1091
+. "$BIN_TEST_SHIM_DIR/record.sh"
+
+record_invocation cloudflared "$@"
