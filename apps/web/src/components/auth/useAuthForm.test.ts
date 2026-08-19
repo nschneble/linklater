@@ -353,6 +353,106 @@ describe('useAuthForm', () => {
     });
   });
 
+  describe('re-entrancy while a submit is in flight', () => {
+    /** A promise that never settles, standing in for a request in flight. */
+    function neverSettles() {
+      return new Promise<never>(() => {});
+    }
+
+    // a captured handler holds a stale `loading`, so only a ref refuses
+    it('refuses a second call on a handler captured before the first submit', async () => {
+      const loginMock = vi.fn().mockImplementation(neverSettles);
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+
+      const { result } = renderAuthFormHook('/login');
+      act(() => {
+        result.current.setEmail(USER_EMAIL);
+        result.current.setPassword(USER_PASSWORD);
+      });
+
+      const capturedSubmit = result.current.handleSubmit;
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        void capturedSubmit(event);
+        void capturedSubmit(event);
+      });
+
+      expect(loginMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('refuses a second submit fired while the first is still in flight', async () => {
+      const loginMock = vi.fn().mockImplementation(neverSettles);
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+
+      const { result } = renderAuthFormHook('/login');
+      act(() => {
+        result.current.setEmail(USER_EMAIL);
+        result.current.setPassword(USER_PASSWORD);
+      });
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        void result.current.handleSubmit(event);
+        void result.current.handleSubmit(event);
+      });
+
+      expect(loginMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('releases the guard so the next submit after a failure gets through', async () => {
+      const loginMock = vi.fn().mockRejectedValue(new Error('Nope'));
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+
+      const { result } = renderAuthFormHook('/login');
+      act(() => {
+        result.current.setEmail(USER_EMAIL);
+        result.current.setPassword(USER_PASSWORD);
+      });
+
+      const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+      await act(async () => {
+        await result.current.handleSubmit(event);
+      });
+      await act(async () => {
+        await result.current.handleSubmit(event);
+      });
+
+      expect(loginMock).toHaveBeenCalledTimes(2);
+    });
+
+    it('refuses a second handleVerifyOtp while the first is still in flight', async () => {
+      const loginMock = vi.fn().mockResolvedValue({
+        mfaToken: 'tok-abc',
+        mfaMethod: 'totp',
+      });
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+      vi.mocked(apiModule.verifyOtp).mockImplementation(neverSettles);
+
+      const { result } = renderAuthFormHook('/login');
+      act(() => {
+        result.current.setEmail(USER_EMAIL);
+        result.current.setPassword(USER_PASSWORD);
+      });
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        await result.current.handleSubmit(event);
+      });
+      expect(result.current.mfaChallenge).toBe('totp');
+
+      act(() => result.current.setMfaCode('123456'));
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        void result.current.handleVerifyOtp(event);
+        void result.current.handleVerifyOtp(event);
+      });
+
+      expect(apiModule.verifyOtp).toHaveBeenCalledTimes(1);
+    });
+  });
+
   // magic-link success frees loading at once but holds the 5000ms toast window so the button stays disabled
   describe('WARN-4 – magic-link success-state hold', () => {
     beforeEach(() => {

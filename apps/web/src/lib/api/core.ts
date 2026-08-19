@@ -35,6 +35,7 @@ export {
 import { API_BASE_URL, getStoredToken } from './storage';
 import { ApiError, parseError, parseResponse } from './responses';
 import { attemptSpeculativeRefresh, attemptTokenRefresh } from './tokenRefresh';
+import { fetchWithinDeadline } from './deadline';
 import { readTokenClaims } from './jwt';
 
 /**
@@ -125,7 +126,7 @@ export async function apiFetch<T>(
 
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetchWithinDeadline(`${API_BASE_URL}${path}`, {
     ...options,
     headers,
   });
@@ -143,10 +144,10 @@ export async function apiFetch<T>(
           ...headers,
           Authorization: `Bearer ${getStoredToken()}`,
         };
-        const retryResponse = await fetch(`${API_BASE_URL}${path}`, {
-          ...options,
-          headers: retryHeaders,
-        });
+        const retryResponse = await fetchWithinDeadline(
+          `${API_BASE_URL}${path}`,
+          { ...options, headers: retryHeaders },
+        );
         if (retryResponse.ok) {
           return parseResponse<T>(retryResponse);
         }

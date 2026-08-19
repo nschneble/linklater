@@ -41,6 +41,8 @@ export function useAuthForm() {
 
   const errorReference = useRef<HTMLParagraphElement>(null);
   const mfaInputReference = useRef<HTMLInputElement>(null);
+  // MfaView resubmits from an effect, where a `loading` read would be stale
+  const submittingReference = useRef(false);
 
   const [email, setEmail] = useState('');
   const { error, errorFromArrival, setError } = useFormError();
@@ -121,6 +123,8 @@ export function useAuthForm() {
 
   const handleSubmit = async (formEvent: FormEvent) => {
     formEvent.preventDefault();
+    if (submittingReference.current) return;
+    submittingReference.current = true;
 
     // two assertive regions would clash
     if (notice !== null && notice.variant === 'error') {
@@ -177,13 +181,16 @@ export function useAuthForm() {
         ),
       );
     } finally {
+      submittingReference.current = false;
       setLoading(false);
     }
   };
 
   const handleVerifyOtp = async (formEvent: FormEvent) => {
     formEvent.preventDefault();
+    if (submittingReference.current) return;
     if (!mfaToken || !mfaChallenge) return;
+    submittingReference.current = true;
     setError(null);
     setLoading(true);
     try {
@@ -195,6 +202,7 @@ export function useAuthForm() {
       setError(capitalizeFirst(getErrorMessage(caught, 'Invalid code')));
       setMfaCode('');
     } finally {
+      submittingReference.current = false;
       setLoading(false);
     }
   };
