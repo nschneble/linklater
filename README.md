@@ -142,7 +142,7 @@ bin/migrate --no-color
 
 `bin/migrate --reset` wipes the database, so it asks you to type `reset` before it does anything. Any other answer cancels and leaves the database untouched. When there is no terminal to ask on, which is the case in CI, it refuses and exits 66 instead of wiping. Redirecting or piping the output does not count: it still asks on the terminal. `--force` answers the confirmation up front and is how a script gets through. `--no-input` turns the prompt into that same refusal.
 
-`bin/migrate` exits 64 on an unknown flag, 66 on the refusal, and 130 when you answer the confirmation with anything but `reset`.
+`bin/migrate` exits 64 on an unknown flag, 66 on the refusal, and 130 when you answer the confirmation with anything but `reset`. All three `bin/` commands name the closest flag they know when what you typed is a character or two away from a real one.
 
 Run `bin/migrate --help` for the full list of options.
 
@@ -168,19 +168,25 @@ bin/dev --no-color
 bin/dev --no-input
 ```
 
-The TUI keys are `0` for status, `1` for API logs, `2` for web logs, `3` for Mailpit logs when Mailpit is installed, `4` for tunnel logs under `--public` when `cloudflared` is installed, and `q` to quit.
+The TUI keys are `0` for status, `1` for API logs, `2` for web logs, `3` for Mailpit logs when Mailpit is installed, `4` for tunnel logs under `--public` when `cloudflared` is installed, and `q` to quit. Control+C and Control+backslash quit too, and pressing Control+C again while the servers are stopping stops them immediately. Quitting stops everything the TUI started, including the processes those servers spawned.
+
+In a log view, `u` and `d` scroll by a screen. A position line above the output reads `lines 41-60 of 137`, and gains `, top`, `, end` or `, all` when you can see an edge. The view keeps up with new output while it sits at the end, and holds still while you are scrolled back.
+
+Logs are kept after the run. Each run gets its own folder under the system temp directory, `$TMPDIR/linklater-dev/<timestamp>-<pid>/`, readable only by you, holding `api.log`, `web.log`, `mailpit.log` and `tunnel.log`. The path prints as the servers stop, so a crash is still there to read once the view is gone. The five newest runs are kept, counting the one currently running, and older ones are deleted at startup. The fallback below writes no logs at all.
+
+A service that has not reported ready within 90 seconds turns red instead of spinning forever, and its log says what the TUI gave up waiting for. The tunnel gets its own 90 seconds, counted from when it starts, which is after the web server is up.
 
 `bin/dev` runs `npm run dev` instead of the TUI when output is redirected, when `TERM` is `dumb` or unset, when there is no controlling terminal, or when you pass `--no-input`. It says which one applied. That fallback starts the API and web servers and nothing else: no Mailpit, no stale port check, and no tunnel or LAN access even if you passed `--public` or `--remote`.
 
-`bin/dev` exits 64 on an unknown flag, 0 when you quit a healthy run with `q`, 1 when a service errored, and 130 when you stop it with Control+C.
+`bin/dev` exits 64 on an unknown flag, 0 when you quit a healthy run with `q`, and 130 when you stop a healthy run with Control+C or Control+backslash. A run where any service errored exits 1 however you stop it, so Control+C on a run with a failed service exits 1 and not 130. Those codes describe the TUI. On the fallback the exit code is whatever `npm run dev` returned.
 
-Linklater uses `concurrently` to run NestJS on port 3000 and Vite on port 5173. **Open [https://localhost:5173](https://localhost:5173) in your web browser and you're good to go!**
+Linklater uses `concurrently` to run NestJS on port 3000 and Vite on port 5173. Vite picks a different port when 5173 is taken, and the status view, the LAN URL and the tunnel all follow the port it actually bound. **Open [https://localhost:5173](https://localhost:5173) in your web browser and you're good to go!**
 
 ![dev](screenshots/dev.jpg)
 
 ### Linting, tests, and CI
 
-Both the front and back-end use ESLint and Prettier. The shell scripts in `bin/` use ShellCheck. Vitest is used to test the front-end and Jest is used to test the back-end. GitHub Actions lint, type-check, and test on pushes and PRs to `main`.
+Both the front and back-end use ESLint and Prettier. The shell scripts in `bin/` use ShellCheck. Vitest is used to test the front-end and Jest is used to test the back-end. The commands in `bin/` and the local ESLint rules sit outside both workspaces, so their tests run on Node's own test runner as a third step of `npm run test`. GitHub Actions lint, type-check, and test on pushes and PRs to `main`.
 
 ```bash
 # cd /path/to/your/repo
@@ -195,11 +201,10 @@ npm run lint:shell
 
 # -OR-
 
-# install, format, lint, type-check, test, and build in one TUI
+# run the whole quality gate in one TUI
 bin/flintest
 bin/flintest --help
 bin/flintest --version
-bin/flintest --update
 
 # run the local visual regression check instead of the default chain
 bin/flintest --tuffgal
@@ -214,7 +219,7 @@ bin/flintest --no-input
 
 `bin/flintest --no-pager` prints failure output in full instead of paging it through `less`. `--no-input` skips the prompt that a `--tuffgal` run ends with.
 
-`bin/flintest` exits 64 on an unknown flag, 1 at the first step that fails, and 130 when you stop it with Control+C.
+`bin/flintest` exits 64 on an unknown flag, 1 at the first step that fails, and 130 when you stop it with Control+C. Control+C while failure output is open in the pager leaves the pager rather than the run: the exit code stays the 1 the failed step earned, and the line naming the step still prints.
 
 #### Visual regression tests
 

@@ -24,6 +24,10 @@
 - The boot screen appears on boots too fast to need explaining
 - The boot text fades under the contrast floor at the bottom of its pulse
 
+### Removed
+
+- `bin/flintest --update`, which ran `npm update` and could un-pin security overrides
+
 ## [1.5.0] - 2026-08-02
 
 ### Added

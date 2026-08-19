@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# stands in for lsof so no test can see, or free, a real listening port
+
+set -uo pipefail
+
+: "${BIN_TEST_SHIM_DIR:?}" "${BIN_TEST_CAPTURE:?}"
+
+# shellcheck source=record.sh disable=SC1091
+. "$BIN_TEST_SHIM_DIR/record.sh"
+
+record_invocation lsof "$@"
+exit 1

@@ -43,12 +43,13 @@ npm run typecheck                                 # Type-check back-end (front-e
 npm run typecheck --workspace @linklater/api      # Type-check back-end only
 
 # Testing
-npm run test                                      # Run all tests
+npm run test                                      # Run all tests: api, web + the root node --test lane
 npm run test --workspace @linklater/web           # Test front-end only
 npm run test apps/web/src/path/to/file.test.tsx   # Run a single front-end test file
 npm run test --workspace @linklater/api           # Test back-end only
 npm run test apps/api/src/path/to/file.spec.ts    # Run a single back-end test file
-npm run test:cov                                  # Run all tests with code coverage
+node --test 'scripts/**/*.test.mjs'               # Run the bin/ command tests on their own
+npm run test:cov                                  # Coverage for api + web ONLY, no root lane
 
 # Tuffgal (v2) visual regression tests
 npm run dev:test                                  # Run dev server in test mode (TESTING_UI=1)
@@ -302,6 +303,7 @@ import { useEffect, useState } from 'react';
 
 ## Gotchas
 
+- **Testing is split in three, coverage in two**: `npm run test` runs the api suite, the web suite, then `node --test` over `eslint-rules/**/*.test.mjs` + `scripts/**/*.test.mjs`, which is where the `bin/` command tests live. `npm run test:cov` chains the two workspaces only, so a green coverage run has not touched `bin/` at all.
 - **Front-end type checking is split in two**: `npm run build` runs `tsc -b` over `src` (the app config excludes test files), and `npm run typecheck:test --workspace @linklater/web` covers the tests. The root `npm run typecheck` chains the back-end and that second one, so validate front-end source with `npm run build` and everything else with `npm run typecheck`.
 - **ESM Jest on the backend**: API test runner uses `--experimental-vm-modules`. No mock `bcryptjs` — use real low-round hashes (`bcrypt.hash('password', 1)`) to avoid ESM interop issues.
 - **Prisma `P2025` in tests**: Prisma throws typed error class, not plain object. Mock with `Object.assign(new Error('...'), { code: 'P2025' })` so `instanceof` checks work correctly.
