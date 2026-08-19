@@ -164,7 +164,7 @@ bin/dev --version
 # turn off colored output
 bin/dev --no-color
 
-# skip the TUI and run npm run dev
+# report progress one line at a time instead of the TUI
 bin/dev --no-input
 ```
 
@@ -172,13 +172,15 @@ The TUI keys are `0` for status, `1` for API logs, `2` for web logs, `3` for Mai
 
 In a log view, `u` and `d` scroll by a screen. A position line above the output reads `lines 41-60 of 137`, and gains `, top`, `, end` or `, all` when you can see an edge. The view keeps up with new output while it sits at the end, and holds still while you are scrolled back.
 
-Logs are kept after the run. Each run gets its own folder under the system temp directory, `$TMPDIR/linklater-dev/<timestamp>-<pid>/`, readable only by you, holding `api.log`, `web.log`, `mailpit.log` and `tunnel.log`. The path prints as the servers stop, so a crash is still there to read once the view is gone. The five newest runs are kept, counting the one currently running, and older ones are deleted at startup. The fallback below writes no logs at all.
+Logs are kept after the run. Each run gets its own folder under the system temp directory, `$TMPDIR/linklater-dev/<timestamp>-<pid>/`, readable only by you, holding `api.log`, `web.log`, `mailpit.log` and `tunnel.log`. The path prints as the servers stop, so a crash is still there to read once the view is gone. The five newest runs are kept, counting the one currently running, and older ones are deleted at startup. The line by line path below keeps the same logs in the same place, and prints the folder as the servers start as well.
 
-A service that has not reported ready within 90 seconds turns red instead of spinning forever, and its log says what the TUI gave up waiting for. The tunnel gets its own 90 seconds, counted from when it starts, which is after the web server is up.
+A service that has not reported ready within 90 seconds is marked as failed instead of spinning forever, and its log says what `bin/dev` gave up waiting for. The tunnel gets its own 90 seconds, counted from when it starts, which is after the web server is up.
 
-`bin/dev` runs `npm run dev` instead of the TUI when output is redirected, when `TERM` is `dumb` or unset, when there is no controlling terminal, or when you pass `--no-input`. It says which one applied. That fallback starts the API and web servers and nothing else: no Mailpit, no stale port check, and no tunnel or LAN access even if you passed `--public` or `--remote`.
+`bin/dev` reports progress one line at a time instead of showing the TUI when output is redirected, when `TERM` is `dumb` or unset, when there is no controlling terminal, or when you pass `--no-input`. It says which one applied. That path starts the same services under the same options: it sweeps the stale port, starts Mailpit, honours `--remote` and `--public`, keeps the same logs and applies the same 90 second bound.
 
-`bin/dev` exits 64 on an unknown flag, 0 when you quit a healthy run with `q`, and 130 when you stop a healthy run with Control+C or Control+backslash. A run where any service errored exits 1 however you stop it, so Control+C on a run with a failed service exits 1 and not 130. Those codes describe the TUI. On the fallback the exit code is whatever `npm run dev` returned.
+Its output is append-only, with no cursor movement, no screen clearing and no color under `TERM=dumb`. Server output stays in the log files rather than being interleaved into one stream, so `tail -f` on the printed folder is how you read it live. A service that fails prints the end of its own log. While anything is still starting, a line every 15 seconds names what is being waited on. There are no keys, so Control+C is the only way to stop it, and pressing it again stops the servers immediately.
+
+`bin/dev` exits 64 on an unknown flag, 0 when you quit a healthy run with `q`, and 130 when you stop a healthy run with Control+C or Control+backslash. A run where any service errored exits 1 however you stop it, so Control+C on a run with a failed service exits 1 and not 130. The line by line path uses those same codes, minus the `q` that only the TUI has, and it exits 1 on its own once no server is left running.
 
 Linklater uses `concurrently` to run NestJS on port 3000 and Vite on port 5173. Vite picks a different port when 5173 is taken, and the status view, the LAN URL and the tunnel all follow the port it actually bound. **Open [https://localhost:5173](https://localhost:5173) in your web browser and you're good to go!**
 
@@ -322,7 +324,7 @@ git push origin v0.3.0
 
 #### Remote access (LAN)
 
-The development server TUI has a `--remote` option which allows Linklater to be discoverable by other devices on the same Wi-Fi network. It only works in the TUI. When `bin/dev` falls back to `npm run dev`, other devices get no access and the script says so.
+`bin/dev` has a `--remote` option which allows Linklater to be discoverable by other devices on the same Wi-Fi network. It works on both the TUI and the line by line path, and both print the LAN URL once the web server is up.
 
 ```bash
 # cd /path/to/your/repo
@@ -362,9 +364,9 @@ This is a one-time system-level change and persists across reboots.
 
 #### Remote access (public)
 
-The development server TUI has a `--public` option which allows Linklater to be discoverable publicly using a [Cloudflare TryCloudflare tunnel](https://github.com/cloudflare/cloudflared). It only works in the TUI. When `bin/dev` falls back to `npm run dev`, there is no tunnel and the script says so.
+`bin/dev` has a `--public` option which allows Linklater to be discoverable publicly using a [Cloudflare TryCloudflare tunnel](https://github.com/cloudflare/cloudflared). It works on both the TUI and the line by line path, and both print the tunnel URL.
 
-Install `cloudflared` first with `brew install cloudflared`, or the tunnel row reads `not installed` and key `4` does nothing. `--public` turns on `--remote` too, so the app is reachable on the Wi-Fi network as well.
+Install `cloudflared` first with `brew install cloudflared`, or the tunnel row reads `not installed` and key `4` does nothing. The line by line path says `cloudflared` is not installed instead. `--public` turns on `--remote` too, so the app is reachable on the Wi-Fi network as well.
 
 ```bash
 # cd /path/to/your/repo

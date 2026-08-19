@@ -5,12 +5,12 @@
  * spec runs on Node's built-in test runner alongside `eslint-rules/` and is
  * wired into `scripts/run-tests.mjs` so it executes on every `npm run test`.
  *
- * Every run puts `scripts/bin-cli-shims` at the front of PATH, so `npm`, `node`
- * and `npx` record what they were asked to do and then return without doing it.
- * Nothing here installs, migrates, wipes a database or binds a port. The npm
- * shim still resolves `run <script>` against the real package.json, so renaming
- * a script one of these commands depends on fails the run rather than passing
- * unnoticed.
+ * Every run puts `scripts/bin-cli-shims` at the front of PATH, so `npm`, `node`,
+ * `npx`, `lsof`, `mailpit` and `cloudflared` record what they were asked to do
+ * and then return without doing it. Nothing here installs, migrates, wipes a
+ * database, binds a port, catches mail or opens a tunnel. The npm shim still
+ * resolves `run <script>` against the real package.json, so renaming a script
+ * one of these commands depends on fails the run rather than passing unnoticed.
  *
  * Two areas are deliberately out of reach. Anything needing a pseudo-terminal
  * (the confirmation prompt, signal handling, the status view itself) is not
@@ -25,6 +25,7 @@ import {
   constants,
   mkdtempSync,
   readFileSync,
+  readdirSync,
   rmSync,
   writeFileSync,
 } from 'node:fs';
@@ -138,7 +139,14 @@ const terminalReachable =
 
 describe('the bin test harness', () => {
   it('finds the shims ahead of the real commands on PATH', () => {
-    for (const commandName of ['npm', 'node', 'npx', 'lsof']) {
+    for (const commandName of [
+      'cloudflared',
+      'lsof',
+      'mailpit',
+      'node',
+      'npm',
+      'npx',
+    ]) {
       strictEqual(resolveOnPath(commandName), join(shimDirectory, commandName));
     }
   });
@@ -241,30 +249,60 @@ describe('bin/flintest', () => {
 });
 
 describe('bin/dev', () => {
-  it('runs npm run dev when the status view is turned off', () => {
-    const { exitCode, stderr, invocations } = runBin('dev', ['--no-input']);
+  // the log folder lands under TMPDIR, and pruning reaps whatever else is there
+  const lineByLine = { TMPDIR: captureRoot };
 
-    strictEqual(exitCode, 0);
+  it('starts the same services when the status view is turned off', () => {
+    const { exitCode, stdout, stderr, invocations } = runBin(
+      'dev',
+      ['--no-input'],
+      lineByLine,
+    );
+    const commands = invocations.map((invocation) => invocation.join(' '));
+
     match(stderr, /Not starting the status view: --no-input was passed\./);
-    match(stderr, /Running npm run dev, which starts the API and web servers/);
-    match(stderr, /Skipped: the stale port check and Mailpit\./);
-    deepStrictEqual(invocations, [['npm', 'run', 'dev']]);
+    match(stderr, /Reporting progress one line at a time instead\./);
+    ok(commands.includes('lsof -ti tcp:39217 -sTCP:LISTEN'));
+    ok(commands.includes('npm run dev --workspace @linklater/api'));
+    ok(commands.includes('npm run dev --workspace @linklater/web'));
+    ok(commands.includes('mailpit'));
+    match(stdout, /Started: API, web server, Mailpit\./);
+    // every shim exits at once, so the run runs out of services to supervise
+    match(stdout, /No servers are left running\./);
+    strictEqual(exitCode, 1);
   });
 
-  it('runs npm run dev when output is redirected', () => {
-    const { exitCode, stderr, invocations } = runBin('dev');
+  it('keeps the logs and reports their folder when output is redirected', () => {
+    const { stdout, stderr, invocations } = runBin('dev', [], lineByLine);
+    const [, logDirectory] = /^Logs: (.+)$/m.exec(stdout) ?? [];
 
-    strictEqual(exitCode, 0);
     match(stderr, /Not starting the status view: output is being redirected\./);
-    deepStrictEqual(invocations, [['npm', 'run', 'dev']]);
+    ok(logDirectory, `no log folder was reported: ${stdout}`);
+    deepStrictEqual(readdirSync(logDirectory).sort(), [
+      'api.log',
+      'mailpit.log',
+      'tunnel.log',
+      'web.log',
+    ]);
+    ok(invocations.some(([command]) => command === 'lsof'));
   });
 
-  it('names the remote access the fallback drops', () => {
-    const publicRun = runBin('dev', ['--no-input', '--public']);
-    const remoteRun = runBin('dev', ['--no-input', '--remote']);
+  it('keeps remote and public access on the line by line path', () => {
+    const remoteRun = runBin('dev', ['--no-input', '--remote'], lineByLine);
+    const publicRun = runBin('dev', ['--no-input', '--public'], lineByLine);
+    const remoteCommands = remoteRun.invocations.map((invocation) =>
+      invocation.join(' '),
+    );
 
-    match(publicRun.stderr, /Skipped: --public, so no Cloudflare tunnel/);
-    match(remoteRun.stderr, /Skipped: --remote, so no access from other/);
+    ok(
+      remoteCommands.includes(
+        'npm run dev --workspace @linklater/web -- --host',
+      ),
+    );
+    match(
+      publicRun.stdout,
+      /The public tunnel starts once the web server is ready\./,
+    );
   });
 });
 
