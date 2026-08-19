@@ -199,7 +199,6 @@ npm run lint:shell
 bin/flintest
 bin/flintest --help
 bin/flintest --version
-bin/flintest --update
 
 # run the local visual regression check instead of the default chain
 bin/flintest --tuffgal
