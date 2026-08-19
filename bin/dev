@@ -830,7 +830,7 @@ while true; do
   fi
 
   if [[ "$WEB_STATE" == "starting" ]]; then
-    EXTRACTED=$(grep 'Local:' "$WEB_LOG" 2>/dev/null \
+    EXTRACTED=$(grep 'Local' "$WEB_LOG" 2>/dev/null | strip_ansi \
                 | grep -oE 'https?://[^ ]+' | tail -1 || true)
     if [[ -n "$EXTRACTED" ]]; then
       WEB_URL="${EXTRACTED%/}"
