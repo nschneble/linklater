@@ -1,6 +1,6 @@
-import { readFileSync, readdirSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+import { readdirSync, readFileSync, writeFileSync } from 'fs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CSS_DIR = join(ROOT, 'apps/web/src/theme/styles');

@@ -16,10 +16,10 @@
 // `test:root` script, which `test:cov` chains too, so the globs naming those
 // specs live in one place rather than drifting between the two entry points.
 
-import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { spawn } from 'node:child_process';
+import { tmpdir } from 'node:os';
 
 const repoRoot = resolve(import.meta.dirname, '..');
 const testTargets = process.argv.slice(2);

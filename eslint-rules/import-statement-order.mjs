@@ -104,8 +104,6 @@ export function checkImportStatementOrder(context, program) {
     const runEnd = blocks[blocks.length - 1].end;
     const isFixable = !containsFileLevelDirective(sourceCode, runStart, runEnd);
 
-    // one report per run: a swap is a single ordering mistake, and naming
-    // both ends of it says more than flagging each moved line separately
     context.report({
       node: sorted[firstWrong].node,
       messageId: 'unsortedImports',

@@ -11,9 +11,9 @@
  */
 
 import { describe, it } from 'node:test';
+import rule from './import-identifier-order.mjs';
 import { RuleTester } from 'eslint';
 import tseslint from 'typescript-eslint';
-import rule from './import-identifier-order.mjs';
 
 RuleTester.describe = describe;
 RuleTester.it = it;

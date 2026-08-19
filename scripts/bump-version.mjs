@@ -33,7 +33,7 @@ function workspacePackagePaths() {
   const rootPackage = readJson('package.json');
   const workspaces = Array.isArray(rootPackage.workspaces)
     ? rootPackage.workspaces
-    : rootPackage.workspaces?.packages ?? [];
+    : (rootPackage.workspaces?.packages ?? []);
 
   return workspaces.flatMap((workspace) => {
     if (!workspace.endsWith('/*')) {
@@ -65,7 +65,8 @@ function updatePackageLock(packagePathsToUpdate) {
 
     for (const packagePath of packagePathsToUpdate) {
       const packageJson = readJson(packagePath);
-      const packageKey = packagePath === 'package.json' ? '' : path.dirname(packagePath);
+      const packageKey =
+        packagePath === 'package.json' ? '' : path.dirname(packagePath);
 
       if (lockfile.packages?.[packageKey]) {
         lockfile.packages[packageKey].version = packageJson.version;
