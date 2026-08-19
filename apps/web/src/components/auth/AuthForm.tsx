@@ -3,6 +3,7 @@ import LoginRegisterView from './LoginRegisterView';
 import MfaView from './MfaView';
 import PendingNoticeAnnouncer from '../common/PendingNoticeAnnouncer';
 import { useAuthForm } from './useAuthForm';
+import { useBusyAnnouncement } from './useBusyAnnouncement';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import type { MfaChallenge, Mode } from './useAuthForm';
 
@@ -28,7 +29,8 @@ function authDocumentTitle(
  * arrived on the URL, which is how a refused OAuth callback lands here.
  * The visible Alert paints the same text with its own live semantics off,
  * so exactly one region announces it; submit errors take the opposite
- * split.
+ * split. A second, polite region names the wait a submit opens, and
+ * `useBusyAnnouncement` owns when it speaks and when it empties.
  *
  * The pending notice comes first because a standing one paints in the
  * flow, and a message explaining why this form is on screen has to be
@@ -64,6 +66,8 @@ export default function AuthForm() {
   } = useAuthForm();
 
   useDocumentTitle(authDocumentTitle(mode, mfaChallenge));
+
+  const busyAnnouncement = useBusyAnnouncement(loading, mode, mfaChallenge);
 
   let view;
   if (mode === 'forgot-password') {
@@ -134,6 +138,14 @@ export default function AuthForm() {
         standing={notice?.standing ?? false}
       />
       {view}
+      <span
+        className="sr-only"
+        role="status"
+        aria-live="polite"
+        data-testid="auth-busy-announcement"
+      >
+        {busyAnnouncement}
+      </span>
       <span
         className="sr-only"
         role="alert"

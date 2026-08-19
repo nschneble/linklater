@@ -123,7 +123,8 @@ export function useAuthForm() {
 
   const handleSubmit = async (formEvent: FormEvent) => {
     formEvent.preventDefault();
-    if (submittingReference.current) return;
+    // the sent-just-now pause has no native disabled left to block Enter
+    if (submittingReference.current || magicLinkSentJustNow) return;
     submittingReference.current = true;
 
     // two assertive regions would clash

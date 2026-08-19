@@ -13,11 +13,11 @@
  * Hook internals are tested in `useAuthForm.test.ts`.
  */
 
+import { act, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import AuthForm from './AuthForm';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRef } from 'react';
 import { MemoryRouter } from 'react-router';
-import { render, screen } from '@testing-library/react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { MfaChallenge, Mode } from './useAuthForm';
 import type { NoticeEntry } from '../../lib/pendingNotice';
@@ -39,6 +39,7 @@ interface MakeHookOverrides {
   announceError?: boolean;
   error?: string | null;
   errorAnnouncement?: string;
+  loading?: boolean;
   mode?: Mode;
   mfaChallenge?: MfaChallenge | null;
   notice?: { message: string; variant: 'success' | 'error' } | null;
@@ -68,7 +69,7 @@ function makeHookResult(
     handleModeChange: vi.fn(),
     handleSubmit: vi.fn(),
     handleVerifyOtp: vi.fn(),
-    loading: false,
+    loading: overrides.loading ?? false,
     magicLinkSentJustNow: false,
     mfaChallenge: overrides.mfaChallenge ?? null,
     mfaCode: '',
@@ -329,5 +330,156 @@ describe('AuthForm – mode routing branches still render under the refactor', (
     // ForgotPasswordView asks for an email but no password
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.queryByLabelText(/password/i)).not.toBeInTheDocument();
+  });
+});
+
+describe('AuthForm – busy announcement', () => {
+  const BUSY_REGION = 'auth-busy-announcement';
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('keeps the region mounted, polite and empty while idle', () => {
+    renderAuthForm();
+
+    const region = screen.getByTestId(BUSY_REGION);
+    expect(region).toHaveAttribute('aria-live', 'polite');
+    expect(region).toHaveAttribute('role', 'status');
+    expect(region.textContent).toBe('');
+  });
+
+  // below a second the busy line only queues ahead of the error that follows
+  it('stays silent when the submit resolves inside the announce delay', () => {
+    vi.mocked(useAuthForm).mockReturnValue(makeHookResult({ loading: true }));
+    const { rerender } = render(
+      <MemoryRouter initialEntries={['/login']}>
+        <AuthForm />
+      </MemoryRouter>,
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(999);
+    });
+
+    vi.mocked(useAuthForm).mockReturnValue(makeHookResult({ loading: false }));
+    rerender(
+      <MemoryRouter initialEntries={['/login']}>
+        <AuthForm />
+      </MemoryRouter>,
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+
+    expect(screen.getByTestId(BUSY_REGION).textContent).toBe('');
+  });
+
+  it('announces once the submit has been out for a full second', () => {
+    vi.mocked(useAuthForm).mockReturnValue(makeHookResult({ loading: true }));
+    renderAuthForm();
+
+    expect(screen.getByTestId(BUSY_REGION).textContent).toBe('');
+
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    expect(screen.getByTestId(BUSY_REGION).textContent).toBe('Signing you in.');
+  });
+
+  it('names the wait per mode, so a reset is not announced as a sign-in', () => {
+    vi.mocked(useAuthForm).mockReturnValue(
+      makeHookResult({ loading: true, mode: 'forgot-password' }),
+    );
+    renderAuthForm();
+
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    expect(screen.getByTestId(BUSY_REGION).textContent).toBe(
+      'Sending your reset link.',
+    );
+  });
+
+  // identical strings get read twice, once as the name and once as the region
+  it('uses words the submit button does not', () => {
+    vi.mocked(useAuthForm).mockReturnValue(makeHookResult({ loading: true }));
+    renderAuthForm();
+
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    const submit = screen.getByRole('button', {
+      name: /log in with magic link/i,
+    });
+    expect(screen.getByTestId(BUSY_REGION).textContent).not.toBe(
+      submit.textContent,
+    );
+  });
+
+  it('empties itself on its own timer so the next wait announces again', () => {
+    vi.mocked(useAuthForm).mockReturnValue(makeHookResult({ loading: true }));
+    renderAuthForm();
+
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(screen.getByTestId(BUSY_REGION).textContent).toBe('Signing you in.');
+
+    act(() => {
+      vi.advanceTimersByTime(8000);
+    });
+    expect(screen.getByTestId(BUSY_REGION).textContent).toBe('');
+  });
+
+  it('empties itself before a retry so the second wait announces too', () => {
+    vi.mocked(useAuthForm).mockReturnValue(makeHookResult({ loading: true }));
+    const { rerender } = render(
+      <MemoryRouter initialEntries={['/login']}>
+        <AuthForm />
+      </MemoryRouter>,
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(screen.getByTestId(BUSY_REGION).textContent).toBe('Signing you in.');
+
+    vi.mocked(useAuthForm).mockReturnValue(makeHookResult({ loading: false }));
+    rerender(
+      <MemoryRouter initialEntries={['/login']}>
+        <AuthForm />
+      </MemoryRouter>,
+    );
+
+    vi.mocked(useAuthForm).mockReturnValue(makeHookResult({ loading: true }));
+    rerender(
+      <MemoryRouter initialEntries={['/login']}>
+        <AuthForm />
+      </MemoryRouter>,
+    );
+
+    // the empty beat is what makes the next set a change a reader hears
+    expect(screen.getByTestId(BUSY_REGION).textContent).toBe('');
+
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(screen.getByTestId(BUSY_REGION).textContent).toBe('Signing you in.');
+  });
+
+  it('carries no aria-busy, which would defer the error that ends the wait', () => {
+    vi.mocked(useAuthForm).mockReturnValue(makeHookResult({ loading: true }));
+    const { container } = renderAuthForm();
+
+    expect(container.querySelector('[aria-busy]')).toBeNull();
   });
 });

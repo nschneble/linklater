@@ -54,9 +54,7 @@ describe('fetchWithinDeadline', () => {
 
     expect(caught).toBeInstanceOf(ApiError);
     expect((caught as ApiError).status).toBe(0);
-    expect((caught as ApiError).message).toBe(
-      'That took too long. Try again.',
-    );
+    expect((caught as ApiError).message).toBe('That took too long. Try again.');
   });
 
   it('leaves a request that answers in time alone', async () => {

@@ -182,3 +182,46 @@ describe('SlidingTabBar', () => {
     expect(screen.getByRole('tablist').className).toContain('group');
   });
 });
+
+describe('SlidingTabBar isDisabled', () => {
+  it('defaults to enabled, so the five existing consumers render unchanged', () => {
+    render(
+      <SlidingTabBar ariaLabel="example" activeIndex={0} tabs={makeTabs()} />,
+    );
+    screen.getAllByRole('tab').forEach((tab) => {
+      expect(tab).not.toHaveAttribute('aria-disabled');
+    });
+  });
+
+  it('marks every tab aria-disabled without going natively disabled', () => {
+    render(
+      <SlidingTabBar
+        ariaLabel="example"
+        activeIndex={0}
+        isDisabled
+        tabs={makeTabs()}
+      />,
+    );
+    screen.getAllByRole('tab').forEach((tab) => {
+      expect(tab).toHaveAttribute('aria-disabled', 'true');
+      expect(tab).not.toBeDisabled();
+    });
+  });
+
+  it('refuses to activate a tab while isDisabled', () => {
+    const handleTwo = vi.fn();
+    render(
+      <SlidingTabBar
+        ariaLabel="example"
+        activeIndex={0}
+        isDisabled
+        tabs={[
+          { id: 'one', label: 'One', onClick: () => {} },
+          { id: 'two', label: 'Two', onClick: handleTwo },
+        ]}
+      />,
+    );
+    fireEvent.click(screen.getByRole('tab', { name: 'Two' }));
+    expect(handleTwo).not.toHaveBeenCalled();
+  });
+});

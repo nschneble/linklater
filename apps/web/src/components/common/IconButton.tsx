@@ -1,4 +1,9 @@
-import { DISABLED, FOCUS_RING, FOCUS_RING_FLUSH } from '../../lib/styles';
+import {
+  ARIA_DISABLED,
+  DISABLED,
+  FOCUS_RING,
+  FOCUS_RING_FLUSH,
+} from '../../lib/styles';
 import type { ButtonHTMLAttributes, Ref } from 'react';
 
 /**
@@ -120,7 +125,7 @@ export default function IconButton({
     : 'opacity-100 scale-100';
 
   // skip disabled when hidden (disabled:opacity-60 outranks opacity-0)
-  const disabledClasses = hidden ? '' : DISABLED;
+  const disabledClasses = hidden ? '' : `${DISABLED} ${ARIA_DISABLED}`;
 
   return (
     <button

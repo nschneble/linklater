@@ -694,9 +694,7 @@ describe('apiFetch request deadline', () => {
     const caught = await pending;
 
     expect(caught).toBeInstanceOf(ApiError);
-    expect((caught as ApiError).message).toBe(
-      'That took too long. Try again.',
-    );
+    expect((caught as ApiError).message).toBe('That took too long. Try again.');
   });
 
   // the deadline composes with a caller's signal rather than replacing it

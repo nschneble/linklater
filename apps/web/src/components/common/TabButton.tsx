@@ -1,4 +1,4 @@
-import { FOCUS_RING } from '../../lib/styles';
+import { ARIA_DISABLED, FOCUS_RING } from '../../lib/styles';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
 /**
@@ -15,11 +15,20 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react';
  * the parent: `data-surface=base` paints mount-tier (idle label
  * `--mount-alt-text`, active inverts to `--mount-bg`); `data-surface=mount`
  * paints orbit-tier. Keeps pill bg + label fg in lock-step structurally.
+ *
+ * `isDisabled` refuses activation without going natively disabled, which
+ * would make the arrow keys a dead key: `useTabNavigation` preventDefaults
+ * before it moves, and both `.focus()` and `.click()` are no-ops on a
+ * natively disabled element. The name is not `disabled`, because that one
+ * would land in the `...props` spread and set the very attribute this
+ * avoids.
  */
 interface TabButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
   // drives `aria-selected`
   isActive: boolean;
+  // refuses activation while staying focusable; defaults to enabled
+  isDisabled?: boolean;
   // parent handles navigation
   onClick: () => void;
   className?: string;
@@ -28,18 +37,22 @@ interface TabButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 export default function TabButton({
   children,
   isActive,
+  isDisabled = false,
   onClick,
   className = '',
   ...props
 }: TabButtonProps) {
   return (
     <button
-      className={`relative z-10 w-full pl-4 pr-4.5 text-[var(--mount-alt-text)] group-data-[surface=mount]:text-[var(--orbit-alt-text)] aria-selected:text-[var(--mount-bg)] group-data-[surface=mount]:aria-selected:text-[var(--orbit-bg)] font-semibold aria-selected:font-extrabold ${FOCUS_RING} rounded-full transition-colors duration-200 cursor-pointer ${className}`}
+      className={`relative z-10 w-full pl-4 pr-4.5 text-[var(--mount-alt-text)] group-data-[surface=mount]:text-[var(--orbit-alt-text)] aria-selected:text-[var(--mount-bg)] group-data-[surface=mount]:aria-selected:text-[var(--orbit-bg)] font-semibold aria-selected:font-extrabold ${FOCUS_RING} rounded-full transition-colors duration-200 cursor-pointer ${ARIA_DISABLED} ${className}`}
       type="button"
       role="tab"
       tabIndex={isActive ? 0 : -1}
-      onClick={onClick}
+      onClick={() => {
+        if (!isDisabled) onClick();
+      }}
       aria-selected={isActive}
+      aria-disabled={isDisabled || undefined}
       {...props}
     >
       <span className="grid justify-center">

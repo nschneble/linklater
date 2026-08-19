@@ -172,3 +172,50 @@ describe('TabButton', () => {
     expect(button.getAttribute('aria-controls')).toBe('panel-x');
   });
 });
+
+describe('TabButton isDisabled', () => {
+  it('emits no aria-disabled at all by default, so other tab bars are untouched', () => {
+    render(
+      <TabButton isActive={false} onClick={() => {}}>
+        Label
+      </TabButton>,
+    );
+    expect(screen.getByRole('tab', { name: 'Label' })).not.toHaveAttribute(
+      'aria-disabled',
+    );
+  });
+
+  it('marks itself aria-disabled without taking the native attribute', () => {
+    render(
+      <TabButton isActive={false} isDisabled onClick={() => {}}>
+        Label
+      </TabButton>,
+    );
+    const button = screen.getByRole('tab', { name: 'Label' });
+    expect(button).toHaveAttribute('aria-disabled', 'true');
+    expect(button).not.toBeDisabled();
+  });
+
+  // useTabNavigation clicks unconditionally; the guard is what stops it
+  it('swallows the activation while isDisabled', () => {
+    const handleClick = vi.fn();
+    render(
+      <TabButton isActive={false} isDisabled onClick={handleClick}>
+        Label
+      </TabButton>,
+    );
+    fireEvent.click(screen.getByRole('tab', { name: 'Label' }));
+    expect(handleClick).not.toHaveBeenCalled();
+  });
+
+  it('stays focusable while isDisabled so arrow keys can still reach it', () => {
+    render(
+      <TabButton isActive isDisabled onClick={() => {}}>
+        Label
+      </TabButton>,
+    );
+    const button = screen.getByRole('tab', { name: 'Label' });
+    button.focus();
+    expect(document.activeElement).toBe(button);
+  });
+});

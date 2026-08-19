@@ -8,9 +8,6 @@ import SlidingTabBar from '../common/SlidingTabBar';
 import { useNavigate } from 'react-router';
 import type { FormEvent, RefObject } from 'react';
 
-const googleSsoEnabled = import.meta.env.VITE_GOOGLE_SSO_ENABLED === 'true';
-const appleSsoEnabled = import.meta.env.VITE_APPLE_SSO_ENABLED === 'true';
-
 type LoginRegisterMode = 'login' | 'register';
 
 function submitLabel(isMagicLink: boolean, mode: LoginRegisterMode): string {
@@ -22,16 +19,30 @@ function submitLabel(isMagicLink: boolean, mode: LoginRegisterMode): string {
   return mode === 'login' ? 'Log in' : 'Create account';
 }
 
+/**
+ * Wraps a control's action so an in-flight submit swallows it. The controls
+ * that need this stay focusable and take `aria-disabled` rather than the
+ * native attribute, which drops focus to `<body>`, so nothing but this
+ * guard is left to refuse the activation.
+ */
+function ignoreWhileLoading(loading: boolean, action: () => void): () => void {
+  return () => {
+    if (!loading) action();
+  };
+}
+
 interface LoginRegisterViewProps {
   /**
    * `false` when the error arrived on the URL: AuthForm announces that one
    * itself, and two regions holding one message race each other.
    */
   announceError?: boolean;
+  appleSsoEnabled?: boolean;
   email: string;
   emailReference: RefObject<HTMLInputElement | null>;
   error: string | null;
   errorReference: RefObject<HTMLParagraphElement | null>;
+  googleSsoEnabled?: boolean;
   loading: boolean;
   magicLinkSentJustNow: boolean;
   mode: LoginRegisterMode;
@@ -46,10 +57,12 @@ interface LoginRegisterViewProps {
 
 export default function LoginRegisterView({
   announceError = true,
+  appleSsoEnabled = import.meta.env.VITE_APPLE_SSO_ENABLED === 'true',
   email,
   emailReference,
   error,
   errorReference,
+  googleSsoEnabled = import.meta.env.VITE_GOOGLE_SSO_ENABLED === 'true',
   loading,
   magicLinkSentJustNow,
   mode,
@@ -77,6 +90,7 @@ export default function LoginRegisterView({
         ariaLabel="Authentication mode"
         activeIndex={mode === 'register' ? 1 : 0}
         className="mb-[24.5px]"
+        isDisabled={loading}
         surface="mount"
         tabClassName="py-2 text-sm"
         tabs={[
@@ -117,6 +131,7 @@ export default function LoginRegisterView({
           surface="mount"
           autoComplete="email"
           onChange={(event) => onEmailChange(event.target.value)}
+          readOnly={loading}
           value={email}
           required
           aria-describedby="auth-form-error"
@@ -136,6 +151,7 @@ export default function LoginRegisterView({
           autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
           onChange={(event) => onPasswordChange(event.target.value)}
           placeholder="Leave blank to use a magic link"
+          readOnly={loading}
           value={password}
           required={false}
           aria-describedby="auth-form-error"
@@ -154,8 +170,9 @@ export default function LoginRegisterView({
         </Alert>
 
         <PrimaryButton
-          disabled={loading || magicLinkSentJustNow}
-          className="w-full py-2.5"
+          className="w-full py-2.5 aria-disabled:data-[busy]:opacity-100 aria-disabled:data-[busy]:cursor-progress"
+          aria-disabled={loading || magicLinkSentJustNow}
+          data-busy={loading || undefined}
         >
           <i
             className={`fa-solid ${magicLinkSentJustNow ? 'fa-wand-magic-sparkles' : password.length === 0 ? 'fa-wand-magic' : 'fa-right-to-bracket'} text-xs`}
@@ -187,9 +204,10 @@ export default function LoginRegisterView({
                 variant="elevated"
                 title="Continue with Google"
                 className="w-full py-2.5 rounded-lg"
-                onClick={() => {
+                onClick={ignoreWhileLoading(loading, () => {
                   window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/google`;
-                }}
+                })}
+                aria-disabled={loading || undefined}
               >
                 <i
                   className="fa-brands fa-google text-[0.7rem]"
@@ -204,9 +222,10 @@ export default function LoginRegisterView({
                 variant="elevated"
                 title="Continue with Apple"
                 className="w-full py-2.5 rounded-lg"
-                onClick={() => {
+                onClick={ignoreWhileLoading(loading, () => {
                   window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/apple`;
-                }}
+                })}
+                aria-disabled={loading || undefined}
               >
                 <svg
                   aria-hidden="true"
@@ -227,7 +246,10 @@ export default function LoginRegisterView({
 
       <div className="flex flex-col items-center mt-4 text-center transition-opacity duration-200 aria-hidden:opacity-0 aria-hidden:pointer-events-none">
         {mode === 'login' && (
-          <LinkButton onClick={onForgotPassword}>
+          <LinkButton
+            onClick={ignoreWhileLoading(loading, onForgotPassword)}
+            aria-disabled={loading || undefined}
+          >
             I literally have no idea what my password is
           </LinkButton>
         )}

@@ -43,6 +43,18 @@ export const FOCUS_RING_FLUSH =
 
 export const DISABLED = 'disabled:opacity-60 disabled:cursor-not-allowed';
 
+/**
+ * The same dimming for a control refused by `aria-disabled` rather than by
+ * the native attribute — the mechanism a control that holds focus has to
+ * use, since a native `disabled` drops that focus to `<body>`.
+ *
+ * Written out rather than derived from `DISABLED`, for the reason spelled
+ * out on `FOCUS_RING_FLUSH`: Tailwind scans source text, and a class
+ * assembled at runtime is a class it never compiles.
+ */
+export const ARIA_DISABLED =
+  'aria-disabled:opacity-60 aria-disabled:cursor-not-allowed';
+
 // closing runs faster than opening so the panel feels snappy
 export function menuRevealStyle(
   isOpen: boolean,
