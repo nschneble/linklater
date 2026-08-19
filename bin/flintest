@@ -108,11 +108,30 @@ resolve_color "$USE_COLOR"
 SPIN=(⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏)
 TICK=✓  CROSS=✗  CIRCLE=○
 
-# ── Layout constants ────────────────────────────────────────────────────────────
+# ── Step table ──────────────────────────────────────────────────────────────────
 if [[ "$RUN_TUFFGAL" == true ]]; then
   STEPS=(Install Playwright Database Test Report)
+  # tuffgal local mode exits 0 on drift; a non-zero exit is a real failure
+  STEP_COMMANDS=(
+    'npm install'
+    'npx --no playwright install chromium'
+    'npm run tuffgal:setup'
+    'npx tuffgal run --local --manage-servers'
+    'open_report'
+  )
 else
   STEPS=(Install Generate Subset\ FA Format Lint Typecheck Lint\ Migrations Test Build)
+  STEP_COMMANDS=(
+    'npm install'
+    'node scripts/generate-email-palette.mjs'
+    'npm run subset-fa --workspace @linklater/web'
+    'npm run format'
+    'npm run lint'
+    'npm run typecheck'
+    'npm run lint:migrations'
+    'npm run test:cov'
+    'npm run build'
+  )
 fi
 NS=${#STEPS[@]}
 
@@ -301,7 +320,7 @@ tuffgal_drift_counts() {
 }
 
 # Open the HTML report in the default browser (macOS `open`). No-op without a TTY.
-# shellcheck disable=SC2317,SC2329 # Invoked indirectly via `run_step 4 open_report`.
+# shellcheck disable=SC2317,SC2329 # Invoked indirectly as the Report step's command.
 open_report() {
   local report="$ROOT_DIR/tuffgal/report/index.html"
   if [[ "$TTY_AVAILABLE" != true || ! -f "$report" ]]; then
@@ -317,36 +336,16 @@ draw_ui
 FAILED_STEP=""
 FAILED_OUTPUT=""
 
-if [[ "$RUN_TUFFGAL" == true ]]; then
-  if ! run_step 0 npm install; then
-    FAILED_STEP="Install"
+for (( index = 0; index < NS; index++ )); do
+  read -r -a step_command <<< "${STEP_COMMANDS[$index]}"
+  if ! run_step "$index" "${step_command[@]}"; then
+    FAILED_STEP="${STEPS[$index]}"
     FAILED_OUTPUT="$STEP_OUTPUT"
+    break
   fi
+done
 
-  if [[ -z "$FAILED_STEP" ]]; then
-    if ! run_step 1 npx --no playwright install chromium; then
-      FAILED_STEP="Playwright"
-      FAILED_OUTPUT="$STEP_OUTPUT"
-    fi
-  fi
-
-  if [[ -z "$FAILED_STEP" ]]; then
-    if ! run_step 2 npm run tuffgal:setup; then
-      FAILED_STEP="Database"
-      FAILED_OUTPUT="$STEP_OUTPUT"
-    fi
-  fi
-
-  # Local advisory mode self-diffs against the git-ignored per-machine cache and
-  # exits 0 even on drift, so a non-zero exit here is a real failure (crash, dead
-  # server), never "screenshots changed".
-  if [[ -z "$FAILED_STEP" ]]; then
-    if ! run_step 3 npx tuffgal run --local --manage-servers; then
-      FAILED_STEP="Test"
-      FAILED_OUTPUT="$STEP_OUTPUT"
-    fi
-  fi
-
+if [[ "$RUN_TUFFGAL" == true ]]; then
   TUFFGAL_SUMMARY=$(tuffgal_summary)
 
   if [[ -n "$FAILED_STEP" ]]; then
@@ -360,10 +359,6 @@ if [[ "$RUN_TUFFGAL" == true ]]; then
     dump_failure "${FAILED_STEP} failed." "$FAILED_OUTPUT"
     exit 1
   fi
-
-  # Run succeeded. Surface the HTML report, then offer to fold any drift into the
-  # local cache so the next run comes back clean.
-  run_step 4 open_report
 
   read -r TUFFGAL_NEW TUFFGAL_CHANGED <<< "$(tuffgal_drift_counts)"
   TUFFGAL_NEW=${TUFFGAL_NEW:-0}
@@ -398,69 +393,6 @@ if [[ "$RUN_TUFFGAL" == true ]]; then
     [[ "$TTY_AVAILABLE" == true ]] && printf '\n'
   fi
   exit 0
-fi
-
-if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step 0 npm install; then
-    FAILED_STEP="Install"
-    FAILED_OUTPUT="$STEP_OUTPUT"
-  fi
-fi
-
-if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step 1 node scripts/generate-email-palette.mjs; then
-    FAILED_STEP="Generate"
-    FAILED_OUTPUT="$STEP_OUTPUT"
-  fi
-fi
-
-if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step 2 npm run subset-fa --workspace @linklater/web; then
-    FAILED_STEP="Subset FA"
-    FAILED_OUTPUT="$STEP_OUTPUT"
-  fi
-fi
-
-if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step 3 npm run format; then
-    FAILED_STEP="Format"
-    FAILED_OUTPUT="$STEP_OUTPUT"
-  fi
-fi
-
-if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step 4 npm run lint; then
-    FAILED_STEP="Lint"
-    FAILED_OUTPUT="$STEP_OUTPUT"
-  fi
-fi
-
-if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step 5 npm run typecheck; then
-    FAILED_STEP="Typecheck"
-    FAILED_OUTPUT="$STEP_OUTPUT"
-  fi
-fi
-
-if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step 6 npm run lint:migrations; then
-    FAILED_STEP="Lint Migrations"
-    FAILED_OUTPUT="$STEP_OUTPUT"
-  fi
-fi
-
-if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step 7 npm run test:cov; then
-    FAILED_STEP="Test"
-    FAILED_OUTPUT="$STEP_OUTPUT"
-  fi
-fi
-
-if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step 8 npm run build; then
-    FAILED_STEP="Build"
-    FAILED_OUTPUT="$STEP_OUTPUT"
-  fi
 fi
 
 if [[ -z "$FAILED_STEP" ]]; then
