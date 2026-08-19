@@ -17,7 +17,7 @@ usage() {
 Usage: bin/dev [options]
 
 Starts the API and web development servers with a live status/log view.
-Runs npm run dev instead when that view cannot be shown.
+Runs npm run dev instead when that view cannot be shown or you turn it off.
 
 Examples:
   bin/dev            Start the development servers
@@ -26,9 +26,9 @@ Examples:
 
 Options:
   --remote     Allows the app to be reachable from other devices on the same
-               Wi-Fi network. Prints the LAN url in the status view.
+               Wi-Fi network. Prints the LAN URL in the status view.
   --public     Allows the app to be reachable publicly using a Cloudflare
-               TryCloudflare tunnel. Prints the CF url in the status view.
+               TryCloudflare tunnel. Prints the tunnel URL in the status view.
   --no-input   Run npm run dev instead of the interactive status view.
   --no-color   Disable colored output.
   --version    Print the version and exit.
@@ -182,7 +182,7 @@ FRAME=0
 OLD_STTY=$(stty -g </dev/tty)
 CLEANUP_POLL_SECONDS=0.1
 CLEANUP_POLL_LIMIT=50
-CLEANUP_FEEDBACK_POLLS=10
+CLEANUP_FEEDBACK_POLL=20
 
 hide_cursor() { printf '\033[?25l'; }
 show_cursor()  { printf '\033[?25h'; }
@@ -215,10 +215,10 @@ _await_children() {
   local polls=0
   while _children_alive; do
     (( polls >= CLEANUP_POLL_LIMIT )) && return 1
-    # a second Control+C interrupts this sleep, escalating to SIGKILL
+    # a second stop key interrupts this sleep, escalating to SIGKILL
     sleep "$CLEANUP_POLL_SECONDS" || return 1
     polls=$(( polls + 1 ))
-    (( polls % CLEANUP_FEEDBACK_POLLS == 0 )) && printf '.' >&2
+    (( polls == CLEANUP_FEEDBACK_POLL )) && printf '  Still stopping the services.\n' >&2
   done
   return 0
 }
@@ -236,7 +236,7 @@ _quit() {
 _cleanup() {
   local route=$1 status=$2
   trap '' EXIT TERM HUP
-  trap ':' INT
+  trap ':' INT QUIT
   if [[ "$route" == interrupt ]]; then
     printf '\n  Stopping services. Press Control+C again to stop them immediately.\n' >&2
   else
@@ -254,8 +254,6 @@ trap '_cleanup signal 130' TERM HUP QUIT
 stty -echo -icanon </dev/tty
 
 # ── Background key reader ─────────────────────────────────────────────────────
-# Blocking single-char reads from the terminal; queues each char in KEY_FILE.
-# Runs independently so the main loop can use plain sleep for animation timing.
 (
   while true; do
     char=''
@@ -500,7 +498,6 @@ while true; do
   PREV_TUNNEL_STATE="$TUNNEL_STATE"
   PREV_VIEW="$VIEW"
 
-  # Drain the keypress queue written by the background reader
   KEY_BATCH=''
   if [[ -s "$KEY_FILE" ]]; then
     KEY_BATCH=$(< "$KEY_FILE")

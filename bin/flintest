@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# flintest – run install, format, lint, typecheck, test, build, with options
+# flintest – run the project quality gate
 
 set -uo pipefail
 
@@ -98,12 +98,15 @@ fi
 probe_terminal
 
 PAGER_FLAGS=(-FIRX)
-PAGER_COMMAND=(less "${PAGER_FLAGS[@]}")
-if [[ -n "${PAGER:-}" ]]; then
-  read -r -a PAGER_COMMAND <<< "$PAGER"
+PAGER_COMMAND=()
+read -r -a PAGER_WORDS <<< "${PAGER:-}"
+if [[ ${#PAGER_WORDS[@]} -gt 0 ]] && command -v "${PAGER_WORDS[0]}" > /dev/null 2>&1; then
+  PAGER_COMMAND=("${PAGER_WORDS[@]}")
   if [[ ${#PAGER_COMMAND[@]} -eq 1 && ( "${PAGER_COMMAND[0]}" == less || "${PAGER_COMMAND[0]}" == */less ) ]]; then
     PAGER_COMMAND+=("${PAGER_FLAGS[@]}")
   fi
+elif command -v less > /dev/null 2>&1; then
+  PAGER_COMMAND=(less "${PAGER_FLAGS[@]}")
 fi
 
 # ── Colors & symbols ────────────────────────────────────────────────────────────
@@ -146,13 +149,13 @@ trap _cleanup EXIT
 trap 'printf "\n  Stopping %s.\n" "$CURRENT_STEP" >&2
       stop_spinner
       show_cursor
-      trap - EXIT INT TERM HUP
-      exit 130' INT TERM HUP
+      trap - EXIT INT TERM HUP QUIT
+      exit 130' INT TERM HUP QUIT
 
 # ── Draw initial UI ─────────────────────────────────────────────────────────────
 draw_ui() {
   if [[ "$TTY_AVAILABLE" != true ]]; then
-    printf 'Running Linklater checks...\n'
+    printf 'Running Linklater checks…\n'
     return
   fi
 
@@ -196,7 +199,7 @@ mark_fail() { write_step "$1" "${RED}${CROSS} ${STEPS[$1]}${RESET}"; }
 start_spinner() {
   local idx=$1
   if [[ "$TTY_AVAILABLE" != true ]]; then
-    printf '  %s...\n' "${STEPS[$idx]}"
+    printf '  %s…\n' "${STEPS[$idx]}"
     return
   fi
 
@@ -208,7 +211,7 @@ start_spinner() {
     while true; do
       local frame="${SPIN[$((i % ${#SPIN[@]}))]}"
       printf '\033[%dA\033[2K\r  %s%s %s%s\033[%dB\033[2K\r' \
-        "$up" "$YELLOW" "$frame" "$name" "$RESET" "$up" > /dev/tty
+        "$up" "$TTY_YELLOW" "$frame" "$name" "$TTY_RESET" "$up" > /dev/tty
       sleep 0.08
       i=$(( i + 1 ))
     done
@@ -232,7 +235,7 @@ stop_spinner() {
 STEP_OUTPUT=""
 run_step() {
   local idx=$1; shift
-  CURRENT_STEP="${STEPS[$idx]}"
+  CURRENT_STEP="the ${STEPS[$idx]} step"
   start_spinner "$idx"
   local output rc=0
   output=$("$@" 2>&1) || rc=$?
@@ -254,12 +257,12 @@ dump_failure() {
   rows=$(stty size 2>/dev/null < /dev/tty | cut -d ' ' -f 1)
   body_lines=$(printf '%s\n' "$body" | wc -l)
   if [[ "$NO_PAGER" != true && "$TTY_AVAILABLE" == true && ${rows:-0} -gt 0 ]] \
-    && [[ $body_lines -gt $rows ]]; then
+    && [[ $body_lines -gt $rows && ${#PAGER_COMMAND[@]} -gt 0 ]]; then
     printf '%s\n' "$body" | sed 's/^/  /' | "${PAGER_COMMAND[@]}"
   else
     printf '%s\n' "$body" | sed 's/^/  /' >&2
   fi
-  printf '\n  %s%s%s%s\n' "$RED" "$BOLD" "$verdict" "$RESET" >&2
+  printf '\n  %s%s%s%s\n' "$ERR_RED" "$ERR_BOLD" "$verdict" "$ERR_RESET" >&2
 }
 
 # ── Visual regression summary ───────────────────────────────────────────────────
@@ -351,9 +354,9 @@ if [[ "$RUN_TUFFGAL" == true ]]; then
 
   if [[ -n "$FAILED_STEP" ]]; then
     if [[ -n "$TUFFGAL_SUMMARY" ]]; then
-      set_status "${RED}${BOLD}${FAILED_STEP} failed – see below.${RESET} ${DIM}${TUFFGAL_SUMMARY}${RESET}"
+      set_status "${RED}${BOLD}${FAILED_STEP} failed. Output below.${RESET} ${DIM}${TUFFGAL_SUMMARY}${RESET}"
     else
-      set_status "${RED}${BOLD}${FAILED_STEP} failed – see below.${RESET}"
+      set_status "${RED}${BOLD}${FAILED_STEP} failed. Output below.${RESET}"
     fi
     [[ "$TTY_AVAILABLE" == true ]] && printf '\n'
     printf '\n'
@@ -384,9 +387,9 @@ if [[ "$RUN_TUFFGAL" == true ]]; then
     if [[ "$APPROVE_REPLY" =~ ^[Yy]([Ee][Ss])?$ ]]; then
       printf '\n'
       if APPROVE_OUTPUT=$(npx tuffgal approve 2>&1); then
-        printf '  %s%s Local cache refreshed – next run will be clean.%s\n' "$GREEN" "$TICK" "$RESET"
+        printf '  %s%s Local cache refreshed. The next run will be clean.%s\n' "$GREEN" "$TICK" "$RESET"
       else
-        printf '  %s%s tuffgal approve failed – see below.%s\n\n' "$RED" "$CROSS" "$RESET" >&2
+        printf '  %s%s tuffgal approve failed. Output below.%s\n\n' "$ERR_RED" "$CROSS" "$ERR_RESET" >&2
         dump_failure "tuffgal approve failed." "$APPROVE_OUTPUT"
         exit 1
       fi
@@ -479,7 +482,7 @@ if [[ -z "$FAILED_STEP" ]]; then
   [[ "$TTY_AVAILABLE" == true ]] && printf '\n'
   exit 0
 else
-  set_status "${RED}${BOLD}${FAILED_STEP} failed – see below.${RESET}"
+  set_status "${RED}${BOLD}${FAILED_STEP} failed. Output below.${RESET}"
   [[ "$TTY_AVAILABLE" == true ]] && printf '\n'
   printf '\n'
   dump_failure "${FAILED_STEP} failed." "$FAILED_OUTPUT"

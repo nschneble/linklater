@@ -101,5 +101,5 @@ elif [[ "$TARGET" == "migrate:reset" ]]; then
   fi
 fi
 
-printf '%sRunning npm run %s --workspace %s%s\n' "$DIM" "$TARGET" "$WORKSPACE" "$RESET" >&2
+printf '%sRunning npm run %s --workspace %s%s\n' "$ERR_DIM" "$TARGET" "$WORKSPACE" "$ERR_RESET" >&2
 exec npm run "$TARGET" --workspace "$WORKSPACE"

@@ -10,6 +10,10 @@
 - Offer to continue into a live session the login screen is covering
 - Screen reader narration while a slow boot runs
 
+### Changed
+
+- `bin/migrate --reset` asks before it wipes, and refuses when no terminal can be asked
+
 ### Fixed
 
 - A rotation the server commits but never delivers ends the session

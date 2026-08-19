@@ -33,19 +33,24 @@ unknown_flag() {
 # shellcheck disable=SC2034
 resolve_color() {
   local permitted=false
-  if [[ "$1" == true && -z "${NO_COLOR:-}" && "${TERM:-}" != dumb ]]; then
+  if [[ "$1" == true && -z "${NO_COLOR:-}" && "${TERM:-dumb}" != dumb ]]; then
     permitted=true
   fi
 
-  TTY_BOLD='' TTY_DIM='' TTY_RESET=''
+  TTY_YELLOW='' TTY_BOLD='' TTY_DIM='' TTY_RESET=''
   if [[ "$permitted" == true ]]; then
-    TTY_BOLD=$'\033[1m' TTY_DIM=$'\033[2m' TTY_RESET=$'\033[0m'
+    TTY_YELLOW=$'\033[33m' TTY_BOLD=$'\033[1m' TTY_DIM=$'\033[2m' TTY_RESET=$'\033[0m'
   fi
 
   RED='' GREEN='' YELLOW='' CYAN='' BOLD='' DIM='' RESET=''
   if [[ "$permitted" == true && -t 1 ]]; then
     RED=$'\033[31m' GREEN=$'\033[32m' YELLOW=$'\033[33m' CYAN=$'\033[36m'
     BOLD=$'\033[1m' DIM=$'\033[2m' RESET=$'\033[0m'
+  fi
+
+  ERR_RED='' ERR_BOLD='' ERR_DIM='' ERR_RESET=''
+  if [[ "$permitted" == true && -t 2 ]]; then
+    ERR_RED=$'\033[31m' ERR_BOLD=$'\033[1m' ERR_DIM=$'\033[2m' ERR_RESET=$'\033[0m'
   fi
 }
 

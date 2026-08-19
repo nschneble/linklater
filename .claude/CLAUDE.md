@@ -61,12 +61,13 @@ npm run tuffgal:approve -- --desktop --new-only   # Pass Tuffgal flags after `--
 # comments `@tuffgal approve` on the PR. No local command writes them (macOS renders ≠ linux CI)
 
 # Database
-npm run migrate --workspace @linklater/api        # Run migrations + regenerate client
-npm run migrate:reset --workspace @linklater/api  # Wipe, re-run migrations + regenerate client
-npm run migrate:deploy --workspace @linklater/api # Production: apply committed migrations + regenerate client (non-interactive)
+npm run migrate --workspace @linklater/api             # Run migrations + regenerate client
+npm run migrate:reset --workspace @linklater/api       # Wipe, re-run migrations + regenerate client
+npm run migrate:reset:force --workspace @linklater/api # Wipe without Prisma's confirmation prompt
+npm run migrate:deploy --workspace @linklater/api      # Production: apply committed migrations + regenerate client (non-interactive)
 ```
 
-> **Note:** `migrate`, `migrate:reset` + `migrate:deploy` chain their Prisma command with `prisma generate`. Prisma 7 `prisma-client` generator need custom `output` path — `migrate dev` alone no auto-regenerate client.
+> **Note:** `migrate`, `migrate:reset`, `migrate:reset:force` + `migrate:deploy` chain their Prisma command with `prisma generate`. Prisma 7 `prisma-client` generator need custom `output` path. `migrate dev` alone no auto-regenerate client.
 
 ## Third-Party Integrations
 
