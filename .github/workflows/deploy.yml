@@ -64,6 +64,7 @@ jobs:
   build-and-push:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -110,6 +111,7 @@ jobs:
     needs: build-and-push
     if: ${{ always() && (needs.build-and-push.result == 'success' || needs.build-and-push.result == 'skipped') }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -185,8 +187,11 @@ jobs:
               DEPLOY_DOMAIN=$(grep -E '^DOMAIN=' production.env | head -n1 | cut -d= -f2- | tr -d '"')
               HEALTHCHECK_URL="https://${DEPLOY_DOMAIN}/api/health"
             fi
+            # bounds each attempt, keeping all 30 inside the ssh action's
+            # 10m command_timeout instead of one stall consuming it
             for attempt in $(seq 1 30); do
-              status=$(curl -s -o /dev/null -w '%{http_code}' "$HEALTHCHECK_URL" || echo 000)
+              status=$(curl -s -o /dev/null -w '%{http_code}' \
+                --connect-timeout 3 --max-time 5 "$HEALTHCHECK_URL") || status=000
               if [ "$status" = "200" ]; then
                 echo "Health check passed (HTTP 200) after ${attempt} attempt(s)."
                 exit 0

@@ -14,6 +14,7 @@ permissions:
 jobs:
   visual-regression:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
 
     services:
       postgres:
@@ -49,18 +50,22 @@ jobs:
       - run: npm ci
       - name: Provision HTTPS certs for API
         run: |
-          sudo apt-get update -y
-          sudo apt-get install -y libnss3-tools
+          # The CA is never checked: tuffgal's runner sets ignoreHTTPSErrors
+          # and the step below sets NODE_TLS_REJECT_UNAUTHORIZED. So the cert
+          # only has to exist, and mkcert -install with its libnss3-tools
+          # apt dependency stays off the path, along with the Azure mirror
+          # that stalled this step twice on 2026-08-19.
           # Pin to a GitHub release asset instead of the dl.filippo.io "latest"
-          # redirector, which 500'd and wedged main on 2026-07-16. Retry to ride
-          # out transient CDN blips.
+          # redirector, which 500'd and wedged main on 2026-07-16. Retry rides
+          # out a transient CDN blip; the timeouts catch a stalled transfer,
+          # which retry alone does not.
           MKCERT_VERSION="v1.4.4"
           curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 \
+            --connect-timeout 10 --max-time 60 \
             "https://github.com/FiloSottile/mkcert/releases/download/${MKCERT_VERSION}/mkcert-${MKCERT_VERSION}-linux-amd64" \
             -o mkcert
           chmod +x mkcert
           sudo mv mkcert /usr/local/bin/mkcert
-          mkcert -install
           mkdir -p apps/api/certs
           mkcert -key-file apps/api/certs/localhost-key.pem -cert-file apps/api/certs/localhost.pem localhost
       - uses: nschneble/tuffgal-action@017db0f0c55fc279263c410d12e4607a53f5644e # v1.7.0
