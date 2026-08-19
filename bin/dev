@@ -216,6 +216,10 @@ SCROLL_WEB=$SCROLL_FOLLOWING
 SCROLL_MAILPIT=$SCROLL_FOLLOWING
 SCROLL_TUNNEL=$SCROLL_FOLLOWING
 
+LOG_GROWTH_POLL_TICKS=3
+LOG_GROWTH_TICKS=0
+LOG_PAINTED_LINES=0
+
 # ── Cleanup ───────────────────────────────────────────────────────────────────
 OLD_STTY=$(stty -g </dev/tty)
 CLEANUP_POLL_SECONDS=0.1
@@ -577,6 +581,7 @@ render_log_view() {
 
   local total start last
   total=$(log_line_total "$log_file")
+  LOG_PAINTED_LINES=$total
   start=$(log_window_start "$log_file" "$total")
   last=$(( start + AVAILABLE - 1 ))
   (( last > total )) && last=$total
@@ -731,11 +736,21 @@ while true; do
     fi
   fi
 
-  # Mark dirty when state changed, key pressed, or the view changed
   if [[ "$API_STATE"  != "$PREV_API_STATE"  || "$WEB_STATE"  != "$PREV_WEB_STATE"  || \
         "$MAILPIT_STATE" != "$PREV_MAILPIT_STATE" || "$TUNNEL_STATE" != "$PREV_TUNNEL_STATE" || \
         "$VIEW" != "$PREV_VIEW" || -n "$KEY_BATCH" ]]; then
     DIRTY=true
+  fi
+
+  if [[ "$VIEW" != "status" ]]; then
+    LOG_GROWTH_TICKS=$(( LOG_GROWTH_TICKS + 1 ))
+    if (( LOG_GROWTH_TICKS >= LOG_GROWTH_POLL_TICKS )); then
+      LOG_GROWTH_TICKS=0
+      if (( $(view_scroll) == SCROLL_FOLLOWING )) && \
+         (( $(log_line_total "$(view_log_file)") > LOG_PAINTED_LINES )); then
+        DIRTY=true
+      fi
+    fi
   fi
 
   # Redraw the region only when something changed, otherwise move the spinner
