@@ -356,13 +356,31 @@ strip_ansi() {
                -e $'s/\033][^\033\007]*\033\\\\//g'
 }
 
-# ── Static header (lines 1–4, never redrawn) ─────────────────────────────────
-draw_header() {
-  printf '\033[2J\033[H'
-  printf '  %s%s╔═════════════════╗%s\n' "$BOLD" "$CYAN" "$RESET"
-  printf '  %s%s║    Linklater    ║%s\n' "$BOLD" "$CYAN" "$RESET"
-  printf '  %s%s╚═════════════════╝%s\n' "$BOLD" "$CYAN" "$RESET"
-  printf '\n'
+# ── Frame assembly ───────────────────────────────────────────────────────────
+FRAME_OPEN=$'\033[H\033[0J'
+FRAME_ROWS=0
+FRAME_BUDGET=23
+FRAME_DENSITY=full
+FRAME_SERVICE_ROW=7
+
+frame_row() {
+  FRAME_ROWS=$(( FRAME_ROWS + 1 ))
+  (( FRAME_ROWS > FRAME_BUDGET )) || FRAME_OUT+="$1"$'\n'
+}
+
+frame_gap() {
+  [[ "$FRAME_DENSITY" == bare ]] || frame_row ''
+}
+
+measure_terminal() {
+  local stty_size; stty_size=$(stty size 2>/dev/null </dev/tty)
+  local rows; rows=${stty_size%% *}; rows=${rows:-24}
+  local cols; cols=${stty_size##* }; cols=${cols:-80}
+  # a newline on the bottom row scrolls the frame out of absolute addressing
+  FRAME_BUDGET=$(( rows - 1 ))
+  (( FRAME_BUDGET < 1 )) && FRAME_BUDGET=1
+  CONTENT_WIDTH=$(( cols - 4 ))
+  (( CONTENT_WIDTH < 20 )) && CONTENT_WIDTH=20
 }
 
 # ── Service row ───────────────────────────────────────────────────────────────
@@ -378,115 +396,96 @@ render_service_line() {
 
 # ── LAN row (remote mode only) ────────────────────────────────────────────────
 render_lan_line() {
-  [[ -z "$REMOTE_URL" ]] && return
   printf "${CYAN}↗${RESET} %-7s  ${CYAN}%s${RESET}" "LAN" "$REMOTE_URL"
 }
 
-# ── Tunnel row (public mode only) ─────────────────────────────────────────────
-render_tunnel_line() {
-  render_service_line "$TUNNEL_STATE" "$TUNNEL_URL" "$1" "Tunnel"
+# ── Key list ──────────────────────────────────────────────────────────────────
+render_key_row() {
+  local key=$1 label=$2 current=$3 marker=''
+  [[ "$current" == "$label" ]] && marker=' (current)'
+  frame_row "  ${key}. ${label} logs${marker}"
 }
 
-# ── Key list ──────────────────────────────────────────────────────────────────
 render_key_list() {
   local current=$1
-  local out=''
-  if [[ "$current" == "API" ]]; then
-    out+="  1. API logs (current)"$'\n'
-  else
-    out+="  1. API logs"$'\n'
-  fi
-  if [[ "$current" == "Web" ]]; then
-    out+="  2. Web logs (current)"$'\n'
-  else
-    out+="  2. Web logs"$'\n'
-  fi
-  if [[ "$MAILPIT_STATE" != "skipped" ]]; then
-    if [[ "$current" == "Mailpit" ]]; then
-      out+="  3. Mailpit logs (current)"$'\n'
-    else
-      out+="  3. Mailpit logs"$'\n'
-    fi
-  fi
+  [[ "$FRAME_DENSITY" == full ]] || return 0
+  render_key_row 1 API "$current"
+  render_key_row 2 Web "$current"
+  [[ "$MAILPIT_STATE" != "skipped" ]] && render_key_row 3 Mailpit "$current"
   if [[ -n "$TUNNEL_STATE" && "$TUNNEL_STATE" != "skipped" ]]; then
-    if [[ "$current" == "Tunnel" ]]; then
-      out+="  4. Tunnel logs (current)"$'\n'
-    else
-      out+="  4. Tunnel logs"$'\n'
-    fi
+    render_key_row 4 Tunnel "$current"
   fi
   if [[ -n "$current" ]]; then
-    out+="  u. Scroll up"$'\n'
-    out+="  d. Scroll down"$'\n'
+    frame_row "  u. Scroll up"
+    frame_row "  d. Scroll down"
   fi
-  printf '%s' "$out"
+}
+
+# ── Shared chrome ─────────────────────────────────────────────────────────────
+render_chrome() {
+  local frame_char=$1 heading=$2
+  frame_row "  ${BOLD}${CYAN}╔═════════════════╗${RESET}"
+  frame_row "  ${BOLD}${CYAN}║    Linklater    ║${RESET}"
+  frame_row "  ${BOLD}${CYAN}╚═════════════════╝${RESET}"
+  frame_gap
+  frame_row "  Viewing: $heading"
+  frame_gap
+  FRAME_SERVICE_ROW=$(( FRAME_ROWS + 1 ))
+  frame_row "  $(render_service_line "$API_STATE" "$API_URL" "$frame_char" "API")"
+  frame_row "  $(render_service_line "$WEB_STATE" "$WEB_URL" "$frame_char" "Web")"
+  frame_row "  $(render_service_line "$MAILPIT_STATE" "$MAILPIT_URL" "$frame_char" "Mailpit")"
+  [[ -n "$TUNNEL_STATE" ]] && \
+    frame_row "  $(render_service_line "$TUNNEL_STATE" "$TUNNEL_URL" "$frame_char" "Tunnel")"
+  [[ -n "$REMOTE_URL" ]] && frame_row "  $(render_lan_line)"
+  frame_gap
 }
 
 # ── Status view ───────────────────────────────────────────────────────────────
 render_status_view() {
   local frame_char=$1
-  local out=''
-  out+=$'\033[5;1H\033[0J'
-  out+="  Viewing: status"$'\n'$'\n'
-
-  out+="  $(render_service_line "$API_STATE" "$API_URL" "$frame_char" "API")"$'\n'
-  out+="  $(render_service_line "$WEB_STATE" "$WEB_URL" "$frame_char" "Web")"$'\n'
-  out+="  $(render_service_line "$MAILPIT_STATE" "$MAILPIT_URL" "$frame_char" "Mailpit")"$'\n'
-  if [[ -n "$TUNNEL_STATE" ]]; then
-    out+="  $(render_tunnel_line "$frame_char")"$'\n'
-  fi
-  if [[ -n "$REMOTE_URL" ]]; then
-    out+="  $(render_lan_line)"$'\n'
-  fi
-  out+=$'\n'
-
-  if [[ "$API_STATE" == "ready" && "$WEB_STATE" == "ready" && \
-        ("$MAILPIT_STATE" == "ready" || "$MAILPIT_STATE" == "skipped") && \
-        ("$TUNNEL_STATE" == "" || "$TUNNEL_STATE" == "ready" || "$TUNNEL_STATE" == "skipped") ]]; then
-    out+="  ${GREEN}${BOLD}Ready.${RESET}"$'\n'$'\n'
-  elif any_service_failed; then
-    out+="  ${RED}${BOLD}An error occurred.${RESET}"$'\n'$'\n'
-  else
-    out+="  Starting up…"$'\n'$'\n'
-  fi
-
-  out+="$(render_key_list '')"$'\n'$'\n'
-  out+="  Press q or Control+C to stop"
-
-  printf '%s' "$out"
+  measure_terminal
+  for FRAME_DENSITY in full compact bare; do
+    FRAME_OUT=$FRAME_OPEN FRAME_ROWS=0
+    render_chrome "$frame_char" "status"
+    if [[ "$API_STATE" == "ready" && "$WEB_STATE" == "ready" && \
+          ("$MAILPIT_STATE" == "ready" || "$MAILPIT_STATE" == "skipped") && \
+          ("$TUNNEL_STATE" == "" || "$TUNNEL_STATE" == "ready" || "$TUNNEL_STATE" == "skipped") ]]; then
+      frame_row "  ${GREEN}${BOLD}Ready.${RESET}"
+    elif any_service_failed; then
+      frame_row "  ${RED}${BOLD}An error occurred.${RESET}"
+    else
+      frame_row "  Starting up…"
+    fi
+    frame_gap
+    render_key_list ''
+    frame_gap
+    frame_row "  Press q or Control+C to stop"
+    (( FRAME_ROWS <= FRAME_BUDGET )) && break
+  done
+  printf '%s' "$FRAME_OUT"
 }
 
 # ── Spinner cells ─────────────────────────────────────────────────────────────
 render_spinner_cells() {
-  local frame_char=$1
+  local frame_char=$1 row=$FRAME_SERVICE_ROW
   local out=''
-  # rows 7-10 are the service block both views draw after the row 5 address
-  [[ "$API_STATE" == "starting" ]]     && out+=$'\033[7;3H'"${YELLOW}${frame_char}${RESET}"
-  [[ "$WEB_STATE" == "starting" ]]     && out+=$'\033[8;3H'"${YELLOW}${frame_char}${RESET}"
-  [[ "$MAILPIT_STATE" == "starting" ]] && out+=$'\033[9;3H'"${YELLOW}${frame_char}${RESET}"
-  [[ "$TUNNEL_STATE" == "starting" ]]  && out+=$'\033[10;3H'"${YELLOW}${frame_char}${RESET}"
+  [[ "$API_STATE" == "starting" ]]     && out+=$'\033['"${row};3H${YELLOW}${frame_char}${RESET}"
+  [[ "$WEB_STATE" == "starting" ]]     && out+=$'\033['"$(( row + 1 ));3H${YELLOW}${frame_char}${RESET}"
+  [[ "$MAILPIT_STATE" == "starting" ]] && out+=$'\033['"$(( row + 2 ));3H${YELLOW}${frame_char}${RESET}"
+  [[ "$TUNNEL_STATE" == "starting" ]]  && out+=$'\033['"$(( row + 3 ));3H${YELLOW}${frame_char}${RESET}"
   [[ -n "$out" ]] && printf '%s%s%s' "$SAVE_CURSOR" "$out" "$RESTORE_CURSOR"
 }
 
-# ── Log view geometry ─────────────────────────────────────────────────────────
-compute_log_geometry() {
-  local stty_size; stty_size=$(stty size 2>/dev/null </dev/tty)
-  local rows; rows=${stty_size%% *}; rows=${rows:-24}
-  local cols; cols=${stty_size##* }; cols=${cols:-80}
-  CONTENT_WIDTH=$(( cols - 4 ))
-  (( CONTENT_WIDTH < 20 )) && CONTENT_WIDTH=20
-  if [[ "$MAILPIT_STATE" == "skipped" ]]; then
-    AVAILABLE=$(( rows - 20 ))
-  else
-    AVAILABLE=$(( rows - 21 ))
-  fi
-  [[ -n "$REMOTE_URL" ]] && AVAILABLE=$(( AVAILABLE - 1 ))
-  [[ -n "$TUNNEL_STATE" ]] && AVAILABLE=$(( AVAILABLE - 1 ))
-  [[ -n "$TUNNEL_STATE" && "$TUNNEL_STATE" != "skipped" ]] && AVAILABLE=$(( AVAILABLE - 1 ))
-  (( AVAILABLE < 1 )) && AVAILABLE=1
+# ── Current view ──────────────────────────────────────────────────────────────
+view_label() {
+  case "$VIEW" in
+    api)     printf 'API' ;;
+    web)     printf 'Web' ;;
+    mailpit) printf 'Mailpit' ;;
+    tunnel)  printf 'Tunnel' ;;
+  esac
 }
 
-# ── Current view ──────────────────────────────────────────────────────────────
 view_log_file() {
   case "$VIEW" in
     api)     printf '%s' "$API_LOG" ;;
@@ -558,7 +557,7 @@ scroll_log_view() {
   local direction=$1 log_file total start bottom
   log_file=$(view_log_file)
   [[ -z "$log_file" ]] && return
-  compute_log_geometry
+  render_log_chrome ' ' "$(view_label)"
   total=$(log_line_total "$log_file")
   start=$(log_window_start "$log_file" "$total")
   bottom=$(( total - AVAILABLE + 1 ))
@@ -591,49 +590,44 @@ render_log_position() {
 }
 
 # ── Log view ──────────────────────────────────────────────────────────────────
-render_log_view() {
-  local frame_char=$1 label=$2 log_file=$3
-  compute_log_geometry
-  local divider; printf -v divider '%*s' "$CONTENT_WIDTH" ''
+render_log_chrome() {
+  local frame_char=$1 label=$2 divider divider_width
+  measure_terminal
+  printf -v divider '%*s' "$CONTENT_WIDTH" ''
   divider=${divider// /─}
-
-  local out=''
-  out+=$'\033[5;1H\033[0J'
-  out+="  Viewing: ${label} logs"$'\n'$'\n'
-
-  out+="  $(render_service_line "$API_STATE" "$API_URL" "$frame_char" "API")"$'\n'
-  out+="  $(render_service_line "$WEB_STATE" "$WEB_URL" "$frame_char" "Web")"$'\n'
-  out+="  $(render_service_line "$MAILPIT_STATE" "$MAILPIT_URL" "$frame_char" "Mailpit")"$'\n'
-  if [[ -n "$TUNNEL_STATE" ]]; then
-    out+="  $(render_tunnel_line "$frame_char")"$'\n'
-  fi
-  if [[ -n "$REMOTE_URL" ]]; then
-    out+="  $(render_lan_line)"$'\n'
-  fi
-  out+=$'\n'
-  out+="  0. (back to status)"$'\n'$'\n'
-  out+="$(render_key_list "$label")"$'\n'$'\n'
-
-  local prefix_len=$(( ${#label} + 8 ))
-  local divider_width=$(( CONTENT_WIDTH - prefix_len ))
+  divider_width=$(( CONTENT_WIDTH - ${#label} - 8 ))
   (( divider_width < 0 )) && divider_width=0
-  out+="  ${DIM}── ${label} ${divider:0:$divider_width}${RESET}"$'\n'
+  for FRAME_DENSITY in full compact bare; do
+    FRAME_OUT=$FRAME_OPEN FRAME_ROWS=0
+    render_chrome "$frame_char" "${label} logs"
+    frame_row "  0. (back to status)"
+    frame_gap
+    render_key_list "$label"
+    frame_gap
+    frame_row "  ${DIM}── ${label} ${divider:0:$divider_width}${RESET}"
+    AVAILABLE=$(( FRAME_BUDGET - FRAME_ROWS - 1 ))
+    (( AVAILABLE >= 1 )) && break
+  done
+  (( AVAILABLE < 1 )) && AVAILABLE=1
+}
 
-  local total start last
+render_log_view() {
+  local frame_char=$1 label log_file total start last
+  label=$(view_label)
+  log_file=$(view_log_file)
+  render_log_chrome "$frame_char" "$label"
   total=$(log_line_total "$log_file")
   LOG_PAINTED_LINES=$total
   start=$(log_window_start "$log_file" "$total")
   last=$(( start + AVAILABLE - 1 ))
   (( last > total )) && last=$total
-  out+="  $(render_log_position "$start" "$last" "$total")"$'\n'
-
+  frame_row "  $(render_log_position "$start" "$last" "$total")"
   if (( total > 0 )); then
     while IFS= read -r line; do
-      out+="  ${line:0:$CONTENT_WIDTH}"$'\n'
+      frame_row "  ${line:0:$CONTENT_WIDTH}"
     done < <(sed -n "${start},${last}p" "$log_file" 2>/dev/null | strip_ansi || true)
   fi
-
-  printf '%s' "$out"
+  printf '%s' "$FRAME_OUT"
 }
 
 # ── Free stale port ──────────────────────────────────────────────────────────
@@ -663,7 +657,7 @@ launch_tunnel() {
 }
 
 hide_cursor
-draw_header
+printf '\033[2J\033[H'
 
 API_PORT="${PORT:-3000}"
 free_port "$API_PORT" "$API_LOG"
@@ -691,6 +685,7 @@ fi
 
 # ── Live update loop ──────────────────────────────────────────────────────────
 DIRTY=true  # always draw on first tick
+trap 'DIRTY=true' WINCH
 STARTING_TIMEOUT_SECONDS=90
 LAUNCH_SECONDS=$SECONDS
 TUNNEL_LAUNCH_SECONDS=0
@@ -824,19 +819,17 @@ while true; do
     fi
   fi
 
-  # Redraw the region only when something changed, otherwise move the spinner
+  # Redraw the frame only when something changed, otherwise move the spinner
   if [[ "$DIRTY" == true ]] || any_service_starting; then
     frame_char="${SPIN[$((FRAME % ${#SPIN[@]}))]}"
     FRAME=$(( FRAME + 1 ))
     if [[ "$DIRTY" == true ]]; then
       DIRTY=false
-      case "$VIEW" in
-        status)  render_status_view "$frame_char" ;;
-        api)     render_log_view "$frame_char" "API"  "$API_LOG"  ;;
-        web)     render_log_view "$frame_char" "Web"  "$WEB_LOG"  ;;
-        mailpit) render_log_view "$frame_char" "Mailpit" "$MAILPIT_LOG" ;;
-        tunnel)  render_log_view "$frame_char" "Tunnel" "$TUNNEL_LOG" ;;
-      esac
+      if [[ "$VIEW" == "status" ]]; then
+        render_status_view "$frame_char"
+      else
+        render_log_view "$frame_char"
+      fi
     else
       render_spinner_cells "$frame_char"
     fi
