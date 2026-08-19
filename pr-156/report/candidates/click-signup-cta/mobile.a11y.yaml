@@ -12,7 +12,7 @@
   - text: Password
   - textbox "Password":
     - /placeholder: Leave blank to use a magic link
-  - alert
+  - paragraph
   - button "Sign up with magic link"
 - button "Read our privacy policy"
 - status
