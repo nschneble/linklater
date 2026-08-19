@@ -430,8 +430,7 @@ describe('OAuthLinkService', () => {
   describe('buildGoogleLinkUrl', () => {
     beforeEach(() => {
       process.env.GOOGLE_CLIENT_ID = 'test-client-id';
-      process.env.GOOGLE_LINK_CALLBACK_URL =
-        'https://api.example.com/auth/google/link/callback';
+      process.env.API_URL = 'https://api.example.com';
       process.env.JWT_SECRET = 'test-secret';
     });
 

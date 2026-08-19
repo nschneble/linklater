@@ -85,6 +85,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       TOTP_ENCRYPTION_KEY: ${TOTP_ENCRYPTION_KEY}
       APP_URL: ${APP_URL}
+      API_URL: ${API_URL}
       # Recommended in production: narrow CORS from the default open `*`.
       CORS_ORIGIN: ${CORS_ORIGIN:-}
       # Optional integrations (absent = feature simply off). See DEPLOYMENT.md.
@@ -96,13 +97,10 @@ services:
       SMTP_FROM: ${SMTP_FROM:-}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL:-}
-      GOOGLE_LINK_CALLBACK_URL: ${GOOGLE_LINK_CALLBACK_URL:-}
       APPLE_CLIENT_ID: ${APPLE_CLIENT_ID:-}
       APPLE_TEAM_ID: ${APPLE_TEAM_ID:-}
       APPLE_KEY_ID: ${APPLE_KEY_ID:-}
       APPLE_PRIVATE_KEY: ${APPLE_PRIVATE_KEY:-}
-      APPLE_CALLBACK_URL: ${APPLE_CALLBACK_URL:-}
       EXTENSION_REDIRECT_URIS: ${EXTENSION_REDIRECT_URIS:-}
       NODE_ENV: production
       NODE_OPTIONS: '--max-old-space-size=768'

@@ -98,6 +98,7 @@ To install, go to **Settings → Bookmarklet** and drag the _Save to Linklater_ 
 - Node 22.x
 - PostgreSQL 16
 - [Mailpit](https://mailpit.axllent.org/)
+- [ShellCheck](https://www.shellcheck.net/) (`brew install shellcheck`), needed by `npm run lint` and `bin/flintest` but not to run the app
 
 ### Install dependencies
 
@@ -126,10 +127,26 @@ cp apps/web/.env.example apps/web/.env
 # cd /path/to/your/repo
 bin/migrate
 bin/migrate --help
+bin/migrate --version
+
+# wipe the database and re-run every migration
 bin/migrate --reset
+bin/migrate --reset --force
+
+# refuse the wipe instead of asking to confirm it
+bin/migrate --reset --no-input
+
+# turn off colored output
+bin/migrate --no-color
 ```
 
-> **Note:** Use `bin/migrate` or `npm run migrate` instead of calling `npx prisma migrate dev` directly. Prisma 7's `prisma-client` generator requires a custom output path, so `migrate dev` does not automatically regenerate the client.
+`bin/migrate --reset` wipes the database, so it asks you to type `reset` before it does anything. Any other answer cancels and leaves the database untouched. When there is no terminal to ask on, which is the case in CI, it refuses and exits 66 instead of wiping. Redirecting or piping the output does not count: it still asks on the terminal. `--force` answers the confirmation up front and is how a script gets through. `--no-input` turns the prompt into that same refusal.
+
+`bin/migrate` exits 64 on an unknown flag, 66 on the refusal, and 130 when you answer the confirmation with anything but `reset`.
+
+Run `bin/migrate --help` for the full list of options.
+
+> **Note:** Use `bin/migrate` or `npm run migrate --workspace @linklater/api` instead of calling `npx prisma migrate dev` directly. Prisma 7's `prisma-client` generator requires a custom output path, so `migrate dev` does not automatically regenerate the client.
 
 ### Start development server
 
@@ -142,7 +159,20 @@ npm run dev
 # start the development server TUI
 bin/dev
 bin/dev --help
+bin/dev --version
+
+# turn off colored output
+bin/dev --no-color
+
+# skip the TUI and run npm run dev
+bin/dev --no-input
 ```
+
+The TUI keys are `0` for status, `1` for API logs, `2` for web logs, `3` for Mailpit logs when Mailpit is installed, `4` for tunnel logs under `--public` when `cloudflared` is installed, and `q` to quit.
+
+`bin/dev` runs `npm run dev` instead of the TUI when output is redirected, when `TERM` is `dumb` or unset, when there is no controlling terminal, or when you pass `--no-input`. It says which one applied. That fallback starts the API and web servers and nothing else: no Mailpit, no stale port check, and no tunnel or LAN access even if you passed `--public` or `--remote`.
+
+`bin/dev` exits 64 on an unknown flag, 0 when you quit a healthy run with `q`, 1 when a service errored, and 130 when you stop it with Control+C.
 
 Linklater uses `concurrently` to run NestJS on port 3000 and Vite on port 5173. **Open [https://localhost:5173](https://localhost:5173) in your web browser and you're good to go!**
 
@@ -150,7 +180,7 @@ Linklater uses `concurrently` to run NestJS on port 3000 and Vite on port 5173. 
 
 ### Linting, tests, and CI
 
-Both the front and back-end use ESLint and Prettier. Vitest is used to test the front-end and Jest is used to test the back-end. GitHub Actions lint, type-check, and test on pushes and PRs to `main`.
+Both the front and back-end use ESLint and Prettier. The shell scripts in `bin/` use ShellCheck. Vitest is used to test the front-end and Jest is used to test the back-end. GitHub Actions lint, type-check, and test on pushes and PRs to `main`.
 
 ```bash
 # cd /path/to/your/repo
@@ -160,13 +190,31 @@ npm run lint
 npm run typecheck
 npm run test
 
+# lint bin/ on its own
+npm run lint:shell
+
 # -OR-
 
 # install, format, lint, type-check, test, and build in one TUI
 bin/flintest
 bin/flintest --help
+bin/flintest --version
 bin/flintest --update
+
+# run the local visual regression check instead of the default chain
+bin/flintest --tuffgal
+
+# turn off colored output, paging, and prompts
+bin/flintest --no-color
+bin/flintest --no-pager
+bin/flintest --no-input
 ```
+
+`npm run lint:shell` runs ShellCheck over every file under `bin/`. `npm run lint` runs it last, after both workspaces, so it also covers CI and `bin/flintest`. It needs ShellCheck on your `PATH`; without it the command stops and names what to install.
+
+`bin/flintest --no-pager` prints failure output in full instead of paging it through `less`. `--no-input` skips the prompt that a `--tuffgal` run ends with.
+
+`bin/flintest` exits 64 on an unknown flag, 1 at the first step that fails, and 130 when you stop it with Control+C.
 
 #### Visual regression tests
 
@@ -175,6 +223,8 @@ Visual + accessibility regression coverage is provided by [Tuffgal](https://www.
 - Stories live in `tuffgal/stories/`
 - Committed baselines live in `tuffgal/baselines/`, but are written only by CI
 - Local `tuffgal/.cache/` holds advisory self-diffs for use during development
+
+`bin/flintest --tuffgal` runs that same local check, opens the HTML report, and then offers to approve any new or changed stories into the local cache. Committed baselines stay CI-only.
 
 ```bash
 # cd /path/to/your/repo
@@ -267,7 +317,7 @@ git push origin v0.3.0
 
 #### Remote access (LAN)
 
-The development server TUI has a `--remote` option which allows Linklater to be discoverable by other devices on the same Wi-Fi network.
+The development server TUI has a `--remote` option which allows Linklater to be discoverable by other devices on the same Wi-Fi network. It only works in the TUI. When `bin/dev` falls back to `npm run dev`, other devices get no access and the script says so.
 
 ```bash
 # cd /path/to/your/repo
@@ -295,7 +345,7 @@ mkcert -CAROOT
 
 ##### Set a friendly hostname (optional)
 
-By default the LAN url uses your Mac's Bonjour hostname.
+By default the LAN URL uses your Mac's Bonjour hostname.
 
 To get `linklater.local` instead:
 
@@ -307,7 +357,9 @@ This is a one-time system-level change and persists across reboots.
 
 #### Remote access (public)
 
-The development server TUI has a `--public` option which allows Linklater to be discoverable publicly using a [Cloudflare TryCloudflare tunnel](https://github.com/cloudflare/cloudflared).
+The development server TUI has a `--public` option which allows Linklater to be discoverable publicly using a [Cloudflare TryCloudflare tunnel](https://github.com/cloudflare/cloudflared). It only works in the TUI. When `bin/dev` falls back to `npm run dev`, there is no tunnel and the script says so.
+
+Install `cloudflared` first with `brew install cloudflared`, or the tunnel row reads `not installed` and key `4` does nothing. `--public` turns on `--remote` too, so the app is reachable on the Wi-Fi network as well.
 
 ```bash
 # cd /path/to/your/repo
@@ -318,5 +370,5 @@ bin/dev --public
 
 #### Known limitations
 
-- Google and Apple SSO won't work; OAuth callback URLs are pinned to localhost
+- Google and Apple SSO won't work; OAuth callback URLs derive from `API_URL`, which points at localhost
 - The bookmarklet generated on the Settings page won't work

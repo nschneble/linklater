@@ -10,13 +10,19 @@
 - Offer to continue into a live session the login screen is covering
 - Screen reader narration while a slow boot runs
 
+### Changed
+
+- `bin/` commands take standard flags, report standard exit codes, and explain what they're doing
+- `bin/migrate --reset` asks before it wipes, and refuses when no terminal can be asked
+- OAuth callback URLs now come from `API_URL` and the route
+
 ### Fixed
 
 - A rotation the server commits but never delivers ends the session
 - A token rotation performed in another tab signs out the current tab
 - An access token already known to be expired still spends a request
-- The boot text fades under the contrast floor at the bottom of its pulse
 - The boot screen appears on boots too fast to need explaining
+- The boot text fades under the contrast floor at the bottom of its pulse
 
 ## [1.5.0] - 2026-08-02
 

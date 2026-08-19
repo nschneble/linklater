@@ -3,38 +3,103 @@
 
 set -euo pipefail
 
-SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+SCRIPT_DIR=$(cd -- "$(dirname -- "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)
 ROOT_DIR=$(cd -- "$SCRIPT_DIR/.." && pwd)
 cd "$ROOT_DIR" || exit
 
+# shellcheck source=lib/cli.sh disable=SC1091
+. "$SCRIPT_DIR/lib/cli.sh" 2>/dev/null ||
+  { printf 'Cannot load %s/lib/cli.sh\n' "$SCRIPT_DIR" >&2; exit 70; }
+
 usage() {
   cat <<'USAGE'
-Usage: bin/migrate [--reset]
+Usage: bin/migrate [options]
 
-Runs Prisma migrations for the @linklater/api workspace.
+Runs Prisma migrations for the @linklater/api workspace. When the schema has
+changed, it also authors a new migration and asks you to name it.
+
+Examples:
+  bin/migrate                  Apply pending migrations, or author a new one
+  bin/migrate --reset          Wipe the database and re-run every migration
+  bin/migrate --reset --force  Wipe the database without confirming first
 
 Options:
-  --reset    Wipe the database and re-run all migrations from scratch.
-  -h, --help Show this help.
+  --reset      Wipe the database and re-run every migration.
+  --force      Answer the --reset confirmation up front.
+  --no-input   Refuse --reset rather than ask for confirmation.
+  --no-color   Disable colored output.
+  --version    Print the version and exit.
+  -h, --help   Show this help.
+
+See README.md for setup and usage notes.
 USAGE
 }
 
+KNOWN_FLAGS=(--reset --force --no-input --no-color --version --help -h)
+
+suggest_flag() {
+  local candidate
+  for candidate in "${KNOWN_FLAGS[@]}"; do
+    if [[ "$candidate" == "$1"* || "$1" == "$candidate"* ]]; then
+      printf 'Did you mean %s?' "$candidate"
+      return
+    fi
+  done
+}
+
+scan_help "$@"
+
+WORKSPACE="@linklater/api"
 TARGET="migrate"
+FORCE=false
+NO_INPUT=false
+USE_COLOR=true
+
 for argument in "$@"; do
   case "$argument" in
     --reset)
       TARGET="migrate:reset"
       ;;
-    -h|--help)
-      usage
-      exit 0
+    --force)
+      FORCE=true
+      ;;
+    --no-input)
+      NO_INPUT=true
+      ;;
+    --no-color)
+      USE_COLOR=false
+      ;;
+    --version)
+      print_version
       ;;
     *)
-      printf 'Unknown option: %s\n\n' "$argument" >&2
-      usage >&2
-      exit 64
+      unknown_flag "$argument" "$(suggest_flag "$argument")"
       ;;
   esac
 done
 
-exec npm run "$TARGET" --workspace @linklater/api
+resolve_color "$USE_COLOR"
+probe_terminal
+
+if [[ "$TARGET" == "migrate:reset" && "$FORCE" == true ]]; then
+  TARGET="migrate:reset:force"
+elif [[ "$TARGET" == "migrate:reset" ]]; then
+  if [[ "$NO_INPUT" == true || "$TERMINAL_REACHABLE" == false ]]; then
+    printf 'Refusing to reset the database without confirmation. --force resets without asking.\n' >&2
+    exit 66
+  fi
+
+  printf '%sThis wipes the database and re-runs every migration.%s\n' "$TTY_BOLD" "$TTY_RESET" > /dev/tty
+  printf 'Type reset to continue: ' > /dev/tty
+  read -r CONFIRMATION < /dev/tty || true
+  CONFIRMATION=$(printf '%s' "$CONFIRMATION" | tr '[:upper:]' '[:lower:]' |
+                 sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+
+  if [[ "$CONFIRMATION" != "reset" ]]; then
+    printf 'Cancelled. The database was not touched.\n' >&2
+    exit 130
+  fi
+fi
+
+printf '%sRunning npm run %s --workspace %s%s\n' "$ERR_DIM" "$TARGET" "$WORKSPACE" "$ERR_RESET" >&2
+exec npm run "$TARGET" --workspace "$WORKSPACE"

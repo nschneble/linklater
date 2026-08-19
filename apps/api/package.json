@@ -12,6 +12,7 @@
     "migrate": "prisma migrate dev && prisma generate",
     "migrate:deploy": "prisma migrate deploy && prisma generate",
     "migrate:reset": "prisma migrate reset && prisma generate",
+    "migrate:reset:force": "prisma migrate reset --force && prisma generate",
     "start": "nest start",
     "start:debug": "nest start --debug --watch",
     "start:dev": "nest start --watch",

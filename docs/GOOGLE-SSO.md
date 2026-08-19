@@ -62,10 +62,10 @@ Miss any one and the flow fails in a specific, diagnosable way; the
      directly at `:3000` and stays unprefixed.
 
      Both are required: the first is the sign-in flow, the second is the
-     "link Google to my account" flow in Settings. They are handled by two
-     separate strategies with two separate callback environment variables
-     (`apps/api/src/auth/google.strategy.ts` and `google-link.strategy.ts`),
-     so registering only one leaves the other flow broken.
+     "link Google to my account" flow in Settings. The API derives both from
+     `API_URL` and the route each controller mounts
+     (`apps/api/src/auth/oauth-callback-urls.ts`), so registering only one here
+     leaves the other flow broken.
 
      Google matches redirect URIs **exactly**: scheme, host, path, and
      trailing slash all count. `https://YOUR_DOMAIN/api/auth/google/callback/`
@@ -81,27 +81,26 @@ list the deploy workflow writes to `production.env`; see DEPLOYMENT.md →
 Required human actions). The compose file already forwards them to the API
 container (`docker-compose.prod.yml`), so no other change is needed.
 
-| Variable                   | Value                                               | Notes                                                |
-| -------------------------- | --------------------------------------------------- | ---------------------------------------------------- |
-| `GOOGLE_CLIENT_ID`         | the client ID from step 1                           | Required for both sign-in and linking.               |
-| `GOOGLE_CLIENT_SECRET`     | the client secret from step 1                       | Required for both sign-in and linking.               |
-| `GOOGLE_CALLBACK_URL`      | `https://YOUR_DOMAIN/api/auth/google/callback`      | Enables the sign-in strategy.                        |
-| `GOOGLE_LINK_CALLBACK_URL` | `https://YOUR_DOMAIN/api/auth/google/link/callback` | Enables the account-linking strategy.                |
-| `APP_URL`                  | `https://YOUR_DOMAIN`                               | Already required; the redirect origin after sign-in. |
+| Variable               | Value                         | Notes                                                |
+| ---------------------- | ----------------------------- | ---------------------------------------------------- |
+| `GOOGLE_CLIENT_ID`     | the client ID from step 1     | Required for both sign-in and linking.               |
+| `GOOGLE_CLIENT_SECRET` | the client secret from step 1 | Required for both sign-in and linking.               |
+| `API_URL`              | `https://YOUR_DOMAIN/api`     | Both callback URLs are derived from it.              |
+| `APP_URL`              | `https://YOUR_DOMAIN`         | Already required; the redirect origin after sign-in. |
 
 Three behaviours worth knowing before you deploy:
 
-- **The provider is all-or-nothing per flow.** The API registers the Google
-  sign-in strategy only when `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and
-  `GOOGLE_CALLBACK_URL` are all present, and the linking strategy only when
-  the first two plus `GOOGLE_LINK_CALLBACK_URL` are present
-  (`apps/api/src/auth/auth.module.ts`). A missing or misspelled value does not
-  error at startup; it silently disables that flow. The route still exists (the
-  controller is always mounted), so a click reaches a route with no strategy
-  behind it and fails with a `500` (`Unknown authentication strategy`).
-- **The callback values must byte-match Google.** `GOOGLE_CALLBACK_URL` and
-  `GOOGLE_LINK_CALLBACK_URL` are sent to Google as the `redirect_uri`, so they
-  have to equal the URIs you registered in step 1 exactly.
+- **The provider is all-or-nothing.** The API registers the Google sign-in and
+  account-linking strategies only when `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`,
+  and `API_URL` are all present (`apps/api/src/auth/auth.module.ts`). A missing or
+  misspelled value does not error at startup; it silently disables both flows. The
+  route still exists (the controller is always mounted), so a click reaches a route
+  with no strategy behind it and fails with a `500` (`Unknown authentication
+strategy`).
+- **`API_URL` must byte-match what you registered.** Both callback URLs are
+  derived from it and sent to Google as the `redirect_uri`, so its origin and its
+  `/api` proxy prefix have to line up with the URIs from step 1 exactly. A trailing
+  slash on it is trimmed, so `.../api` and `.../api/` behave the same.
 - **`APP_URL` is where the browser lands after sign-in.** The callback handler
   redirects to `${APP_URL}/oauth/callback#...` with the session tokens in the
   URL fragment (`apps/api/src/auth/oauth-sign-in.controller.ts`). Point it at the

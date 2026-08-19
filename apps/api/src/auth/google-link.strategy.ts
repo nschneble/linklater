@@ -1,4 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  GOOGLE_LINK_CALLBACK_ROUTE,
+  publicCallbackUrl,
+} from './oauth-callback-urls.js';
 import { PassportStrategy } from '@nestjs/passport';
 import { requireEnv } from '../common/index.js';
 import { Strategy, type Profile } from 'passport-google-oauth20';
@@ -30,7 +34,7 @@ export class GoogleLinkStrategy extends PassportStrategy(
     super({
       clientID: requireEnv('GOOGLE_CLIENT_ID'),
       clientSecret: requireEnv('GOOGLE_CLIENT_SECRET'),
-      callbackURL: requireEnv('GOOGLE_LINK_CALLBACK_URL'),
+      callbackURL: publicCallbackUrl(GOOGLE_LINK_CALLBACK_ROUTE),
       scope: ['email', 'profile'],
       passReqToCallback: true,
       state: false,

@@ -1,4 +1,9 @@
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  APPLE_SIGN_IN_CALLBACK_ROUTE,
+  AUTH_ROUTE_PREFIX,
+  GOOGLE_SIGN_IN_CALLBACK_ROUTE,
+} from './oauth-callback-urls.js';
 import { AuthService } from './auth.service.js';
 import { Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
 import {
@@ -21,7 +26,7 @@ import type { Response } from 'express';
  * API origin strands the user), which is why no 4xx is documented here.
  */
 @ApiTags('auth')
-@Controller('auth')
+@Controller(AUTH_ROUTE_PREFIX)
 export class OAuthSignInController {
   constructor(private readonly authService: AuthService) {}
 
@@ -43,7 +48,7 @@ export class OAuthSignInController {
       'Redirects to the app with the session tokens in the URL fragment, or back to the login page with a failure code when the state cookie, the provider, or an MFA enrolment blocks the sign-in.',
   })
   @UseGuards(createOAuthCallbackGuard('google'))
-  @Get('google/callback')
+  @Get(GOOGLE_SIGN_IN_CALLBACK_ROUTE)
   async googleCallback(@Req() request: AuthRequest, @Res() response: Response) {
     await this.completeOAuthLogin(request, response, 'google');
   }
@@ -66,7 +71,7 @@ export class OAuthSignInController {
       'Redirects to the app with the session tokens in the URL fragment, or back to the login page with a failure code when the state cookie, the provider, or an MFA enrolment blocks the sign-in.',
   })
   @UseGuards(createOAuthCallbackGuard('apple'))
-  @Post('apple/callback')
+  @Post(APPLE_SIGN_IN_CALLBACK_ROUTE)
   async appleCallback(@Req() request: AuthRequest, @Res() response: Response) {
     await this.completeOAuthLogin(request, response, 'apple');
   }

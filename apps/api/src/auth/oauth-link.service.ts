@@ -4,6 +4,10 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { generateLinkState } from './oauth-link-state.js';
+import {
+  GOOGLE_LINK_CALLBACK_ROUTE,
+  publicCallbackUrl,
+} from './oauth-callback-urls.js';
 import { Prisma, PrismaService } from '../prisma/index.js';
 import { requireEnv } from '../common/index.js';
 import {
@@ -37,7 +41,7 @@ export class OAuthLinkService {
     const linkState = generateLinkState(userId, requireEnv('JWT_SECRET'));
     const parameters = new URLSearchParams({
       client_id: requireEnv('GOOGLE_CLIENT_ID'),
-      redirect_uri: requireEnv('GOOGLE_LINK_CALLBACK_URL'),
+      redirect_uri: publicCallbackUrl(GOOGLE_LINK_CALLBACK_ROUTE),
       response_type: 'code',
       scope: 'email profile',
       state: linkState,

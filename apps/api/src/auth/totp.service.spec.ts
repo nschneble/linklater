@@ -56,6 +56,22 @@ describe('TotpService', () => {
     jest.clearAllMocks();
   });
 
+  it('throws when TOTP_ENCRYPTION_KEY is not set', async () => {
+    const original = process.env.TOTP_ENCRYPTION_KEY;
+    delete process.env.TOTP_ENCRYPTION_KEY;
+    (usersServiceMock.findById as jest.Mock).mockResolvedValue(
+      makeUser() as never,
+    );
+
+    try {
+      await expect(service.generateSetup(USER_ID, USER_EMAIL)).rejects.toThrow(
+        'TOTP_ENCRYPTION_KEY must be set',
+      );
+    } finally {
+      process.env.TOTP_ENCRYPTION_KEY = original;
+    }
+  });
+
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
