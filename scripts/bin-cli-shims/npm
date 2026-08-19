@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# stands in for npm while the bin/ scripts are under test
+
+set -uo pipefail
+
+: "${BIN_TEST_SHIM_DIR:?}" "${BIN_TEST_CAPTURE:?}" "${BIN_TEST_REAL_NODE:?}"
+
+# shellcheck source=record.sh disable=SC1091
+. "$BIN_TEST_SHIM_DIR/record.sh"
+
+record_invocation npm "$@"
+
+if [[ "${1:-}" != run ]]; then
+  exit 0
+fi
+
+if [[ -n "${BIN_TEST_FAIL_SCRIPT:-}" && "${2:-}" == "${BIN_TEST_FAIL_SCRIPT}" ]]; then
+  printf 'the %s script was told to fail\n' "$2" >&2
+  exit 1
+fi
+
+exec "$BIN_TEST_REAL_NODE" "$BIN_TEST_SHIM_DIR/npm-script-exists.mjs" "$@"
