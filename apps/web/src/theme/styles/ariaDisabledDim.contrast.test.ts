@@ -6,11 +6,19 @@
  * `bundles.contrast.test.ts` models every token opaque and cannot see this
  * at all.
  *
- * The measurement below is what decided `lib/styles.ts` `ARIA_DISABLED`:
+ * The first measurement is what decided `lib/styles.ts` `ARIA_DISABLED`:
  * across all shipped cascades no alpha under 1 clears 4.5:1 on every
- * control, so "tune the dim" was never an available fix. A control whose
- * label a user is still waiting on therefore carries no dim, and the ones
- * that keep it are inactive components, which 1.4.3 exempts.
+ * control, so "tune the dim" was never an available fix. 1.4.3 exempts
+ * every control here, none of which is left operable; the dim a waiting
+ * control goes without is a house rule above that floor rather than the
+ * criterion.
+ *
+ * The second is not a house rule. `opacity` composites the element's
+ * `outline` along with it, so the dim reaches the focus indicator of a
+ * control that stays in the tab order — and five on the login form do,
+ * deliberately. 2.4.7 wants that indicator visible and grants no
+ * inactive-component exception, so a band the bundle contract pins at 3:1
+ * arriving at 2.43:1 is worth a condition on the variant.
  *
  * Reading the alpha out of the compiled sheet rather than restating it is
  * what makes the second assertion bite: raise the dim toward full opacity
@@ -33,6 +41,7 @@ import { describe, expect, it } from 'vitest';
 import type { Rgb } from './bundles-color-utils';
 
 const AA_NORMAL = 4.5;
+const AA_NON_TEXT = 3;
 
 /*
  * The primary button on a mount surface: the auth submit, the suggestion
@@ -64,12 +73,36 @@ function readToken(
   return compositeOverBg(parseColor(value), pageBg);
 }
 
+/** Every opacity rule the utility compiles to, selector and 0-1 alpha. */
+async function opacityRules(): Promise<[string, number][]> {
+  const css = await compileClasses(ARIA_DISABLED.split(' '));
+  const rules = [...css.matchAll(/([^{}]+)\{[^{}]*opacity:\s*(\d+)%/g)];
+  if (rules.length === 0) throw new Error('ARIA_DISABLED compiled no opacity');
+  return rules.map(([, selector, percent]) => [
+    selector.trim(),
+    Number(percent) / 100,
+  ]);
+}
+
 /** The alpha the sheet actually declares for the dim, as a 0-1 fraction. */
 async function declaredDimAlpha(): Promise<number> {
-  const css = await compileClasses(ARIA_DISABLED.split(' '));
-  const match = css.match(/opacity:\s*(\d+)%/);
-  if (match === null) throw new Error('ARIA_DISABLED compiled no opacity');
-  return Number(match[1]) / 100;
+  const rules = await opacityRules();
+  return Math.min(...rules.map(([, alpha]) => alpha));
+}
+
+/**
+ * The alpha a control the user has FOCUSED renders at. A rule excluding
+ * `:focus-visible` does not reach one, so a sheet where every dim excludes
+ * it leaves the control at 1 — which is the whole fix, stated as the number
+ * the measurement then runs on.
+ */
+async function focusedAlpha(): Promise<number> {
+  const rules = await opacityRules();
+  const reaching = rules.filter(
+    ([selector]) => !selector.includes(':not(:focus-visible)'),
+  );
+  if (reaching.length === 0) return 1;
+  return Math.min(...reaching.map(([, alpha]) => alpha));
 }
 
 function dim(color: Rgb, alpha: number, behind: Rgb): Rgb {
@@ -110,6 +143,43 @@ function measure(alpha: number): Measured[] {
   return rows;
 }
 
+/*
+ * The surfaces a dimmed-but-focusable control's outline lands on. The band
+ * is offset outside the border box, so what sits behind it is the parent's
+ * fill: the auth card for the SSO buttons and the forgot-password link,
+ * the tab bar's own track for the two tabs.
+ */
+const RING_SURFACES = ['mount-bg', 'orbit-bg'] as const;
+
+interface MeasuredRing {
+  readonly selector: string;
+  readonly surface: string;
+  readonly ratio: number;
+}
+
+function measureFocusRing(alpha: number): MeasuredRing[] {
+  const rows: MeasuredRing[] = [];
+  for (const selector of cascadeSelectors()) {
+    const declarations = parseDeclarations(extractBlock(BUNDLES_CSS, selector));
+    const pageBg = readToken(declarations, 'base-bg', [0, 0, 0]);
+    if (pageBg === null) continue;
+
+    const ring = readToken(declarations, 'focus-ring', pageBg);
+    if (ring === null) continue;
+
+    for (const surface of RING_SURFACES) {
+      const behind = readToken(declarations, surface, pageBg);
+      if (behind === null) continue;
+      rows.push({
+        selector,
+        surface,
+        ratio: contrastRatio(dim(ring, alpha, behind), behind),
+      });
+    }
+  }
+  return rows;
+}
+
 describe('the dim a busy control withholds', () => {
   it('leaves the primary button clearing 4.5:1 in every cascade', async () => {
     const rows = measure(await declaredDimAlpha());
@@ -131,5 +201,28 @@ describe('the dim a busy control withholds', () => {
       worst.atDimAlpha,
       `${worst.selector} composites to ${describeRatio(worst.atDimAlpha)} at ${alpha}`,
     ).toBeLessThan(AA_NORMAL);
+  });
+});
+
+describe('the focus indicator on a control that refuses', () => {
+  it('clears 3:1 on every surface it can land on', async () => {
+    const rows = measureFocusRing(await focusedAlpha());
+    expect(rows.length).toBeGreaterThan(20);
+    for (const row of rows) {
+      expect
+        .soft(row.ratio, `${row.selector} focus-ring on ${row.surface}`)
+        .toBeGreaterThanOrEqual(AA_NON_TEXT);
+    }
+  });
+
+  it('would not, were the dim to reach it', async () => {
+    const rows = measureFocusRing(await declaredDimAlpha());
+    const worst = rows.reduce((low, row) =>
+      row.ratio < low.ratio ? row : low,
+    );
+    expect(
+      worst.ratio,
+      `${worst.selector} on ${worst.surface} composites to ${describeRatio(worst.ratio)}`,
+    ).toBeLessThan(AA_NON_TEXT);
   });
 });

@@ -14,6 +14,7 @@
  *    Guards against an accidental refactor flipping the default.
  */
 
+import { compileClasses } from '../../../test/tailwind';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import PrimaryButton from './PrimaryButton';
@@ -50,6 +51,26 @@ describe('PrimaryButton', () => {
     expect(button.className).toContain(
       'hover:bg-[var(--orbit-highlight-hover)]',
     );
+  });
+
+  // the fill needs restating: CSS applies `:hover` to a refused button too
+  it('holds its own fill under the cursor while it refuses', async () => {
+    render(<PrimaryButton aria-disabled>save</PrimaryButton>);
+    const button = screen.getByRole('button', { name: 'save' });
+    const css = await compileClasses(button.className.split(' '));
+    const fills = [
+      ...css.matchAll(/([^{}]+)\{\s*background-color:\s*var\((--[a-z-]+)\)/g),
+    ].map(([, selector, token]) => ({ selector, token }));
+    const hover = fills.findIndex(({ selector }) =>
+      selector.includes(':hover'),
+    );
+    const refused = fills.findIndex(({ selector }) =>
+      selector.includes('[aria-disabled="true"]'),
+    );
+
+    expect(hover).toBeGreaterThanOrEqual(0);
+    expect(refused).toBeGreaterThan(hover);
+    expect(fills[refused].token).toBe('--mount-highlight');
   });
 
   it('hidden=true seals AT exposure: disabled, aria-hidden, tabIndex=-1, pointer-events-none', () => {

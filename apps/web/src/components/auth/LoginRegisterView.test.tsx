@@ -574,6 +574,17 @@ describe('LoginRegisterView submit icon cross-fade', () => {
     expect(css.match(/animation:/g)).toHaveLength(1);
   });
 
+  // idle, the layer sits at opacity 0, so an ungated spin never stops
+  it('runs the spin only while the button reports itself busy', async () => {
+    renderView({ password: 'secret' });
+    const spinner = iconStack(submitButton()).spinner?.querySelector('i');
+    const css = await compileClasses(spinner?.className.split(' ') ?? []);
+
+    expect(css.match(/([^{}]+)\{[^{}]*animation:/)?.[1]).toContain(
+      ':is(:where(.group)[data-busy] *)',
+    );
+  });
+
   // a line height on the taller layer would grow the button for everyone
   it('sizes the spinner without also setting a line height', async () => {
     renderView({ password: 'secret' });

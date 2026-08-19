@@ -59,7 +59,7 @@ export default function LinkButton({
       ref={ref}
       type="button"
       data-surface={surface}
-      className={`${SURFACE_CLASSES[surface]} text-xs underline underline-offset-3 disabled:opacity-50 aria-disabled:opacity-50 disabled:cursor-not-allowed aria-disabled:cursor-not-allowed cursor-pointer active:scale-[0.96] aria-disabled:active:scale-100 ${FOCUS_RING} rounded transition duration-200 ${className}`}
+      className={`${SURFACE_CLASSES[surface]} text-xs underline underline-offset-3 disabled:opacity-50 aria-disabled:not-focus-visible:opacity-50 disabled:cursor-not-allowed aria-disabled:cursor-not-allowed cursor-pointer active:scale-[0.96] aria-disabled:active:scale-100 ${FOCUS_RING} rounded transition duration-200 ${className}`}
       disabled={disabled}
       onClick={onClick}
       {...props}

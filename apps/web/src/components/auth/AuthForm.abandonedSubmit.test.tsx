@@ -121,9 +121,8 @@ describe('AuthForm – walking away from a request in flight', () => {
     });
 
     expect(screen.queryByText('Reset link sent!')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Log in' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Log in' })).not.toHaveAttribute(
       'aria-disabled',
-      'false',
     );
   });
 });

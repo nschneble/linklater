@@ -139,7 +139,7 @@ export default function MultiFactorSection() {
                 onClick={mfa.handleStartTotpSetup}
               >
                 <i
-                  className="fa-solid fa-circle-notch text-xs"
+                  className="fa-solid fa-arrow-right text-xs"
                   aria-hidden="true"
                 />
                 {mfa.loading ? 'Continuing…' : 'Continue setup'}

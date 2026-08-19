@@ -35,11 +35,11 @@ interface PrimaryButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 type Surface = NonNullable<PrimaryButtonProps['surface']>;
 
 const fillByHost: Record<Surface, string> = {
-  base: 'bg-[var(--base-highlight)] disabled:bg-[var(--base-highlight)] hover:bg-[var(--base-highlight-hover)] text-[var(--base-highlight-fg)]',
+  base: 'bg-[var(--base-highlight)] disabled:bg-[var(--base-highlight)] aria-disabled:bg-[var(--base-highlight)] hover:bg-[var(--base-highlight-hover)] text-[var(--base-highlight-fg)]',
   mount:
-    'bg-[var(--mount-highlight)] disabled:bg-[var(--mount-highlight)] hover:bg-[var(--mount-highlight-hover)] text-[var(--mount-highlight-fg)]',
+    'bg-[var(--mount-highlight)] disabled:bg-[var(--mount-highlight)] aria-disabled:bg-[var(--mount-highlight)] hover:bg-[var(--mount-highlight-hover)] text-[var(--mount-highlight-fg)]',
   orbit:
-    'bg-[var(--orbit-highlight)] disabled:bg-[var(--orbit-highlight)] hover:bg-[var(--orbit-highlight-hover)] text-[var(--orbit-highlight-fg)]',
+    'bg-[var(--orbit-highlight)] disabled:bg-[var(--orbit-highlight)] aria-disabled:bg-[var(--orbit-highlight)] hover:bg-[var(--orbit-highlight-hover)] text-[var(--orbit-highlight-fg)]',
 };
 
 /**

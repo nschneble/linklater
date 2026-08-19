@@ -165,8 +165,11 @@ function selectorDeclaring(css: string, declaration: string): string {
 /*
  * A control refused while its own request is in flight and a control that
  * is simply unavailable read as the same thing under one dim, and only the
- * second earns it: 1.4.3 exempts an inactive component, not a label a user
- * is still waiting on. The measured cost of getting that wrong is in
+ * second gets it here. That is a house rule above the floor, not the
+ * criterion: 1.4.3's inactive-component exception turns on whether a
+ * component is operable, and no `aria-disabled` site in this repo leaves
+ * one that way, so the exception covers both. What the split answers to
+ * is the measured cost, in
  * `theme/styles/ariaDisabledDim.contrast.test.ts`.
  *
  * The assertions are about which elements each rule can match, not about
@@ -192,6 +195,13 @@ describe('ARIA_DISABLED', () => {
     const css = await compileUtilities(ARIA_DISABLED);
     expect(selectorDeclaring(css, 'opacity: 60%')).toContain(
       ':not([data-cooldown])',
+    );
+  });
+
+  it('cannot dim a control the user has focused, outline and all', async () => {
+    const css = await compileUtilities(ARIA_DISABLED);
+    expect(selectorDeclaring(css, 'opacity: 60%')).toContain(
+      ':not(:focus-visible)',
     );
   });
 

@@ -171,13 +171,13 @@ export default function LoginRegisterView({
 
         <PrimaryButton
           className="group w-full py-2.5"
-          aria-disabled={loading || magicLinkSentJustNow}
+          aria-disabled={loading || magicLinkSentJustNow || undefined}
           data-busy={loading || undefined}
           data-cooldown={magicLinkSentJustNow || undefined}
         >
           <span aria-hidden="true" className="inline-grid place-items-center">
             <span className="col-start-1 row-start-1 opacity-0 blur-xs scale-[0.25] group-data-[busy]:opacity-100 group-data-[busy]:blur-none group-data-[busy]:scale-100 transition-[opacity,filter,scale] duration-300 ease-in-out motion-reduce:transition-none">
-              <i className="fa-solid fa-circle-notch text-[0.8125rem] motion-safe:animate-spin" />
+              <i className="fa-solid fa-circle-notch text-[0.8125rem] group-data-[busy]:motion-safe:animate-spin" />
             </span>
             <span className="col-start-1 row-start-1 opacity-100 blur-none scale-100 group-data-[busy]:opacity-0 group-data-[busy]:blur-xs group-data-[busy]:scale-[0.25] transition-[opacity,filter,scale] duration-300 ease-in-out motion-reduce:transition-none">
               <i

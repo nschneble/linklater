@@ -6,6 +6,7 @@
  * because JSDOM does not exercise CSS `:hover`.
  */
 
+import { compileClasses } from '../../../test/tailwind';
 import { createRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
@@ -89,6 +90,19 @@ describe('LinkButton', () => {
     expect(button.className).toContain('disabled:opacity-50');
     fireEvent.click(button);
     expect(handleClick).not.toHaveBeenCalled();
+  });
+
+  it('spares a focused refusal the dim, so its outline is not composited', async () => {
+    render(
+      <LinkButton aria-disabled onClick={() => {}}>
+        link
+      </LinkButton>,
+    );
+    const button = screen.getByRole('button', { name: 'link' });
+    const css = await compileClasses(button.className.split(' '));
+    expect(css).toMatch(
+      /\[aria-disabled="true"\]:not\(:focus-visible\)\s*\{\s*opacity:\s*50%/,
+    );
   });
 
   it('forwards ref to the underlying button – load-bearing for post-action focus on ConfirmAccountDeletionPage', () => {

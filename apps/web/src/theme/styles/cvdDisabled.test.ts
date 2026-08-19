@@ -11,10 +11,13 @@
  * pins at 4.5:1 for every bundle. It needs no new contract pairs, and it
  * cannot drift when a bundle is added.
  *
- * Some of these controls are operable: `aria-disabled` does not block
- * clicks, and the codebase relies on that. So this is 1.4.3 for the ones a
- * user can still activate, not merely a nicety under the inactive-component
- * exception.
+ * `aria-disabled` does not block clicks, and the codebase relies on that,
+ * but no site setting it leaves a control operable: all fifteen either
+ * guard their own handler or are natively disabled besides, so 1.4.3's
+ * inactive-component exception covers the lot. The 4.5:1 holds on other
+ * grounds: the hatch is gated to `[data-cvd='on']`, where `index.css`
+ * forces `opacity: 1`, so the pair the contract pins is the pair that
+ * renders.
  */
 
 import { compileIndexCss } from '../../../test/tailwind';
@@ -32,10 +35,11 @@ describe('the CVD disabled hatch', () => {
    * shape beats a contrast reduction, and shipped stripes across the
    * primary button a user had just successfully pressed. Nearly thirty
    * controls here set `disabled` for a request in flight or a success
-   * cooldown, and one sets `aria-disabled` on a full-bleed overlay, so a
-   * treatment that reads as permanently unavailable is the wrong signal
-   * for almost every one of them. Gating is what confines it to the users
-   * who need a non-colour cue and accept that trade.
+   * cooldown, and fifteen more take `aria-disabled` to refuse without
+   * dropping focus, so a treatment that reads as permanently unavailable
+   * is the wrong signal for almost every one of them. Gating is what
+   * confines it to the users who need a non-colour cue and accept that
+   * trade.
    */
   it('reaches only the users who asked for it', async () => {
     const css = await compileIndexCss([]);
