@@ -191,7 +191,7 @@ jobs:
             # 10m command_timeout instead of one stall consuming it
             for attempt in $(seq 1 30); do
               status=$(curl -s -o /dev/null -w '%{http_code}' \
-                --connect-timeout 3 --max-time 5 "$HEALTHCHECK_URL" || echo 000)
+                --connect-timeout 3 --max-time 5 "$HEALTHCHECK_URL") || status=000
               if [ "$status" = "200" ]; then
                 echo "Health check passed (HTTP 200) after ${attempt} attempt(s)."
                 exit 0
