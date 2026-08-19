@@ -1,0 +1,21 @@
+- status
+- status
+- text: Magic link sent!
+- button "Dismiss"
+- status: Magic link sent!
+- heading "Linklater" [level=1]
+- paragraph: Save links now, read them later.
+- tablist "Authentication mode":
+  - tab "Log in" [selected]
+  - tab "Sign up"
+- tabpanel "Log in":
+  - text: Email
+  - textbox "Email": testing-ui@linklater.test
+  - text: Password
+  - textbox "Password":
+    - /placeholder: Leave blank to use a magic link
+  - alert
+  - button "Log in with magic link" [disabled]
+- button "I literally have no idea what my password is"
+- status
+- alert
