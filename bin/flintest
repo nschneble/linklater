@@ -12,6 +12,7 @@ cd "$ROOT_DIR" || exit
   { printf 'Cannot load %s/lib/cli.sh\n' "$SCRIPT_DIR" >&2; exit 70; }
 
 # ── Arguments ───────────────────────────────────────────────────────────────────
+# shellcheck disable=SC2317,SC2329 # Invoked by scan_help and unknown_flag.
 usage() {
   cat <<'USAGE'
 Usage: bin/flintest [options]
@@ -29,11 +30,9 @@ Runs the project quality gate in order:
 
 Examples:
   bin/flintest             Run the quality gate
-  bin/flintest --update    Update dependencies first, then run the gate
   bin/flintest --tuffgal   Run the local visual regression check instead
 
 Options:
-  --update     Run npm update before npm install.
   --tuffgal    Replace the default chain with a local visual regression run that
                self-diffs against the per-machine, git-ignored cache:
                  npm install
@@ -56,7 +55,6 @@ USAGE
 
 scan_help "$@"
 
-RUN_UPDATE=false
 RUN_TUFFGAL=false
 NO_INPUT=false
 NO_PAGER=false
@@ -64,9 +62,6 @@ USE_COLOR=true
 
 for argument in "$@"; do
   case "$argument" in
-    --update)
-      RUN_UPDATE=true
-      ;;
     --tuffgal)
       RUN_TUFFGAL=true
       ;;
@@ -88,14 +83,12 @@ for argument in "$@"; do
   esac
 done
 
-if [[ "$RUN_UPDATE" == true && "$RUN_TUFFGAL" == true ]]; then
-  printf '%s\n\n' '--update and --tuffgal cannot be combined.' >&2
-  usage >&2
-  exit 64
-fi
-
 # ── Terminal capability ─────────────────────────────────────────────────────────
 probe_terminal
+
+if [[ "${TERM:-dumb}" == dumb ]]; then
+  TTY_AVAILABLE=false
+fi
 
 PAGER_FLAGS=(-FIRX)
 PAGER_COMMAND=()
@@ -118,8 +111,6 @@ TICK=✓  CROSS=✗  CIRCLE=○
 # ── Layout constants ────────────────────────────────────────────────────────────
 if [[ "$RUN_TUFFGAL" == true ]]; then
   STEPS=(Install Playwright Database Test Report)
-elif [[ "$RUN_UPDATE" == true ]]; then
-  STEPS=(Update Install Generate Subset\ FA Format Lint Typecheck Lint\ Migrations Test Build)
 else
   STEPS=(Install Generate Subset\ FA Format Lint Typecheck Lint\ Migrations Test Build)
 fi
@@ -137,6 +128,7 @@ show_cursor()  { [[ "$TTY_AVAILABLE" == true ]] && printf '\033[?25h'; }
 
 # ── Cleanup on exit ─────────────────────────────────────────────────────────────
 CURRENT_STEP="the run"
+PAGING=false
 
 # shellcheck disable=SC2317,SC2329 # Invoked by trap.
 _cleanup() {
@@ -146,11 +138,14 @@ _cleanup() {
 }
 
 trap _cleanup EXIT
-trap 'printf "\n  Stopping %s.\n" "$CURRENT_STEP" >&2
-      stop_spinner
-      show_cursor
-      trap - EXIT INT TERM HUP QUIT
-      exit 130' INT TERM HUP QUIT
+# bash defers the signal until the pager exits; the verdict is already set
+trap 'if [[ "$PAGING" != true ]]; then
+        printf "\n  Stopping %s.\n" "$CURRENT_STEP" >&2
+        stop_spinner
+        show_cursor
+        trap - EXIT INT TERM HUP QUIT
+        exit 130
+      fi' INT TERM HUP QUIT
 
 # ── Draw initial UI ─────────────────────────────────────────────────────────────
 draw_ui() {
@@ -258,7 +253,9 @@ dump_failure() {
   body_lines=$(printf '%s\n' "$body" | wc -l)
   if [[ "$NO_PAGER" != true && "$TTY_AVAILABLE" == true && ${rows:-0} -gt 0 ]] \
     && [[ $body_lines -gt $rows && ${#PAGER_COMMAND[@]} -gt 0 ]]; then
+    PAGING=true
     printf '%s\n' "$body" | sed 's/^/  /' | "${PAGER_COMMAND[@]}"
+    PAGING=false
   else
     printf '%s\n' "$body" | sed 's/^/  /' >&2
   fi
@@ -403,75 +400,64 @@ if [[ "$RUN_TUFFGAL" == true ]]; then
   exit 0
 fi
 
-# Build step index offset based on whether --update was requested
-STEP_OFFSET=0
-
-if [[ "$RUN_UPDATE" == true ]]; then
-  if ! run_step 0 npm update; then
-    FAILED_STEP="Update"
-    FAILED_OUTPUT="$STEP_OUTPUT"
-  fi
-  STEP_OFFSET=1
-fi
-
 if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step "$STEP_OFFSET" npm install; then
+  if ! run_step 0 npm install; then
     FAILED_STEP="Install"
     FAILED_OUTPUT="$STEP_OUTPUT"
   fi
 fi
 
 if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step $(( STEP_OFFSET + 1 )) node scripts/generate-email-palette.mjs; then
+  if ! run_step 1 node scripts/generate-email-palette.mjs; then
     FAILED_STEP="Generate"
     FAILED_OUTPUT="$STEP_OUTPUT"
   fi
 fi
 
 if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step $(( STEP_OFFSET + 2 )) npm run subset-fa --workspace @linklater/web; then
+  if ! run_step 2 npm run subset-fa --workspace @linklater/web; then
     FAILED_STEP="Subset FA"
     FAILED_OUTPUT="$STEP_OUTPUT"
   fi
 fi
 
 if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step $(( STEP_OFFSET + 3 )) npm run format; then
+  if ! run_step 3 npm run format; then
     FAILED_STEP="Format"
     FAILED_OUTPUT="$STEP_OUTPUT"
   fi
 fi
 
 if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step $(( STEP_OFFSET + 4 )) npm run lint; then
+  if ! run_step 4 npm run lint; then
     FAILED_STEP="Lint"
     FAILED_OUTPUT="$STEP_OUTPUT"
   fi
 fi
 
 if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step $(( STEP_OFFSET + 5 )) npm run typecheck; then
+  if ! run_step 5 npm run typecheck; then
     FAILED_STEP="Typecheck"
     FAILED_OUTPUT="$STEP_OUTPUT"
   fi
 fi
 
 if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step $(( STEP_OFFSET + 6 )) npm run lint:migrations; then
+  if ! run_step 6 npm run lint:migrations; then
     FAILED_STEP="Lint Migrations"
     FAILED_OUTPUT="$STEP_OUTPUT"
   fi
 fi
 
 if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step $(( STEP_OFFSET + 7 )) npm run test:cov; then
+  if ! run_step 7 npm run test:cov; then
     FAILED_STEP="Test"
     FAILED_OUTPUT="$STEP_OUTPUT"
   fi
 fi
 
 if [[ -z "$FAILED_STEP" ]]; then
-  if ! run_step $(( STEP_OFFSET + 8 )) npm run build; then
+  if ! run_step 8 npm run build; then
     FAILED_STEP="Build"
     FAILED_OUTPUT="$STEP_OUTPUT"
   fi
