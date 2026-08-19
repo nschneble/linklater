@@ -20,8 +20,8 @@
 
 import { deepStrictEqual, strictEqual } from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { Linter } from 'eslint';
 import identifierOrder from './import-identifier-order.mjs';
+import { Linter } from 'eslint';
 import tseslint from 'typescript-eslint';
 import typeImportsAfterValue from './type-imports-after-value.mjs';
 

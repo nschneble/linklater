@@ -10,9 +10,9 @@
  */
 
 import { describe, it } from 'node:test';
+import rule from './type-imports-after-value.mjs';
 import { RuleTester } from 'eslint';
 import tseslint from 'typescript-eslint';
-import rule from './type-imports-after-value.mjs';
 
 RuleTester.describe = describe;
 RuleTester.it = it;
