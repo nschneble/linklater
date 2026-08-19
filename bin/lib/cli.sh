@@ -32,11 +32,20 @@ unknown_flag() {
 
 # shellcheck disable=SC2034
 resolve_color() {
-  if [[ "$1" == true && -t 1 && -z "${NO_COLOR:-}" && "${TERM:-}" != dumb ]]; then
-    RED=$'\033[31m' GRN=$'\033[32m' YLW=$'\033[33m' CYN=$'\033[36m'
-    BLD=$'\033[1m'  DIM=$'\033[2m'  RST=$'\033[0m'
-  else
-    RED='' GRN='' YLW='' CYN='' BLD='' DIM='' RST=''
+  local permitted=false
+  if [[ "$1" == true && -z "${NO_COLOR:-}" && "${TERM:-}" != dumb ]]; then
+    permitted=true
+  fi
+
+  TTY_BOLD='' TTY_DIM='' TTY_RESET=''
+  if [[ "$permitted" == true ]]; then
+    TTY_BOLD=$'\033[1m' TTY_DIM=$'\033[2m' TTY_RESET=$'\033[0m'
+  fi
+
+  RED='' GREEN='' YELLOW='' CYAN='' BOLD='' DIM='' RESET=''
+  if [[ "$permitted" == true && -t 1 ]]; then
+    RED=$'\033[31m' GREEN=$'\033[32m' YELLOW=$'\033[33m' CYAN=$'\033[36m'
+    BOLD=$'\033[1m' DIM=$'\033[2m' RESET=$'\033[0m'
   fi
 }
 

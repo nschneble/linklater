@@ -97,9 +97,13 @@ fi
 # ── Terminal capability ─────────────────────────────────────────────────────────
 probe_terminal
 
-PAGER_COMMAND=(less -FIRX)
+PAGER_FLAGS=(-FIRX)
+PAGER_COMMAND=(less "${PAGER_FLAGS[@]}")
 if [[ -n "${PAGER:-}" ]]; then
   read -r -a PAGER_COMMAND <<< "$PAGER"
+  if [[ ${#PAGER_COMMAND[@]} -eq 1 && ( "${PAGER_COMMAND[0]}" == less || "${PAGER_COMMAND[0]}" == */less ) ]]; then
+    PAGER_COMMAND+=("${PAGER_FLAGS[@]}")
+  fi
 fi
 
 # ── Colors & symbols ────────────────────────────────────────────────────────────
@@ -125,13 +129,13 @@ _spinner_pid=""
 
 # ── Cursor helpers ──────────────────────────────────────────────────────────────
 hide_cursor() { [[ "$TTY_AVAILABLE" == true ]] && printf '\033[?25l'; }
-# shellcheck disable=SC2329 # Invoked by _cleanup, which is registered as a trap.
+# shellcheck disable=SC2317,SC2329 # Invoked by _cleanup, which is registered as a trap.
 show_cursor()  { [[ "$TTY_AVAILABLE" == true ]] && printf '\033[?25h'; }
 
 # ── Cleanup on exit ─────────────────────────────────────────────────────────────
 CURRENT_STEP="the run"
 
-# shellcheck disable=SC2329 # Invoked by trap.
+# shellcheck disable=SC2317,SC2329 # Invoked by trap.
 _cleanup() {
   stop_spinner
   show_cursor
@@ -153,15 +157,15 @@ draw_ui() {
   fi
 
   printf '\033[2J\033[H'
-  printf '  %s%s╔═════════════════╗%s\n' "$BLD" "$CYN" "$RST"
-  printf '  %s%s║    Linklater    ║%s\n' "$BLD" "$CYN" "$RST"
-  printf '  %s%s╚═════════════════╝%s\n' "$BLD" "$CYN" "$RST"
+  printf '  %s%s╔═════════════════╗%s\n' "$BOLD" "$CYAN" "$RESET"
+  printf '  %s%s║    Linklater    ║%s\n' "$BOLD" "$CYAN" "$RESET"
+  printf '  %s%s╚═════════════════╝%s\n' "$BOLD" "$CYAN" "$RESET"
   printf '\n'
   for name in "${STEPS[@]}"; do
-    printf "  ${DIM}${CIRCLE} %s${RST}\n" "$name"
+    printf "  ${DIM}${CIRCLE} %s${RESET}\n" "$name"
   done
   printf '\n'
-  printf '  %sInitializing…%s' "$DIM" "$RST"
+  printf '  %sInitializing…%s' "$DIM" "$RESET"
 }
 
 # Write text onto a step line then return cursor to status line.
@@ -185,8 +189,8 @@ set_status() {
   printf '\033[2K\r  %b' "$*"
 }
 
-mark_done() { write_step "$1" "${GRN}${TICK} ${STEPS[$1]}${RST}"; }
-mark_fail() { write_step "$1" "${RED}${CROSS} ${STEPS[$1]}${RST}"; }
+mark_done() { write_step "$1" "${GREEN}${TICK} ${STEPS[$1]}${RESET}"; }
+mark_fail() { write_step "$1" "${RED}${CROSS} ${STEPS[$1]}${RESET}"; }
 
 # ── Background spinner ──────────────────────────────────────────────────────────
 start_spinner() {
@@ -204,7 +208,7 @@ start_spinner() {
     while true; do
       local frame="${SPIN[$((i % ${#SPIN[@]}))]}"
       printf '\033[%dA\033[2K\r  %s%s %s%s\033[%dB\033[2K\r' \
-        "$up" "$YLW" "$frame" "$name" "$RST" "$up" > /dev/tty
+        "$up" "$YELLOW" "$frame" "$name" "$RESET" "$up" > /dev/tty
       sleep 0.08
       i=$(( i + 1 ))
     done
@@ -255,7 +259,7 @@ dump_failure() {
   else
     printf '%s\n' "$body" | sed 's/^/  /' >&2
   fi
-  printf '\n  %s%s%s%s\n' "$RED" "$BLD" "$verdict" "$RST" >&2
+  printf '\n  %s%s%s%s\n' "$RED" "$BOLD" "$verdict" "$RESET" >&2
 }
 
 # ── Visual regression summary ───────────────────────────────────────────────────
@@ -297,7 +301,7 @@ tuffgal_drift_counts() {
 }
 
 # Open the HTML report in the default browser (macOS `open`). No-op without a TTY.
-# shellcheck disable=SC2329 # Invoked indirectly via `run_step 4 open_report`.
+# shellcheck disable=SC2317,SC2329 # Invoked indirectly via `run_step 4 open_report`.
 open_report() {
   local report="$ROOT_DIR/tuffgal/report/index.html"
   if [[ "$TTY_AVAILABLE" != true || ! -f "$report" ]]; then
@@ -347,9 +351,9 @@ if [[ "$RUN_TUFFGAL" == true ]]; then
 
   if [[ -n "$FAILED_STEP" ]]; then
     if [[ -n "$TUFFGAL_SUMMARY" ]]; then
-      set_status "${RED}${BLD}${FAILED_STEP} failed – see below.${RST} ${DIM}${TUFFGAL_SUMMARY}${RST}"
+      set_status "${RED}${BOLD}${FAILED_STEP} failed – see below.${RESET} ${DIM}${TUFFGAL_SUMMARY}${RESET}"
     else
-      set_status "${RED}${BLD}${FAILED_STEP} failed – see below.${RST}"
+      set_status "${RED}${BOLD}${FAILED_STEP} failed – see below.${RESET}"
     fi
     [[ "$TTY_AVAILABLE" == true ]] && printf '\n'
     printf '\n'
@@ -366,29 +370,29 @@ if [[ "$RUN_TUFFGAL" == true ]]; then
   TUFFGAL_CHANGED=${TUFFGAL_CHANGED:-0}
 
   if [[ -n "$TUFFGAL_SUMMARY" ]]; then
-    set_status "${GRN}${BLD}Visual regression complete${RST}\n  ${DIM}${TUFFGAL_SUMMARY}${RST}"
+    set_status "${GREEN}${BOLD}Visual regression complete${RESET}\n  ${DIM}${TUFFGAL_SUMMARY}${RESET}"
   else
-    set_status "${GRN}${BLD}Visual regression complete${RST}"
+    set_status "${GREEN}${BOLD}Visual regression complete${RESET}"
   fi
 
   if [[ "$NO_INPUT" != true && "$TERMINAL_REACHABLE" == true && $(( TUFFGAL_NEW + TUFFGAL_CHANGED )) -gt 0 ]]; then
     show_cursor
     printf '\n\n  %sApprove %s new + %s changed into the local cache?%s [y/N] ' \
-      "$BLD" "$TUFFGAL_NEW" "$TUFFGAL_CHANGED" "$RST" > /dev/tty
+      "$TTY_BOLD" "$TUFFGAL_NEW" "$TUFFGAL_CHANGED" "$TTY_RESET" > /dev/tty
     APPROVE_REPLY=""
     read -r APPROVE_REPLY < /dev/tty || true
     if [[ "$APPROVE_REPLY" =~ ^[Yy]([Ee][Ss])?$ ]]; then
       printf '\n'
       if APPROVE_OUTPUT=$(npx tuffgal approve 2>&1); then
-        printf '  %s%s Local cache refreshed – next run will be clean.%s\n' "$GRN" "$TICK" "$RST"
+        printf '  %s%s Local cache refreshed – next run will be clean.%s\n' "$GREEN" "$TICK" "$RESET"
       else
-        printf '  %s%s tuffgal approve failed – see below.%s\n\n' "$RED" "$CROSS" "$RST" >&2
+        printf '  %s%s tuffgal approve failed – see below.%s\n\n' "$RED" "$CROSS" "$RESET" >&2
         dump_failure "tuffgal approve failed." "$APPROVE_OUTPUT"
         exit 1
       fi
     else
       printf '\n  %sLeft as-is. Re-run to re-check, or approve later with npm run tuffgal:approve.%s\n' \
-        "$DIM" "$RST"
+        "$TTY_DIM" "$TTY_RESET" > /dev/tty
     fi
   else
     [[ "$TTY_AVAILABLE" == true ]] && printf '\n'
@@ -471,11 +475,11 @@ if [[ -z "$FAILED_STEP" ]]; then
 fi
 
 if [[ -z "$FAILED_STEP" ]]; then
-  set_status "${GRN}${BLD}All checks passed.${RST}"
+  set_status "${GREEN}${BOLD}All checks passed.${RESET}"
   [[ "$TTY_AVAILABLE" == true ]] && printf '\n'
   exit 0
 else
-  set_status "${RED}${BLD}${FAILED_STEP} failed – see below.${RST}"
+  set_status "${RED}${BOLD}${FAILED_STEP} failed – see below.${RESET}"
   [[ "$TTY_AVAILABLE" == true ]] && printf '\n'
   printf '\n'
   dump_failure "${FAILED_STEP} failed." "$FAILED_OUTPUT"

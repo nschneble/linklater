@@ -42,6 +42,9 @@ Keys:
   4  Tunnel logs (--public only)
   q  Quit
 
+Control+C quits as well. Pressing it again while the servers are stopping
+stops them immediately.
+
 See README.md for setup and usage notes.
 USAGE
 }
@@ -179,6 +182,7 @@ FRAME=0
 OLD_STTY=$(stty -g </dev/tty)
 CLEANUP_POLL_SECONDS=0.1
 CLEANUP_POLL_LIMIT=50
+CLEANUP_FEEDBACK_POLLS=10
 
 hide_cursor() { printf '\033[?25l'; }
 show_cursor()  { printf '\033[?25h'; }
@@ -211,8 +215,10 @@ _await_children() {
   local polls=0
   while _children_alive; do
     (( polls >= CLEANUP_POLL_LIMIT )) && return 1
+    # a second Control+C interrupts this sleep, escalating to SIGKILL
     sleep "$CLEANUP_POLL_SECONDS" || return 1
     polls=$(( polls + 1 ))
+    (( polls % CLEANUP_FEEDBACK_POLLS == 0 )) && printf '.' >&2
   done
   return 0
 }
@@ -242,7 +248,7 @@ _cleanup() {
 }
 trap '_cleanup quit $?' EXIT
 trap '_cleanup interrupt 130' INT
-trap '_cleanup signal 130' TERM HUP
+trap '_cleanup signal 130' TERM HUP QUIT
 
 # ── Terminal setup ────────────────────────────────────────────────────────────
 stty -echo -icanon </dev/tty
@@ -267,9 +273,9 @@ strip_ansi() {
 # ── Static header (lines 1–4, never redrawn) ─────────────────────────────────
 draw_header() {
   printf '\033[2J\033[H'
-  printf '  %s%s╔═════════════════╗%s\n' "$BLD" "$CYN" "$RST"
-  printf '  %s%s║    Linklater    ║%s\n' "$BLD" "$CYN" "$RST"
-  printf '  %s%s╚═════════════════╝%s\n' "$BLD" "$CYN" "$RST"
+  printf '  %s%s╔═════════════════╗%s\n' "$BOLD" "$CYAN" "$RESET"
+  printf '  %s%s║    Linklater    ║%s\n' "$BOLD" "$CYAN" "$RESET"
+  printf '  %s%s╚═════════════════╝%s\n' "$BOLD" "$CYAN" "$RESET"
   printf '\n'
 }
 
@@ -277,17 +283,17 @@ draw_header() {
 render_service_line() {
   local state=$1 url=$2 frame_char=$3 label=$4
   case "$state" in
-    starting) printf "${YLW}%s${RST} %-7s  starting"                "$frame_char" "$label" ;;
-    ready)    printf "${GRN}%s${RST} %-7s  ${GRN}ready  %s${RST}"   "$TICK"       "$label" "$url" ;;
-    error)    printf "${RED}%s${RST} %-7s  ${RED}error${RST}"       "$CROSS"      "$label" ;;
-    skipped)  printf "%s %-7s  not installed"                       "$CIRCLE"     "$label" ;;
+    starting) printf "${YELLOW}%s${RESET} %-7s  starting"                 "$frame_char" "$label" ;;
+    ready)    printf "${GREEN}%s${RESET} %-7s  ${GREEN}ready  %s${RESET}" "$TICK"       "$label" "$url" ;;
+    error)    printf "${RED}%s${RESET} %-7s  ${RED}error${RESET}"         "$CROSS"      "$label" ;;
+    skipped)  printf "%s %-7s  not installed"                             "$CIRCLE"     "$label" ;;
   esac
 }
 
 # ── LAN row (remote mode only) ────────────────────────────────────────────────
 render_lan_line() {
   [[ -z "$REMOTE_URL" ]] && return
-  printf "${CYN}↗${RST} %-7s  ${CYN}%s${RST}" "LAN" "$REMOTE_URL"
+  printf "${CYAN}↗${RESET} %-7s  ${CYAN}%s${RESET}" "LAN" "$REMOTE_URL"
 }
 
 # ── Tunnel row (public mode only) ─────────────────────────────────────────────
@@ -300,25 +306,25 @@ render_key_list() {
   local current=$1
   local out=''
   if [[ "$current" == "API" ]]; then
-    out+="  →  API logs"$'\n'
+    out+="  1. API logs (current)"$'\n'
   else
     out+="  1. API logs"$'\n'
   fi
   if [[ "$current" == "Web" ]]; then
-    out+="  →  Web logs"$'\n'
+    out+="  2. Web logs (current)"$'\n'
   else
     out+="  2. Web logs"$'\n'
   fi
   if [[ "$MAILPIT_STATE" != "skipped" ]]; then
     if [[ "$current" == "Mailpit" ]]; then
-      out+="  →  Mailpit logs"$'\n'
+      out+="  3. Mailpit logs (current)"$'\n'
     else
       out+="  3. Mailpit logs"$'\n'
     fi
   fi
   if [[ -n "$TUNNEL_STATE" && "$TUNNEL_STATE" != "skipped" ]]; then
     if [[ "$current" == "Tunnel" ]]; then
-      out+="  →  Tunnel logs"$'\n'
+      out+="  4. Tunnel logs (current)"$'\n'
     else
       out+="  4. Tunnel logs"$'\n'
     fi
@@ -331,6 +337,7 @@ render_status_view() {
   local frame_char=$1
   local out=''
   out+=$'\033[5;1H\033[0J'
+  out+="  Viewing: status"$'\n'$'\n'
 
   out+="  $(render_service_line "$API_STATE" "$API_URL" "$frame_char" "API")"$'\n'
   out+="  $(render_service_line "$WEB_STATE" "$WEB_URL" "$frame_char" "Web")"$'\n'
@@ -346,14 +353,13 @@ render_status_view() {
   if [[ "$API_STATE" == "ready" && "$WEB_STATE" == "ready" && \
         ("$MAILPIT_STATE" == "ready" || "$MAILPIT_STATE" == "skipped") && \
         ("$TUNNEL_STATE" == "" || "$TUNNEL_STATE" == "ready" || "$TUNNEL_STATE" == "skipped") ]]; then
-    out+="  ${GRN}${BLD}Ready.${RST}"$'\n'$'\n'
+    out+="  ${GREEN}${BOLD}Ready.${RESET}"$'\n'$'\n'
   elif any_service_failed; then
-    out+="  ${RED}${BLD}An error occurred.${RST}"$'\n'$'\n'
+    out+="  ${RED}${BOLD}An error occurred.${RESET}"$'\n'$'\n'
   else
     out+="  Starting up…"$'\n'$'\n'
   fi
 
-  out+="  Viewing: status"$'\n'$'\n'
   out+="$(render_key_list '')"$'\n'$'\n'
   out+="  Press q or Control+C to stop"
 
@@ -383,6 +389,7 @@ render_log_view() {
 
   local out=''
   out+=$'\033[5;1H\033[0J'
+  out+="  Viewing: ${label} logs"$'\n'$'\n'
 
   out+="  $(render_service_line "$API_STATE" "$API_URL" "$frame_char" "API")"$'\n'
   out+="  $(render_service_line "$WEB_STATE" "$WEB_URL" "$frame_char" "Web")"$'\n'
@@ -395,13 +402,12 @@ render_log_view() {
   fi
   out+=$'\n'
   out+="  0. (back to status)"$'\n'$'\n'
-  out+="  Viewing: ${label} logs"$'\n'$'\n'
   out+="$(render_key_list "$label")"$'\n'$'\n'
 
   local prefix_len=$(( ${#label} + 8 ))
   local divider_width=$(( content_width - prefix_len ))
   (( divider_width < 0 )) && divider_width=0
-  out+="  ${DIM}── ${label} ${divider:0:$divider_width}${RST}"$'\n'$'\n'
+  out+="  ${DIM}── ${label} ${divider:0:$divider_width}${RESET}"$'\n'$'\n'
 
   local service_state
   if [[ "$log_file" == "$API_LOG" ]]; then

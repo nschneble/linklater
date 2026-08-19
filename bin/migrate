@@ -15,15 +15,16 @@ usage() {
   cat <<'USAGE'
 Usage: bin/migrate [options]
 
-Runs Prisma migrations for the @linklater/api workspace.
+Runs Prisma migrations for the @linklater/api workspace. When the schema has
+changed, it also authors a new migration and asks you to name it.
 
 Examples:
-  bin/migrate                  Apply pending migrations
+  bin/migrate                  Apply pending migrations, or author a new one
   bin/migrate --reset          Wipe the database and re-run every migration
   bin/migrate --reset --force  Wipe the database without confirming first
 
 Options:
-  --reset      Wipe the database and re-run all migrations from scratch.
+  --reset      Wipe the database and re-run every migration.
   --force      Answer the --reset confirmation up front.
   --no-input   Refuse --reset rather than ask for confirmation.
   --no-color   Disable colored output.
@@ -48,6 +49,7 @@ suggest_flag() {
 
 scan_help "$@"
 
+WORKSPACE="@linklater/api"
 TARGET="migrate"
 FORCE=false
 NO_INPUT=false
@@ -87,11 +89,11 @@ elif [[ "$TARGET" == "migrate:reset" ]]; then
     exit 66
   fi
 
-  printf '%sThis wipes the database and re-runs every migration.%s\n' "$BLD" "$RST" > /dev/tty
+  printf '%sThis wipes the database and re-runs every migration.%s\n' "$TTY_BOLD" "$TTY_RESET" > /dev/tty
   printf 'Type reset to continue: ' > /dev/tty
-  CONFIRMATION=""
   read -r CONFIRMATION < /dev/tty || true
-  CONFIRMATION=$(printf '%s' "$CONFIRMATION" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')
+  CONFIRMATION=$(printf '%s' "$CONFIRMATION" | tr '[:upper:]' '[:lower:]' |
+                 sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
 
   if [[ "$CONFIRMATION" != "reset" ]]; then
     printf 'Cancelled. The database was not touched.\n' >&2
@@ -99,5 +101,5 @@ elif [[ "$TARGET" == "migrate:reset" ]]; then
   fi
 fi
 
-printf '%sRunning npm run %s --workspace @linklater/api%s\n' "$DIM" "$TARGET" "$RST" >&2
-exec npm run "$TARGET" --workspace @linklater/api
+printf '%sRunning npm run %s --workspace %s%s\n' "$DIM" "$TARGET" "$WORKSPACE" "$RESET" >&2
+exec npm run "$TARGET" --workspace "$WORKSPACE"
