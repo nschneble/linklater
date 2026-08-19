@@ -17,7 +17,8 @@ usage() {
 Usage: bin/dev [options]
 
 Starts the API and web development servers with a live status/log view.
-Runs npm run dev instead when that view cannot be shown or you turn it off.
+Reports progress one line at a time instead when that view cannot be shown
+or you turn it off. Both paths start the same servers with the same options.
 
 Examples:
   bin/dev            Start the development servers
@@ -26,15 +27,16 @@ Examples:
 
 Options:
   --remote     Allows the app to be reachable from other devices on the same
-               Wi-Fi network. Prints the LAN URL in the status view.
+               Wi-Fi network. Prints the LAN URL.
   --public     Allows the app to be reachable publicly using a Cloudflare
-               TryCloudflare tunnel. Prints the tunnel URL in the status view.
-  --no-input   Run npm run dev instead of the interactive status view.
+               TryCloudflare tunnel. Prints the tunnel URL.
+  --no-input   Report progress one line at a time instead of showing the
+               interactive status view.
   --no-color   Disable colored output.
   --version    Print the version and exit.
   -h, --help   Show this help.
 
-Keys:
+Keys, in the status view:
   0  Status
   1  API logs
   2  Web logs
@@ -90,7 +92,9 @@ done
 
 probe_terminal
 
+RENDERER=status
 if [[ "$NO_INPUT" == true || "$TTY_AVAILABLE" != true || "${TERM:-dumb}" == "dumb" ]]; then
+  RENDERER=plain
   if [[ "$NO_INPUT" == true ]]; then
     printf 'Not starting the status view: --no-input was passed.\n' >&2
   elif [[ ! -t 1 ]]; then
@@ -100,17 +104,7 @@ if [[ "$NO_INPUT" == true || "$TTY_AVAILABLE" != true || "${TERM:-dumb}" == "dum
   else
     printf 'Not starting the status view: no controlling terminal is available.\n' >&2
   fi
-  printf 'Running npm run dev, which starts the API and web servers only.\n' >&2
-  printf 'Skipped: the stale port check and Mailpit.\n' >&2
-  if [[ "$PUBLIC" == true ]]; then
-    printf 'Skipped: --public, so no Cloudflare tunnel and no access from other devices.\n' >&2
-  elif [[ "$REMOTE" == true ]]; then
-    printf 'Skipped: --remote, so no access from other devices.\n' >&2
-  fi
-  if [[ "$USE_COLOR" == false ]]; then
-    export NO_COLOR=1
-  fi
-  exec npm run dev
+  printf 'Reporting progress one line at a time instead.\n' >&2
 fi
 
 # ── Colors & symbols ─────────────────────────────────────────────────────────
@@ -158,7 +152,10 @@ WEB_LOG="$LOG_DIR/web.log"
 MAILPIT_LOG="$LOG_DIR/mailpit.log"
 TUNNEL_LOG="$LOG_DIR/tunnel.log"
 touch "$API_LOG" "$WEB_LOG" "$MAILPIT_LOG" "$TUNNEL_LOG"
-KEY_FILE=$(mktemp)
+KEY_FILE=""
+if [[ "$RENDERER" == status ]]; then
+  KEY_FILE=$(mktemp)
+fi
 
 prune_run_logs() {
   local runs total excess entry
@@ -224,7 +221,10 @@ LOG_GROWTH_TICKS=0
 LOG_PAINTED_LINES=0
 
 # ── Cleanup ───────────────────────────────────────────────────────────────────
-OLD_STTY=$(stty -g </dev/tty)
+OLD_STTY=""
+if [[ "$RENDERER" == status ]]; then
+  OLD_STTY=$(stty -g </dev/tty)
+fi
 CLEANUP_POLL_SECONDS=0.1
 CLEANUP_POLL_LIMIT=50
 CLEANUP_FEEDBACK_POLL=20
@@ -232,8 +232,10 @@ CLEANUP_ESCALATE=false
 DESCENDANT_PIDS=""
 STOP_ROUTE=""
 
-hide_cursor() { printf '\033[?25l'; }
-show_cursor()  { printf '\033[?25h'; }
+show_cursor() {
+  [[ "$RENDERER" == status ]] && printf '\033[?25h'
+  return 0
+}
 
 any_service_failed() {
   [[ "$API_STATE" == "error" || "$WEB_STATE" == "error" || \
@@ -243,6 +245,12 @@ any_service_failed() {
 any_service_starting() {
   [[ "$API_STATE" == "starting" || "$WEB_STATE" == "starting" || \
      "$MAILPIT_STATE" == "starting" || "$TUNNEL_STATE" == "starting" ]]
+}
+
+all_services_ready() {
+  [[ "$API_STATE" == "ready" && "$WEB_STATE" == "ready" && \
+     ("$MAILPIT_STATE" == "ready" || "$MAILPIT_STATE" == "skipped") && \
+     ("$TUNNEL_STATE" == "" || "$TUNNEL_STATE" == "ready" || "$TUNNEL_STATE" == "skipped") ]]
 }
 
 _time_out_service() {
@@ -310,8 +318,10 @@ _await_children() {
 _quit() {
   local status=$1
   any_service_failed && status=1
-  rm -f "$KEY_FILE"
-  stty "$OLD_STTY" </dev/tty 2>/dev/null || true
+  [[ -n "$KEY_FILE" ]] && rm -f "$KEY_FILE"
+  if [[ -n "$OLD_STTY" ]]; then
+    stty "$OLD_STTY" </dev/tty 2>/dev/null || true
+  fi
   show_cursor
   printf '\n'
   printf '  Logs: %s\n' "$LOG_DIR" >&2
@@ -339,17 +349,21 @@ trap 'STOP_ROUTE=interrupt' INT
 trap 'STOP_ROUTE=signal' TERM HUP QUIT
 
 # ── Terminal setup ────────────────────────────────────────────────────────────
-stty -echo -icanon </dev/tty
+if [[ "$RENDERER" == status ]]; then
+  stty -echo -icanon </dev/tty
+fi
 
 # ── Background key reader ─────────────────────────────────────────────────────
-(
-  while true; do
-    char=''
-    IFS= read -r -n 1 char </dev/tty 2>/dev/null || break
-    [[ -n "$char" ]] && printf '%s' "$char" >> "$KEY_FILE"
-  done
-) &
-KEY_READER_PID=$!
+if [[ "$RENDERER" == status ]]; then
+  (
+    while true; do
+      char=''
+      IFS= read -r -n 1 char </dev/tty 2>/dev/null || break
+      [[ -n "$char" ]] && printf '%s' "$char" >> "$KEY_FILE"
+    done
+  ) &
+  KEY_READER_PID=$!
+fi
 
 # ── Strip ANSI escape codes (BSD sed compatible) ──────────────────────────────
 strip_ansi() {
@@ -449,9 +463,7 @@ render_status_view() {
   for FRAME_DENSITY in full compact bare; do
     FRAME_OUT=$FRAME_OPEN FRAME_ROWS=0
     render_chrome "$frame_char" "status"
-    if [[ "$API_STATE" == "ready" && "$WEB_STATE" == "ready" && \
-          ("$MAILPIT_STATE" == "ready" || "$MAILPIT_STATE" == "skipped") && \
-          ("$TUNNEL_STATE" == "" || "$TUNNEL_STATE" == "ready" || "$TUNNEL_STATE" == "skipped") ]]; then
+    if all_services_ready; then
       frame_row "  ${GREEN}${BOLD}Ready.${RESET}"
     elif any_service_failed; then
       frame_row "  ${RED}${BOLD}An error occurred.${RESET}"
@@ -632,15 +644,94 @@ render_log_view() {
   printf '%s' "$FRAME_OUT"
 }
 
+PLAIN_LOG_TAIL_LINES=12
+PLAIN_HEARTBEAT_SECONDS=15
+PLAIN_HEARTBEAT_AT=0
+PLAIN_READY_ANNOUNCED=false
+
+plain_report() {
+  printf '%s\n' "$1"
+}
+
+plain_transition() {
+  local label=$1 previous=$2 current=$3 url=$4 log=$5 tail_lines line
+  [[ "$previous" == "$current" ]] && return 0
+  if [[ "$current" == "ready" ]]; then
+    url=$(printf '%s' "$url" | strip_ansi)
+    plain_report "${GREEN}$label is ready.${RESET} $url"
+    return 0
+  fi
+  [[ "$current" != "error" ]] && return 0
+  tail_lines=$(tail -n "$PLAIN_LOG_TAIL_LINES" "$log" 2>/dev/null | strip_ansi || true)
+  if [[ -z "$tail_lines" ]]; then
+    plain_report "${RED}$label failed.${RESET} It wrote nothing to its log."
+    return 0
+  fi
+  plain_report "${RED}$label failed.${RESET} The end of its log reads:"
+  while IFS= read -r line; do
+    plain_report "    $line"
+  done <<< "$tail_lines"
+  return 0
+}
+
+plain_starting_list() {
+  local names=''
+  [[ "$API_STATE" == "starting" ]] && names="$names, API"
+  [[ "$WEB_STATE" == "starting" ]] && names="$names, web server"
+  [[ "$MAILPIT_STATE" == "starting" ]] && names="$names, Mailpit"
+  [[ "$TUNNEL_STATE" == "starting" ]] && names="$names, tunnel"
+  printf '%s' "${names#, }"
+}
+
+render_plain_start() {
+  local launched="API, web server"
+  [[ -n "$MAILPIT_PID" ]] && launched="$launched, Mailpit"
+  plain_report "Starting the development servers. Control+C stops them."
+  plain_report "Logs: $LOG_DIR"
+  if [[ -n "$FREED_PORT_PIDS" ]]; then
+    plain_report "Stopped a leftover server holding port $API_PORT, process $FREED_PORT_PIDS."
+  fi
+  plain_report "Started: $launched."
+  if [[ "$MAILPIT_STATE" == "skipped" ]]; then
+    plain_report "Mailpit is not installed, so mail is not being caught."
+  fi
+  if [[ "$TUNNEL_STATE" == "skipped" ]]; then
+    plain_report "cloudflared is not installed, so there is no public tunnel."
+  elif [[ "$TUNNEL_STATE" == "starting" ]]; then
+    plain_report "The public tunnel starts once the web server is ready."
+  fi
+}
+
+render_plain_update() {
+  plain_transition API "$PREV_API_STATE" "$API_STATE" "$API_URL" "$API_LOG"
+  plain_transition 'The web server' "$PREV_WEB_STATE" "$WEB_STATE" "$WEB_URL" "$WEB_LOG"
+  if [[ "$WEB_STATE" == "ready" && "$PREV_WEB_STATE" != "ready" && -n "$REMOTE_URL" ]]; then
+    plain_report "Other devices on this Wi-Fi network can reach it at $REMOTE_URL"
+  fi
+  plain_transition Mailpit "$PREV_MAILPIT_STATE" "$MAILPIT_STATE" "$MAILPIT_URL" "$MAILPIT_LOG"
+  plain_transition 'The tunnel' "$PREV_TUNNEL_STATE" "$TUNNEL_STATE" "$TUNNEL_URL" "$TUNNEL_LOG"
+  if [[ "$PLAIN_READY_ANNOUNCED" == false ]] && all_services_ready; then
+    PLAIN_READY_ANNOUNCED=true
+    plain_report "Everything is ready. Control+C stops the servers."
+  fi
+  if any_service_starting && (( SECONDS >= PLAIN_HEARTBEAT_AT )); then
+    PLAIN_HEARTBEAT_AT=$(( SECONDS + PLAIN_HEARTBEAT_SECONDS ))
+    plain_report "Waiting after $(( SECONDS - LAUNCH_SECONDS )) seconds for: $(plain_starting_list)."
+  fi
+}
+
 # ── Free stale port ──────────────────────────────────────────────────────────
 # Kill any process holding the API port so a leftover Node from a previous run
 # doesn't crash startup with EADDRINUSE.
 free_port() {
   local port=$1 log=$2
   local pids
+  FREED_PORT_PIDS=""
   pids=$(lsof -ti tcp:"$port" -sTCP:LISTEN 2>/dev/null || true)
   if [[ -n "$pids" ]]; then
-    printf 'Freeing port %s (killing PID %s)\n' "$port" "$(echo "$pids" | tr '\n' ' ')" >>"$log"
+    FREED_PORT_PIDS=$(echo "$pids" | tr '\n' ' ')
+    FREED_PORT_PIDS=${FREED_PORT_PIDS% }
+    printf 'Freeing port %s (killing PID %s)\n' "$port" "$FREED_PORT_PIDS" >>"$log"
     # shellcheck disable=SC2086
     kill -9 $pids 2>/dev/null || true
     # Brief pause to let the kernel release the socket before bind().
@@ -658,8 +749,9 @@ launch_tunnel() {
   TUNNEL_LAUNCH_SECONDS=$SECONDS
 }
 
-hide_cursor
-printf '\033[2J\033[H'
+if [[ "$RENDERER" == status ]]; then
+  printf '\033[?25l\033[2J\033[H'
+fi
 
 API_PORT="${PORT:-3000}"
 free_port "$API_PORT" "$API_LOG"
@@ -691,6 +783,11 @@ trap 'DIRTY=true' WINCH
 STARTING_TIMEOUT_SECONDS=90
 LAUNCH_SECONDS=$SECONDS
 TUNNEL_LAUNCH_SECONDS=0
+
+if [[ "$RENDERER" == plain ]]; then
+  PLAIN_HEARTBEAT_AT=$(( LAUNCH_SECONDS + PLAIN_HEARTBEAT_SECONDS ))
+  render_plain_start
+fi
 
 while true; do
   PREV_API_STATE="$API_STATE"
@@ -733,7 +830,7 @@ while true; do
   fi
 
   if [[ "$WEB_STATE" == "starting" ]]; then
-    EXTRACTED=$(grep 'Local:' "$WEB_LOG" 2>/dev/null \
+    EXTRACTED=$(grep 'Local' "$WEB_LOG" 2>/dev/null | strip_ansi \
                 | grep -oE 'https?://[^ ]+' | tail -1 || true)
     if [[ -n "$EXTRACTED" ]]; then
       WEB_URL="${EXTRACTED%/}"
@@ -802,6 +899,16 @@ while true; do
   if [[ -z "$TUNNEL_PID" && "$TUNNEL_STATE" == "starting" && "$WEB_STATE" == "error" ]]; then
     printf 'Not starting the tunnel: the web server never became ready.\n' >>"$TUNNEL_LOG"
     TUNNEL_STATE="error"
+  fi
+
+  if [[ "$RENDERER" == plain ]]; then
+    render_plain_update
+    if ! _children_alive; then
+      plain_report 'No servers are left running.'
+      _cleanup quit 1
+    fi
+    sleep 0.08
+    continue
   fi
 
   if [[ "$API_STATE"  != "$PREV_API_STATE"  || "$WEB_STATE"  != "$PREV_WEB_STATE"  || \
