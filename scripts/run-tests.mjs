@@ -10,9 +10,9 @@
 // Jest in apps/api uses `rootDir: "src"` so we translate the repo-relative
 // path into an api/src-relative path before handing it to Jest.
 //
-// the `eslint-rules/` directory lives at the repo root, outside of both
-// workspaces, so its specs run on Node's built-in test runner as an extra
-// step during a full (no-path) run.
+// the `eslint-rules/` and `scripts/` directories live at the repo root,
+// outside of both workspaces, so their specs run on Node's built-in test
+// runner as an extra step during a full (no-path) run.
 
 import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
@@ -102,9 +102,10 @@ async function runAllWorkspaces() {
       { env: { ...process.env, LINKLATER_FAILED_TESTS_OUTPUT: webOutputPath } },
     );
 
-    const ruleTestsExitCode = await runCommand('node', [
+    const rootTestsExitCode = await runCommand('node', [
       '--test',
       'eslint-rules/**/*.test.mjs',
+      'scripts/**/*.test.mjs',
     ]);
 
     printConsolidatedBlock([
@@ -120,7 +121,7 @@ async function runAllWorkspaces() {
       },
     ]);
 
-    return apiExitCode || webExitCode || ruleTestsExitCode;
+    return apiExitCode || webExitCode || rootTestsExitCode;
   } finally {
     rmSync(tempDirectory, { force: true, recursive: true });
   }
