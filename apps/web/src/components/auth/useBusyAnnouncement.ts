@@ -16,12 +16,12 @@ const CLEAR_DELAY_MS = 8000;
  * which is the bug `ExtensionAuthorizePage` documents.
  */
 const BUSY_MESSAGE: Record<Mode, string> = {
-  login: 'Signing you in.',
-  register: 'Creating your account.',
-  'forgot-password': 'Sending your reset link.',
+  login: 'Signing you in…',
+  register: 'Creating your account…',
+  'forgot-password': 'Sending your reset link…',
 };
 
-const MFA_BUSY_MESSAGE = 'Checking your code.';
+const MFA_BUSY_MESSAGE = 'Checking your code…';
 
 function busyMessage(mode: Mode, mfaChallenge: MfaChallenge | null): string {
   if (mfaChallenge) return MFA_BUSY_MESSAGE;

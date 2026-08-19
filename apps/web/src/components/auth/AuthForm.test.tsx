@@ -390,7 +390,7 @@ describe('AuthForm – busy announcement', () => {
       vi.advanceTimersByTime(1000);
     });
 
-    expect(screen.getByTestId(BUSY_REGION).textContent).toBe('Signing you in.');
+    expect(screen.getByTestId(BUSY_REGION).textContent).toBe('Signing you in…');
   });
 
   it('names the wait per mode, so a reset is not announced as a sign-in', () => {
@@ -404,7 +404,7 @@ describe('AuthForm – busy announcement', () => {
     });
 
     expect(screen.getByTestId(BUSY_REGION).textContent).toBe(
-      'Sending your reset link.',
+      'Sending your reset link…',
     );
   });
 
@@ -432,7 +432,7 @@ describe('AuthForm – busy announcement', () => {
     act(() => {
       vi.advanceTimersByTime(1000);
     });
-    expect(screen.getByTestId(BUSY_REGION).textContent).toBe('Signing you in.');
+    expect(screen.getByTestId(BUSY_REGION).textContent).toBe('Signing you in…');
 
     act(() => {
       vi.advanceTimersByTime(8000);
@@ -451,7 +451,7 @@ describe('AuthForm – busy announcement', () => {
     act(() => {
       vi.advanceTimersByTime(1000);
     });
-    expect(screen.getByTestId(BUSY_REGION).textContent).toBe('Signing you in.');
+    expect(screen.getByTestId(BUSY_REGION).textContent).toBe('Signing you in…');
 
     vi.mocked(useAuthForm).mockReturnValue(makeHookResult({ loading: false }));
     rerender(
@@ -473,7 +473,7 @@ describe('AuthForm – busy announcement', () => {
     act(() => {
       vi.advanceTimersByTime(1000);
     });
-    expect(screen.getByTestId(BUSY_REGION).textContent).toBe('Signing you in.');
+    expect(screen.getByTestId(BUSY_REGION).textContent).toBe('Signing you in…');
   });
 
   it('carries no aria-busy, which would defer the error that ends the wait', () => {
