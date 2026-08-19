@@ -35,18 +35,6 @@ See README.md for setup and usage notes.
 USAGE
 }
 
-KNOWN_FLAGS=(--reset --force --no-input --no-color --version --help -h)
-
-suggest_flag() {
-  local candidate
-  for candidate in "${KNOWN_FLAGS[@]}"; do
-    if [[ "$candidate" == "$1"* || "$1" == "$candidate"* ]]; then
-      printf 'Did you mean %s?' "$candidate"
-      return
-    fi
-  done
-}
-
 scan_help "$@"
 
 WORKSPACE="@linklater/api"
@@ -54,6 +42,8 @@ TARGET="migrate"
 FORCE=false
 NO_INPUT=false
 USE_COLOR=true
+
+KNOWN_FLAGS=(--reset --force --no-input --no-color --version --help -h)
 
 for argument in "$@"; do
   case "$argument" in
@@ -73,7 +63,7 @@ for argument in "$@"; do
       print_version
       ;;
     *)
-      unknown_flag "$argument" "$(suggest_flag "$argument")"
+      unknown_flag "$argument" "${KNOWN_FLAGS[@]}"
       ;;
   esac
 done

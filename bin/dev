@@ -62,6 +62,8 @@ PUBLIC=false
 NO_INPUT=false
 USE_COLOR=true
 
+KNOWN_FLAGS=(--remote --public --no-input --no-color --version --help -h)
+
 for argument in "$@"; do
   case "$argument" in
     --remote)
@@ -81,7 +83,7 @@ for argument in "$@"; do
       print_version
       ;;
     *)
-      unknown_flag "$argument"
+      unknown_flag "$argument" "${KNOWN_FLAGS[@]}"
       ;;
   esac
 done
