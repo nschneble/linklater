@@ -188,6 +188,29 @@ describe('LinksList "Load more" focus preservation (WCAG 2.4.3)', () => {
     expect(screen.queryByRole('button', { name: /load more/i })).toBeNull();
   });
 
+  /*
+   * Its label is the live text "Loading…", which a user has to be able to
+   * read, so the dim `aria-disabled` otherwise carries is not available
+   * here — it composites the pair to 3.33:1 in before-midnight light.
+   */
+  it('declares the wait, so the shared dim is withheld from it', () => {
+    const { rerender } = renderWithProviders(
+      <LinksList {...loadMoreProps} loadingLinks={false} />,
+    );
+    expect(
+      screen.getByRole('button', { name: /load more/i }),
+    ).not.toHaveAttribute('data-busy');
+
+    rerender(
+      <ThemeProvider>
+        <LinksList {...loadMoreProps} loadingLinks={true} />
+      </ThemeProvider>,
+    );
+    expect(screen.getByRole('button', { name: /loading/i })).toHaveAttribute(
+      'data-busy',
+    );
+  });
+
   it('does not fire onLoadMore while a fetch is already in flight', () => {
     const onLoadMore = vi.fn();
     renderWithProviders(

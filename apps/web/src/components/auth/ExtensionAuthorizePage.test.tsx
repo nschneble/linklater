@@ -315,6 +315,23 @@ describe('ExtensionAuthorizePage pending state', () => {
     await findFailure();
   });
 
+  /*
+   * One attribute was carrying two states here: a grant in flight and an
+   * account that changed underneath the page. Only the second is a control
+   * the user cannot use, and only it earns the dim that says so.
+   */
+  it('separates a grant in flight from an account it can no longer grant on', async () => {
+    const grant = deferGrant();
+    renderPage();
+
+    fireEvent.click(authorizeButton());
+    expect(authorizeButton()).toHaveAttribute('data-busy');
+
+    grant.reject(new ApiError('Bad gateway', 502));
+    await findFailure();
+    expect(authorizeButton()).not.toHaveAttribute('data-busy');
+  });
+
   it('keeps the pending control focusable, so focus is never dropped to body', async () => {
     const grant = deferGrant();
     renderPage();
@@ -528,6 +545,15 @@ describe('ExtensionAuthorizePage account switched underneath it', () => {
 
     expect(changedNode()).toHaveTextContent('');
     expect(authorizeButton()).toHaveAttribute('aria-disabled', 'false');
+  });
+
+  // a control the user cannot use, so the dim it keeps is the right signal
+  it('is not busy, having nothing in flight', () => {
+    setStoredToken(ALICE_TOKEN);
+    renderPage();
+
+    signInElsewhere(BOB_TOKEN);
+    expect(authorizeButton()).not.toHaveAttribute('data-busy');
   });
 
   it('stops naming an account it can no longer grant on', () => {

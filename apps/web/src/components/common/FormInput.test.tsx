@@ -13,6 +13,7 @@
  * on them.
  */
 
+import { compileClasses } from '../../../test/tailwind';
 import { createRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render } from '@testing-library/react';
@@ -49,6 +50,34 @@ describe('FormInput', () => {
     expect(className).toContain('border-[var(--mount-border)]');
     expect(className).toContain('text-[var(--mount-text)]');
     expect(className).toContain('placeholder:text-[var(--mount-alt-text)]');
+  });
+
+  /*
+   * A read-only field swallows keystrokes, and screen readers say so. Every
+   * other control this form locks changes visibly, so a field that looks
+   * exactly like the one the user was typing into a moment ago is the odd
+   * one out. A dashed border carries it in every theme, which a fill swap
+   * would not: eight of the shipped cascades set --{surface}-input-bg to
+   * the same value as --{surface}-bg.
+   */
+  it('marks a read-only field as one, since nothing else does', () => {
+    const { getByRole } = render(
+      <FormInput type="text" readOnly aria-label="x" />,
+    );
+    const className = getByRole('textbox').className;
+    expect(className).toContain('read-only:not-disabled:border-dashed');
+    expect(className).toContain('read-only:not-disabled:cursor-default');
+  });
+
+  // CSS :read-only also matches a disabled input, which is a different state
+  it('leaves a natively disabled field to the treatment it already had', async () => {
+    const css = await compileClasses([
+      'read-only:not-disabled:border-dashed',
+      'read-only:not-disabled:cursor-default',
+    ]);
+    expect(css).toContain(':read-only:not(:disabled)');
+    expect(css).toContain('border-style: dashed');
+    expect(css).toContain('cursor: default');
   });
 
   it('drops the opposite surface classes – base surface omits mount-* paint', () => {

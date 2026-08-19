@@ -45,7 +45,7 @@ const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
     return (
       <input
         ref={reference}
-        className={`block w-full mt-1 px-3 py-2 ${surfaceClasses} text-base sm:text-sm focus-visible:border-transparent ${FOCUS_RING_FLUSH} rounded-lg ${className}`}
+        className={`block w-full mt-1 px-3 py-2 ${surfaceClasses} read-only:not-disabled:border-dashed text-base sm:text-sm focus-visible:border-transparent ${FOCUS_RING_FLUSH} rounded-lg read-only:not-disabled:cursor-default ${className}`}
         {...props}
       />
     );

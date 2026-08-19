@@ -338,6 +338,30 @@ describe('LoginRegisterView while a submit is in flight', () => {
     ).not.toHaveAttribute('data-busy');
   });
 
+  /*
+   * The pause after a send is neither of the states the primitive already
+   * knows. Nothing is in flight, so the progress cursor would lie; and the
+   * press landed, so the dim that says "unavailable" is the wrong signal
+   * for a button the user just succeeded with — the same judgement
+   * `theme/styles/cvdDisabled.test.ts` records for the CVD hatch.
+   */
+  it('names the magic-link pause a cooldown, which is neither busy nor unavailable', () => {
+    const { rerender } = renderView({
+      magicLinkSentJustNow: true,
+      password: '',
+    });
+    const cooling = screen.getByRole('button', {
+      name: /log in with magic link/i,
+    });
+    expect(cooling).toHaveAttribute('data-cooldown');
+    expect(cooling).not.toHaveAttribute('data-busy');
+
+    rerender(makeView({ loading: true, password: 'secret' }));
+    expect(screen.getByRole('button', { name: 'Log in' })).not.toHaveAttribute(
+      'data-cooldown',
+    );
+  });
+
   it('makes both inputs read-only rather than disabled', () => {
     renderView({ loading: true });
     const email = screen.getByLabelText(/email/i);

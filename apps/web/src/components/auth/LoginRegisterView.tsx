@@ -170,9 +170,10 @@ export default function LoginRegisterView({
         </Alert>
 
         <PrimaryButton
-          className="w-full py-2.5 aria-disabled:data-[busy]:opacity-100 aria-disabled:data-[busy]:cursor-progress"
+          className="w-full py-2.5"
           aria-disabled={loading || magicLinkSentJustNow}
           data-busy={loading || undefined}
+          data-cooldown={magicLinkSentJustNow || undefined}
         >
           <i
             className={`fa-solid ${magicLinkSentJustNow ? 'fa-wand-magic-sparkles' : password.length === 0 ? 'fa-wand-magic' : 'fa-right-to-bracket'} text-xs`}

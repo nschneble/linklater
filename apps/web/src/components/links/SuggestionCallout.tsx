@@ -51,7 +51,9 @@ interface SuggestionCalloutProps {
  *   `LinkCardLayout`.
  * - During the round-trip, `aria-busy="true"` + `aria-disabled="true"`
  *   keep focus on the button (a hard `disabled` would steal focus and
- *   suppress the error announcement).
+ *   suppress the error announcement). `data-busy` names the wait to the
+ *   shared refusal styling, which otherwise dims a control this one is
+ *   not: see `lib/styles.ts` `ARIA_DISABLED`.
  * - Errors render via the shared `Alert` component which sets
  *   `role="alert"` – do not duplicate `aria-live` here.
  */
@@ -195,6 +197,7 @@ export default function SuggestionCallout({
               onClick={handleAddAndRead}
               aria-busy={adding}
               aria-disabled={adding}
+              data-busy={adding || undefined}
               aria-describedby="suggestion-callout-title"
               aria-label={
                 inNewTab ? 'Add and read (opens in new tab)' : undefined

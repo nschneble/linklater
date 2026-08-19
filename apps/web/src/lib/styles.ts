@@ -44,16 +44,13 @@ export const FOCUS_RING_FLUSH =
 export const DISABLED = 'disabled:opacity-60 disabled:cursor-not-allowed';
 
 /**
- * The same dimming for a control refused by `aria-disabled` rather than by
- * the native attribute — the mechanism a control that holds focus has to
- * use, since a native `disabled` drops that focus to `<body>`.
- *
- * Written out rather than derived from `DISABLED`, for the reason spelled
- * out on `FOCUS_RING_FLUSH`: Tailwind scans source text, and a class
- * assembled at runtime is a class it never compiles.
+ * The refusal a control that has to keep its focus uses instead of the
+ * native attribute. `data-busy` and `data-cooldown` name a press that
+ * landed rather than a control the user cannot use, and withhold the dim,
+ * which composites a label to 2.64:1 (`ariaDisabledDim.contrast.test.ts`).
  */
 export const ARIA_DISABLED =
-  'aria-disabled:opacity-60 aria-disabled:cursor-not-allowed';
+  'aria-disabled:not-data-busy:not-data-cooldown:opacity-60 aria-disabled:not-data-busy:cursor-not-allowed data-busy:cursor-progress';
 
 // closing runs faster than opening so the panel feels snappy
 export function menuRevealStyle(

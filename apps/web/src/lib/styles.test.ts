@@ -1,11 +1,12 @@
-import { compileClasses } from '../../test/tailwind';
-import { describe, expect, it } from 'vitest';
 import {
+  ARIA_DISABLED,
   DISABLED,
   FOCUS_RING,
   FOCUS_RING_FLUSH,
   menuRevealStyle,
 } from './styles';
+import { compileClasses } from '../../test/tailwind';
+import { describe, expect, it } from 'vitest';
 
 describe('menuRevealStyle', () => {
   describe('when isOpen is true', () => {
@@ -151,5 +152,61 @@ describe('DISABLED', () => {
 
   it('contains disabled:cursor-not-allowed', () => {
     expect(DISABLED).toContain('disabled:cursor-not-allowed');
+  });
+});
+
+/** The selector of the compiled rule carrying a given declaration. */
+function selectorDeclaring(css: string, declaration: string): string {
+  const escaped = declaration.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = css.match(new RegExp(`([^{}]+)\\{[^{}]*${escaped}`));
+  return match === null ? '' : match[1].trim();
+}
+
+/*
+ * A control refused while its own request is in flight and a control that
+ * is simply unavailable read as the same thing under one dim, and only the
+ * second earns it: 1.4.3 exempts an inactive component, not a label a user
+ * is still waiting on. The measured cost of getting that wrong is in
+ * `theme/styles/ariaDisabledDim.contrast.test.ts`.
+ *
+ * The assertions are about which elements each rule can match, not about
+ * which rule wins. A busy control matches no rule that dims it, so the
+ * split survives Tailwind reordering the sheet.
+ */
+describe('ARIA_DISABLED', () => {
+  it('dims a control refused with no reason given', async () => {
+    const css = await compileUtilities(ARIA_DISABLED);
+    expect(selectorDeclaring(css, 'opacity: 60%')).toContain(
+      '[aria-disabled="true"]',
+    );
+  });
+
+  it('cannot dim a control that reports itself busy', async () => {
+    const css = await compileUtilities(ARIA_DISABLED);
+    expect(selectorDeclaring(css, 'opacity: 60%')).toContain(
+      ':not([data-busy])',
+    );
+  });
+
+  it('cannot dim a control refused by a cooldown', async () => {
+    const css = await compileUtilities(ARIA_DISABLED);
+    expect(selectorDeclaring(css, 'opacity: 60%')).toContain(
+      ':not([data-cooldown])',
+    );
+  });
+
+  it('holds the refusal cursor over a cooldown, which has nothing in flight', async () => {
+    const css = await compileUtilities(ARIA_DISABLED);
+    const selector = selectorDeclaring(css, 'cursor: not-allowed');
+    expect(selector).toContain('[aria-disabled="true"]');
+    expect(selector).not.toContain(':not([data-cooldown])');
+  });
+
+  it('gives a busy control the progress cursor and not the refusal one', async () => {
+    const css = await compileUtilities(ARIA_DISABLED);
+    expect(selectorDeclaring(css, 'cursor: progress')).toContain('[data-busy]');
+    expect(selectorDeclaring(css, 'cursor: not-allowed')).toContain(
+      ':not([data-busy])',
+    );
   });
 });
