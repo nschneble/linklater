@@ -13,6 +13,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { compileClasses } from '../../../test/tailwind';
 import { createRef } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import LoginRegisterView from './LoginRegisterView';
@@ -477,5 +478,115 @@ describe('LoginRegisterView single sign-on buttons', () => {
     fireEvent.click(google);
 
     expect(window.location.href).not.toContain('/auth/google');
+  });
+});
+
+/*
+ * The submit icon cross-fades to a spinner in the shape CopyButton
+ * established, driven by the `data-busy` the button already sets rather
+ * than by React state. Nothing latches: a failure puts the idle glyph
+ * back, and on success the route unmounts the form before it can.
+ */
+describe('LoginRegisterView submit icon cross-fade', () => {
+  function submitButton() {
+    return screen.getByRole('button', { name: 'Log in' });
+  }
+
+  function iconStack(button: HTMLElement) {
+    const wrapper = button.querySelector('span[aria-hidden="true"]');
+    const layers = Array.from(wrapper?.children ?? []) as HTMLElement[];
+    return {
+      idle: layers.find((layer) => !layer.querySelector('.fa-circle-notch')),
+      layers,
+      spinner: layers.find((layer) => layer.querySelector('.fa-circle-notch')),
+      wrapper,
+    };
+  }
+
+  it('stacks the spinner and the idle glyph on one grid cell', () => {
+    renderView({ password: 'secret' });
+    const { idle, layers, spinner, wrapper } = iconStack(submitButton());
+
+    expect(wrapper).toHaveClass('inline-grid', 'place-items-center');
+    expect(layers).toHaveLength(2);
+    layers.forEach((layer) => {
+      expect(layer).toHaveClass('col-start-1', 'row-start-1');
+    });
+    expect(spinner?.querySelector('.fa-circle-notch')).toBeInTheDocument();
+    expect(idle?.querySelector('.fa-right-to-bracket')).toBeInTheDocument();
+  });
+
+  it("fades the two layers from the button's own data-busy", () => {
+    renderView({ password: 'secret' });
+    const button = submitButton();
+    const { idle, spinner } = iconStack(button);
+
+    expect(button).toHaveClass('group');
+    expect(spinner?.className).toContain('group-data-[busy]:opacity-100');
+    expect(idle?.className).toContain('group-data-[busy]:opacity-0');
+  });
+
+  it('renders the same stack busy, idle and after a failure', () => {
+    const { rerender } = renderView({ password: 'secret' });
+    const idleMarkup = iconStack(submitButton()).wrapper?.outerHTML;
+    expect(idleMarkup).toContain('fa-circle-notch');
+
+    rerender(makeView({ loading: true, password: 'secret' }));
+    expect(iconStack(submitButton()).wrapper?.outerHTML).toBe(idleMarkup);
+
+    rerender(makeView({ error: 'Wrong password', password: 'secret' }));
+    expect(iconStack(submitButton()).wrapper?.outerHTML).toBe(idleMarkup);
+    expect(submitButton()).not.toHaveAttribute('data-busy');
+  });
+
+  it('compiles the busy variants that carry the cross-fade', async () => {
+    renderView({ password: 'secret' });
+    const { idle, spinner } = iconStack(submitButton());
+    const css = await compileClasses([
+      ...(spinner?.className.split(' ') ?? []),
+      ...(idle?.className.split(' ') ?? []),
+    ]);
+
+    ['opacity-100', 'opacity-0', 'scale-100', 'blur-none'].forEach(
+      (utility) => {
+        expect(css).toContain(
+          `.group-data-\\[busy\\]\\:${utility}:is(:where(.group)[data-busy] *)`,
+        );
+      },
+    );
+  });
+
+  /*
+   * `motion-safe:animate-spin` and `animate-spin
+   * motion-reduce:animate-none` both compile, but the second only works
+   * where the query is implemented: a UA answering neither leaves the
+   * spin running with nothing to defeat it. Asking where `animation:`
+   * lands is what rejects that spelling.
+   */
+  it('emits the spin only where reduced motion is not preferred', async () => {
+    renderView({ password: 'secret' });
+    const spinner = iconStack(submitButton()).spinner?.querySelector('i');
+    const css = await compileClasses(spinner?.className.split(' ') ?? []);
+    const guard = '@media (prefers-reduced-motion: no-preference)';
+
+    expect(css).toContain(guard);
+    expect(css.slice(0, css.indexOf(guard))).not.toContain('animation:');
+    expect(css.match(/animation:/g)).toHaveLength(1);
+  });
+
+  // a line height on the taller layer would grow the button for everyone
+  it('sizes the spinner without also setting a line height', async () => {
+    renderView({ password: 'secret' });
+    const spinner = iconStack(submitButton()).spinner?.querySelector('i');
+    const css = await compileClasses(spinner?.className.split(' ') ?? []);
+    const utilities = css.slice(css.indexOf('@layer utilities'));
+
+    expect(utilities).toContain('font-size: 0.8125rem');
+    expect(utilities).not.toContain('line-height');
+  });
+
+  it('keeps both icons out of the name the button answers to', () => {
+    renderView({ loading: true, password: 'secret' });
+    expect(submitButton()).toHaveAccessibleName('Log in');
   });
 });

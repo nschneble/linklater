@@ -170,15 +170,21 @@ export default function LoginRegisterView({
         </Alert>
 
         <PrimaryButton
-          className="w-full py-2.5"
+          className="group w-full py-2.5"
           aria-disabled={loading || magicLinkSentJustNow}
           data-busy={loading || undefined}
           data-cooldown={magicLinkSentJustNow || undefined}
         >
-          <i
-            className={`fa-solid ${magicLinkSentJustNow ? 'fa-wand-magic-sparkles' : password.length === 0 ? 'fa-wand-magic' : 'fa-right-to-bracket'} text-xs`}
-            aria-hidden="true"
-          />
+          <span aria-hidden="true" className="inline-grid place-items-center">
+            <span className="col-start-1 row-start-1 opacity-0 blur-xs scale-[0.25] group-data-[busy]:opacity-100 group-data-[busy]:blur-none group-data-[busy]:scale-100 transition-[opacity,filter,scale] duration-300 ease-in-out motion-reduce:transition-none">
+              <i className="fa-solid fa-circle-notch text-[0.8125rem] motion-safe:animate-spin" />
+            </span>
+            <span className="col-start-1 row-start-1 opacity-100 blur-none scale-100 group-data-[busy]:opacity-0 group-data-[busy]:blur-xs group-data-[busy]:scale-[0.25] transition-[opacity,filter,scale] duration-300 ease-in-out motion-reduce:transition-none">
+              <i
+                className={`fa-solid ${magicLinkSentJustNow ? 'fa-wand-magic-sparkles' : password.length === 0 ? 'fa-wand-magic' : 'fa-right-to-bracket'} text-xs`}
+              />
+            </span>
+          </span>
           {submitLabel(password.length === 0, mode)}
         </PrimaryButton>
       </form>
