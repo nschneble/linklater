@@ -40,10 +40,16 @@ Keys:
   2  Web logs
   3  Mailpit logs (when installed)
   4  Tunnel logs (--public only)
+  u  Scroll up in a log view
+  d  Scroll down in a log view
   q  Quit
 
 Control+C quits as well. Pressing it again while the servers are stopping
 stops them immediately.
+
+Logs from each run are kept in a folder under the system temp directory.
+The path is printed when the servers stop, and the five newest runs are
+kept.
 
 See README.md for setup and usage notes.
 USAGE
@@ -110,6 +116,7 @@ resolve_color "$USE_COLOR"
 
 SPIN=(⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏)
 TICK=✓  CROSS=✗  CIRCLE=○
+SAVE_CURSOR=$'\e7'  RESTORE_CURSOR=$'\e8'
 
 # ── Mailpit binary detection ──────────────────────────────────────────────────
 MAILPIT_BIN=""
@@ -133,12 +140,37 @@ if [[ "$PUBLIC" == true ]]; then
   fi
 fi
 
-# ── Temp files ────────────────────────────────────────────────────────────────
-API_LOG=$(mktemp)
-WEB_LOG=$(mktemp)
-MAILPIT_LOG=$(mktemp)
-TUNNEL_LOG=$(mktemp)
+# ── Log files ─────────────────────────────────────────────────────────────────
+TEMP_ROOT="${TMPDIR:-/tmp}"
+LOG_ROOT="${TEMP_ROOT%/}/linklater-dev"
+LOG_RUNS_KEPT=5
+LOG_DIR="$LOG_ROOT/$(date +%Y%m%d-%H%M%S)-$$"
+if ! mkdir -p "$LOG_DIR" 2>/dev/null; then
+  printf 'Cannot create the log folder %s\n' "$LOG_DIR" >&2
+  exit 73
+fi
+chmod 700 "$LOG_DIR"
+
+API_LOG="$LOG_DIR/api.log"
+WEB_LOG="$LOG_DIR/web.log"
+MAILPIT_LOG="$LOG_DIR/mailpit.log"
+TUNNEL_LOG="$LOG_DIR/tunnel.log"
+touch "$API_LOG" "$WEB_LOG" "$MAILPIT_LOG" "$TUNNEL_LOG"
 KEY_FILE=$(mktemp)
+
+prune_run_logs() {
+  local runs total excess entry
+  runs=$(find "$LOG_ROOT" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort)
+  [[ -z "$runs" ]] && return
+  total=$(printf '%s\n' "$runs" | wc -l)
+  excess=$(( total - LOG_RUNS_KEPT ))
+  (( excess < 1 )) && return
+  printf '%s\n' "$runs" | head -n "$excess" | while IFS= read -r entry; do
+    rm -f "$entry"/*.log
+    rmdir "$entry" 2>/dev/null || true
+  done
+}
+prune_run_logs
 
 # ── Process state ─────────────────────────────────────────────────────────────
 # Values: starting | ready | error | skipped | "" (blank)
@@ -174,9 +206,15 @@ if [[ "$REMOTE" == true ]]; then
 fi
 
 # ── View state ────────────────────────────────────────────────────────────────
-# Values: status | api | web | mailpit
+# Values: status | api | web | mailpit | tunnel
 VIEW="status"
 FRAME=0
+
+SCROLL_FOLLOWING=0
+SCROLL_API=$SCROLL_FOLLOWING
+SCROLL_WEB=$SCROLL_FOLLOWING
+SCROLL_MAILPIT=$SCROLL_FOLLOWING
+SCROLL_TUNNEL=$SCROLL_FOLLOWING
 
 # ── Cleanup ───────────────────────────────────────────────────────────────────
 OLD_STTY=$(stty -g </dev/tty)
@@ -190,6 +228,11 @@ show_cursor()  { printf '\033[?25h'; }
 any_service_failed() {
   [[ "$API_STATE" == "error" || "$WEB_STATE" == "error" || \
      "$MAILPIT_STATE" == "error" || "$TUNNEL_STATE" == "error" ]]
+}
+
+any_service_starting() {
+  [[ "$API_STATE" == "starting" || "$WEB_STATE" == "starting" || \
+     "$MAILPIT_STATE" == "starting" || "$TUNNEL_STATE" == "starting" ]]
 }
 
 _kill_children() {
@@ -226,10 +269,11 @@ _await_children() {
 _quit() {
   local status=$1
   any_service_failed && status=1
-  rm -f "$API_LOG" "$WEB_LOG" "$MAILPIT_LOG" "$TUNNEL_LOG" "$KEY_FILE"
+  rm -f "$KEY_FILE"
   stty "$OLD_STTY" </dev/tty 2>/dev/null || true
   show_cursor
   printf '\n'
+  printf '  Logs: %s\n' "$LOG_DIR" >&2
   exit "$status"
 }
 
@@ -327,6 +371,10 @@ render_key_list() {
       out+="  4. Tunnel logs"$'\n'
     fi
   fi
+  if [[ -n "$current" ]]; then
+    out+="  u. Scroll up"$'\n'
+    out+="  d. Scroll down"$'\n'
+  fi
   printf '%s' "$out"
 }
 
@@ -364,25 +412,145 @@ render_status_view() {
   printf '%s' "$out"
 }
 
+# ── Spinner cells ─────────────────────────────────────────────────────────────
+render_spinner_cells() {
+  local frame_char=$1
+  local out=''
+  # rows 7-10 are the service block both views draw after the row 5 address
+  [[ "$API_STATE" == "starting" ]]     && out+=$'\033[7;3H'"${YELLOW}${frame_char}${RESET}"
+  [[ "$WEB_STATE" == "starting" ]]     && out+=$'\033[8;3H'"${YELLOW}${frame_char}${RESET}"
+  [[ "$MAILPIT_STATE" == "starting" ]] && out+=$'\033[9;3H'"${YELLOW}${frame_char}${RESET}"
+  [[ "$TUNNEL_STATE" == "starting" ]]  && out+=$'\033[10;3H'"${YELLOW}${frame_char}${RESET}"
+  [[ -n "$out" ]] && printf '%s%s%s' "$SAVE_CURSOR" "$out" "$RESTORE_CURSOR"
+}
+
+# ── Log view geometry ─────────────────────────────────────────────────────────
+compute_log_geometry() {
+  local stty_size; stty_size=$(stty size 2>/dev/null </dev/tty)
+  local rows; rows=${stty_size%% *}; rows=${rows:-24}
+  local cols; cols=${stty_size##* }; cols=${cols:-80}
+  CONTENT_WIDTH=$(( cols - 4 ))
+  (( CONTENT_WIDTH < 20 )) && CONTENT_WIDTH=20
+  if [[ "$MAILPIT_STATE" == "skipped" ]]; then
+    AVAILABLE=$(( rows - 20 ))
+  else
+    AVAILABLE=$(( rows - 21 ))
+  fi
+  [[ -n "$REMOTE_URL" ]] && AVAILABLE=$(( AVAILABLE - 1 ))
+  [[ -n "$TUNNEL_STATE" ]] && AVAILABLE=$(( AVAILABLE - 1 ))
+  [[ -n "$TUNNEL_STATE" && "$TUNNEL_STATE" != "skipped" ]] && AVAILABLE=$(( AVAILABLE - 1 ))
+  (( AVAILABLE < 1 )) && AVAILABLE=1
+}
+
+# ── Current view ──────────────────────────────────────────────────────────────
+view_log_file() {
+  case "$VIEW" in
+    api)     printf '%s' "$API_LOG" ;;
+    web)     printf '%s' "$WEB_LOG" ;;
+    mailpit) printf '%s' "$MAILPIT_LOG" ;;
+    tunnel)  printf '%s' "$TUNNEL_LOG" ;;
+  esac
+}
+
+view_service_state() {
+  case "$VIEW" in
+    api)     printf '%s' "$API_STATE" ;;
+    web)     printf '%s' "$WEB_STATE" ;;
+    mailpit) printf '%s' "$MAILPIT_STATE" ;;
+    tunnel)  printf '%s' "$TUNNEL_STATE" ;;
+  esac
+}
+
+view_scroll() {
+  case "$VIEW" in
+    api)     printf '%s' "$SCROLL_API" ;;
+    web)     printf '%s' "$SCROLL_WEB" ;;
+    mailpit) printf '%s' "$SCROLL_MAILPIT" ;;
+    tunnel)  printf '%s' "$SCROLL_TUNNEL" ;;
+    *)       printf '%s' "$SCROLL_FOLLOWING" ;;
+  esac
+}
+
+set_view_scroll() {
+  case "$VIEW" in
+    api)     SCROLL_API=$1 ;;
+    web)     SCROLL_WEB=$1 ;;
+    mailpit) SCROLL_MAILPIT=$1 ;;
+    tunnel)  SCROLL_TUNNEL=$1 ;;
+  esac
+}
+
+# ── Log window ────────────────────────────────────────────────────────────────
+log_line_total() {
+  local total; total=$(awk 'END { print NR }' "$1" 2>/dev/null)
+  printf '%s' "${total:-0}"
+}
+
+log_follow_start() {
+  local log_file=$1 service_state=$2 total=$3
+  local start=$(( total - AVAILABLE + 1 )) error_line
+  if [[ "$service_state" == "error" ]]; then
+    # Start from 2 lines before the first error so the full message is visible
+    error_line=$(grep -n 'Error\|EADDR\|EACCES\|UnhandledPromise\|Cannot find module' \
+                 "$log_file" 2>/dev/null | head -1 | cut -d: -f1)
+    if [[ -n "$error_line" && "$error_line" -gt 2 ]]; then
+      start=$(( error_line - 2 ))
+    fi
+  fi
+  (( start < 1 )) && start=1
+  printf '%s' "$start"
+}
+
+log_window_start() {
+  local log_file=$1 total=$2
+  local start; start=$(view_scroll)
+  if (( start == SCROLL_FOLLOWING )); then
+    start=$(log_follow_start "$log_file" "$(view_service_state)" "$total")
+  fi
+  printf '%s' "$start"
+}
+
+scroll_log_view() {
+  local direction=$1 log_file total start bottom
+  log_file=$(view_log_file)
+  [[ -z "$log_file" ]] && return
+  compute_log_geometry
+  total=$(log_line_total "$log_file")
+  start=$(log_window_start "$log_file" "$total")
+  bottom=$(( total - AVAILABLE + 1 ))
+  (( bottom < 1 )) && bottom=1
+  if [[ "$direction" == up ]]; then
+    start=$(( start - AVAILABLE ))
+    (( start < 1 )) && start=1
+    set_view_scroll "$start"
+  elif (( start + AVAILABLE >= bottom )); then
+    set_view_scroll "$SCROLL_FOLLOWING"
+  else
+    set_view_scroll "$(( start + AVAILABLE ))"
+  fi
+}
+
+render_log_position() {
+  local start=$1 last=$2 total=$3 edge=''
+  if (( total < 1 )); then
+    printf 'no output yet'
+    return
+  fi
+  if (( start <= 1 && last >= total )); then
+    edge=', all'
+  elif (( start <= 1 )); then
+    edge=', top'
+  elif (( last >= total )); then
+    edge=', end'
+  fi
+  printf 'lines %s-%s of %s%s' "$start" "$last" "$total" "$edge"
+}
+
 # ── Log view ──────────────────────────────────────────────────────────────────
 render_log_view() {
   local frame_char=$1 label=$2 log_file=$3
-  local stty_size; stty_size=$(stty size </dev/tty 2>/dev/null)
-  local rows; rows=${stty_size%% *}; rows=${rows:-24}
-  local cols; cols=${stty_size##* }; cols=${cols:-80}
-  local content_width=$(( cols - 4 ))
-  (( content_width < 20 )) && content_width=20
-  local available
-  if [[ "$MAILPIT_STATE" == "skipped" ]]; then
-    available=$(( rows - 18 ))
-  else
-    available=$(( rows - 19 ))
-  fi
-  [[ -n "$REMOTE_URL" ]] && available=$(( available - 1 ))
-  [[ -n "$TUNNEL_STATE" ]] && available=$(( available - 1 ))
-  [[ -n "$TUNNEL_STATE" && "$TUNNEL_STATE" != "skipped" ]] && available=$(( available - 1 ))
-  (( available < 1 )) && available=1
-  local divider; printf -v divider '%*s' "$content_width" ''
+  compute_log_geometry
+  local divider; printf -v divider '%*s' "$CONTENT_WIDTH" ''
   divider=${divider// /─}
 
   local out=''
@@ -403,40 +571,21 @@ render_log_view() {
   out+="$(render_key_list "$label")"$'\n'$'\n'
 
   local prefix_len=$(( ${#label} + 8 ))
-  local divider_width=$(( content_width - prefix_len ))
+  local divider_width=$(( CONTENT_WIDTH - prefix_len ))
   (( divider_width < 0 )) && divider_width=0
-  out+="  ${DIM}── ${label} ${divider:0:$divider_width}${RESET}"$'\n'$'\n'
+  out+="  ${DIM}── ${label} ${divider:0:$divider_width}${RESET}"$'\n'
 
-  local service_state
-  if [[ "$log_file" == "$API_LOG" ]]; then
-    service_state="$API_STATE"
-  elif [[ "$log_file" == "$MAILPIT_LOG" ]]; then
-    service_state="$MAILPIT_STATE"
-  elif [[ "$log_file" == "$TUNNEL_LOG" ]]; then
-    service_state="$TUNNEL_STATE"
-  else
-    service_state="$WEB_STATE"
-  fi
+  local total start last
+  total=$(log_line_total "$log_file")
+  start=$(log_window_start "$log_file" "$total")
+  last=$(( start + AVAILABLE - 1 ))
+  (( last > total )) && last=$total
+  out+="  $(render_log_position "$start" "$last" "$total")"$'\n'
 
-  if [[ "$service_state" == "error" ]]; then
-    # Start from 2 lines before the first error so the full message is visible
-    local error_line
-    error_line=$(grep -n 'Error\|EADDR\|EACCES\|UnhandledPromise\|Cannot find module' \
-                 "$log_file" 2>/dev/null | head -1 | cut -d: -f1)
-    if [[ -n "$error_line" && "$error_line" -gt 2 ]]; then
-      local start=$(( error_line - 2 ))
-      while IFS= read -r line; do
-        out+="  ${line:0:$content_width}"$'\n'
-      done < <(sed -n "${start},$((start + available - 1))p" "$log_file" 2>/dev/null | strip_ansi || true)
-    else
-      while IFS= read -r line; do
-        out+="  ${line:0:$content_width}"$'\n'
-      done < <(tail -n "$available" "$log_file" 2>/dev/null | strip_ansi || true)
-    fi
-  else
+  if (( total > 0 )); then
     while IFS= read -r line; do
-      out+="  ${line:0:$content_width}"$'\n'
-    done < <(tail -n "$available" "$log_file" 2>/dev/null | strip_ansi || true)
+      out+="  ${line:0:$CONTENT_WIDTH}"$'\n'
+    done < <(sed -n "${start},${last}p" "$log_file" 2>/dev/null | strip_ansi || true)
   fi
 
   printf '%s' "$out"
@@ -514,6 +663,8 @@ while true; do
       2) VIEW="web" ;;
       3) [[ "$MAILPIT_STATE" != "skipped" ]] && VIEW="mailpit" ;;
       4) [[ -n "$TUNNEL_STATE" && "$TUNNEL_STATE" != "skipped" ]] && VIEW="tunnel" ;;
+      u) scroll_log_view up ;;
+      d) scroll_log_view down ;;
       q) exit 0 ;;
     esac
   done
@@ -580,27 +731,29 @@ while true; do
     fi
   fi
 
-  # Mark dirty when state changed, key pressed, or spinner is animating
+  # Mark dirty when state changed, key pressed, or the view changed
   if [[ "$API_STATE"  != "$PREV_API_STATE"  || "$WEB_STATE"  != "$PREV_WEB_STATE"  || \
         "$MAILPIT_STATE" != "$PREV_MAILPIT_STATE" || "$TUNNEL_STATE" != "$PREV_TUNNEL_STATE" || \
-        "$VIEW" != "$PREV_VIEW" || -n "$KEY_BATCH" || \
-        "$API_STATE" == "starting" || "$WEB_STATE" == "starting" || \
-        "$MAILPIT_STATE" == "starting" || "$TUNNEL_STATE" == "starting" ]]; then
+        "$VIEW" != "$PREV_VIEW" || -n "$KEY_BATCH" ]]; then
     DIRTY=true
   fi
 
-  # Render only when something changed
-  if [[ "$DIRTY" == true ]]; then
+  # Redraw the region only when something changed, otherwise move the spinner
+  if [[ "$DIRTY" == true ]] || any_service_starting; then
     frame_char="${SPIN[$((FRAME % ${#SPIN[@]}))]}"
     FRAME=$(( FRAME + 1 ))
-    DIRTY=false
-    case "$VIEW" in
-      status)  render_status_view "$frame_char" ;;
-      api)     render_log_view "$frame_char" "API"  "$API_LOG"  ;;
-      web)     render_log_view "$frame_char" "Web"  "$WEB_LOG"  ;;
-      mailpit) render_log_view "$frame_char" "Mailpit" "$MAILPIT_LOG" ;;
-      tunnel)  render_log_view "$frame_char" "Tunnel" "$TUNNEL_LOG" ;;
-    esac
+    if [[ "$DIRTY" == true ]]; then
+      DIRTY=false
+      case "$VIEW" in
+        status)  render_status_view "$frame_char" ;;
+        api)     render_log_view "$frame_char" "API"  "$API_LOG"  ;;
+        web)     render_log_view "$frame_char" "Web"  "$WEB_LOG"  ;;
+        mailpit) render_log_view "$frame_char" "Mailpit" "$MAILPIT_LOG" ;;
+        tunnel)  render_log_view "$frame_char" "Tunnel" "$TUNNEL_LOG" ;;
+      esac
+    else
+      render_spinner_cells "$frame_char"
+    fi
   fi
 
   sleep 0.08
