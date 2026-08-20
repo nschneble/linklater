@@ -1,4 +1,4 @@
-import { hasRecentLocalChange, readLocalStorage } from './storage';
+import { hasRecentLocalChange, readPersistedValue } from './storage';
 import { useEffect } from 'react';
 
 interface ServerBooleanPrefStorageKeys {
@@ -14,8 +14,8 @@ interface ServerBooleanPrefStorageKeys {
  *
  * A 30s guard skips the sync right after an optimistic local toggle: if the
  * local timestamp is newer than `RECENT_LOCAL_CHANGE_MS`, the server value is
- * ignored this pass. When disabling, a local `'on'` value acts as a second
- * guard so a stale server `false` cannot stomp a just-enabled local pref.
+ * ignored this pass. When disabling, the stored value only overrules
+ * `isEnabled` if the store is the newest copy of it this tab knows of.
  *
  * Both the CVD-mode and dyslexic-font syncs in `App` run through this hook;
  * only the storage keys and enable/disable actions differ.
@@ -37,9 +37,7 @@ export function useServerBooleanPrefSync(
     if (serverValue && !isEnabled) {
       enable();
     } else if (!serverValue && isEnabled) {
-      // only disable when the local value isn't 'on' (second guard)
-      const localState = readLocalStorage(valueKey);
-      if (localState !== 'on') {
+      if (readPersistedValue(valueKey, 'on') !== 'on') {
         disable();
       }
     }

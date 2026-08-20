@@ -63,19 +63,41 @@ export function readLocalStorage(key: string): string | null {
 }
 
 /**
+ * Keys this tab could not persist, each mapped to what the store held when
+ * it refused. A refusal is the only evidence a later read has that the
+ * store's copy is older than the state this tab is showing.
+ */
+const refusedWrites = new Map<string, string | null>();
+
+/**
  * Safely writes to `localStorage`. Does nothing when the write is refused
  * (blocked storage, a full quota). The theme provider mounts above every
  * `ErrorBoundary`, so an unguarded write reached from its boot layout
  * effect, or from the server-sync effect in `App.tsx`, is a blank page.
- * A write that precedes the state change it records costs more than the
- * record: the throw skips the change too, so the preference never applies.
  */
 export function writeLocalStorage(key: string, value: string): void {
   try {
     window.localStorage.setItem(key, value);
+    refusedWrites.delete(key);
   } catch {
-    return;
+    refusedWrites.set(key, readLocalStorage(key));
   }
+}
+
+/**
+ * The newest copy of `key` this tab knows of. Unreadable, absent, and a
+ * value this tab failed to write over all resolve to `cachedValue`: a
+ * refused write leaves live state ahead of the store. A stored value that
+ * moved since the refusal is another tab's, and wins.
+ */
+export function readPersistedValue(key: string, cachedValue: string): string {
+  const persisted = readLocalStorage(key);
+  if (persisted === null) return cachedValue;
+  if (refusedWrites.has(key) && persisted === refusedWrites.get(key)) {
+    return cachedValue;
+  }
+
+  return persisted;
 }
 
 /**
@@ -114,9 +136,6 @@ interface PersistWithTimestampInput {
  * under `updatedAtKey`, so the `hasRecentLocalChange` guard can later suppress
  * a stale server sync. The `applyServer*` syncs and the system-mode paths
  * write the value alone, so they never reset their own guard window.
- *
- * Both writes go through `writeLocalStorage`, so a refused store is a
- * no-op rather than a throw and every caller's state change still runs.
  *
  * Takes a named-argument object rather than three positional `string`s. With
  * all three parameters sharing the `string` type, positional arguments let a

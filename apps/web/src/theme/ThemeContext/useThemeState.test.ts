@@ -171,6 +171,28 @@ describe('setBaseTheme', () => {
     expect(result.current.isCvdMode).toBe(false);
     expect(result.current.baseTheme).toBe('boyhood');
   });
+
+  it('still clears CVD mode when the store refuses the removal', () => {
+    const { result } = renderHook(() => useThemeState());
+
+    act(() => {
+      result.current.enableCvdMode();
+    });
+
+    expect(() =>
+      withRefusedStorage(
+        'removeItem',
+        () => {
+          act(() => {
+            result.current.setBaseTheme('boyhood');
+          });
+        },
+        'localStorage',
+      ),
+    ).not.toThrow();
+    expect(result.current.isCvdMode).toBe(false);
+    expect(result.current.baseTheme).toBe('boyhood');
+  });
 });
 
 describe('setMode', () => {
@@ -350,7 +372,7 @@ describe('enableCvdMode', () => {
     ).not.toThrow();
   });
 
-  // the refused write is the first statement, so all of this is at stake
+  // the refused write is the first side effect, so all of this is at stake
   it('still turns CVD on when the store refuses the pre-cvd write', () => {
     const { result } = renderHook(() => useThemeState());
 
