@@ -216,6 +216,22 @@ describe('applyServerTheme', () => {
 
     expect(result.current.baseTheme).toBe('boyhood');
   });
+
+  it('still applies the server theme when the store refuses the write', () => {
+    const { result } = renderHook(() => useThemeState());
+
+    withRefusedStorage(
+      'setItem',
+      () => {
+        act(() => {
+          result.current.applyServerTheme('boyhood');
+        });
+      },
+      'localStorage',
+    );
+
+    expect(result.current.baseTheme).toBe('boyhood');
+  });
 });
 
 describe('applyServerMode', () => {
@@ -651,6 +667,22 @@ describe('applyServerCustomThemeEnabled', () => {
     expect(result.current.customThemeEnabled).toBe(true);
     expect(window.localStorage.getItem(CUSTOM_THEME_ENABLED_KEY)).toBe('on');
   });
+
+  it('still applies the server value when the store refuses the write', () => {
+    const { result } = renderHook(() => useThemeState());
+
+    withRefusedStorage(
+      'setItem',
+      () => {
+        act(() => {
+          result.current.applyServerCustomThemeEnabled(true);
+        });
+      },
+      'localStorage',
+    );
+
+    expect(result.current.customThemeEnabled).toBe(true);
+  });
 });
 
 describe('setCustomTheme', () => {
@@ -724,6 +756,40 @@ describe('applyServerCustomTheme', () => {
 
     expect(result.current.customTheme).toBeNull();
     expect(window.localStorage.getItem(CUSTOM_THEME_STORAGE_KEY)).toBeNull();
+  });
+
+  it('still applies the server palette when the store refuses the write', () => {
+    const { result } = renderHook(() => useThemeState());
+    const serverTheme = { dark: { '--mount-border': '#server0' }, light: {} };
+
+    withRefusedStorage(
+      'setItem',
+      () => {
+        act(() => {
+          result.current.applyServerCustomTheme(serverTheme);
+        });
+      },
+      'localStorage',
+    );
+
+    expect(result.current.customTheme).toEqual(serverTheme);
+  });
+
+  it('still clears the custom theme when the store refuses the removal', () => {
+    seedStoredCustomTheme({ dark: { '--mount-border': '#local00' } });
+    const { result } = renderHook(() => useThemeState());
+
+    withRefusedStorage(
+      'removeItem',
+      () => {
+        act(() => {
+          result.current.applyServerCustomTheme(null);
+        });
+      },
+      'localStorage',
+    );
+
+    expect(result.current.customTheme).toBeNull();
   });
 });
 

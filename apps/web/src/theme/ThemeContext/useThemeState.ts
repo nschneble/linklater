@@ -28,6 +28,7 @@ import {
   persistWithTimestamp,
   PRE_CVD_THEME_KEY,
   readLocalStorage,
+  removeLocalStorage,
   THEME_STORAGE_KEY,
   THEME_UPDATED_AT_KEY,
   writeLocalStorage,
@@ -239,7 +240,7 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
   const applyServerTheme = useCallback((theme: BaseTheme) => {
     if (hasRecentLocalChange(THEME_UPDATED_AT_KEY)) return;
     setBaseThemeState(theme);
-    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    writeLocalStorage(THEME_STORAGE_KEY, theme);
   }, []);
 
   const setCustomTheme = useCallback((nextCustomTheme: CustomTheme) => {
@@ -256,12 +257,12 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
       if (hasRecentLocalChange(CUSTOM_THEME_UPDATED_AT_KEY)) return;
       setCustomThemeState(serverCustomTheme);
       if (serverCustomTheme) {
-        window.localStorage.setItem(
+        writeLocalStorage(
           CUSTOM_THEME_STORAGE_KEY,
           JSON.stringify(serverCustomTheme),
         );
       } else {
-        window.localStorage.removeItem(CUSTOM_THEME_STORAGE_KEY);
+        removeLocalStorage(CUSTOM_THEME_STORAGE_KEY);
       }
     },
     [],
@@ -279,10 +280,7 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
   const applyServerCustomThemeEnabled = useCallback((enabled: boolean) => {
     if (hasRecentLocalChange(CUSTOM_THEME_ENABLED_UPDATED_AT_KEY)) return;
     setCustomThemeEnabledState(enabled);
-    window.localStorage.setItem(
-      CUSTOM_THEME_ENABLED_KEY,
-      enabled ? 'on' : 'off',
-    );
+    writeLocalStorage(CUSTOM_THEME_ENABLED_KEY, enabled ? 'on' : 'off');
   }, []);
 
   // per-tab: a tab painting its own OS value ignores the account's mode

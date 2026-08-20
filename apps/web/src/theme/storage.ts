@@ -65,12 +65,25 @@ export function readLocalStorage(key: string): string | null {
 /**
  * Safely writes to `localStorage`, mirroring `readLocalStorage`. Does
  * nothing when the write is refused (blocked storage, a full quota). The
- * theme provider mounts above every `ErrorBoundary`, so an
- * unguarded write in its mount effect is a blank page.
+ * theme provider mounts above every `ErrorBoundary`, so an unguarded write
+ * from any of its effects — boot layout, server sync — is a blank page.
  */
 export function writeLocalStorage(key: string, value: string): void {
   try {
     window.localStorage.setItem(key, value);
+  } catch {
+    return;
+  }
+}
+
+/**
+ * Safely removes a key, mirroring `writeLocalStorage`. `removeItem` throws
+ * under a blocked store exactly as `setItem` does, so a sync path that
+ * clears a preference needs a guard of its own.
+ */
+export function removeLocalStorage(key: string): void {
+  try {
+    window.localStorage.removeItem(key);
   } catch {
     return;
   }
