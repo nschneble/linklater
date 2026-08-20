@@ -9,4 +9,5 @@
   - /placeholder: 000 000
 - button "Verify"
 - button "Use a recovery code"
+- status
 - alert

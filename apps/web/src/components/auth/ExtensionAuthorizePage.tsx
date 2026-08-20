@@ -130,9 +130,9 @@ export default function ExtensionAuthorizePage() {
       <div className="flex gap-3 justify-center">
         <PrimaryButton
           type="button"
-          className="aria-disabled:active:scale-100 aria-disabled:cursor-not-allowed"
           onClick={() => void handleAuthorize()}
           aria-disabled={authorizing || mismatched}
+          data-busy={authorizing || undefined}
           aria-describedby={`${ACCOUNT_CHANGED_IDS.join(' ')} ${AUTHORIZE_ERROR_ID}`}
         >
           {authorizing ? 'Authorizing…' : 'Authorize'}

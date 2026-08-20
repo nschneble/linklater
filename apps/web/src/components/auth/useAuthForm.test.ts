@@ -353,6 +353,265 @@ describe('useAuthForm', () => {
     });
   });
 
+  describe('re-entrancy while a submit is in flight', () => {
+    /** A promise that never settles, standing in for a request in flight. */
+    function neverSettles() {
+      return new Promise<never>(() => {});
+    }
+
+    // a captured handler holds a stale `loading`, so only a ref refuses
+    it('refuses a second call on a handler captured before the first submit', async () => {
+      const loginMock = vi.fn().mockImplementation(neverSettles);
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+
+      const { result } = renderAuthFormHook('/login');
+      act(() => {
+        result.current.setEmail(USER_EMAIL);
+        result.current.setPassword(USER_PASSWORD);
+      });
+
+      const capturedSubmit = result.current.handleSubmit;
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        void capturedSubmit(event);
+        void capturedSubmit(event);
+      });
+
+      expect(loginMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('refuses a second submit fired while the first is still in flight', async () => {
+      const loginMock = vi.fn().mockImplementation(neverSettles);
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+
+      const { result } = renderAuthFormHook('/login');
+      act(() => {
+        result.current.setEmail(USER_EMAIL);
+        result.current.setPassword(USER_PASSWORD);
+      });
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        void result.current.handleSubmit(event);
+        void result.current.handleSubmit(event);
+      });
+
+      expect(loginMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('releases the guard so the next submit after a failure gets through', async () => {
+      const loginMock = vi.fn().mockRejectedValue(new Error('Nope'));
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+
+      const { result } = renderAuthFormHook('/login');
+      act(() => {
+        result.current.setEmail(USER_EMAIL);
+        result.current.setPassword(USER_PASSWORD);
+      });
+
+      const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+      await act(async () => {
+        await result.current.handleSubmit(event);
+      });
+      await act(async () => {
+        await result.current.handleSubmit(event);
+      });
+
+      expect(loginMock).toHaveBeenCalledTimes(2);
+    });
+
+    it('refuses a second handleVerifyOtp while the first is still in flight', async () => {
+      const loginMock = vi.fn().mockResolvedValue({
+        mfaToken: 'tok-abc',
+        mfaMethod: 'totp',
+      });
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+      vi.mocked(apiModule.verifyOtp).mockImplementation(neverSettles);
+
+      const { result } = renderAuthFormHook('/login');
+      act(() => {
+        result.current.setEmail(USER_EMAIL);
+        result.current.setPassword(USER_PASSWORD);
+      });
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        await result.current.handleSubmit(event);
+      });
+      expect(result.current.mfaChallenge).toBe('totp');
+
+      act(() => result.current.setMfaCode('123456'));
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        void result.current.handleVerifyOtp(event);
+        void result.current.handleVerifyOtp(event);
+      });
+
+      expect(apiModule.verifyOtp).toHaveBeenCalledTimes(1);
+    });
+
+    // aria-disabled, unlike disabled, does not block an implicit submit
+    it('refuses a submit fired during the magic-link cooldown', async () => {
+      vi.mocked(apiModule.requestMagicLink).mockResolvedValue(undefined);
+
+      const { result } = renderAuthFormHook('/login');
+      act(() => result.current.setEmail(USER_EMAIL));
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        await result.current.handleSubmit(event);
+      });
+      expect(result.current.magicLinkSentJustNow).toBe(true);
+
+      await act(async () => {
+        const event = { preventDefault: vi.fn() } as unknown as FormEvent;
+        await result.current.handleSubmit(event);
+      });
+
+      expect(apiModule.requestMagicLink).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  /*
+   * Leaving a screen mid-request abandons that request, and the two halves
+   * of that have to be kept apart. The guard is only as good as the state
+   * justifying it, so an arrival clears it or the next screen renders a
+   * submit button that swallows every press until the abandoned request
+   * settles. The abandoned request then still settles, and by then it is
+   * writing over a screen it knows nothing about.
+   */
+  describe('a submit the user walks away from', () => {
+    function heldPromise() {
+      let settle!: (value?: unknown) => void;
+      let reject!: (reason: Error) => void;
+      const promise = new Promise((resolvePromise, rejectPromise) => {
+        settle = resolvePromise;
+        reject = rejectPromise;
+      });
+      return { promise, reject, settle };
+    }
+
+    const event = () => ({ preventDefault: vi.fn() }) as unknown as FormEvent;
+
+    it('lets the submit on the screen the user moved to through', async () => {
+      const held = heldPromise();
+      vi.mocked(apiModule.forgotPassword).mockReturnValue(
+        held.promise as Promise<void>,
+      );
+      const loginMock = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+
+      const { result } = renderAuthFormHook('/forgot-password');
+      act(() => result.current.setEmail(USER_EMAIL));
+      await act(async () => {
+        void result.current.handleSubmit(event());
+      });
+
+      await act(async () => result.current.handleModeChange('login'));
+      expect(result.current.mode).toBe('login');
+
+      act(() => result.current.setPassword(USER_PASSWORD));
+      await act(async () => {
+        await result.current.handleSubmit(event());
+      });
+
+      expect(loginMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not release the loading of the submit that replaced it', async () => {
+      const held = heldPromise();
+      vi.mocked(apiModule.forgotPassword).mockReturnValue(
+        held.promise as Promise<void>,
+      );
+      const loginMock = vi
+        .fn()
+        .mockImplementation(() => new Promise<never>(() => {}));
+      vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
+
+      const { result } = renderAuthFormHook('/forgot-password');
+      act(() => result.current.setEmail(USER_EMAIL));
+      await act(async () => {
+        void result.current.handleSubmit(event());
+      });
+      await act(async () => result.current.handleModeChange('login'));
+
+      act(() => result.current.setPassword(USER_PASSWORD));
+      await act(async () => {
+        void result.current.handleSubmit(event());
+      });
+      expect(result.current.loading).toBe(true);
+
+      await act(async () => {
+        held.settle();
+        await held.promise;
+      });
+
+      expect(result.current.loading).toBe(true);
+    });
+
+    it('paints no success it earned on a screen that is gone', async () => {
+      const held = heldPromise();
+      vi.mocked(apiModule.forgotPassword).mockReturnValue(
+        held.promise as Promise<void>,
+      );
+
+      const { result } = renderAuthFormHook('/forgot-password');
+      act(() => result.current.setEmail(USER_EMAIL));
+      await act(async () => {
+        void result.current.handleSubmit(event());
+      });
+      await act(async () => result.current.handleModeChange('login'));
+
+      await act(async () => {
+        held.settle();
+        await held.promise;
+      });
+
+      expect(result.current.notice).toBeNull();
+      expect(result.current.forgotPasswordSentJustNow).toBe(false);
+    });
+
+    it('paints no failure it earned there either, deadline included', async () => {
+      const held = heldPromise();
+      vi.mocked(apiModule.forgotPassword).mockReturnValue(
+        held.promise as Promise<void>,
+      );
+
+      const { result } = renderAuthFormHook('/forgot-password');
+      act(() => result.current.setEmail(USER_EMAIL));
+      await act(async () => {
+        void result.current.handleSubmit(event());
+      });
+      await act(async () => result.current.handleModeChange('login'));
+
+      await act(async () => {
+        held.reject(new Error('The request took too long'));
+        await held.promise.catch(() => undefined);
+      });
+
+      expect(result.current.error).toBeNull();
+    });
+
+    // the generation only moves on an arrival; a plain submit must still settle
+    it('leaves an ordinary submit settling as it always did', async () => {
+      vi.mocked(apiModule.forgotPassword).mockResolvedValue(undefined);
+
+      const { result } = renderAuthFormHook('/forgot-password');
+      act(() => result.current.setEmail(USER_EMAIL));
+      await act(async () => {
+        await result.current.handleSubmit(event());
+      });
+
+      expect(result.current.loading).toBe(false);
+      expect(result.current.notice).toEqual({
+        message: 'Reset link sent!',
+        variant: 'success',
+      });
+    });
+  });
+
   // magic-link success frees loading at once but holds the 5000ms toast window so the button stays disabled
   describe('WARN-4 – magic-link success-state hold', () => {
     beforeEach(() => {
@@ -1076,26 +1335,16 @@ describe('useAuthForm', () => {
       expect(focusSpy).not.toHaveBeenCalled();
     });
 
-    it('leaves the Alert without a live region while it holds the arrival error', async () => {
-      const { result } = renderAuthFormHook(ARRIVAL_PATH);
-
-      await waitFor(() => {
-        expect(result.current.error).toBe(ARRIVAL_MESSAGE);
-      });
-      expect(result.current.announceError).toBe(false);
-    });
-
     it('announces nothing on a clean arrival (negative control)', async () => {
       const { result } = renderAuthFormHook('/login');
 
       await act(async () => {});
 
       expect(result.current.error).toBeNull();
-      expect(result.current.announceError).toBe(true);
       expect(result.current.errorAnnouncement).toBe('');
     });
 
-    it('gives the Alert back its live region and its focus on the next submit', async () => {
+    it('focuses the Alert on the next submit error, having spared the arrival one', async () => {
       const loginMock = vi
         .fn()
         .mockRejectedValue(new Error('Invalid credentials'));
@@ -1123,14 +1372,13 @@ describe('useAuthForm', () => {
       });
 
       expect(result.current.error).toBe('Invalid credentials');
-      expect(result.current.announceError).toBe(true);
       expect(focusSpy).toHaveBeenCalled();
     });
 
     // the catalog copy and the API's error strings are two vocabularies
     // with nothing keeping them disjoint, and an overlap fails silently:
-    // the Alert drops its role, the focus effect skips it, and the submit
-    // has already dismissed the mirror
+    // the focus effect skips the error, and the submit has already
+    // dismissed the mirror that would otherwise have spoken it
     it('announces a submit error that repeats the arrival copy', async () => {
       const loginMock = vi.fn().mockRejectedValue(new Error(ARRIVAL_MESSAGE));
       vi.mocked(useAuth).mockReturnValue(makeAuthContext({ login: loginMock }));
@@ -1157,9 +1405,8 @@ describe('useAuthForm', () => {
         await result.current.handleSubmit(event);
       });
 
-      // same string, different channel: the Alert speaks for this one
+      // same string, different channel: focus speaks for this one
       expect(result.current.error).toBe(ARRIVAL_MESSAGE);
-      expect(result.current.announceError).toBe(true);
       expect(focusSpy).toHaveBeenCalled();
     });
 
@@ -1218,8 +1465,6 @@ describe('useAuthForm', () => {
 
         expect(result.current.error).toBe('Invalid credentials');
         expect(result.current.errorAnnouncement).toBe('');
-        // the Alert takes its own live region back for the submit error
-        expect(result.current.announceError).toBe(true);
       });
 
       // a mode change inside the hold window sends focus into the new

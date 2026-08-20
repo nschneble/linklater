@@ -1,4 +1,4 @@
-import { DISABLED, FOCUS_RING } from '../../lib/styles';
+import { ARIA_DISABLED, DISABLED, FOCUS_RING } from '../../lib/styles';
 import type { ButtonHTMLAttributes, Ref } from 'react';
 
 /**
@@ -35,11 +35,11 @@ interface PrimaryButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 type Surface = NonNullable<PrimaryButtonProps['surface']>;
 
 const fillByHost: Record<Surface, string> = {
-  base: 'bg-[var(--base-highlight)] disabled:bg-[var(--base-highlight)] hover:bg-[var(--base-highlight-hover)] text-[var(--base-highlight-fg)]',
+  base: 'bg-[var(--base-highlight)] disabled:bg-[var(--base-highlight)] aria-disabled:bg-[var(--base-highlight)] hover:bg-[var(--base-highlight-hover)] text-[var(--base-highlight-fg)]',
   mount:
-    'bg-[var(--mount-highlight)] disabled:bg-[var(--mount-highlight)] hover:bg-[var(--mount-highlight-hover)] text-[var(--mount-highlight-fg)]',
+    'bg-[var(--mount-highlight)] disabled:bg-[var(--mount-highlight)] aria-disabled:bg-[var(--mount-highlight)] hover:bg-[var(--mount-highlight-hover)] text-[var(--mount-highlight-fg)]',
   orbit:
-    'bg-[var(--orbit-highlight)] disabled:bg-[var(--orbit-highlight)] hover:bg-[var(--orbit-highlight-hover)] text-[var(--orbit-highlight-fg)]',
+    'bg-[var(--orbit-highlight)] disabled:bg-[var(--orbit-highlight)] aria-disabled:bg-[var(--orbit-highlight)] hover:bg-[var(--orbit-highlight-hover)] text-[var(--orbit-highlight-fg)]',
 };
 
 /**
@@ -56,7 +56,7 @@ export function primaryActionClasses(
   surface: Surface = 'mount',
   stateClasses = '',
 ): string {
-  return `inline-flex items-center justify-center gap-1.5 pl-3.5 pr-4 py-2 ${fillByHost[surface]} border-shadow hover:border-shadow text-xs font-semibold ${FOCUS_RING} rounded-full ${stateClasses} transition duration-200 active:scale-[0.96] disabled:active:scale-100 cursor-pointer`;
+  return `inline-flex items-center justify-center gap-1.5 pl-3.5 pr-4 py-2 ${fillByHost[surface]} border-shadow hover:border-shadow text-xs font-semibold ${FOCUS_RING} rounded-full ${stateClasses} transition duration-200 active:scale-[0.96] disabled:active:scale-100 aria-disabled:active:scale-100 cursor-pointer`;
 }
 
 export default function PrimaryButton({
@@ -73,7 +73,7 @@ export default function PrimaryButton({
     : 'opacity-100 scale-100';
 
   // skip disabled when hidden (disabled:opacity-60 outranks opacity-0)
-  const disabledClasses = hidden ? '' : DISABLED;
+  const disabledClasses = hidden ? '' : `${DISABLED} ${ARIA_DISABLED}`;
 
   return (
     <button

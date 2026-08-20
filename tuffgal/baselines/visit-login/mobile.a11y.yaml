@@ -12,7 +12,8 @@
   - text: Password
   - textbox "Password":
     - /placeholder: Leave blank to use a magic link
-  - alert
+  - paragraph
   - button "Log in with magic link"
 - button "I literally have no idea what my password is"
+- status
 - alert

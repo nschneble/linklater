@@ -185,10 +185,10 @@ export default function LinksList({
               <IconButton
                 variant="elevated"
                 surface="base"
-                className="aria-disabled:cursor-not-allowed"
                 onClick={handleLoadMore}
                 aria-busy={loadingLinks}
                 aria-disabled={loadingLinks}
+                data-busy={loadingLinks || undefined}
               >
                 {loadingLinks
                   ? 'Loading…'

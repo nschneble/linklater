@@ -40,12 +40,12 @@ const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
   ) {
     const surfaceClasses =
       surface === 'mount'
-        ? 'bg-[var(--mount-input-bg)] border border-[var(--mount-border)] text-[var(--mount-text)] placeholder:text-[var(--mount-alt-text)]'
-        : 'bg-[var(--base-input-bg)] border border-[var(--base-border)] text-[var(--base-text)] placeholder:text-[var(--base-alt-text)]';
+        ? 'bg-[var(--mount-input-bg)] border border-[var(--mount-border)] read-only:not-disabled:border-dashed text-[var(--mount-text)] placeholder:text-[var(--mount-alt-text)]'
+        : 'bg-[var(--base-input-bg)] border border-[var(--base-border)] read-only:not-disabled:border-dashed text-[var(--base-text)] placeholder:text-[var(--base-alt-text)]';
     return (
       <input
         ref={reference}
-        className={`block w-full mt-1 px-3 py-2 ${surfaceClasses} text-base sm:text-sm focus-visible:border-transparent ${FOCUS_RING_FLUSH} rounded-lg ${className}`}
+        className={`block w-full mt-1 px-3 py-2 ${surfaceClasses} text-base sm:text-sm focus-visible:border-transparent ${FOCUS_RING_FLUSH} rounded-lg read-only:not-disabled:cursor-default ${className}`}
         {...props}
       />
     );

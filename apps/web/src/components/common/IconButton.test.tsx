@@ -14,6 +14,7 @@
  *    `opacity-0` visibility class wins specificity (commented in source).
  */
 
+import { compileClasses } from '../../../test/tailwind';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { FOCUS_RING, FOCUS_RING_FLUSH } from '../../lib/styles';
@@ -188,6 +189,15 @@ describe('IconButton', () => {
     expect(button.className).toContain('bg-[var(--mount-bg)]');
     expect(button.className).toContain('hover:bg-[var(--orbit-bg)]');
     expect(button.className).toContain('text-[var(--mount-text)]');
+  });
+
+  it('spares a focused refusal the dim, so its outline is not composited', async () => {
+    render(<IconButton aria-disabled>label</IconButton>);
+    const button = screen.getByRole('button', { name: 'label' });
+    const css = await compileClasses(button.className.split(' '));
+    expect(css).toMatch(
+      /\[aria-disabled="true"\].*:not\(:focus-visible\)\s*\{\s*opacity:\s*60%/,
+    );
   });
 
   it('hidden=true seals AT exposure: disabled, aria-hidden, tabIndex=-1, pointer-events-none', () => {

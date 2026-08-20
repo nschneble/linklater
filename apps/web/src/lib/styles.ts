@@ -43,6 +43,15 @@ export const FOCUS_RING_FLUSH =
 
 export const DISABLED = 'disabled:opacity-60 disabled:cursor-not-allowed';
 
+/**
+ * The refusal a control that has to keep its focus uses instead of the
+ * native attribute. The dim is a house rule above AA, withheld from a
+ * press that landed and from a focused control, whose `outline` `opacity`
+ * would composite along with it (`ariaDisabledDim.contrast.test.ts`).
+ */
+export const ARIA_DISABLED =
+  'aria-disabled:not-data-busy:not-data-cooldown:not-focus-visible:opacity-60 aria-disabled:not-data-busy:cursor-not-allowed data-busy:cursor-progress';
+
 // closing runs faster than opening so the panel feels snappy
 export function menuRevealStyle(
   isOpen: boolean,

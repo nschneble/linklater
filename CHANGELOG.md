@@ -6,6 +6,7 @@
 
 ### Added
 
+- A smoother login and signup experience
 - Notice when a session from another tab changes the account on screen
 - Offer to continue into a live session the login screen is covering
 - Screen reader narration while a slow boot runs
@@ -21,6 +22,7 @@
 - A rotation the server commits but never delivers ends the session
 - A token rotation performed in another tab signs out the current tab
 - An access token already known to be expired still spends a request
+- Submitting the login form twice in quick succession sends two requests
 - The boot screen appears on boots too fast to need explaining
 - The boot text fades under the contrast floor at the bottom of its pulse
 

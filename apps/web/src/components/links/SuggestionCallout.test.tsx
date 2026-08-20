@@ -67,6 +67,41 @@ afterEach(() => {
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
+describe('SuggestionCallout while the add is out', () => {
+  // a round trip, not a control the user cannot use, so no dim
+  it('declares the wait, so the shared dim is withheld from it', async () => {
+    vi.mocked(apiModule.getSuggestions).mockResolvedValue({
+      sourceName: 'Wikipedia',
+      suggestions: [makeSuggestion({ title: 'First Suggestion' })],
+    });
+    let settleCreate!: () => void;
+    vi.mocked(apiModule.createLink).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          settleCreate = () => resolve(makeLink());
+        }),
+    );
+    vi.mocked(apiModule.readLink).mockResolvedValue(makeLink());
+
+    await act(async () => {
+      render(<SuggestionCallout inNewTab={true} />);
+    });
+    const button = await screen.findByRole('button', {
+      name: /add and read \(opens in new tab\)/i,
+    });
+    expect(button).not.toHaveAttribute('data-busy');
+
+    await act(async () => {
+      button.click();
+    });
+    expect(button).toHaveAttribute('data-busy');
+
+    await act(async () => {
+      settleCreate();
+    });
+  });
+});
+
 describe('SuggestionCallout inNewTab refetch after Add-and-Read', () => {
   it('refetches a fresh suggestion after a successful Add-and-Read in inNewTab mode', async () => {
     vi.mocked(apiModule.getSuggestions)

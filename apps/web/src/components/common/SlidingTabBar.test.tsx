@@ -182,3 +182,29 @@ describe('SlidingTabBar', () => {
     expect(screen.getByRole('tablist').className).toContain('group');
   });
 });
+
+describe('SlidingTabBar isDisabled', () => {
+  it('defaults to enabled, so a bar that passes nothing marks no tab', () => {
+    render(
+      <SlidingTabBar ariaLabel="example" activeIndex={0} tabs={makeTabs()} />,
+    );
+    screen.getAllByRole('tab').forEach((tab) => {
+      expect(tab).not.toHaveAttribute('aria-disabled');
+    });
+  });
+
+  it('marks every tab aria-disabled without going natively disabled', () => {
+    render(
+      <SlidingTabBar
+        ariaLabel="example"
+        activeIndex={0}
+        isDisabled
+        tabs={makeTabs()}
+      />,
+    );
+    screen.getAllByRole('tab').forEach((tab) => {
+      expect(tab).toHaveAttribute('aria-disabled', 'true');
+      expect(tab).not.toBeDisabled();
+    });
+  });
+});

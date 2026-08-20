@@ -20,6 +20,12 @@ interface SlidingTabBarProps {
   ariaLabel: string;
   // drives `aria-selected` and the pill position
   activeIndex: number;
+  /**
+   * Refuses activation on every tab while leaving each one focusable and
+   * arrow-navigable, for a host whose work is in flight. Defaults to
+   * `false`, so a consumer that never passes it renders unchanged.
+   */
+  isDisabled?: boolean;
   tabs: SlidingTab[];
   /**
    * Which bundle surface hosts this tab bar (i.e. the bundle of the parent
@@ -50,6 +56,7 @@ interface SlidingTabBarProps {
 export default function SlidingTabBar({
   ariaLabel,
   activeIndex,
+  isDisabled = false,
   tabs,
   surface = 'base',
   className = '',
@@ -86,6 +93,7 @@ export default function SlidingTabBar({
           aria-controls={tab.ariaControls}
           className={tabClassName}
           isActive={index === activeIndex}
+          isDisabled={isDisabled}
           onClick={tab.onClick}
         >
           {tab.label}

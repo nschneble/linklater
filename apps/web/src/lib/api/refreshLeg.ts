@@ -33,14 +33,15 @@ import {
 export type RefreshOutcome = 'renewed' | 'refused' | 'unresolved';
 
 /**
- * Deadline for the token-refresh fetch. apiFetch imposes no timeout of its
- * own, and every 401'd caller awaits this single shared refresh, so a
- * refresh hung on a dead network (a mid-request socket stall) would hold
- * every awaiter open until the browser's socket-level timeout, which can
- * run to minutes. Callers that carry their own per-request deadline still
- * could not escape it: the metadata poller's deadline bounds its poll but
- * explicitly does not cover the refresh leg it triggers. Bounding the
- * refresh here is the only place that leg gets a limit.
+ * Deadline for the token-refresh fetch. `postRefresh` goes to the network
+ * through `fetch` directly, so apiFetch's deadline never covers this leg,
+ * and every 401'd caller awaits this single shared refresh. A refresh hung
+ * on a dead network (a mid-request socket stall) would hold every awaiter
+ * open until the browser's socket-level timeout, which can run to minutes.
+ * Callers that carry their own per-request deadline still could not escape
+ * it: the metadata poller's deadline bounds its poll legs but explicitly
+ * does not cover the refresh they trigger. Bounding the refresh here is
+ * the only place that leg gets a limit.
  *
  * An abort rejects the fetch exactly as an unreachable server would, so a
  * timed-out refresh follows the same catch below as any network failure:

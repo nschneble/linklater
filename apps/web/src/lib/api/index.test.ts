@@ -666,6 +666,60 @@ describe('apiFetch', () => {
   });
 });
 
+// the deadline proves its own arms in deadline.test.ts; what only a round
+// trip shows is that apiFetch routes through it rather than raw fetch
+describe('apiFetch request deadline', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('rejects a request that outlives the deadline', async () => {
+    globalThis.fetch = vi.fn(
+      (_url: string, options?: RequestInit) =>
+        new Promise((_resolve, reject) => {
+          options?.signal?.addEventListener('abort', () =>
+            reject(new DOMException('The operation was aborted', 'AbortError')),
+          );
+        }),
+    ) as unknown as typeof fetch;
+
+    const pending = apiFetch('/test', {}, false).catch(
+      (caught: unknown) => caught,
+    );
+    await vi.advanceTimersByTimeAsync(10_000);
+    const caught = await pending;
+
+    expect(caught).toBeInstanceOf(ApiError);
+    expect((caught as ApiError).message).toBe('That took too long. Try again.');
+  });
+
+  // the deadline composes with a caller's signal rather than replacing it
+  it('still cancels an in-flight request on the caller own signal', async () => {
+    globalThis.fetch = vi.fn(
+      (_url: string, options?: RequestInit) =>
+        new Promise((_resolve, reject) => {
+          options?.signal?.addEventListener('abort', () =>
+            reject(new DOMException('The operation was aborted', 'AbortError')),
+          );
+        }),
+    ) as unknown as typeof fetch;
+    const callerController = new AbortController();
+
+    const pending = getLink('link-1', callerController.signal).catch(
+      (caught: unknown) => caught,
+    );
+    callerController.abort();
+    const caught = await pending;
+
+    expect(caught).not.toBeInstanceOf(ApiError);
+    expect((caught as DOMException).name).toBe('AbortError');
+  });
+});
+
 describe('apiFetch expiry pre-flight', () => {
   it('renews first, sparing the leg a server would refuse', async () => {
     setStoredToken(makeTokenExpiringIn(-60), 'valid-refresh');

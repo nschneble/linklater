@@ -33,6 +33,13 @@ export type MfaChallenge = 'totp' | 'recovery';
  * lives in `useAuthFormArrival.ts`, which holds its two effects together
  * because the order between them is load-bearing. `resetForm` below is
  * the part of that work reaching state this file owns.
+ *
+ * It moves a generation counter with it, and the two halves of that are
+ * separate. Clearing the re-entrancy guard is what stops the screen the
+ * user moved to from rendering a submit button that swallows every press.
+ * Moving the counter is what stops the request they walked away from —
+ * which settles either way, at the deadline if not sooner — from writing
+ * its outcome over a screen it knows nothing about.
  */
 export function useAuthForm() {
   const { login, refreshUser, register } = useAuth();
@@ -41,6 +48,10 @@ export function useAuthForm() {
 
   const errorReference = useRef<HTMLParagraphElement>(null);
   const mfaInputReference = useRef<HTMLInputElement>(null);
+  // MfaView resubmits from an effect, where a `loading` read would be stale
+  const submittingReference = useRef(false);
+  // bumped by every arrival, so a submit can tell it was walked away from
+  const submitGeneration = useRef(0);
 
   const [email, setEmail] = useState('');
   const { error, errorFromArrival, setError } = useFormError();
@@ -92,6 +103,8 @@ export function useAuthForm() {
 
   // a new identity per render would re-run the arrival effect
   const resetForm = useCallback(() => {
+    submitGeneration.current += 1;
+    submittingReference.current = false;
     setPassword('');
     setError(null);
     setLoading(false);
@@ -121,6 +134,11 @@ export function useAuthForm() {
 
   const handleSubmit = async (formEvent: FormEvent) => {
     formEvent.preventDefault();
+    // the sent-just-now pause has no native disabled left to block Enter
+    if (submittingReference.current || magicLinkSentJustNow) return;
+    submittingReference.current = true;
+    const generation = submitGeneration.current;
+    const isCurrentSubmit = () => generation === submitGeneration.current;
 
     // two assertive regions would clash
     if (notice !== null && notice.variant === 'error') {
@@ -140,6 +158,7 @@ export function useAuthForm() {
         } else {
           await registerMagicLink(email);
         }
+        if (!isCurrentSubmit()) return;
         setNotice({
           message: 'Magic link sent!',
           variant: 'success',
@@ -151,6 +170,7 @@ export function useAuthForm() {
 
       if (mode === 'login') {
         const result = await login(email, password);
+        if (!isCurrentSubmit()) return;
         if (result && 'mfaToken' in result) {
           setMfaToken(result.mfaToken);
           setMfaChallenge(result.mfaMethod);
@@ -158,8 +178,10 @@ export function useAuthForm() {
         }
       } else if (mode === 'register') {
         await register(email, password);
+        if (!isCurrentSubmit()) return;
       } else {
         await apiForgotPassword(email);
+        if (!isCurrentSubmit()) return;
         setNotice({
           message: 'Reset link sent!',
           variant: 'success',
@@ -171,31 +193,44 @@ export function useAuthForm() {
 
       navigate(postLoginDestination(), { replace: true });
     } catch (caught: unknown) {
+      if (!isCurrentSubmit()) return;
       setError(
         capitalizeFirst(
           getErrorMessage(caught, 'Something went dreadfully wrong'),
         ),
       );
     } finally {
-      setLoading(false);
+      if (isCurrentSubmit()) {
+        submittingReference.current = false;
+        setLoading(false);
+      }
     }
   };
 
   const handleVerifyOtp = async (formEvent: FormEvent) => {
     formEvent.preventDefault();
+    if (submittingReference.current) return;
     if (!mfaToken || !mfaChallenge) return;
+    submittingReference.current = true;
+    const generation = submitGeneration.current;
+    const isCurrentSubmit = () => generation === submitGeneration.current;
     setError(null);
     setLoading(true);
     try {
       await verifyOtp(mfaToken, mfaCode, mfaChallenge);
       await refreshUser();
+      if (!isCurrentSubmit()) return;
       setMfaCode('');
       navigate(postLoginDestination(), { replace: true });
     } catch (caught: unknown) {
+      if (!isCurrentSubmit()) return;
       setError(capitalizeFirst(getErrorMessage(caught, 'Invalid code')));
       setMfaCode('');
     } finally {
-      setLoading(false);
+      if (isCurrentSubmit()) {
+        submittingReference.current = false;
+        setLoading(false);
+      }
     }
   };
 
@@ -211,8 +246,6 @@ export function useAuthForm() {
   };
 
   return {
-    // an arrival error has a live region already, a second would race it
-    announceError: !errorFromArrival,
     email,
     emailReference,
     error,
