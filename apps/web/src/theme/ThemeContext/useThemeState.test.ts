@@ -25,7 +25,10 @@ import {
 } from '../storage';
 import { CUSTOM_TOKEN_KEYS } from '../customTheme';
 import { getSystemMode } from '../systemMode';
-import { stubSystemColorScheme } from '../../../test/systemColorScheme';
+import {
+  restoreSystemColorScheme,
+  stubSystemColorScheme,
+} from '../../../test/systemColorScheme';
 import { useThemeState } from './useThemeState';
 
 const storage: Record<string, string> = {};
@@ -775,15 +778,7 @@ describe('setPreviewTheme', () => {
 });
 
 describe('system mode', () => {
-  const nativeMatchMedia = window.matchMedia;
-
-  afterEach(() => {
-    Object.defineProperty(window, 'matchMedia', {
-      configurable: true,
-      writable: true,
-      value: nativeMatchMedia,
-    });
-  });
+  afterEach(restoreSystemColorScheme);
 
   it('follows the OS when the stored mode already matches it', () => {
     const system = stubSystemColorScheme('dark');

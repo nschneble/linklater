@@ -40,6 +40,12 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
  * `PATCH /users/me` resolves, from reverting the user's choice back to the
  * stale server value.
  *
+ * Color mode has two more writers, both device-local and neither synced to
+ * the account: `useSystemModeSync` adopts an OS appearance change, and
+ * boot reconciles a stored mode against the OS value the device last saw.
+ * `applyServerMode` declines outright while the device is following its
+ * OS, so the account's mode reaches only a device that chose one.
+ *
  * @param children - The subtree that should have access to theme state.
  */
 export function ThemeProvider({ children }: { children: ReactNode }) {

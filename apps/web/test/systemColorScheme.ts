@@ -4,10 +4,20 @@ import type { Mode } from '../src/theme/constants';
 type ChangeListener = (event: MediaQueryListEvent) => void;
 
 export interface SystemColorSchemeStub {
-  /** Moves the OS preference and notifies subscribers. Wrap in `act`. */
+  /** Wrap in `act`. */
   flip: (systemMode: Mode) => void;
-  /** Subscribers still attached, for asserting listener cleanup. */
   listenerCount: () => number;
+}
+
+const nativeMatchMedia = window.matchMedia;
+
+/** Teardown for an `afterEach`, which cannot reach a per-test handle. */
+export function restoreSystemColorScheme(): void {
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    writable: true,
+    value: nativeMatchMedia,
+  });
 }
 
 /**

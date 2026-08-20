@@ -13,7 +13,6 @@ export interface ThemeContextValue {
   mode: Mode;
   /** Moving off the CVD base theme also turns CVD mode off. */
   setBaseTheme: (theme: BaseTheme) => void;
-  /** The theme being previewed, or `null` when none is. */
   previewTheme: BaseTheme | null;
   /**
    * Paints a theme without committing it, so consumers keep reading the

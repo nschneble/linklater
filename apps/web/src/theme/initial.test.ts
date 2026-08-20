@@ -1,20 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getInitialBaseTheme, getInitialMode } from './initial';
-
-function stubMatchMedia(matches: boolean): void {
-  Object.defineProperty(window, 'matchMedia', {
-    configurable: true,
-    writable: true,
-    value: vi.fn().mockReturnValue({
-      matches,
-      media: '(prefers-color-scheme: light)',
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-      onchange: null,
-    }),
-  });
-}
+import {
+  restoreSystemColorScheme,
+  stubSystemColorScheme,
+} from '../../test/systemColorScheme';
 
 describe('getInitialBaseTheme', () => {
   afterEach(() => {
@@ -64,10 +53,11 @@ describe('getInitialBaseTheme', () => {
 describe('getInitialMode', () => {
   beforeEach(() => {
     // jsdom lacks matchMedia; stub it so tests that ignore it still pass
-    stubMatchMedia(false);
+    stubSystemColorScheme('dark');
   });
 
   afterEach(() => {
+    restoreSystemColorScheme();
     window.localStorage.clear();
     vi.restoreAllMocks();
   });
@@ -83,44 +73,44 @@ describe('getInitialMode', () => {
   });
 
   it('falls back to "light" from OS preference when nothing is stored and prefers-color-scheme is light', () => {
-    stubMatchMedia(true);
+    stubSystemColorScheme('light');
     expect(getInitialMode()).toBe('light');
   });
 
   it('falls back to "dark" when nothing is stored and prefers-color-scheme is not light', () => {
-    stubMatchMedia(false);
+    stubSystemColorScheme('dark');
     expect(getInitialMode()).toBe('dark');
   });
 
   it('falls back to OS preference when the stored mode is an unrecognized value', () => {
     window.localStorage.setItem('linklater_mode', 'system');
-    stubMatchMedia(true);
+    stubSystemColorScheme('light');
     expect(getInitialMode()).toBe('light');
   });
 
   it('adopts the OS value when the stored mode is the one the OS moved off', () => {
     window.localStorage.setItem('linklater_mode', 'dark');
     window.localStorage.setItem('linklater_last_seen_system_mode', 'dark');
-    stubMatchMedia(true);
+    stubSystemColorScheme('light');
     expect(getInitialMode()).toBe('light');
   });
 
   it('keeps a stored mode the OS was already disagreeing with', () => {
     window.localStorage.setItem('linklater_mode', 'dark');
     window.localStorage.setItem('linklater_last_seen_system_mode', 'light');
-    stubMatchMedia(true);
+    stubSystemColorScheme('light');
     expect(getInitialMode()).toBe('dark');
   });
 
   it('keeps the stored mode when no OS value has been seen yet', () => {
     window.localStorage.setItem('linklater_mode', 'dark');
-    stubMatchMedia(true);
+    stubSystemColorScheme('light');
     expect(getInitialMode()).toBe('dark');
   });
 
   it('takes the OS value when nothing is stored, whatever it last saw', () => {
     window.localStorage.setItem('linklater_last_seen_system_mode', 'dark');
-    stubMatchMedia(true);
+    stubSystemColorScheme('light');
     expect(getInitialMode()).toBe('light');
   });
 });

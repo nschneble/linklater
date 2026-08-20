@@ -3,10 +3,6 @@ import type { Mode } from './constants';
 
 const SYSTEM_LIGHT_MODE_QUERY = '(prefers-color-scheme: light)';
 
-/**
- * The OS-level color scheme, defaulting to `'dark'` when the media query is
- * unavailable (SSR, or a runtime without `matchMedia`).
- */
 export function getSystemMode(): Mode {
   if (
     typeof window === 'undefined' ||
@@ -18,16 +14,14 @@ export function getSystemMode(): Mode {
 }
 
 /**
- * Whether a tab painting `paintedMode` is following its system rather than
- * sitting on an explicit choice, so a choice the OS later agrees with
- * collapses into following it. Compared against what this tab paints, never
- * storage, which a sibling tab can move out from under it.
+ * Compares against what this tab paints, never storage, which a sibling
+ * tab can move out from under it.
  */
 export function isFollowingSystemMode(paintedMode: Mode): boolean {
   return paintedMode === getSystemMode();
 }
 
-// unlike applyServerMode, no guard: the OS decides its own device
+/** Unlike `applyServerMode`, no guard: the OS decides its own device. */
 export function useSystemModeSync(
   adoptSystemMode: (systemMode: Mode) => void,
 ): void {

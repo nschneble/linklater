@@ -6,10 +6,11 @@ import {
   useSystemModeSync,
 } from './systemMode';
 import { MODE_STORAGE_KEY } from './storage';
-import { stubSystemColorScheme } from '../../test/systemColorScheme';
+import {
+  restoreSystemColorScheme,
+  stubSystemColorScheme,
+} from '../../test/systemColorScheme';
 import type { Mode } from './constants';
-
-const nativeMatchMedia = window.matchMedia;
 
 function removeMatchMedia(): void {
   Object.defineProperty(window, 'matchMedia', {
@@ -20,11 +21,7 @@ function removeMatchMedia(): void {
 }
 
 afterEach(() => {
-  Object.defineProperty(window, 'matchMedia', {
-    configurable: true,
-    writable: true,
-    value: nativeMatchMedia,
-  });
+  restoreSystemColorScheme();
   window.localStorage.clear();
   vi.restoreAllMocks();
 });

@@ -23,7 +23,7 @@ As a user, you can:
 - Save links in-app or using the handy [bookmarklet](#bookmarklet)
 - Search and [stumble!](https://en.wikipedia.org/wiki/StumbleUpon)
 - Preview themes based on Richard Linklater's filmography
-- Toggle between light and dark mode
+- Toggle between light and dark mode, or leave it following your system
 - Generate API tokens for third-party integrations
 - Delete your account and burn it to the ground
 
