@@ -16,7 +16,7 @@
 - A new browser follows your device's appearance instead of the mode saved to your account
 - `bin/` commands take standard flags, report standard exit codes, and explain what they're doing
 - `bin/migrate --reset` asks before it wipes, and refuses when no terminal can be asked
-- Light and dark mode follows your device's appearance; a differing choice holds on that device until the appearance changes again
+- Light and dark mode follows your device's appearance, and a mode you pick yourself is used instead while it differs from it
 - OAuth callback URLs now come from `API_URL` and the route
 
 ### Fixed
@@ -26,6 +26,7 @@
 - A token rotation performed in another tab signs out the current tab
 - An access token already known to be expired still spends a request
 - Submitting the login form twice in quick succession sends two requests
+- Syncing your saved theme on a browser that blocks storage blanks the page
 - The boot screen appears on boots too fast to need explaining
 - The boot text fades under the contrast floor at the bottom of its pulse
 
