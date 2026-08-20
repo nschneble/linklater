@@ -1,5 +1,5 @@
 import { act, render, renderHook } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createElement } from 'react';
 
 import {
@@ -12,7 +12,24 @@ import { withRefusedStorage } from '../../../test/refusedStorage';
 
 beforeEach(resetShortcutsPreference);
 
+describe('resetShortcutsPreference', () => {
+  it('empties the store rather than leaving the default it just wrote', () => {
+    window.localStorage.setItem(KEYBOARD_SHORTCUTS_KEY, 'off');
+
+    resetShortcutsPreference();
+
+    expect(window.localStorage.getItem(KEYBOARD_SHORTCUTS_KEY)).toBeNull();
+  });
+});
+
 describe('useShortcutsEnabled', () => {
+  let freshModule: typeof import('./useShortcutsEnabled') | null = null;
+
+  afterEach(() => {
+    freshModule?.stopCrossTabShortcutsSync();
+    freshModule = null;
+  });
+
   it('defaults to enabled when nothing is stored', () => {
     const { result } = renderHook(() => useShortcutsEnabled());
     expect(result.current).toBe(true);
@@ -62,9 +79,10 @@ describe('useShortcutsEnabled', () => {
   it('seeds enabled at module load when the store is empty', async () => {
     window.localStorage.clear();
     vi.resetModules();
-    const freshModule = await import('./useShortcutsEnabled');
+    const loadedModule = await import('./useShortcutsEnabled');
+    freshModule = loadedModule;
 
-    const { result } = renderHook(() => freshModule.useShortcutsEnabled());
+    const { result } = renderHook(() => loadedModule.useShortcutsEnabled());
 
     expect(result.current).toBe(true);
   });
@@ -72,10 +90,11 @@ describe('useShortcutsEnabled', () => {
   it('seeds its in-memory copy at module load, not on first use', async () => {
     window.localStorage.setItem(KEYBOARD_SHORTCUTS_KEY, 'off');
     vi.resetModules();
-    const freshModule = await import('./useShortcutsEnabled');
+    const loadedModule = await import('./useShortcutsEnabled');
+    freshModule = loadedModule;
     window.localStorage.clear();
 
-    const { result } = renderHook(() => freshModule.useShortcutsEnabled());
+    const { result } = renderHook(() => loadedModule.useShortcutsEnabled());
 
     expect(result.current).toBe(false);
   });

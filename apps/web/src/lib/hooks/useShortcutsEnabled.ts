@@ -50,9 +50,12 @@ function handleShortcutsStorageEvent(event: StorageEvent): void {
   notifyListeners();
 }
 
-if (typeof window !== 'undefined') {
+function startCrossTabShortcutsSync(): void {
+  if (typeof window === 'undefined') return;
   window.addEventListener('storage', handleShortcutsStorageEvent);
 }
+
+startCrossTabShortcutsSync();
 
 /**
  * Persists the keyboard-shortcuts preference and notifies every
@@ -72,4 +75,15 @@ export function setShortcutsEnabled(enabled: boolean): void {
  */
 export function useShortcutsEnabled(): boolean {
   return useSyncExternalStore(subscribe, readEnabled, readEnabled);
+}
+
+/**
+ * Exists for suites that re-import this module: without it each import
+ * leaves another listener on the shared `window`. The app never stops
+ * reading a sibling tab's preference while it runs, which is why nothing
+ * in `src` calls this.
+ */
+export function stopCrossTabShortcutsSync(): void {
+  if (typeof window === 'undefined') return;
+  window.removeEventListener('storage', handleShortcutsStorageEvent);
 }
