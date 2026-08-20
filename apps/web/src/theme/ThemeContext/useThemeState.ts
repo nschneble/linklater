@@ -30,6 +30,7 @@ import {
   readLocalStorage,
   THEME_STORAGE_KEY,
   THEME_UPDATED_AT_KEY,
+  writeLocalStorage,
 } from '../storage';
 import {
   CVD_BASE_THEME,
@@ -88,7 +89,10 @@ type PaintedTheme = BaseTheme | typeof BRANDING_THEME_ID;
 export function useThemeState(isAuthenticated = true): ThemeContextValue {
   const [baseTheme, setBaseThemeState] =
     useState<BaseTheme>(getInitialBaseTheme);
-  const [mode, setModeState] = useState<Mode>(getInitialMode);
+  const [systemModeAtBoot] = useState<Mode>(getSystemMode);
+  const [mode, setModeState] = useState<Mode>(() =>
+    getInitialMode(systemModeAtBoot),
+  );
   const [isCvdMode, setIsCvdMode] = useState<boolean>(
     () => readLocalStorage(CVD_MODE_KEY) === 'on',
   );
@@ -122,11 +126,11 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
 
   // records the OS value this boot saw, and keeps the mode it painted
   useLayoutEffect(() => {
-    window.localStorage.setItem(LAST_SEEN_SYSTEM_MODE_KEY, getSystemMode());
+    writeLocalStorage(LAST_SEEN_SYSTEM_MODE_KEY, systemModeAtBoot);
     if (modeRef.current !== readLocalStorage(MODE_STORAGE_KEY)) {
-      window.localStorage.setItem(MODE_STORAGE_KEY, modeRef.current);
+      writeLocalStorage(MODE_STORAGE_KEY, modeRef.current);
     }
-  }, []);
+  }, [systemModeAtBoot]);
 
   // set data-theme/mode before child effects call getComputedStyle
   useLayoutEffect(() => {
@@ -286,15 +290,15 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
     if (isFollowingSystemMode(modeRef.current)) return;
     if (hasRecentLocalChange(MODE_UPDATED_AT_KEY)) return;
     setModeState(serverMode);
-    window.localStorage.setItem(MODE_STORAGE_KEY, serverMode);
+    writeLocalStorage(MODE_STORAGE_KEY, serverMode);
   }, []);
 
   const adoptSystemMode = useCallback(
     (systemMode: Mode) => {
       applyModeTransition();
       setModeState(systemMode);
-      window.localStorage.setItem(MODE_STORAGE_KEY, systemMode);
-      window.localStorage.setItem(LAST_SEEN_SYSTEM_MODE_KEY, systemMode);
+      writeLocalStorage(MODE_STORAGE_KEY, systemMode);
+      writeLocalStorage(LAST_SEEN_SYSTEM_MODE_KEY, systemMode);
     },
     [applyModeTransition],
   );

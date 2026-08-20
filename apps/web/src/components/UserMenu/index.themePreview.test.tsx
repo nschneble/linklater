@@ -7,7 +7,7 @@
  */
 
 import { act, fireEvent, render, within } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const session = vi.hoisted(() => ({ user: { userId: 'user-1' } as unknown }));
 
@@ -23,7 +23,10 @@ import {
   MODE_STORAGE_KEY,
   THEME_STORAGE_KEY,
 } from '../../theme/storage';
-import { stubSystemColorScheme } from '../../../test/systemColorScheme';
+import {
+  restoreSystemColorScheme,
+  stubSystemColorScheme,
+} from '../../../test/systemColorScheme';
 import { ThemeProvider, useTheme } from '../../theme/ThemeContext';
 import UserMenu from './index';
 import type { AppView } from '../../lib/navigation';
@@ -110,6 +113,8 @@ beforeEach(() => {
   root().removeAttribute('style');
 });
 
+afterEach(restoreSystemColorScheme);
+
 describe('selecting a theme after a preview', () => {
   it('leaves no custom tokens behind when a film theme is chosen', () => {
     renderMenu();
@@ -138,6 +143,24 @@ describe('selecting a theme after a preview', () => {
     fireEvent.click(themeOption('School of Rock'));
 
     expect(root().dataset.theme).toBe('school-of-rock');
+  });
+});
+
+describe('leaving the theme area mid-preview', () => {
+  it('puts the committed theme back', () => {
+    renderMenu();
+
+    fireEvent.mouseEnter(themeOption('Boyhood'));
+    expect(root().dataset.theme).toBe('boyhood');
+
+    const themeRow = document.querySelector<HTMLElement>(
+      '[aria-label="Theme"]',
+    )?.parentElement;
+    fireEvent.mouseOut(themeRow as HTMLElement, {
+      relatedTarget: document.querySelector('[role="menu"]:not([aria-label])'),
+    });
+
+    expect(root().dataset.theme).toBe('scanner-darkly');
   });
 });
 

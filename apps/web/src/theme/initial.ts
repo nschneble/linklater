@@ -23,11 +23,10 @@ export function getInitialBaseTheme(): BaseTheme {
  * here, marking it as followed rather than chosen. Anything else is
  * honored as stored, or read from the OS when nothing was.
  */
-export function getInitialMode(): Mode {
+export function getInitialMode(systemMode: Mode = getSystemMode()): Mode {
   const stored = readLocalStorage(MODE_STORAGE_KEY);
-  if (stored !== 'light' && stored !== 'dark') return getSystemMode();
+  if (stored !== 'light' && stored !== 'dark') return systemMode;
 
-  const systemMode = getSystemMode();
   if (stored === systemMode) return stored;
   if (stored === readLocalStorage(LAST_SEEN_SYSTEM_MODE_KEY)) return systemMode;
   return stored;

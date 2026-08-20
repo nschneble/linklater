@@ -63,6 +63,20 @@ export function readLocalStorage(key: string): string | null {
 }
 
 /**
+ * Safely writes to `localStorage`, mirroring `readLocalStorage`. Does
+ * nothing when the write is refused (blocked storage, a full quota). The
+ * theme provider mounts above the app's only `ErrorBoundary`, so an
+ * unguarded write in its mount effect is a blank page.
+ */
+export function writeLocalStorage(key: string, value: string): void {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    return;
+  }
+}
+
+/**
  * Returns `true` when the preference tracked by `updatedAtKey` was changed
  * locally within the last `RECENT_LOCAL_CHANGE_MS`. The server-sync effects in
  * `useThemeState` (`applyServer*`) and `useServerBooleanPrefSync` call this to
@@ -84,8 +98,8 @@ interface PersistWithTimestampInput {
  * Persists a preference `value` under `valueKey` and stamps the current time
  * under `updatedAtKey`, so the `hasRecentLocalChange` guard can later suppress
  * a stale server sync. Only user-initiated setters write the timestamp; the
- * `applyServer*` syncs and the system-mode paths write the value alone
- * (via a bare `setItem`) so they never reset their own guard window.
+ * `applyServer*` syncs and the system-mode paths write the value alone, so
+ * they never reset their own guard window.
  *
  * Takes a named-argument object rather than three positional `string`s. With
  * all three parameters sharing the `string` type, positional arguments let a

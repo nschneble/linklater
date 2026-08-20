@@ -1,5 +1,6 @@
 /**
- * Runs a block against a `sessionStorage` that refuses one method.
+ * Runs a block against a web storage area that refuses one method,
+ * `sessionStorage` unless `store` names the other one.
  *
  * A whole substitute store is stood in front of the accessor, rather than
  * the method being patched, because patching does not take: jsdom hands
@@ -13,8 +14,9 @@
 export function withRefusedStorage(
   method: 'getItem' | 'setItem' | 'removeItem',
   run: () => void,
+  store: 'localStorage' | 'sessionStorage' = 'sessionStorage',
 ) {
-  const real = window.sessionStorage;
+  const real = window[store];
   const substitute = {
     getItem: (key: string) => real.getItem(key),
     setItem: (key: string, value: string) => real.setItem(key, value),
@@ -29,15 +31,15 @@ export function withRefusedStorage(
     throw new DOMException('SecurityError');
   };
 
-  const original = Object.getOwnPropertyDescriptor(window, 'sessionStorage');
-  Object.defineProperty(window, 'sessionStorage', {
+  const original = Object.getOwnPropertyDescriptor(window, store);
+  Object.defineProperty(window, store, {
     configurable: true,
     value: substitute as Storage,
   });
   try {
     run();
   } finally {
-    if (original) Object.defineProperty(window, 'sessionStorage', original);
-    else Reflect.deleteProperty(window, 'sessionStorage');
+    if (original) Object.defineProperty(window, store, original);
+    else Reflect.deleteProperty(window, store);
   }
 }

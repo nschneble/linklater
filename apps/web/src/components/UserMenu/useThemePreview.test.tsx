@@ -11,13 +11,6 @@ import { useThemePreview } from './useThemePreview';
 
 const root = document.documentElement;
 
-/** Lets a real jsdom animation frame run, so a deferred write can land. */
-async function drainFrames() {
-  await act(async () => {
-    await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
-  });
-}
-
 afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
@@ -27,7 +20,7 @@ afterEach(() => {
 });
 
 describe('the cvd attribute borrowed for a preview', () => {
-  it('comes back when re-entering the theme row cancels the reset', async () => {
+  it('comes back when re-entering the theme row cancels the reset', () => {
     root.dataset.cvd = 'on';
     const { result } = renderHook(() => useThemePreview(vi.fn()));
 
@@ -36,43 +29,54 @@ describe('the cvd attribute borrowed for a preview', () => {
 
     act(() => result.current.resetPreview());
     act(() => result.current.handleThemeRowEnter());
-    await drainFrames();
 
     expect(root.dataset.cvd).toBe('on');
   });
 
-  it('comes back when the menu unmounts mid-preview', async () => {
+  it('comes back when the menu unmounts mid-preview', () => {
     root.dataset.cvd = 'on';
     const { result, unmount } = renderHook(() => useThemePreview(vi.fn()));
 
     act(() => result.current.applyPreview('boyhood'));
     unmount();
-    await drainFrames();
 
     expect(root.dataset.cvd).toBe('on');
   });
 
-  it('comes back even when something else repaints the theme first', async () => {
+  it('comes back even when something else repaints the theme first', () => {
     root.dataset.cvd = 'on';
     const { result } = renderHook(() => useThemePreview(vi.fn()));
 
     act(() => result.current.applyPreview('boyhood'));
     act(() => result.current.resetPreview());
     root.dataset.theme = 'branding';
-    await drainFrames();
 
     expect(root.dataset.cvd).toBe('on');
   });
 });
 
 describe('the return animation', () => {
-  it('runs for 600ms and then hands the timing back', async () => {
+  it('is timed before the preview clears, not after', () => {
+    const durationsWhenPainted: string[] = [];
+    const setPreviewTheme = vi.fn(() => {
+      durationsWhenPainted.push(
+        root.style.getPropertyValue('--theme-transition-duration'),
+      );
+    });
+    const { result } = renderHook(() => useThemePreview(setPreviewTheme));
+
+    act(() => result.current.applyPreview('boyhood'));
+    act(() => result.current.resetPreview());
+
+    expect(durationsWhenPainted).toEqual(['150ms', '600ms']);
+  });
+
+  it('runs for 600ms and then hands the timing back', () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     const { result } = renderHook(() => useThemePreview(vi.fn()));
 
     act(() => result.current.applyPreview('boyhood'));
     act(() => result.current.resetPreview());
-    await drainFrames();
 
     expect(root.style.getPropertyValue('--theme-transition-duration')).toBe(
       '600ms',

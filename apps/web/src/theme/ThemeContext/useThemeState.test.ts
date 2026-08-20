@@ -30,6 +30,7 @@ import {
   stubSystemColorScheme,
 } from '../../../test/systemColorScheme';
 import { useThemeState } from './useThemeState';
+import { withRefusedStorage } from '../../../test/refusedStorage';
 
 const storage: Record<string, string> = {};
 
@@ -899,6 +900,50 @@ describe('system mode', () => {
     );
     expect(window.localStorage.getItem(MODE_STORAGE_KEY)).toBe('light');
     expect(window.localStorage.getItem(MODE_UPDATED_AT_KEY)).toBeNull();
+  });
+
+  it('records the OS value this boot read, not a second reading', () => {
+    let readCount = 0;
+    const lightQuery = {
+      get matches() {
+        readCount += 1;
+        return readCount > 1;
+      },
+      media: '(prefers-color-scheme: light)',
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    };
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      writable: true,
+      value: (media: string) =>
+        media === lightQuery.media
+          ? lightQuery
+          : {
+              matches: false,
+              media,
+              addEventListener() {},
+              removeEventListener() {},
+            },
+    });
+
+    const { result } = renderHook(() => useThemeState());
+
+    expect(result.current.mode).toBe('dark');
+    expect(window.localStorage.getItem(LAST_SEEN_SYSTEM_MODE_KEY)).toBe('dark');
+    expect(window.localStorage.getItem(MODE_STORAGE_KEY)).toBe('dark');
+  });
+
+  it('mounts without throwing when the store refuses to be written', () => {
+    stubSystemColorScheme('light');
+
+    withRefusedStorage(
+      'setItem',
+      () => {
+        expect(() => renderHook(() => useThemeState())).not.toThrow();
+      },
+      'localStorage',
+    );
   });
 
   it('records the OS value again after an adoption', () => {

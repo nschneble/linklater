@@ -21,7 +21,11 @@ export function isFollowingSystemMode(paintedMode: Mode): boolean {
   return paintedMode === getSystemMode();
 }
 
-/** Unlike `applyServerMode`, no guard: the OS decides its own device. */
+/**
+ * Unlike `applyServerMode`, no guard: the OS decides its own device.
+ *
+ * An OS round-trip drops a choice in an open tab; a closed tab keeps it.
+ */
 export function useSystemModeSync(
   adoptSystemMode: (systemMode: Mode) => void,
 ): void {
