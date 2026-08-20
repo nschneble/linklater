@@ -34,6 +34,7 @@ vi.mock('./lib/api', () => ({
 }));
 
 import { makeAuthContext, makeUser } from '../test/factories';
+import { resetShortcutsPreference } from '../test/shortcutsPreference';
 import { setShortcutsEnabled } from './lib/hooks/useShortcutsEnabled';
 import { updateMe } from './lib/api';
 import { useAppShell } from './useAppShell';
@@ -289,9 +290,7 @@ describe('save-link dialog open state (drives AppShell chrome inerting)', () => 
 });
 
 describe('global x shortcut respects the keyboard-shortcuts preference', () => {
-  afterEach(() => {
-    window.localStorage.clear();
-  });
+  beforeEach(resetShortcutsPreference);
 
   function renderWithMenuTrigger() {
     const trigger = document.createElement('button');

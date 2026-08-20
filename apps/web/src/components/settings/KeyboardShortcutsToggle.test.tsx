@@ -1,9 +1,10 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 
 import { KEYBOARD_SHORTCUTS_KEY } from '../../lib/hooks/useShortcutsEnabled';
 import KeyboardShortcutsToggle from './KeyboardShortcutsToggle';
+import { resetShortcutsPreference } from '../../../test/shortcutsPreference';
 
 function renderToggle() {
   return render(
@@ -13,9 +14,7 @@ function renderToggle() {
   );
 }
 
-afterEach(() => {
-  window.localStorage.clear();
-});
+beforeEach(resetShortcutsPreference);
 
 describe('KeyboardShortcutsToggle', () => {
   it('renders as a checked switch by default (shortcuts on)', () => {

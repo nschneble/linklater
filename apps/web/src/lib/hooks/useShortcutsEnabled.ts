@@ -1,26 +1,41 @@
-import { readLocalStorage } from '../../theme/storage';
+import {
+  readLocalStorage,
+  readPersistedValue,
+  writeLocalStorage,
+} from '../../theme/storage';
 import { useSyncExternalStore } from 'react';
 
 /** `localStorage` key for the single-key keyboard shortcuts preference. */
 export const KEYBOARD_SHORTCUTS_KEY = 'linklater_keyboard_shortcuts';
 
 /**
- * Device-local store for whether the app's single-key keyboard shortcuts are
- * active. Shared by `useAppShell` (the `x` menu shortcut), `useLinksView`
- * (the `useKeyboardShortcuts` listener), and the Settings toggle that writes
- * it, so all three read one source of truth.
+ * Device-local store for whether the app's single-key keyboard
+ * shortcuts are active. Shared by `useAppShell` (the `x` menu
+ * shortcut), `useLinksView` (the `useKeyboardShortcuts` listener), and
+ * the Settings toggle that writes it, so all three read one source of
+ * truth.
  *
- * The value is read synchronously from `localStorage` on every snapshot, so a
- * stored "disabled" preference gates the listeners on first mount rather than
- * after an effect settles. That gap matters for speech-input users: without a
- * synchronous read, a dictated keystroke could land on `d` (Stumble) before
- * the stored preference loaded. Default is on (shortcuts exist unless the user
- * turns them off), satisfying WCAG 2.1.4 via a conformant disable path.
+ * Every snapshot resolves synchronously, against the store or against
+ * this tab's own last choice where a refused write left the store
+ * behind it. So a stored "disabled" preference gates the listeners on
+ * first mount rather than after an effect settles, which matters for
+ * speech-input users: a dictated keystroke could otherwise land on `d`
+ * (Stumble) before the preference loaded. Default is on (shortcuts
+ * exist unless the user turns them off), satisfying WCAG 2.1.4 via a
+ * disable path a blocked store cannot cancel.
  */
 const listeners = new Set<() => void>();
 
+let cachedPreference = readLocalStorage(KEYBOARD_SHORTCUTS_KEY) ?? 'on';
+
+function notifyListeners(): void {
+  for (const listener of listeners) {
+    listener();
+  }
+}
+
 function readEnabled(): boolean {
-  return readLocalStorage(KEYBOARD_SHORTCUTS_KEY) !== 'off';
+  return readPersistedValue(KEYBOARD_SHORTCUTS_KEY, cachedPreference) !== 'off';
 }
 
 function subscribe(listener: () => void): () => void {
@@ -30,24 +45,29 @@ function subscribe(listener: () => void): () => void {
   };
 }
 
+function handleShortcutsStorageEvent(event: StorageEvent): void {
+  if (event.key !== KEYBOARD_SHORTCUTS_KEY) return;
+  cachedPreference = readPersistedValue(
+    KEYBOARD_SHORTCUTS_KEY,
+    cachedPreference,
+  );
+  notifyListeners();
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', handleShortcutsStorageEvent);
+}
+
 /**
- * Persists the keyboard-shortcuts preference and notifies every subscribed
- * consumer so the toggle and both shortcut listeners update together.
+ * Persists the keyboard-shortcuts preference and notifies every
+ * subscribed consumer so the toggle and both shortcut listeners update
+ * together. The in-memory copy moves first, so a refused write cannot
+ * snap the switch back.
  */
 export function setShortcutsEnabled(enabled: boolean): void {
-  try {
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(
-        KEYBOARD_SHORTCUTS_KEY,
-        enabled ? 'on' : 'off',
-      );
-    }
-  } catch {
-    // storage may be blocked (private browsing); still notify subscribers
-  }
-  for (const listener of listeners) {
-    listener();
-  }
+  cachedPreference = enabled ? 'on' : 'off';
+  writeLocalStorage(KEYBOARD_SHORTCUTS_KEY, cachedPreference);
+  notifyListeners();
 }
 
 /**

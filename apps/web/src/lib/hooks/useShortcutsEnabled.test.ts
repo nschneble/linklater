@@ -1,5 +1,5 @@
 import { act, render, renderHook } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createElement } from 'react';
 
 import {
@@ -7,10 +7,10 @@ import {
   setShortcutsEnabled,
   useShortcutsEnabled,
 } from './useShortcutsEnabled';
+import { resetShortcutsPreference } from '../../../test/shortcutsPreference';
+import { withRefusedStorage } from '../../../test/refusedStorage';
 
-afterEach(() => {
-  window.localStorage.clear();
-});
+beforeEach(resetShortcutsPreference);
 
 describe('useShortcutsEnabled', () => {
   it('defaults to enabled when nothing is stored', () => {
@@ -57,5 +57,93 @@ describe('useShortcutsEnabled', () => {
 
     act(() => setShortcutsEnabled(true));
     expect(window.localStorage.getItem(KEYBOARD_SHORTCUTS_KEY)).toBe('on');
+  });
+
+  it('seeds its in-memory copy at module load, not on first use', async () => {
+    window.localStorage.setItem(KEYBOARD_SHORTCUTS_KEY, 'off');
+    vi.resetModules();
+    const freshModule = await import('./useShortcutsEnabled');
+    window.localStorage.clear();
+
+    const { result } = renderHook(() => freshModule.useShortcutsEnabled());
+
+    expect(result.current).toBe(false);
+  });
+});
+
+describe('useShortcutsEnabled against a store that refuses writes', () => {
+  it('holds the disable a refused write could not persist', () => {
+    const { result } = renderHook(() => useShortcutsEnabled());
+
+    withRefusedStorage(
+      'setItem',
+      () => act(() => setShortcutsEnabled(false)),
+      'localStorage',
+    );
+
+    expect(result.current).toBe(false);
+  });
+
+  it('holds the disable when the refused write left an older "on" stored', () => {
+    window.localStorage.setItem(KEYBOARD_SHORTCUTS_KEY, 'on');
+    const { result } = renderHook(() => useShortcutsEnabled());
+
+    withRefusedStorage(
+      'setItem',
+      () => act(() => setShortcutsEnabled(false)),
+      'localStorage',
+    );
+
+    expect(result.current).toBe(false);
+  });
+
+  it('reads a refused disable on the first committed render, before any effect', () => {
+    withRefusedStorage(
+      'setItem',
+      () => setShortcutsEnabled(false),
+      'localStorage',
+    );
+
+    const committedRenders: boolean[] = [];
+    function Probe() {
+      committedRenders.push(useShortcutsEnabled());
+      return null;
+    }
+
+    render(createElement(Probe));
+
+    expect(committedRenders[0]).toBe(false);
+    expect(committedRenders).toHaveLength(1);
+  });
+
+  it("adopts another tab's value over the refusal it is holding", () => {
+    const { result } = renderHook(() => useShortcutsEnabled());
+    withRefusedStorage(
+      'setItem',
+      () => act(() => setShortcutsEnabled(false)),
+      'localStorage',
+    );
+    expect(result.current).toBe(false);
+
+    window.localStorage.setItem(KEYBOARD_SHORTCUTS_KEY, 'on');
+    act(() => {
+      window.dispatchEvent(
+        new StorageEvent('storage', {
+          key: KEYBOARD_SHORTCUTS_KEY,
+          newValue: 'on',
+        }),
+      );
+    });
+
+    expect(result.current).toBe(true);
+
+    window.localStorage.removeItem(KEYBOARD_SHORTCUTS_KEY);
+    act(() => {
+      window.dispatchEvent(
+        new StorageEvent('storage', { key: KEYBOARD_SHORTCUTS_KEY }),
+      );
+    });
+
+    expect(result.current).toBe(true);
   });
 });
