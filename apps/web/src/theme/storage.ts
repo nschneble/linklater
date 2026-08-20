@@ -63,10 +63,10 @@ export function readLocalStorage(key: string): string | null {
 }
 
 /**
- * Safely writes to `localStorage`, mirroring `readLocalStorage`. Does
- * nothing when the write is refused (blocked storage, a full quota). The
- * theme provider mounts above every `ErrorBoundary`, so an unguarded write
- * from any of its effects — boot layout, server sync — is a blank page.
+ * Safely writes to `localStorage`. Does nothing when the write is refused
+ * (blocked storage, a full quota). The theme provider mounts above every
+ * `ErrorBoundary`, so an unguarded write reached from its boot layout
+ * effect, or from the server-sync effect in `App.tsx`, is a blank page.
  */
 export function writeLocalStorage(key: string, value: string): void {
   try {
@@ -110,9 +110,8 @@ interface PersistWithTimestampInput {
 /**
  * Persists a preference `value` under `valueKey` and stamps the current time
  * under `updatedAtKey`, so the `hasRecentLocalChange` guard can later suppress
- * a stale server sync. Only user-initiated setters write the timestamp; the
- * `applyServer*` syncs and the system-mode paths write the value alone, so
- * they never reset their own guard window.
+ * a stale server sync. The `applyServer*` syncs and the system-mode paths
+ * write the value alone, so they never reset their own guard window.
  *
  * Takes a named-argument object rather than three positional `string`s. With
  * all three parameters sharing the `string` type, positional arguments let a

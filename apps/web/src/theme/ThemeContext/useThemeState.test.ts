@@ -215,6 +215,7 @@ describe('applyServerTheme', () => {
     });
 
     expect(result.current.baseTheme).toBe('boyhood');
+    expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe('boyhood');
   });
 
   it('still applies the server theme when the store refuses the write', () => {
