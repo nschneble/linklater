@@ -509,6 +509,7 @@ describe('disableCvdMode', () => {
 
     expect(returned).toBe('boyhood');
     expect(result.current.isCvdMode).toBe(false);
+    expect(result.current.baseTheme).toBe('boyhood');
   });
 });
 

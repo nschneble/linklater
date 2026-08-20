@@ -101,22 +101,17 @@ describe('server preference sync against live theme state', () => {
     expect(result.current.baseTheme).toBe(CVD_BASE_THEME);
   });
 
-  it('keeps the dyslexic font on when the store refuses the toggle write', () => {
-    const { result } = renderHook(useServerPrefSyncHarness, {
-      initialProps: { serverDyslexicFont: false },
+  it('still turns the dyslexic font off when the stored value reads off', () => {
+    writeLocalStorage(DYSLEXIC_FONT_KEY, 'on');
+    const { rerender, result } = renderHook(useServerPrefSyncHarness, {
+      initialProps: {},
     });
-
-    withRefusedStorage(
-      'setItem',
-      () => {
-        act(() => {
-          result.current.enableDyslexicFont();
-        });
-      },
-      'localStorage',
-    );
-
     expect(result.current.isDyslexicFont).toBe(true);
+
+    window.localStorage.setItem(DYSLEXIC_FONT_KEY, 'off');
+    rerender({ serverDyslexicFont: false });
+
+    expect(result.current.isDyslexicFont).toBe(false);
   });
 
   it('keeps CVD on when a refused write leaves a stale off behind', () => {
