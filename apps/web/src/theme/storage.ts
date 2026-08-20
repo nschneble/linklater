@@ -65,7 +65,7 @@ export function readLocalStorage(key: string): string | null {
 /**
  * Safely writes to `localStorage`, mirroring `readLocalStorage`. Does
  * nothing when the write is refused (blocked storage, a full quota). The
- * theme provider mounts above the app's only `ErrorBoundary`, so an
+ * theme provider mounts above every `ErrorBoundary`, so an
  * unguarded write in its mount effect is a blank page.
  */
 export function writeLocalStorage(key: string, value: string): void {

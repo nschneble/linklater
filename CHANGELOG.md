@@ -16,7 +16,7 @@
 - A new browser follows your device's appearance instead of the mode saved to your account
 - `bin/` commands take standard flags, report standard exit codes, and explain what they're doing
 - `bin/migrate --reset` asks before it wipes, and refuses when no terminal can be asked
-- Light and dark mode follows your device's appearance until you pick a different one
+- Light and dark mode follows your device's appearance; a differing choice holds on that device until the appearance changes again
 - OAuth callback URLs now come from `API_URL` and the route
 
 ### Fixed
