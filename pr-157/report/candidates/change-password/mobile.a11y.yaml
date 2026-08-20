@@ -60,12 +60,8 @@
       - text: New password
       - textbox "New password":
         - /placeholder: Leave blank to keep current password
-        - text: battery-staple-1234
-      - text: Current password
-      - textbox "Current password":
-        - /placeholder: Required to confirm password change
-        - text: testing-ui-correct-horse
-      - button "Saving…" [disabled]
+      - status: Password updated
+      - button "Save new password" [disabled]
   - region "Enhanced security":
     - heading "Enhanced security" [level=2]
     - paragraph: Set up and manage multi-factor authentication. That's not overkill for a read-it-later app, right?
