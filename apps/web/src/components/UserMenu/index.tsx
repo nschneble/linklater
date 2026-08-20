@@ -1,5 +1,5 @@
 import { FOCUS_RING, menuRevealStyle } from '../../lib/styles';
-import { forwardRef, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { forwardRef, useEffect, useMemo, useRef } from 'react';
 import { gravatarUrl } from '../../lib/gravatar';
 import MenuItem from './MenuItem';
 import MenuSection from './MenuSection';
@@ -51,26 +51,19 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
   forwardedReference,
 ) {
   const avatarUrl = useMemo(() => gravatarUrl(user.email, 64), [user.email]);
-  const { baseTheme, customTheme, mode } = useTheme();
+  const { baseTheme, mode, previewTheme, setPreviewTheme } = useTheme();
 
   const {
     applyPreview,
-    clearResetHandles,
     flyoutReference,
     handleThemeRowEnter,
-    previewTheme,
     setShowThemeSubmenu,
     showThemeSubmenu,
     submenuOpenedByKeyboard,
     themeRowReference,
     themeSubmenuOnLeft,
     resetPreview,
-  } = useThemePreview(customTheme, mode);
-
-  // cancel the in-flight reset rAF on commit so a stale closure can't win
-  useLayoutEffect(() => {
-    clearResetHandles();
-  }, [baseTheme, clearResetHandles]);
+  } = useThemePreview(setPreviewTheme);
 
   const avatarReference = useRef<HTMLButtonElement | null>(null);
   const menuReference = useRef<HTMLDivElement | null>(null);
@@ -88,7 +81,7 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
 
   const resetPreviewIfActive = () => {
     if (previewTheme !== null) {
-      resetPreview(baseTheme);
+      resetPreview();
     }
   };
 
@@ -130,6 +123,7 @@ const UserMenu = forwardRef<HTMLButtonElement, UserMenuProps>(function UserMenu(
   }, [isOpen, setShowThemeSubmenu]);
 
   const handleThemeSelect = (theme: BaseTheme) => {
+    resetPreviewIfActive();
     onThemeSelect(theme);
     onClose();
   };

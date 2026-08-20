@@ -61,6 +61,7 @@ function makeThemeContext(
     isCvdMode: false,
     isDyslexicFont: false,
     mode: 'dark',
+    previewTheme: null,
     setBaseTheme: vi.fn(() => undefined),
     setCustomTheme: vi.fn(() => undefined),
     setCustomThemeEnabled: vi.fn(() => undefined),
