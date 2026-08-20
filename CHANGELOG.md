@@ -27,6 +27,7 @@
 - An access token already known to be expired still spends a request
 - Submitting the login form twice in quick succession sends two requests
 - Syncing your saved theme on a browser that blocks storage blanks the page
+- Turning off keyboard shortcuts does nothing on a browser that blocks storage
 - Turning on colorblind mode or the dyslexia-friendly font does nothing on a browser that blocks storage
 - The boot screen appears on boots too fast to need explaining
 - The boot text fades under the contrast floor at the bottom of its pulse
