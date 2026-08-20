@@ -10,4 +10,5 @@
 - button "Send password reset link" [disabled]
 - paragraph:
   - button "Back to login"
+- status
 - alert
