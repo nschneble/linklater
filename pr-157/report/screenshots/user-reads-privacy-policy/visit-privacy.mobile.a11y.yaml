@@ -33,7 +33,7 @@
       - text: The URLs you save to your account, along with metadata our server fetches from those pages so your links are pleasantly presented. Link metadata includes title, description, site name, favicon, and preview image.
     - listitem:
       - strong: Preferences
-      - text: Display settings such as theme, light/dark mode, custom theme colors, and accessibility options including Color Vision Deficiency (CVD) mode and an OpenDyslexic typeface.
+      - text: Display settings such as theme, light/dark mode, custom theme colors, and accessibility options including Color Vision Deficiency (CVD) mode and an OpenDyslexic typeface. When your light/dark mode matches your device's own appearance setting, the app follows that setting as it changes. That reading happens in your browser, and the mode it follows is never stored with your account.
     - listitem:
       - strong: Two-factor authentication data
       - text: If you enable two-factor authentication, we store your TOTP secret and hashed recovery codes.
