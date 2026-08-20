@@ -149,6 +149,28 @@ describe('setBaseTheme', () => {
 
     expect(result.current.isCvdMode).toBe(true);
   });
+
+  it('still clears CVD mode when the store refuses the write', () => {
+    const { result } = renderHook(() => useThemeState());
+
+    act(() => {
+      result.current.enableCvdMode();
+    });
+
+    expect(() =>
+      withRefusedStorage(
+        'setItem',
+        () => {
+          act(() => {
+            result.current.setBaseTheme('boyhood');
+          });
+        },
+        'localStorage',
+      ),
+    ).not.toThrow();
+    expect(result.current.isCvdMode).toBe(false);
+    expect(result.current.baseTheme).toBe('boyhood');
+  });
 });
 
 describe('setMode', () => {
@@ -311,6 +333,40 @@ describe('enableCvdMode', () => {
 
     expect(returned).toBe('apollo-10-1-2');
   });
+
+  it('does not throw when the store refuses the pre-cvd write', () => {
+    const { result } = renderHook(() => useThemeState());
+
+    expect(() =>
+      withRefusedStorage(
+        'setItem',
+        () => {
+          act(() => {
+            result.current.enableCvdMode();
+          });
+        },
+        'localStorage',
+      ),
+    ).not.toThrow();
+  });
+
+  // the refused write is the first statement, so all of this is at stake
+  it('still turns CVD on when the store refuses the pre-cvd write', () => {
+    const { result } = renderHook(() => useThemeState());
+
+    withRefusedStorage(
+      'setItem',
+      () => {
+        act(() => {
+          result.current.enableCvdMode();
+        });
+      },
+      'localStorage',
+    );
+
+    expect(result.current.isCvdMode).toBe(true);
+    expect(result.current.baseTheme).toBe('apollo-10-1-2');
+  });
 });
 
 describe('disableCvdMode', () => {
@@ -387,6 +443,51 @@ describe('disableCvdMode', () => {
 
     expect(returned).toBe('school-of-rock');
   });
+
+  it('does not throw when the store refuses the pre-cvd removal', () => {
+    const { result } = renderHook(() => useThemeState());
+
+    act(() => {
+      result.current.enableCvdMode();
+    });
+
+    expect(() =>
+      withRefusedStorage(
+        'removeItem',
+        () => {
+          act(() => {
+            result.current.disableCvdMode();
+          });
+        },
+        'localStorage',
+      ),
+    ).not.toThrow();
+  });
+
+  it('still clears CVD and returns the previous theme when the removal is refused', () => {
+    const { result } = renderHook(() => useThemeState());
+    let returned: string | undefined;
+
+    act(() => {
+      result.current.setBaseTheme('boyhood');
+    });
+    act(() => {
+      result.current.enableCvdMode();
+    });
+
+    withRefusedStorage(
+      'removeItem',
+      () => {
+        act(() => {
+          returned = result.current.disableCvdMode();
+        });
+      },
+      'localStorage',
+    );
+
+    expect(returned).toBe('boyhood');
+    expect(result.current.isCvdMode).toBe(false);
+  });
 });
 
 describe('enableDyslexicFont', () => {
@@ -428,6 +529,23 @@ describe('enableDyslexicFont', () => {
     });
 
     expect(result.current.baseTheme).toBe('boyhood');
+  });
+
+  it('still enables the font when the store refuses the write', () => {
+    const { result } = renderHook(() => useThemeState());
+
+    expect(() =>
+      withRefusedStorage(
+        'setItem',
+        () => {
+          act(() => {
+            result.current.enableDyslexicFont();
+          });
+        },
+        'localStorage',
+      ),
+    ).not.toThrow();
+    expect(result.current.isDyslexicFont).toBe(true);
   });
 });
 
@@ -481,6 +599,27 @@ describe('disableDyslexicFont', () => {
     });
 
     expect(result.current.baseTheme).toBe('boyhood');
+  });
+
+  it('still disables the font when the store refuses the write', () => {
+    const { result } = renderHook(() => useThemeState());
+
+    act(() => {
+      result.current.enableDyslexicFont();
+    });
+
+    expect(() =>
+      withRefusedStorage(
+        'setItem',
+        () => {
+          act(() => {
+            result.current.disableDyslexicFont();
+          });
+        },
+        'localStorage',
+      ),
+    ).not.toThrow();
+    expect(result.current.isDyslexicFont).toBe(false);
   });
 });
 

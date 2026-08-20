@@ -177,8 +177,8 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
 
       if (isCvdMode && theme !== CVD_BASE_THEME) {
         setIsCvdMode(false);
-        window.localStorage.setItem(CVD_MODE_KEY, 'off');
-        window.localStorage.removeItem(PRE_CVD_THEME_KEY);
+        writeLocalStorage(CVD_MODE_KEY, 'off');
+        removeLocalStorage(PRE_CVD_THEME_KEY);
       }
     },
     [isCvdMode],
@@ -305,7 +305,7 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
   const enableCvdMode = useCallback((): BaseTheme => {
     const current = baseThemeRef.current;
     if (current !== CVD_BASE_THEME) {
-      window.localStorage.setItem(PRE_CVD_THEME_KEY, current);
+      writeLocalStorage(PRE_CVD_THEME_KEY, current);
     }
     setBaseThemeState(CVD_BASE_THEME);
     persistWithTimestamp({
@@ -339,7 +339,7 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
       value: 'off',
       updatedAtKey: CVD_UPDATED_AT_KEY,
     });
-    window.localStorage.removeItem(PRE_CVD_THEME_KEY);
+    removeLocalStorage(PRE_CVD_THEME_KEY);
     setIsCvdMode(false);
     return previousTheme;
   }, []);

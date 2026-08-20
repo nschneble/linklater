@@ -67,6 +67,8 @@ export function readLocalStorage(key: string): string | null {
  * (blocked storage, a full quota). The theme provider mounts above every
  * `ErrorBoundary`, so an unguarded write reached from its boot layout
  * effect, or from the server-sync effect in `App.tsx`, is a blank page.
+ * A write that precedes the state change it records costs more than the
+ * record: the throw skips the change too, so the preference never applies.
  */
 export function writeLocalStorage(key: string, value: string): void {
   try {
@@ -113,6 +115,9 @@ interface PersistWithTimestampInput {
  * a stale server sync. The `applyServer*` syncs and the system-mode paths
  * write the value alone, so they never reset their own guard window.
  *
+ * Both writes go through `writeLocalStorage`, so a refused store is a
+ * no-op rather than a throw and every caller's state change still runs.
+ *
  * Takes a named-argument object rather than three positional `string`s. With
  * all three parameters sharing the `string` type, positional arguments let a
  * caller silently transpose the two key slots (`valueKey`/`updatedAtKey`) or
@@ -124,6 +129,6 @@ export function persistWithTimestamp({
   value,
   updatedAtKey,
 }: PersistWithTimestampInput): void {
-  window.localStorage.setItem(valueKey, value);
-  window.localStorage.setItem(updatedAtKey, Date.now().toString());
+  writeLocalStorage(valueKey, value);
+  writeLocalStorage(updatedAtKey, Date.now().toString());
 }
