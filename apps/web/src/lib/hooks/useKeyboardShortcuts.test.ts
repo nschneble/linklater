@@ -87,6 +87,22 @@ describe('useKeyboardShortcuts', () => {
     expect(options.onToggleShortcuts).not.toHaveBeenCalled();
   });
 
+  it('goes quiet when the preference is turned off mid-session', () => {
+    const options = makeOptions();
+    const { rerender } = renderHook(
+      (singleKeyShortcutsEnabled: boolean) =>
+        useKeyboardShortcuts({ ...options, singleKeyShortcutsEnabled }),
+      { initialProps: true },
+    );
+
+    fireKey('d');
+    expect(options.onStumble).toHaveBeenCalledOnce();
+
+    rerender(false);
+    fireKey('d');
+    expect(options.onStumble).toHaveBeenCalledOnce();
+  });
+
   it('named keys (arrows, Enter, Escape) still fire when the preference is disabled', () => {
     const onEscape = vi.fn();
     const options = makeOptions({ singleKeyShortcutsEnabled: false, onEscape });

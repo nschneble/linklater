@@ -59,6 +59,16 @@ describe('useShortcutsEnabled', () => {
     expect(window.localStorage.getItem(KEYBOARD_SHORTCUTS_KEY)).toBe('on');
   });
 
+  it('seeds enabled at module load when the store is empty', async () => {
+    window.localStorage.clear();
+    vi.resetModules();
+    const freshModule = await import('./useShortcutsEnabled');
+
+    const { result } = renderHook(() => freshModule.useShortcutsEnabled());
+
+    expect(result.current).toBe(true);
+  });
+
   it('seeds its in-memory copy at module load, not on first use', async () => {
     window.localStorage.setItem(KEYBOARD_SHORTCUTS_KEY, 'off');
     vi.resetModules();

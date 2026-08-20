@@ -10,19 +10,15 @@ export const KEYBOARD_SHORTCUTS_KEY = 'linklater_keyboard_shortcuts';
 
 /**
  * Device-local store for whether the app's single-key keyboard
- * shortcuts are active. Shared by `useAppShell` (the `x` menu
- * shortcut), `useLinksView` (the `useKeyboardShortcuts` listener), and
- * the Settings toggle that writes it, so all three read one source of
- * truth.
+ * shortcuts are active.
  *
- * Every snapshot resolves synchronously, against the store or against
- * this tab's own last choice where a refused write left the store
- * behind it. So a stored "disabled" preference gates the listeners on
- * first mount rather than after an effect settles, which matters for
- * speech-input users: a dictated keystroke could otherwise land on `d`
- * (Stumble) before the preference loaded. Default is on (shortcuts
- * exist unless the user turns them off), satisfying WCAG 2.1.4 via a
- * disable path a blocked store cannot cancel.
+ * Every snapshot resolves synchronously, so a stored "disabled"
+ * preference gates the listeners on first mount rather than after an
+ * effect settles, which matters for speech-input users: a dictated
+ * keystroke could otherwise land on `d` (Stumble) before the
+ * preference loaded. Default is on (shortcuts exist unless the user
+ * turns them off), satisfying WCAG 2.1.4 via a disable that holds for
+ * the session a refused write could not persist.
  */
 const listeners = new Set<() => void>();
 
@@ -60,9 +56,9 @@ if (typeof window !== 'undefined') {
 
 /**
  * Persists the keyboard-shortcuts preference and notifies every
- * subscribed consumer so the toggle and both shortcut listeners update
- * together. The in-memory copy moves first, so a refused write cannot
- * snap the switch back.
+ * subscribed consumer. A refused write cannot snap the switch back:
+ * `readPersistedValue` holds the in-memory copy against the value the
+ * refusal saw.
  */
 export function setShortcutsEnabled(enabled: boolean): void {
   cachedPreference = enabled ? 'on' : 'off';

@@ -88,7 +88,7 @@ export function writeLocalStorage(key: string, value: string): void {
  * The newest copy of `key` this tab knows of. Unreadable, absent, and a
  * value this tab failed to write over all resolve to `cachedValue`: a
  * refused write leaves live state ahead of the store. A stored value that
- * moved since the refusal is another tab's, and wins.
+ * differs from the one the refusal saw is another tab's, and wins.
  */
 export function readPersistedValue(key: string, cachedValue: string): string {
   const persisted = readLocalStorage(key);
