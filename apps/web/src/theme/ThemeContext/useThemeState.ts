@@ -37,6 +37,7 @@ import {
   type Mode,
 } from '../constants';
 import { getInitialBaseTheme, getInitialMode } from '../initial';
+import { isFollowingSystemMode, useSystemModeSync } from '../systemMode';
 import type { CustomTheme } from '../customTheme';
 import type { ThemeContextValue } from './types';
 
@@ -262,11 +263,23 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
     );
   }, []);
 
+  // per-device: a device following its own OS ignores the account's mode
   const applyServerMode = useCallback((serverMode: Mode) => {
+    if (isFollowingSystemMode()) return;
     if (hasRecentLocalChange(MODE_UPDATED_AT_KEY)) return;
     setModeState(serverMode);
     window.localStorage.setItem(MODE_STORAGE_KEY, serverMode);
   }, []);
+
+  const adoptSystemMode = useCallback(
+    (systemMode: Mode) => {
+      applyModeTransition();
+      setModeState(systemMode);
+      window.localStorage.setItem(MODE_STORAGE_KEY, systemMode);
+    },
+    [applyModeTransition],
+  );
+  useSystemModeSync(adoptSystemMode);
 
   const enableCvdMode = useCallback((): BaseTheme => {
     const current = baseThemeRef.current;

@@ -35,6 +35,7 @@ vi.mock('./lib/api', () => ({
 
 import { makeAuthContext, makeUser } from '../test/factories';
 import { setShortcutsEnabled } from './lib/hooks/useShortcutsEnabled';
+import { updateMe } from './lib/api';
 import { useAppShell } from './useAppShell';
 import { useAuth } from './auth/AuthContext';
 import { useLocation, useNavigate } from 'react-router';
@@ -232,6 +233,24 @@ describe('user menu toggle', () => {
     });
 
     expect(result.current.showUserMenu).toBe(false);
+  });
+});
+
+describe('mode toggle', () => {
+  it('persists the mode it painted, not the account value', () => {
+    const theme = makeThemeContext({ mode: 'light' });
+    vi.mocked(useTheme).mockReturnValue(theme);
+    vi.mocked(useAuth).mockReturnValue(
+      makeAuthContext({ user: makeUser({ mode: 'dark' }) }),
+    );
+    const { result } = renderHook(() => useAppShell());
+
+    act(() => {
+      result.current.handleModeToggle();
+    });
+
+    expect(theme.toggleMode).toHaveBeenCalledOnce();
+    expect(updateMe).toHaveBeenCalledWith({ mode: 'dark' });
   });
 });
 

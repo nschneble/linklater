@@ -21,6 +21,7 @@ export interface ThemeContextValue {
   setMode: (mode: Mode) => void;
   toggleMode: () => void;
   applyServerTheme: (theme: BaseTheme) => void;
+  /** Ignored while this device is following its own OS color scheme. */
   applyServerMode: (mode: Mode) => void;
   /** Returns the resolved theme for the caller to send to the server. */
   enableCvdMode: () => BaseTheme;

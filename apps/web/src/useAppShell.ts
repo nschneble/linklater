@@ -40,7 +40,7 @@ const VIEW_LABELS: Record<AppView, string> = {
  */
 export function useAppShell() {
   const { logout, markWelcomed, user } = useAuth();
-  const { setBaseTheme, toggleMode } = useTheme();
+  const { mode, setBaseTheme, toggleMode } = useTheme();
   const shortcutsEnabled = useShortcutsEnabled();
   const location = useLocation();
   const navigate = useNavigate();
@@ -90,9 +90,8 @@ export function useAppShell() {
     );
   };
 
-  // derive next mode from user.mode not ThemeContext to stay auth-synced
   const handleModeToggle = () => {
-    const nextMode = user?.mode === 'light' ? 'dark' : 'light';
+    const nextMode = mode === 'light' ? 'dark' : 'light';
     toggleMode();
     updateMe({ mode: nextMode }).catch((error) =>
       console.error('Failed to save mode', error),

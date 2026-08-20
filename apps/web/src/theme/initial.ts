@@ -1,3 +1,4 @@
+import { getSystemMode } from './systemMode';
 import {
   MODE_STORAGE_KEY,
   readLocalStorage,
@@ -23,11 +24,5 @@ export function getInitialBaseTheme(): BaseTheme {
 export function getInitialMode(): Mode {
   const stored = readLocalStorage(MODE_STORAGE_KEY);
   if (stored === 'light' || stored === 'dark') return stored;
-  if (
-    typeof window !== 'undefined' &&
-    window.matchMedia?.('(prefers-color-scheme: light)').matches
-  ) {
-    return 'light';
-  }
-  return 'dark';
+  return getSystemMode();
 }
