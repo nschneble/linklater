@@ -110,6 +110,11 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
     baseThemeRef.current = baseTheme;
   }, [baseTheme]);
 
+  const modeRef = useRef<Mode>(mode);
+  useLayoutEffect(() => {
+    modeRef.current = mode;
+  }, [mode]);
+
   // set data-theme/mode before child effects call getComputedStyle
   useLayoutEffect(() => {
     document.documentElement.dataset.theme = paintedTheme;
@@ -263,9 +268,9 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
     );
   }, []);
 
-  // per-device: a device following its own OS ignores the account's mode
+  // per-tab: a tab painting its own OS value ignores the account's mode
   const applyServerMode = useCallback((serverMode: Mode) => {
-    if (isFollowingSystemMode()) return;
+    if (isFollowingSystemMode(modeRef.current)) return;
     if (hasRecentLocalChange(MODE_UPDATED_AT_KEY)) return;
     setModeState(serverMode);
     window.localStorage.setItem(MODE_STORAGE_KEY, serverMode);

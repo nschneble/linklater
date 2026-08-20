@@ -1,4 +1,3 @@
-import { MODE_STORAGE_KEY, readLocalStorage } from './storage';
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import type { Mode } from './constants';
 
@@ -19,22 +18,16 @@ export function getSystemMode(): Mode {
 }
 
 /**
- * Whether this device is following its system rather than sitting on an
- * explicit choice. Derived by comparison, so a choice that the OS later
- * agrees with collapses back into following it.
+ * Whether a tab painting `paintedMode` is following its system rather than
+ * sitting on an explicit choice, so a choice the OS later agrees with
+ * collapses into following it. Compared against what this tab paints, never
+ * storage, which a sibling tab can move out from under it.
  */
-export function isFollowingSystemMode(): boolean {
-  return readLocalStorage(MODE_STORAGE_KEY) === getSystemMode();
+export function isFollowingSystemMode(paintedMode: Mode): boolean {
+  return paintedMode === getSystemMode();
 }
 
-/**
- * Calls `adoptSystemMode` with the new OS color scheme whenever it changes.
- *
- * Adoption is unconditional: the stored mode is either the old OS value, in
- * which case this device is following the system, or already the new one, in
- * which case adopting it changes nothing. Either way the device ends up
- * following the system, so there is nothing to compare.
- */
+// unlike applyServerMode, no guard: the OS decides its own device
 export function useSystemModeSync(
   adoptSystemMode: (systemMode: Mode) => void,
 ): void {

@@ -213,33 +213,32 @@ describe('applyServerTheme', () => {
 });
 
 describe('applyServerMode', () => {
+  // stored light vs the dark matchMedia fallback: a choice, not the system
   it('does not update when a local mode change was made recently', () => {
+    window.localStorage.setItem(MODE_STORAGE_KEY, 'light');
     const { result } = renderHook(() => useThemeState());
-    window.localStorage.setItem(
-      'linklater_mode_updated_at',
-      Date.now().toString(),
-    );
+    window.localStorage.setItem(MODE_UPDATED_AT_KEY, Date.now().toString());
 
     act(() => {
-      result.current.applyServerMode('light');
+      result.current.applyServerMode('dark');
     });
 
-    // default mode is dark (no matchMedia stub → dark fallback)
-    expect(result.current.mode).toBe('dark');
+    expect(result.current.mode).toBe('light');
   });
 
   it('applies the server mode when the local change is stale', () => {
+    window.localStorage.setItem(MODE_STORAGE_KEY, 'light');
     const { result } = renderHook(() => useThemeState());
     window.localStorage.setItem(
-      'linklater_mode_updated_at',
+      MODE_UPDATED_AT_KEY,
       (Date.now() - 60_000).toString(),
     );
 
     act(() => {
-      result.current.applyServerMode('light');
+      result.current.applyServerMode('dark');
     });
 
-    expect(result.current.mode).toBe('light');
+    expect(result.current.mode).toBe('dark');
   });
 });
 
@@ -872,5 +871,39 @@ describe('system mode', () => {
 
     expect(result.current.mode).toBe('light');
     expect(window.localStorage.getItem(MODE_STORAGE_KEY)).toBe('light');
+  });
+
+  it('ignores the server mode after the OS drove an adoption', () => {
+    const system = stubSystemColorScheme('dark');
+    window.localStorage.setItem(MODE_STORAGE_KEY, 'dark');
+    window.localStorage.setItem(
+      MODE_UPDATED_AT_KEY,
+      (Date.now() - 60_000).toString(),
+    );
+    const { result } = renderHook(() => useThemeState());
+
+    act(() => system.flip('light'));
+    act(() => result.current.applyServerMode('dark'));
+
+    expect(result.current.mode).toBe('light');
+    expect(window.localStorage.getItem(MODE_STORAGE_KEY)).toBe('light');
+  });
+
+  it('applies the server mode in a tab a sibling left behind', () => {
+    stubSystemColorScheme('dark');
+    window.localStorage.setItem(MODE_STORAGE_KEY, 'light');
+    const firstTab = renderHook(() => useThemeState());
+    const secondTab = renderHook(() => useThemeState());
+
+    act(() => firstTab.result.current.toggleMode());
+    window.localStorage.setItem(
+      MODE_UPDATED_AT_KEY,
+      (Date.now() - 60_000).toString(),
+    );
+
+    act(() => secondTab.result.current.applyServerMode('dark'));
+
+    expect(firstTab.result.current.mode).toBe('dark');
+    expect(secondTab.result.current.mode).toBe('dark');
   });
 });

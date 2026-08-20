@@ -47,21 +47,25 @@ describe('getSystemMode', () => {
 });
 
 describe('isFollowingSystemMode', () => {
-  it('is true when the stored mode equals the OS preference', () => {
+  it('is true when the painted mode equals the OS preference', () => {
     stubSystemColorScheme('light');
-    window.localStorage.setItem(MODE_STORAGE_KEY, 'light');
-    expect(isFollowingSystemMode()).toBe(true);
+    expect(isFollowingSystemMode('light')).toBe(true);
   });
 
-  it('is false when the stored mode differs from the OS preference', () => {
+  it('is false when the painted mode differs from the OS preference', () => {
     stubSystemColorScheme('light');
-    window.localStorage.setItem(MODE_STORAGE_KEY, 'dark');
-    expect(isFollowingSystemMode()).toBe(false);
+    expect(isFollowingSystemMode('dark')).toBe(false);
   });
 
-  it('is false when no mode is stored', () => {
+  it('ignores a stored mode a sibling tab moved', () => {
     stubSystemColorScheme('dark');
-    expect(isFollowingSystemMode()).toBe(false);
+    window.localStorage.setItem(MODE_STORAGE_KEY, 'dark');
+    expect(isFollowingSystemMode('light')).toBe(false);
+  });
+
+  it('is true on a device that has never stored a mode', () => {
+    stubSystemColorScheme('dark');
+    expect(isFollowingSystemMode('dark')).toBe(true);
   });
 });
 
