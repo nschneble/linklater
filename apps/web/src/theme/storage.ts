@@ -6,6 +6,11 @@ export const MODE_STORAGE_KEY = 'linklater_mode';
 export const THEME_UPDATED_AT_KEY = 'linklater_theme_updated_at';
 /** Timestamp written alongside the mode when a user action changes it. */
 export const MODE_UPDATED_AT_KEY = 'linklater_mode_updated_at';
+/**
+ * The OS color scheme as of the last time this device saw it, so a boot
+ * can tell a mode the OS moved away from apart from one the user chose.
+ */
+export const LAST_SEEN_SYSTEM_MODE_KEY = 'linklater_last_seen_system_mode';
 /** Whether CVD mode is explicitly on. */
 export const CVD_MODE_KEY = 'linklater_cvd_mode';
 /** The theme that was active before CVD mode was enabled. */
@@ -79,8 +84,8 @@ interface PersistWithTimestampInput {
  * Persists a preference `value` under `valueKey` and stamps the current time
  * under `updatedAtKey`, so the `hasRecentLocalChange` guard can later suppress
  * a stale server sync. Only user-initiated setters write the timestamp; the
- * `applyServer*` syncs write the value alone (via a bare `setItem`) so they
- * never reset their own guard window.
+ * `applyServer*` syncs and the system-mode paths write the value alone
+ * (via a bare `setItem`) so they never reset their own guard window.
  *
  * Takes a named-argument object rather than three positional `string`s. With
  * all three parameters sharing the `string` type, positional arguments let a

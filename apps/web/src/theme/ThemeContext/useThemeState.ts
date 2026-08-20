@@ -22,6 +22,7 @@ import {
   DYSLEXIC_FONT_KEY,
   DYSLEXIC_FONT_UPDATED_AT_KEY,
   hasRecentLocalChange,
+  LAST_SEEN_SYSTEM_MODE_KEY,
   MODE_STORAGE_KEY,
   MODE_UPDATED_AT_KEY,
   persistWithTimestamp,
@@ -37,7 +38,11 @@ import {
   type Mode,
 } from '../constants';
 import { getInitialBaseTheme, getInitialMode } from '../initial';
-import { isFollowingSystemMode, useSystemModeSync } from '../systemMode';
+import {
+  getSystemMode,
+  isFollowingSystemMode,
+  useSystemModeSync,
+} from '../systemMode';
 import type { CustomTheme } from '../customTheme';
 import type { ThemeContextValue } from './types';
 
@@ -114,6 +119,14 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
   useLayoutEffect(() => {
     modeRef.current = mode;
   }, [mode]);
+
+  // records the OS value this boot saw, and keeps the mode it painted
+  useLayoutEffect(() => {
+    window.localStorage.setItem(LAST_SEEN_SYSTEM_MODE_KEY, getSystemMode());
+    if (modeRef.current !== readLocalStorage(MODE_STORAGE_KEY)) {
+      window.localStorage.setItem(MODE_STORAGE_KEY, modeRef.current);
+    }
+  }, []);
 
   // set data-theme/mode before child effects call getComputedStyle
   useLayoutEffect(() => {
@@ -281,6 +294,7 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
       applyModeTransition();
       setModeState(systemMode);
       window.localStorage.setItem(MODE_STORAGE_KEY, systemMode);
+      window.localStorage.setItem(LAST_SEEN_SYSTEM_MODE_KEY, systemMode);
     },
     [applyModeTransition],
   );

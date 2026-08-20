@@ -18,11 +18,13 @@ import {
   CUSTOM_THEME_ENABLED_UPDATED_AT_KEY,
   CUSTOM_THEME_STORAGE_KEY,
   CUSTOM_THEME_UPDATED_AT_KEY,
+  LAST_SEEN_SYSTEM_MODE_KEY,
   MODE_STORAGE_KEY,
   MODE_UPDATED_AT_KEY,
   THEME_STORAGE_KEY,
 } from '../storage';
 import { CUSTOM_TOKEN_KEYS } from '../customTheme';
+import { getSystemMode } from '../systemMode';
 import { stubSystemColorScheme } from '../../../test/systemColorScheme';
 import { useThemeState } from './useThemeState';
 
@@ -811,6 +813,9 @@ describe('system mode', () => {
     const { result } = renderHook(() => useThemeState());
 
     act(() => result.current.setMode('light'));
+    expect(window.localStorage.getItem(MODE_STORAGE_KEY)).toBe('light');
+    expect(getSystemMode()).toBe('dark');
+
     act(() => system.flip('light'));
     expect(result.current.mode).toBe('light');
 
@@ -887,6 +892,69 @@ describe('system mode', () => {
 
     expect(result.current.mode).toBe('light');
     expect(window.localStorage.getItem(MODE_STORAGE_KEY)).toBe('light');
+  });
+
+  it('records the OS value and the mode it painted at mount', () => {
+    stubSystemColorScheme('light');
+
+    renderHook(() => useThemeState());
+
+    expect(window.localStorage.getItem(LAST_SEEN_SYSTEM_MODE_KEY)).toBe(
+      'light',
+    );
+    expect(window.localStorage.getItem(MODE_STORAGE_KEY)).toBe('light');
+    expect(window.localStorage.getItem(MODE_UPDATED_AT_KEY)).toBeNull();
+  });
+
+  it('records the OS value again after an adoption', () => {
+    const system = stubSystemColorScheme('dark');
+    window.localStorage.setItem(MODE_STORAGE_KEY, 'dark');
+    const { result } = renderHook(() => useThemeState());
+
+    act(() => system.flip('light'));
+
+    expect(result.current.mode).toBe('light');
+    expect(window.localStorage.getItem(LAST_SEEN_SYSTEM_MODE_KEY)).toBe(
+      'light',
+    );
+  });
+
+  it('adopts an OS change that landed while the tab was closed', () => {
+    const system = stubSystemColorScheme('dark');
+    window.localStorage.setItem(MODE_STORAGE_KEY, 'dark');
+    renderHook(() => useThemeState()).unmount();
+
+    system.flip('light');
+    const { result } = renderHook(() => useThemeState());
+
+    expect(result.current.mode).toBe('light');
+    expect(document.documentElement.dataset.mode).toBe('light');
+    expect(window.localStorage.getItem(MODE_STORAGE_KEY)).toBe('light');
+    expect(window.localStorage.getItem(MODE_UPDATED_AT_KEY)).toBeNull();
+  });
+
+  it('ignores the server mode after adopting at mount', () => {
+    stubSystemColorScheme('light');
+    window.localStorage.setItem(MODE_STORAGE_KEY, 'dark');
+    window.localStorage.setItem(LAST_SEEN_SYSTEM_MODE_KEY, 'dark');
+    const { result } = renderHook(() => useThemeState());
+
+    act(() => result.current.applyServerMode('dark'));
+
+    expect(result.current.mode).toBe('light');
+    expect(window.localStorage.getItem(MODE_STORAGE_KEY)).toBe('light');
+  });
+
+  it('keeps a chosen mode the OS has not caught up to', () => {
+    stubSystemColorScheme('light');
+    window.localStorage.setItem(MODE_STORAGE_KEY, 'dark');
+    window.localStorage.setItem(LAST_SEEN_SYSTEM_MODE_KEY, 'light');
+
+    const { result } = renderHook(() => useThemeState());
+
+    expect(result.current.mode).toBe('dark');
+    expect(document.documentElement.dataset.mode).toBe('dark');
+    expect(window.localStorage.getItem(MODE_STORAGE_KEY)).toBe('dark');
   });
 
   it('applies the server mode in a tab a sibling left behind', () => {

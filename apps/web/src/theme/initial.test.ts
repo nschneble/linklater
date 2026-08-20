@@ -97,4 +97,30 @@ describe('getInitialMode', () => {
     stubMatchMedia(true);
     expect(getInitialMode()).toBe('light');
   });
+
+  it('adopts the OS value when the stored mode is the one the OS moved off', () => {
+    window.localStorage.setItem('linklater_mode', 'dark');
+    window.localStorage.setItem('linklater_last_seen_system_mode', 'dark');
+    stubMatchMedia(true);
+    expect(getInitialMode()).toBe('light');
+  });
+
+  it('keeps a stored mode the OS was already disagreeing with', () => {
+    window.localStorage.setItem('linklater_mode', 'dark');
+    window.localStorage.setItem('linklater_last_seen_system_mode', 'light');
+    stubMatchMedia(true);
+    expect(getInitialMode()).toBe('dark');
+  });
+
+  it('keeps the stored mode when no OS value has been seen yet', () => {
+    window.localStorage.setItem('linklater_mode', 'dark');
+    stubMatchMedia(true);
+    expect(getInitialMode()).toBe('dark');
+  });
+
+  it('takes the OS value when nothing is stored, whatever it last saw', () => {
+    window.localStorage.setItem('linklater_last_seen_system_mode', 'dark');
+    stubMatchMedia(true);
+    expect(getInitialMode()).toBe('light');
+  });
 });
