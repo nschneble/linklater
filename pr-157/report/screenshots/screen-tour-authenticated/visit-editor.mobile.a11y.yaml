@@ -1,0 +1,109 @@
+- status
+- link "Skip to main content":
+  - /url: "#main-content"
+- banner:
+  - button "Go to your links": Linklater Save links now, read them later.
+  - button "User menu (testing-ui@linklater.test)"
+  - dialog "User menu":
+    - menu "User menu":
+      - group "Logged in as":
+        - paragraph: Logged in as
+        - paragraph: testing-ui@linklater.test
+      - menuitem "Your links"
+      - menuitem "Settings"
+      - menuitem "Switch to dark mode"
+      - menuitem "Craft your theme"
+      - menuitem "Theme A Scanner Darkly"
+      - menuitem "Log out"
+    - menu "Theme":
+      - menuitem "Back to main menu"
+      - paragraph: Themes
+      - menuitemradio "Apollo 10½ Accessible theme"
+      - menuitemradio "A Scanner Darkly" [checked]
+      - menuitemradio "Before Sunrise"
+      - menuitemradio "Before Sunset"
+      - menuitemradio "Before Midnight"
+      - menuitemradio "Boyhood"
+      - menuitemradio "Dazed and Confused"
+      - menuitemradio "Hit Man"
+      - menuitemradio "Nouvelle Vague"
+      - menuitemradio "School of Rock"
+- main "Theme editor":
+  - heading "Theme editor" [level=1]
+  - img "Theme colors meet minimum contrast"
+  - paragraph: All changes are saved automatically.
+  - status
+  - tablist "Palette to edit":
+    - tab "Light" [selected]
+    - tab "Dark"
+  - button "Randomize"
+  - button "Copy A Scanner Darkly" [disabled]
+  - text: Already using A Scanner Darkly's colors. Edit a color or Randomize to start a custom theme.
+  - tabpanel "Light":
+    - region "Color Bundles":
+      - heading "Color Bundles" [level=2]
+      - note: These start from A Scanner Darkly. Editing any color saves it as your own theme.
+      - tablist "Color Bundles":
+        - tab "Base" [selected]
+        - tab "Mount"
+        - tab "Orbit"
+        - tab "Alert"
+        - tab "Warn"
+        - tab "Info"
+        - tab "Success"
+      - heading "Colors" [level=3]
+      - tabpanel "Base":
+        - paragraph: Background
+        - textbox "Color picker for Background": "#eeeedf"
+        - textbox "Value for Background":
+          - /placeholder: "#000000"
+          - text: "#eeeedf"
+        - paragraph: Border
+        - textbox "Color picker for Border": "#3b376a"
+        - textbox "Value for Border":
+          - /placeholder: "#000000"
+          - text: "#3b376a"
+        - paragraph: Text
+        - textbox "Color picker for Text": "#0f0b1b"
+        - textbox "Value for Text":
+          - /placeholder: "#000000"
+          - text: "#0f0b1b"
+        - paragraph: Alt text
+        - textbox "Color picker for Alt text": "#4c2413"
+        - textbox "Value for Alt text":
+          - /placeholder: "#000000"
+          - text: "#4c2413"
+        - paragraph: Highlight
+        - textbox "Color picker for Highlight": "#8f2610"
+        - textbox "Value for Highlight":
+          - /placeholder: "#000000"
+          - text: "#8f2610"
+        - paragraph: Highlight hover
+        - textbox "Color picker for Highlight hover": "#6f1c08"
+        - textbox "Value for Highlight hover":
+          - /placeholder: "#000000"
+          - text: "#6f1c08"
+        - paragraph: Highlight text
+        - textbox "Color picker for Highlight text": "#eeeedf"
+        - textbox "Value for Highlight text":
+          - /placeholder: "#000000"
+          - text: "#eeeedf"
+        - paragraph: Input
+        - textbox "Color picker for Input": "#eeeedf"
+        - textbox "Value for Input":
+          - /placeholder: "#000000"
+          - text: "#eeeedf"
+        - paragraph: Subtle text
+        - textbox "Color picker for Subtle text": "#2f2b52"
+        - textbox "Value for Subtle text":
+          - /placeholder: "#000000"
+          - text: "#2f2b52"
+        - paragraph: Focus
+        - textbox "Color picker for Focus": "#8f2610"
+        - textbox "Value for Focus":
+          - /placeholder: "#000000"
+          - text: "#8f2610"
+    - region "Live preview":
+      - heading "Live preview" [level=2]
+      - text: Preview
+      - paragraph: Page defaults. Covers elements like the page title, search input, and navigation buttons.
