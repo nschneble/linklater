@@ -292,6 +292,8 @@ import { useEffect, useState } from 'react';
 
   Ternaries still correct for pure JS state with no DOM representation (e.g. `mode === 'login'`, animation gates, internal hover coordination across non-nested elements) — + for setting ARIA attribute itself (e.g. `aria-current={isActive ? 'page' : undefined}`).
 
+- **A control that is WAITING marks itself, not just `aria-disabled`.** Add `data-busy` while a request is in flight, `data-cooldown` during a pause after an action that landed, `data-copied` after a copy. `ARIA_DISABLED` in `lib/styles.ts` withholds the 60% dim on those attributes and on `:focus-visible`, so a control that is refusing dims and one that is working does not. A new in-flight control that takes `aria-disabled` alone gets the wrong paint — it reads as unavailable when it is merely busy, and its focus ring composites away with it.
+
 ## Theme System (Bundles)
 
 - 7-bundle architecture in `apps/web/src/theme/styles/bundles.css`: `base`, `mount`, `orbit`, `alert`, `warn`, `info`, `success`. Token shape: `--{bundle}-{slot}` (e.g. `--mount-border`).
