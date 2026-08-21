@@ -104,7 +104,7 @@
 
   /* warn = amber (bg = rgb(69 26 3 / 0.55) over #0a0812). */
   --warn-bg: #451a038c;
-  --warn-border: #f59e0b;
+  --warn-border: #fbbf24;
   --warn-text: #fcd34d;
   --warn-alt-text: #fde68a;
   --warn-highlight: #f59e0b;
