@@ -1,4 +1,4 @@
-type StorageMethod = 'getItem' | 'setItem' | 'removeItem';
+type StorageMethod = 'clear' | 'getItem' | 'setItem' | 'removeItem';
 type StorageArea = 'localStorage' | 'sessionStorage';
 
 interface InstalledRefusal {

@@ -45,6 +45,34 @@ describe('resetShortcutsPreference', () => {
 
     expect(window.localStorage.getItem(KEYBOARD_SHORTCUTS_KEY)).toBeNull();
   });
+
+  it('drops a refusal record while the store is still refusing writes', () => {
+    window.localStorage.setItem(KEYBOARD_SHORTCUTS_KEY, 'off');
+
+    withRefusedStorage(
+      'setItem',
+      () => {
+        setShortcutsEnabled(true);
+        resetShortcutsPreference();
+      },
+      'localStorage',
+    );
+
+    window.localStorage.setItem(KEYBOARD_SHORTCUTS_KEY, 'off');
+    const { result } = renderHook(() => useShortcutsEnabled());
+    expect(result.current).toBe(false);
+  });
+
+  it('resets what it still can when the store refuses to clear', () => {
+    setShortcutsEnabled(false);
+
+    withRefusedStorage('clear', resetShortcutsPreference, 'localStorage');
+
+    // the refused clear left 'off' stored; only the in-memory half is at issue
+    window.localStorage.removeItem(KEYBOARD_SHORTCUTS_KEY);
+    const { result } = renderHook(() => useShortcutsEnabled());
+    expect(result.current).toBe(true);
+  });
 });
 
 describe('useShortcutsEnabled', () => {

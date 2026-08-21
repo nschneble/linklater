@@ -1,4 +1,5 @@
 import {
+  forgetRefusedWrite,
   readLocalStorage,
   readPersistedValue,
   writeLocalStorage,
@@ -108,6 +109,18 @@ startCrossTabShortcutsSync();
 export function setShortcutsEnabled(enabled: boolean): void {
   cachedPreference = enabled ? 'on' : 'off';
   writeLocalStorage(KEYBOARD_SHORTCUTS_KEY, cachedPreference);
+  notifyListeners();
+}
+
+/**
+ * Returns this module's memory of the preference to its fresh state,
+ * touching no store. `setShortcutsEnabled` clears the refusal record only
+ * by writing successfully, plants one under a refusal, and is itself under
+ * test, so a reset cannot route through it. Nothing in `src` resets.
+ */
+export function forgetShortcutsPreference(): void {
+  cachedPreference = 'on';
+  forgetRefusedWrite(KEYBOARD_SHORTCUTS_KEY);
   notifyListeners();
 }
 
