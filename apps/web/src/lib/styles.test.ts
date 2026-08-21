@@ -1,5 +1,6 @@
 import {
   ARIA_DISABLED,
+  BUSY,
   DISABLED,
   FOCUS_RING,
   FOCUS_RING_FLUSH,
@@ -218,5 +219,28 @@ describe('ARIA_DISABLED', () => {
     expect(selectorDeclaring(css, 'cursor: not-allowed')).toContain(
       ':not([data-busy])',
     );
+  });
+});
+
+/*
+ * The waiting half on its own, for a control that refuses only while it
+ * waits. The constant above spends two of its three classes on the case
+ * such a control never reaches, and both are written as the absence of an
+ * attribute it always sets, so on it they compile to dead rules.
+ */
+describe('BUSY', () => {
+  it('gives a waiting control the progress cursor', async () => {
+    const css = await compileUtilities(BUSY);
+    expect(selectorDeclaring(css, 'cursor: progress')).toContain('[data-busy]');
+  });
+
+  it('emits no rule that a control marked busy cannot match', async () => {
+    const css = await compileUtilities(BUSY);
+    expect(css).not.toContain(':not([data-busy])');
+  });
+
+  it('leaves the dim to the constant that owns the refusal case', async () => {
+    const css = await compileUtilities(BUSY);
+    expect(css).not.toContain('opacity');
   });
 });

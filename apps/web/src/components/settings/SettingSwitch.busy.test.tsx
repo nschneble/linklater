@@ -78,4 +78,13 @@ describe('SettingSwitch while busy', () => {
       css.indexOf('cursor: pointer'),
     );
   });
+
+  it('carries no styling for a refusal it has no way to be in', async () => {
+    renderSwitch(true);
+    const css = await compileClasses(
+      screen.getByRole('switch').className.split(/\s+/).filter(Boolean),
+    );
+
+    expect(css).not.toContain(':not([data-busy])');
+  });
 });

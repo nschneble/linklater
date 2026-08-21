@@ -1,8 +1,13 @@
 /*
  * The switch's rendered state is owned by the `user-toggles-dyslexic-font`
  * Tuffgal story, so this file keeps only what a story can't observe: the
- * `PATCH /users/me` payload carries `dyslexicFont` alone (no `theme`, unlike
- * CVD mode), and the optimistic flip rolls back when the persist fails.
+ * `PATCH /users/me` payload carries `dyslexicFont` alone (no `theme`,
+ * unlike CVD mode), the optimistic flip rolls back when the persist
+ * fails, and the busy window tracks that persist.
+ *
+ * What a busy switch does - refusing a second activation, keeping focus,
+ * never going natively disabled - belongs to the shared control and is
+ * pinned in `SettingSwitch.busy.test.tsx`.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -76,7 +81,7 @@ describe('DyslexicFontToggle', () => {
     expect(mockTheme.disableDyslexicFont).toHaveBeenCalledTimes(1);
   });
 
-  it('refuses a second flip while the persist is in flight, without dropping focus', async () => {
+  it('holds the switch busy for as long as its own persist runs', async () => {
     let resolvePersist!: () => void;
     vi.mocked(updateMe).mockReturnValue(
       new Promise<void>((resolve) => {
@@ -85,20 +90,12 @@ describe('DyslexicFontToggle', () => {
     );
     render(<DyslexicFontToggle />);
     const toggle = screen.getByRole('switch');
-    toggle.focus();
 
     fireEvent.click(toggle);
 
-    await waitFor(() =>
-      expect(toggle).toHaveAttribute('aria-disabled', 'true'),
-    );
-    expect(toggle).not.toBeDisabled();
-    expect(document.activeElement).toBe(toggle);
-
-    fireEvent.click(toggle);
-    expect(updateMe).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(toggle).toHaveAttribute('aria-busy', 'true'));
 
     resolvePersist();
-    await waitFor(() => expect(toggle).not.toHaveAttribute('aria-disabled'));
+    await waitFor(() => expect(toggle).not.toHaveAttribute('aria-busy'));
   });
 });

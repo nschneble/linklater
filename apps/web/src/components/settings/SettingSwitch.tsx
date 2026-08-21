@@ -1,4 +1,4 @@
-import { ARIA_DISABLED } from '../../lib/styles';
+import { BUSY } from '../../lib/styles';
 import type { ReactNode } from 'react';
 
 interface SettingSwitchProps {
@@ -8,11 +8,11 @@ interface SettingSwitchProps {
   label: string;
   /**
    * Supporting copy below the label. An accessible description is flattened
-   * to a string, so anything interactive belongs in `action` instead.
+   * to a string, so anything interactive belongs in `followUpAction`.
    */
   description: ReactNode;
-  /** Follow-up control, rendered outside the flattened description. */
-  action?: ReactNode;
+  /** Control rendered below the description, and outside it. */
+  followUpAction?: ReactNode;
   /** Extra classes merged onto the label, e.g. a font-preview override. */
   labelClassName?: string;
   /** Current on/off state, mapped to `aria-checked`. */
@@ -34,7 +34,7 @@ export default function SettingSwitch({
   id,
   label,
   description,
-  action,
+  followUpAction,
   checked,
   busy,
   onToggle,
@@ -62,7 +62,7 @@ export default function SettingSwitch({
         >
           {description}
         </p>
-        {action}
+        {followUpAction}
       </div>
 
       <button
@@ -76,7 +76,7 @@ export default function SettingSwitch({
         aria-busy={busy || undefined}
         data-busy={busy || undefined}
         onClick={handleClick}
-        className={`group relative inline-flex shrink-0 items-center w-11 h-6 mt-0.5 bg-[var(--orbit-bg)] aria-checked:bg-[var(--orbit-highlight)] border border-[var(--orbit-border)] aria-checked:border-transparent forced-colors:border-[ButtonText] forced-colors:aria-checked:border-[Highlight] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] rounded-full transition-colors duration-200 cursor-pointer ${ARIA_DISABLED}`}
+        className={`group relative inline-flex shrink-0 items-center w-11 h-6 mt-0.5 bg-[var(--orbit-bg)] aria-checked:bg-[var(--orbit-highlight)] border border-[var(--orbit-border)] aria-checked:border-transparent forced-colors:border-[ButtonText] forced-colors:aria-checked:border-[Highlight] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] rounded-full transition-colors duration-200 cursor-pointer ${BUSY}`}
       >
         <span className="inline-block w-4 h-4 translate-x-1 group-aria-checked:translate-x-6 bg-white rounded-full shadow-sm transition-transform duration-200" />
       </button>

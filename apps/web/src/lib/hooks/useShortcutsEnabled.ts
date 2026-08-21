@@ -56,8 +56,7 @@ function subscribe(listener: () => void): () => void {
  * The preference a `storage` event leaves this tab holding. The event
  * proves a sibling wrote, which no refusal record can tell once the store
  * cycles back to the value the refusal saw. Only a disable is taken on
- * that proof: of the two unordered answers, only a stray `on` re-arms a
- * handler someone asked to stop. A refused enable is the price.
+ * it: a stray `on` re-arms a handler someone asked to stop.
  */
 function resolveSiblingPreference(): string {
   const stored = readLocalStorage(KEYBOARD_SHORTCUTS_KEY);

@@ -8,14 +8,9 @@ interface InstalledRefusal {
 
 /**
  * Stands a substitute store in front of `store` whose `method` throws.
- *
- * A whole substitute is installed, rather than the method being patched,
- * because patching does not take: jsdom hands out a `Storage` proxy whose
- * methods are neither the prototype's nor writable through the instance.
- * Assigning over one of those names stores an item under that name
- * instead, and the real method goes on answering. A test written that way
- * passes without ever reaching the arm it names, which is the shape every
- * best-effort `catch` here is meant to be pinned by.
+ * A whole substitute, not a patched method: jsdom's `Storage` proxy has
+ * methods neither on the prototype nor writable, so an assignment stores
+ * an item under that name and the real method goes on answering.
  */
 function installRefusal(
   method: StorageMethod,
@@ -59,14 +54,11 @@ function installRefusal(
 }
 
 /**
- * Runs a block against a web storage area that refuses one method,
- * `sessionStorage` unless `store` names the other one.
- *
- * @throws {Error} When nothing under `run` called the refusing method.
- *   It counts calls without telling which caller arrived, so it catches a
- *   refusal aimed at the wrong area — easy, since `store` defaults — but
- *   a render path reading the same key satisfies it just as the code
- *   under test would. The value assertion still carries the claim.
+ * Runs a block against a storage area whose `method` refuses,
+ * `sessionStorage` unless `store` says otherwise.
+ * @throws {Error} When nothing under `run` reached that method. Blind
+ *   to the caller: a render path on the key satisfies it, so the value
+ *   assertion carries the claim.
  */
 export function withRefusedStorage(
   method: StorageMethod,

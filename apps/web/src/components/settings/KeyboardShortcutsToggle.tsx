@@ -40,7 +40,7 @@ export default function KeyboardShortcutsToggle() {
           <span className="font-semibold">A</span> to add links.
         </>
       }
-      action={
+      followUpAction={
         <LinkButton
           className="inline-flex"
           surface="mount"

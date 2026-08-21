@@ -86,13 +86,9 @@ export function writeLocalStorage(key: string, value: string): void {
 
 /**
  * Drops `key`'s refusal record, for a test returning a key to its
- * unwritten state without a working store to write through.
- *
- * Nothing else in `src` should call it. Releasing a record on a live read
- * or event path was reviewed and rejected: it resurrects shortcuts in a
- * tab where the user disabled them, and from this shared module it would
- * also let a stale server undo a CVD or dyslexic-font accommodation via
- * `useServerBooleanPrefSync`.
+ * unwritten state without a working store to write through. No live path
+ * may: a release there re-arms shortcuts a user disabled, or lets a stale
+ * server undo a CVD or dyslexic-font accommodation.
  */
 export function forgetRefusedWrite(key: string): void {
   refusedWrites.delete(key);

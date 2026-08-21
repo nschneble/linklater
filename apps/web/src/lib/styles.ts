@@ -52,6 +52,14 @@ export const DISABLED = 'disabled:opacity-60 disabled:cursor-not-allowed';
 export const ARIA_DISABLED =
   'aria-disabled:not-data-busy:not-data-cooldown:not-focus-visible:opacity-60 aria-disabled:not-data-busy:cursor-not-allowed data-busy:cursor-progress';
 
+/**
+ * The waiting half of `ARIA_DISABLED`, for a control whose only refusal is
+ * the wait itself. Both classes the constant withholds from `data-busy`
+ * are gated on the absence of an attribute such a control always sets, so
+ * on one they compile to rules nothing can match.
+ */
+export const BUSY = 'data-busy:cursor-progress';
+
 // closing runs faster than opening so the panel feels snappy
 export function menuRevealStyle(
   isOpen: boolean,
