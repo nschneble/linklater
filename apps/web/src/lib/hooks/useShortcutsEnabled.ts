@@ -53,37 +53,18 @@ function subscribe(listener: () => void): () => void {
 }
 
 /**
- * The preference a `storage` event leaves this tab holding. The event is
- * proof a sibling just wrote the stored value, which is the one thing the
- * refusal record cannot tell once the store has cycled back to the value
- * the refusal saw. A present stored value other than `on` is taken as a
- * disable on that proof alone, which no other read here does:
- * `readPersistedValue` hands back the cached copy instead when the stored
- * value is the one the refusal saw. The event fixes no order
- * against this tab's own writes, and of the two unordered answers only a
- * stray `on` re-arms a `document`-level handler someone asked to stop. So
- * the record stands only against a stored `on`, and a refused local
- * disable outlives one.
- *
- * The refused local enable is the direction given up: while the store
- * reads anything but `on`, any sibling event drops it, even one whose
- * write predates the enable, so a switch turned on in a tab whose store
- * refuses writes can visibly go back off. An absent or unreadable store is
- * neither value, so a sibling's `removeItem` still evicts nothing.
- *
- * The two reads are not one snapshot: the store is shared across
- * processes and the spec has authors assume no locking. Only the first
- * can short-circuit to `off`, so a tear misses only towards the
- * fall-through, which re-reads the store, and the write that caused it
- * delivers an event of its own.
- *
- * `lib/api/storage.ts` leaves the same unordered event to `readPersisted`
- * in both directions, having no unsafe one to break the tie towards.
+ * The preference a `storage` event leaves this tab holding. The event
+ * proves a sibling wrote, which no refusal record can tell once the store
+ * cycles back to the value the refusal saw. Only a disable is taken on
+ * that proof: of the two unordered answers, only a stray `on` re-arms a
+ * handler someone asked to stop. A refused enable is the price.
  */
 function resolveSiblingPreference(): string {
   const stored = readLocalStorage(KEYBOARD_SHORTCUTS_KEY);
+  // absent and unreadable are neither value, so a removeItem evicts nothing
   if (stored !== null && stored !== 'on') return 'off';
 
+  // a tear between the two reads misses only towards this re-read
   return readPersistedValue(KEYBOARD_SHORTCUTS_KEY, cachedPreference);
 }
 
@@ -113,15 +94,14 @@ export function setShortcutsEnabled(enabled: boolean): void {
 }
 
 /**
- * Returns this module's memory of the preference to its fresh state,
- * touching no store. `setShortcutsEnabled` clears the refusal record only
- * by writing successfully, plants one under a refusal, and is itself under
- * test, so a reset cannot route through it. Nothing in `src` resets.
+ * Drops this module's memory of the preference to a fixed `on`, touching
+ * no store. Fixed rather than a re-seed on purpose: `seedPreference`
+ * answers `off` under a refusal, and a test wants one starting point
+ * either way. Nothing in `src` calls this.
  */
 export function forgetShortcutsPreference(): void {
   cachedPreference = 'on';
   forgetRefusedWrite(KEYBOARD_SHORTCUTS_KEY);
-  notifyListeners();
 }
 
 /**
