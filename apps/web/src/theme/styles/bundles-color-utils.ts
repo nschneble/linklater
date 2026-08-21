@@ -141,8 +141,17 @@ export function resolveFg(value: Rgba): Rgb {
   return [value[0], value[1], value[2]];
 }
 
-// comments are consumed at tokenization, so no boundary may see one
-function stripComments(css: string): string {
+/**
+ * Removes every CSS comment, because comments are consumed at tokenization
+ * and so no boundary a reader looks for may fall inside one.
+ *
+ * Exported for callers that measure a POSITION in the source rather than
+ * extract a block: an `indexOf` over a selector finds the first mention of
+ * it, and the first mention is routinely a comment describing the block
+ * rather than the block. Both readers have to run over the same stripped
+ * string for their offsets to be comparable.
+ */
+export function stripComments(css: string): string {
   return css.replace(/\/\*[\s\S]*?\*\//g, '');
 }
 

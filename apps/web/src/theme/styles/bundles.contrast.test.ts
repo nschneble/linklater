@@ -38,6 +38,7 @@ import {
   parseDeclarations,
   readPageBg,
   resolveFg,
+  stripComments,
 } from './bundles-color-utils';
 import { describe, expect, it } from 'vitest';
 import type { Rgb, Rgba, Slot } from './bundles-color-utils';
@@ -711,16 +712,31 @@ describe('bundle contrast contract', () => {
    * different AND that branding is later in source, so the resolved bg is
    * branding's own. Alpha is encoded as the trailing hex byte: 0.55 -> 8c,
    * 0.4 -> 66.
+   *
+   * Both offsets are read from comment-stripped source. Against the raw
+   * string the branding offset landed at 47358, inside branding.css's own
+   * preamble describing the block, so the order held by luck of where the
+   * prose sits rather than by where the rules do.
    */
   describe('branding alert/success bg wins by source order', () => {
-    const brandingIndex = BUNDLES_CSS.indexOf("[data-theme='branding']");
-    const darkModeIndex = BUNDLES_CSS.indexOf("[data-mode='dark']");
+    const cascadeSource = stripComments(BUNDLES_CSS);
+    const brandingIndex = cascadeSource.indexOf("[data-theme='branding']");
+    const darkModeIndex = cascadeSource.indexOf("[data-mode='dark']");
     const brandingDecls = parseDeclarations(
       extractBlock(BUNDLES_CSS, "[data-theme='branding']"),
     );
     const darkDecls = parseDeclarations(
       extractBlock(BUNDLES_CSS, "[data-mode='dark']"),
     );
+
+    it('measures both offsets at a rule, not at a mention of one', () => {
+      expect(cascadeSource.slice(brandingIndex)).toMatch(
+        /^\[data-theme='branding'\]\s*\{/,
+      );
+      expect(cascadeSource.slice(darkModeIndex)).toMatch(
+        /^\[data-mode='dark'\]\s*\{/,
+      );
+    });
 
     it('branding cascade is later in source than [data-mode=dark]', () => {
       expect(brandingIndex).toBeGreaterThan(-1);

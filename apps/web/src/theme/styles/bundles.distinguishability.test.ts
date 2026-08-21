@@ -175,6 +175,18 @@ const NOUVELLE_VAGUE_DARK_PAGE_BG: Rgb = readPageBg(
   "[data-theme='nouvelle-vague'][data-mode='dark']",
   'base-bg',
 );
+/*
+ * branding is the OFF-BOOK brand-chrome theme: DARK-LOCKED / mode-independent,
+ * so its selector has NO `[data-mode]` qualifier (see branding.css). It backs
+ * every logged-out surface, which is why its state bundles need the same CVD
+ * guarantee the on-book themes get. Its own --base-bg (#0a0812, the bg-hit-man
+ * radial's outer stop) is the page bg its alpha state-bundle bgs composite over.
+ */
+const BRANDING_PAGE_BG: Rgb = readPageBg(
+  BUNDLES_CSS,
+  "[data-theme='branding']",
+  'base-bg',
+);
 
 const FIXTURES: readonly CascadeFixture[] = [
   {
@@ -286,6 +298,11 @@ const FIXTURES: readonly CascadeFixture[] = [
     label: 'nouvelle-vague dark',
     selector: "[data-theme='nouvelle-vague'][data-mode='dark']",
     pageBg: NOUVELLE_VAGUE_DARK_PAGE_BG,
+  },
+  {
+    label: 'branding',
+    selector: "[data-theme='branding']",
+    pageBg: BRANDING_PAGE_BG,
   },
 ];
 
@@ -421,6 +438,26 @@ const SHAPE_REDUNDANCY_WAIVERS: ReadonlySet<string> = new Set([
   'nouvelle-vague-light::alert-success',
   'nouvelle-vague-dark::alert-success',
   'nouvelle-vague-dark::info-warn',
+
+  // branding (off-book, mode-independent) - 2 warm-vs-warm pairs. Both
+  // members of both pairs are painted by Toast.tsx, which is the strongest
+  // form this proof takes anywhere in the file: one component renders all
+  // three of alert / warn / success and gives each an unconditional glyph
+  // of its own (fa-circle-exclamation, fa-triangle-exclamation,
+  // fa-circle-check), so neither pair rests on color in the component that
+  // shows them side by side. Alert.tsx and StatusBadge.tsx carry the same
+  // glyphs, also unconditionally, on the surfaces that render only one.
+  //   - alert-warn: rose-400 vs amber-500 borders collapse under tritan
+  //     (dE bg 3.8 / border 7.3); the 0.55-alpha bgs both composite over
+  //     the same near-black chrome, so the luminance gap closes too
+  //     (bg 1.23x, border 1.33x).
+  //   - success-warn: emerald-500 vs amber-500 collapse under protan
+  //     (dE bg 4.3 / border 9.0), and sit closest of any branding pair on
+  //     luminance (bg 1.17x, border 1.07x).
+  // Re-hueing either bundle is a palette change, which is the user's call,
+  // not this suite's.
+  'branding::alert-warn',
+  'branding::success-warn',
 ]);
 
 const CASCADE_SLUGS: Record<string, string> = {
@@ -448,6 +485,7 @@ const CASCADE_SLUGS: Record<string, string> = {
   "[data-theme='before-sunrise'][data-mode='dark']": 'before-sunrise-dark',
   "[data-theme='nouvelle-vague'][data-mode='light']": 'nouvelle-vague-light',
   "[data-theme='nouvelle-vague'][data-mode='dark']": 'nouvelle-vague-dark',
+  "[data-theme='branding']": 'branding',
 };
 
 function waiverKey(selector: string, first: Bundle, second: Bundle): string {
