@@ -193,13 +193,6 @@ export function getSlot(
   return parseColor(value);
 }
 
-export function bundleIsFullyDefined(
-  declarations: Map<string, string>,
-  bundle: Bundle,
-): boolean {
-  return SLOTS.every((slot) => getSlot(declarations, bundle, slot) !== null);
-}
-
 export function readPageBg(
   themeCss: string,
   selector: string,

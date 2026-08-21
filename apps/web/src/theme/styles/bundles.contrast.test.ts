@@ -18,13 +18,19 @@
  * Soft assertions are used so a single run reports every failing pair,
  * not just the first.
  *
+ * A cascade may declare a bundle only partly - the synthetic fallback omits
+ * --orbit-bg and every --{base,mount,orbit}-highlight slot on purpose (see
+ * bundles.css preamble). Coverage is decided per PAIR, not per bundle: a pair
+ * is skipped only when a slot it actually reads is absent. Deciding per bundle
+ * is what hid two SC 1.4.11 border failures in the synthetic fallback, since
+ * one missing highlight slot took the defined border pair down with it.
+ *
  * Sister suite: bundles.distinguishability.test.ts encodes the
  * CVD-distinguishability invariant from feedback-bundle-hue-separation.
  * Shared color parsing + WCAG helpers live in bundles-color-utils.ts.
  */
 
 import {
-  bundleIsFullyDefined,
   BUNDLES,
   BUNDLES_CSS,
   CARD_BUNDLES,
@@ -368,22 +374,27 @@ describe('bundle contrast contract', () => {
 
     describe(`${fixture.label}`, () => {
       for (const bundle of BUNDLES) {
-        if (!bundleIsFullyDefined(declarations, bundle)) {
+        const definedPairs = CONTRACT.flatMap((pair) => {
+          const foregroundRaw = getSlot(declarations, bundle, pair.fg);
+          const backgroundRaw = getSlot(declarations, bundle, pair.bg);
+          if (foregroundRaw === null || backgroundRaw === null) {
+            return [];
+          }
+          return [{ ...pair, foregroundRaw, backgroundRaw }];
+        });
+        // an empty describe registers zero it() calls and vitest fails it
+        if (definedPairs.length === 0) {
           continue;
         }
 
         describe(`${bundle} bundle`, () => {
-          for (const pair of CONTRACT) {
+          for (const pair of definedPairs) {
             it(`${pair.fg} on ${pair.bg} >= ${pair.threshold}:1`, () => {
-              const foregroundRaw = getSlot(declarations, bundle, pair.fg);
-              const backgroundRaw = getSlot(declarations, bundle, pair.bg);
-              if (foregroundRaw === null || backgroundRaw === null) {
-                throw new Error(
-                  `Missing slot for ${bundle}-${pair.fg} / ${bundle}-${pair.bg}`,
-                );
-              }
-              const background = compositeOverBg(backgroundRaw, fixture.pageBg);
-              const foreground = resolveFg(foregroundRaw);
+              const background = compositeOverBg(
+                pair.backgroundRaw,
+                fixture.pageBg,
+              );
+              const foreground = resolveFg(pair.foregroundRaw);
               const ratio = contrastRatio(foreground, background);
               expect
                 .soft(
