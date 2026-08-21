@@ -153,9 +153,11 @@ export function extractBlock(source: string, selector: string): string {
 
 export function parseDeclarations(block: string): Map<string, string> {
   const declarations = new Map<string, string>();
-  const pattern = /--([a-z-]+)\s*:\s*([^;]+);/g;
+  const withoutComments = block.replace(/\/\*[\s\S]*?\*\//g, '');
+  // a value may wrap across lines but never reach the next --token:
+  const pattern = /--([a-z-]+)\s*:\s*((?:(?!--[a-z-]+\s*:)[^;{}])+);/g;
   let match: RegExpExecArray | null;
-  while ((match = pattern.exec(block)) !== null) {
+  while ((match = pattern.exec(withoutComments)) !== null) {
     declarations.set(match[1], match[2].trim());
   }
   return declarations;
