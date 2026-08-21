@@ -13,7 +13,7 @@
         - paragraph: testing-ui@linklater.test
       - menuitem "Your links"
       - menuitem "Settings"
-      - menuitem "Switch to dark mode"
+      - menuitem "Switch to light mode"
       - menuitem "Craft your theme"
       - menuitem "Theme A Scanner Darkly"
       - menuitem "Log out"

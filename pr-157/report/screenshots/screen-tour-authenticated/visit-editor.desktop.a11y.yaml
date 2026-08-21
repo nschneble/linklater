@@ -10,12 +10,12 @@
   - paragraph: All changes are saved automatically.
   - status
   - tablist "Palette to edit":
-    - tab "Light" [selected]
-    - tab "Dark"
+    - tab "Light"
+    - tab "Dark" [selected]
   - button "Randomize"
   - button "Copy A Scanner Darkly" [disabled]
   - text: Already using A Scanner Darkly's colors. Edit a color or Randomize to start a custom theme.
-  - tabpanel "Light":
+  - tabpanel "Dark":
     - region "Color Bundles":
       - heading "Color Bundles" [level=2]
       - note: These start from A Scanner Darkly. Editing any color saves it as your own theme.
@@ -30,55 +30,55 @@
       - heading "Colors" [level=3]
       - tabpanel "Base":
         - paragraph: Background
-        - textbox "Color picker for Background": "#eeeedf"
+        - textbox "Color picker for Background": "#0f0b1b"
         - textbox "Value for Background":
           - /placeholder: "#000000"
-          - text: "#eeeedf"
+          - text: "#0f0b1b"
         - paragraph: Border
-        - textbox "Color picker for Border": "#3b376a"
+        - textbox "Color picker for Border": "#847ecc"
         - textbox "Value for Border":
           - /placeholder: "#000000"
-          - text: "#3b376a"
+          - text: "#847ecc"
         - paragraph: Text
-        - textbox "Color picker for Text": "#0f0b1b"
+        - textbox "Color picker for Text": "#eeeedf"
         - textbox "Value for Text":
           - /placeholder: "#000000"
-          - text: "#0f0b1b"
+          - text: "#eeeedf"
         - paragraph: Alt text
-        - textbox "Color picker for Alt text": "#4c2413"
+        - textbox "Color picker for Alt text": "#ebcaae"
         - textbox "Value for Alt text":
           - /placeholder: "#000000"
-          - text: "#4c2413"
+          - text: "#ebcaae"
         - paragraph: Highlight
-        - textbox "Color picker for Highlight": "#8f2610"
+        - textbox "Color picker for Highlight": "#ed9156"
         - textbox "Value for Highlight":
           - /placeholder: "#000000"
-          - text: "#8f2610"
+          - text: "#ed9156"
         - paragraph: Highlight hover
-        - textbox "Color picker for Highlight hover": "#6f1c08"
+        - textbox "Color picker for Highlight hover": "#f5a878"
         - textbox "Value for Highlight hover":
           - /placeholder: "#000000"
-          - text: "#6f1c08"
+          - text: "#f5a878"
         - paragraph: Highlight text
-        - textbox "Color picker for Highlight text": "#eeeedf"
+        - textbox "Color picker for Highlight text": "#1a0e08"
         - textbox "Value for Highlight text":
           - /placeholder: "#000000"
-          - text: "#eeeedf"
+          - text: "#1a0e08"
         - paragraph: Input
-        - textbox "Color picker for Input": "#eeeedf"
+        - textbox "Color picker for Input": "#201e43"
         - textbox "Value for Input":
           - /placeholder: "#000000"
-          - text: "#eeeedf"
+          - text: "#201e43"
         - paragraph: Subtle text
-        - textbox "Color picker for Subtle text": "#2f2b52"
+        - textbox "Color picker for Subtle text": "#bcdc6f"
         - textbox "Value for Subtle text":
           - /placeholder: "#000000"
-          - text: "#2f2b52"
+          - text: "#bcdc6f"
         - paragraph: Focus
-        - textbox "Color picker for Focus": "#8f2610"
+        - textbox "Color picker for Focus": "#ed9156"
         - textbox "Value for Focus":
           - /placeholder: "#000000"
-          - text: "#8f2610"
+          - text: "#ed9156"
     - region "Live preview":
       - heading "Live preview" [level=2]
       - text: Preview
