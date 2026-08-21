@@ -13,6 +13,7 @@ export interface ThemeContextValue {
   mode: Mode;
   /** Moving off the CVD base theme also turns CVD mode off. */
   setBaseTheme: (theme: BaseTheme) => void;
+  previewTheme: BaseTheme | null;
   /**
    * Paints a theme without committing it, so consumers keep reading the
    * real selection. Pass `null` to revert.
@@ -21,6 +22,7 @@ export interface ThemeContextValue {
   setMode: (mode: Mode) => void;
   toggleMode: () => void;
   applyServerTheme: (theme: BaseTheme) => void;
+  /** Ignored while this device is following its own OS color scheme. */
   applyServerMode: (mode: Mode) => void;
   /** Returns the resolved theme for the caller to send to the server. */
   enableCvdMode: () => BaseTheme;

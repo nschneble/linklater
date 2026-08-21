@@ -1,7 +1,7 @@
 # Privacy Policy
 
 **Effective date:** July 25, 2026  
-**Last updated:** August 7, 2026
+**Last updated:** August 20, 2026
 
 Linklater (the "Service") is operated by Nick Schneble ("we," "us," or "our").
 This Privacy Policy describes how we collect, use, and protect your personal
@@ -27,7 +27,7 @@ Stored only as a salted cryptographic hash. We never store or transmit your plai
 - **Saved links**  
 The URLs you save to your account, along with metadata our server fetches from those pages so your links are pleasantly presented. Link metadata includes title, description, site name, favicon, and preview image.
 - **Preferences**  
-Display settings such as theme, light/dark mode, custom theme colors, and accessibility options including Color Vision Deficiency (CVD) mode and an OpenDyslexic typeface.
+Display settings such as theme, light/dark mode, custom theme colors, and accessibility options including Color Vision Deficiency (CVD) mode and an OpenDyslexic typeface. When your light/dark mode matches your device's own appearance setting, the app follows that setting as it changes. That reading stays in your browser, and the mode it follows is never stored with your account.
 - **Two-factor authentication data**  
 If you enable two-factor authentication, we store your TOTP secret and hashed recovery codes.
 
@@ -41,7 +41,7 @@ If you enable two-factor authentication, we store your TOTP secret and hashed re
 ### Information collected automatically
 
 - **Cookies and local storage**  
-Used solely to keep you signed in and to remember your preferences. We don't use cookies for advertising or tracking.
+Used to keep you signed in, to remember your preferences, and to record your device's light or dark appearance as your browser last saw it. We don't use cookies for advertising or tracking.
 - **Authentication tokens**  
 Session, refresh, and any personal access or bookmarklet tokens you create are stored (hashed where possible) to keep your account secure.
 - **Server logs**  

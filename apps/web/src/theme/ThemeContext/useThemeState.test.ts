@@ -18,10 +18,19 @@ import {
   CUSTOM_THEME_ENABLED_UPDATED_AT_KEY,
   CUSTOM_THEME_STORAGE_KEY,
   CUSTOM_THEME_UPDATED_AT_KEY,
+  LAST_SEEN_SYSTEM_MODE_KEY,
+  MODE_STORAGE_KEY,
+  MODE_UPDATED_AT_KEY,
   THEME_STORAGE_KEY,
 } from '../storage';
 import { CUSTOM_TOKEN_KEYS } from '../customTheme';
+import { getSystemMode } from '../systemMode';
+import {
+  restoreSystemColorScheme,
+  stubSystemColorScheme,
+} from '../../../test/systemColorScheme';
 import { useThemeState } from './useThemeState';
+import { withRefusedStorage } from '../../../test/refusedStorage';
 
 const storage: Record<string, string> = {};
 
@@ -140,6 +149,50 @@ describe('setBaseTheme', () => {
 
     expect(result.current.isCvdMode).toBe(true);
   });
+
+  it('still clears CVD mode when the store refuses the write', () => {
+    const { result } = renderHook(() => useThemeState());
+
+    act(() => {
+      result.current.enableCvdMode();
+    });
+
+    expect(() =>
+      withRefusedStorage(
+        'setItem',
+        () => {
+          act(() => {
+            result.current.setBaseTheme('boyhood');
+          });
+        },
+        'localStorage',
+      ),
+    ).not.toThrow();
+    expect(result.current.isCvdMode).toBe(false);
+    expect(result.current.baseTheme).toBe('boyhood');
+  });
+
+  it('still clears CVD mode when the store refuses the removal', () => {
+    const { result } = renderHook(() => useThemeState());
+
+    act(() => {
+      result.current.enableCvdMode();
+    });
+
+    expect(() =>
+      withRefusedStorage(
+        'removeItem',
+        () => {
+          act(() => {
+            result.current.setBaseTheme('boyhood');
+          });
+        },
+        'localStorage',
+      ),
+    ).not.toThrow();
+    expect(result.current.isCvdMode).toBe(false);
+    expect(result.current.baseTheme).toBe('boyhood');
+  });
 });
 
 describe('setMode', () => {
@@ -206,37 +259,53 @@ describe('applyServerTheme', () => {
     });
 
     expect(result.current.baseTheme).toBe('boyhood');
+    expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe('boyhood');
+  });
+
+  it('still applies the server theme when the store refuses the write', () => {
+    const { result } = renderHook(() => useThemeState());
+
+    withRefusedStorage(
+      'setItem',
+      () => {
+        act(() => {
+          result.current.applyServerTheme('boyhood');
+        });
+      },
+      'localStorage',
+    );
+
+    expect(result.current.baseTheme).toBe('boyhood');
   });
 });
 
 describe('applyServerMode', () => {
+  // stored light vs the dark matchMedia fallback: a choice, not the system
   it('does not update when a local mode change was made recently', () => {
+    window.localStorage.setItem(MODE_STORAGE_KEY, 'light');
     const { result } = renderHook(() => useThemeState());
-    window.localStorage.setItem(
-      'linklater_mode_updated_at',
-      Date.now().toString(),
-    );
+    window.localStorage.setItem(MODE_UPDATED_AT_KEY, Date.now().toString());
 
     act(() => {
-      result.current.applyServerMode('light');
+      result.current.applyServerMode('dark');
     });
 
-    // default mode is dark (no matchMedia stub → dark fallback)
-    expect(result.current.mode).toBe('dark');
+    expect(result.current.mode).toBe('light');
   });
 
   it('applies the server mode when the local change is stale', () => {
+    window.localStorage.setItem(MODE_STORAGE_KEY, 'light');
     const { result } = renderHook(() => useThemeState());
     window.localStorage.setItem(
-      'linklater_mode_updated_at',
+      MODE_UPDATED_AT_KEY,
       (Date.now() - 60_000).toString(),
     );
 
     act(() => {
-      result.current.applyServerMode('light');
+      result.current.applyServerMode('dark');
     });
 
-    expect(result.current.mode).toBe('light');
+    expect(result.current.mode).toBe('dark');
   });
 });
 
@@ -285,6 +354,40 @@ describe('enableCvdMode', () => {
     });
 
     expect(returned).toBe('apollo-10-1-2');
+  });
+
+  it('does not throw when the store refuses the pre-cvd write', () => {
+    const { result } = renderHook(() => useThemeState());
+
+    expect(() =>
+      withRefusedStorage(
+        'setItem',
+        () => {
+          act(() => {
+            result.current.enableCvdMode();
+          });
+        },
+        'localStorage',
+      ),
+    ).not.toThrow();
+  });
+
+  // the refused write is the first side effect, so all of this is at stake
+  it('still turns CVD on when the store refuses the pre-cvd write', () => {
+    const { result } = renderHook(() => useThemeState());
+
+    withRefusedStorage(
+      'setItem',
+      () => {
+        act(() => {
+          result.current.enableCvdMode();
+        });
+      },
+      'localStorage',
+    );
+
+    expect(result.current.isCvdMode).toBe(true);
+    expect(result.current.baseTheme).toBe('apollo-10-1-2');
   });
 });
 
@@ -362,6 +465,52 @@ describe('disableCvdMode', () => {
 
     expect(returned).toBe('school-of-rock');
   });
+
+  it('does not throw when the store refuses the pre-cvd removal', () => {
+    const { result } = renderHook(() => useThemeState());
+
+    act(() => {
+      result.current.enableCvdMode();
+    });
+
+    expect(() =>
+      withRefusedStorage(
+        'removeItem',
+        () => {
+          act(() => {
+            result.current.disableCvdMode();
+          });
+        },
+        'localStorage',
+      ),
+    ).not.toThrow();
+  });
+
+  it('still clears CVD and returns the previous theme when the removal is refused', () => {
+    const { result } = renderHook(() => useThemeState());
+    let returned: string | undefined;
+
+    act(() => {
+      result.current.setBaseTheme('boyhood');
+    });
+    act(() => {
+      result.current.enableCvdMode();
+    });
+
+    withRefusedStorage(
+      'removeItem',
+      () => {
+        act(() => {
+          returned = result.current.disableCvdMode();
+        });
+      },
+      'localStorage',
+    );
+
+    expect(returned).toBe('boyhood');
+    expect(result.current.isCvdMode).toBe(false);
+    expect(result.current.baseTheme).toBe('boyhood');
+  });
 });
 
 describe('enableDyslexicFont', () => {
@@ -403,6 +552,23 @@ describe('enableDyslexicFont', () => {
     });
 
     expect(result.current.baseTheme).toBe('boyhood');
+  });
+
+  it('still enables the font when the store refuses the write', () => {
+    const { result } = renderHook(() => useThemeState());
+
+    expect(() =>
+      withRefusedStorage(
+        'setItem',
+        () => {
+          act(() => {
+            result.current.enableDyslexicFont();
+          });
+        },
+        'localStorage',
+      ),
+    ).not.toThrow();
+    expect(result.current.isDyslexicFont).toBe(true);
   });
 });
 
@@ -456,6 +622,27 @@ describe('disableDyslexicFont', () => {
     });
 
     expect(result.current.baseTheme).toBe('boyhood');
+  });
+
+  it('still disables the font when the store refuses the write', () => {
+    const { result } = renderHook(() => useThemeState());
+
+    act(() => {
+      result.current.enableDyslexicFont();
+    });
+
+    expect(() =>
+      withRefusedStorage(
+        'setItem',
+        () => {
+          act(() => {
+            result.current.disableDyslexicFont();
+          });
+        },
+        'localStorage',
+      ),
+    ).not.toThrow();
+    expect(result.current.isDyslexicFont).toBe(false);
   });
 });
 
@@ -643,6 +830,22 @@ describe('applyServerCustomThemeEnabled', () => {
     expect(result.current.customThemeEnabled).toBe(true);
     expect(window.localStorage.getItem(CUSTOM_THEME_ENABLED_KEY)).toBe('on');
   });
+
+  it('still applies the server value when the store refuses the write', () => {
+    const { result } = renderHook(() => useThemeState());
+
+    withRefusedStorage(
+      'setItem',
+      () => {
+        act(() => {
+          result.current.applyServerCustomThemeEnabled(true);
+        });
+      },
+      'localStorage',
+    );
+
+    expect(result.current.customThemeEnabled).toBe(true);
+  });
 });
 
 describe('setCustomTheme', () => {
@@ -717,6 +920,40 @@ describe('applyServerCustomTheme', () => {
     expect(result.current.customTheme).toBeNull();
     expect(window.localStorage.getItem(CUSTOM_THEME_STORAGE_KEY)).toBeNull();
   });
+
+  it('still applies the server palette when the store refuses the write', () => {
+    const { result } = renderHook(() => useThemeState());
+    const serverTheme = { dark: { '--mount-border': '#server0' }, light: {} };
+
+    withRefusedStorage(
+      'setItem',
+      () => {
+        act(() => {
+          result.current.applyServerCustomTheme(serverTheme);
+        });
+      },
+      'localStorage',
+    );
+
+    expect(result.current.customTheme).toEqual(serverTheme);
+  });
+
+  it('still clears the custom theme when the store refuses the removal', () => {
+    seedStoredCustomTheme({ dark: { '--mount-border': '#local00' } });
+    const { result } = renderHook(() => useThemeState());
+
+    withRefusedStorage(
+      'removeItem',
+      () => {
+        act(() => {
+          result.current.applyServerCustomTheme(null);
+        });
+      },
+      'localStorage',
+    );
+
+    expect(result.current.customTheme).toBeNull();
+  });
 });
 
 describe('setPreviewTheme', () => {
@@ -767,5 +1004,243 @@ describe('setPreviewTheme', () => {
 
     expect(root().dataset.theme).not.toBe('custom');
     expect(root().style.getPropertyValue('--mount-border')).toBe('');
+  });
+});
+
+describe('system mode', () => {
+  afterEach(restoreSystemColorScheme);
+
+  it('follows the OS when the stored mode already matches it', () => {
+    const system = stubSystemColorScheme('dark');
+    window.localStorage.setItem(MODE_STORAGE_KEY, 'dark');
+    const { result } = renderHook(() => useThemeState());
+
+    act(() => system.flip('light'));
+
+    expect(result.current.mode).toBe('light');
+    expect(window.localStorage.getItem(MODE_STORAGE_KEY)).toBe('light');
+    expect(document.documentElement.dataset.mode).toBe('light');
+  });
+
+  it('paints the stored mode when it differs from the OS', () => {
+    stubSystemColorScheme('dark');
+    window.localStorage.setItem(MODE_STORAGE_KEY, 'light');
+
+    const { result } = renderHook(() => useThemeState());
+
+    expect(result.current.mode).toBe('light');
+    expect(document.documentElement.dataset.mode).toBe('light');
+  });
+
+  it('collapses a choice back into following the system', () => {
+    const system = stubSystemColorScheme('dark');
+    window.localStorage.setItem(MODE_STORAGE_KEY, 'dark');
+    const { result } = renderHook(() => useThemeState());
+
+    act(() => result.current.setMode('light'));
+    expect(window.localStorage.getItem(MODE_STORAGE_KEY)).toBe('light');
+    expect(getSystemMode()).toBe('dark');
+
+    act(() => system.flip('light'));
+    expect(result.current.mode).toBe('light');
+
+    act(() => system.flip('dark'));
+
+    expect(result.current.mode).toBe('dark');
+    expect(window.localStorage.getItem(MODE_STORAGE_KEY)).toBe('dark');
+  });
+
+  it('keeps the adopted OS value across a remount', () => {
+    const system = stubSystemColorScheme('dark');
+    window.localStorage.setItem(MODE_STORAGE_KEY, 'dark');
+    const first = renderHook(() => useThemeState());
+
+    act(() => system.flip('light'));
+    first.unmount();
+
+    const { result } = renderHook(() => useThemeState());
+    expect(result.current.mode).toBe('light');
+  });
+
+  it('does not write the OS-driven mode timestamp', () => {
+    const system = stubSystemColorScheme('dark');
+    window.localStorage.setItem(MODE_STORAGE_KEY, 'dark');
+    const { result } = renderHook(() => useThemeState());
+
+    act(() => system.flip('light'));
+
+    expect(result.current.mode).toBe('light');
+    expect(window.localStorage.getItem(MODE_UPDATED_AT_KEY)).toBeNull();
+  });
+
+  it('ignores the server mode while the device follows the system', () => {
+    stubSystemColorScheme('dark');
+    window.localStorage.setItem(MODE_STORAGE_KEY, 'dark');
+    window.localStorage.setItem(
+      MODE_UPDATED_AT_KEY,
+      (Date.now() - 60_000).toString(),
+    );
+    const { result } = renderHook(() => useThemeState());
+
+    act(() => result.current.applyServerMode('light'));
+
+    expect(result.current.mode).toBe('dark');
+    expect(window.localStorage.getItem(MODE_STORAGE_KEY)).toBe('dark');
+  });
+
+  it('applies the server mode while the device is on a choice', () => {
+    stubSystemColorScheme('light');
+    window.localStorage.setItem(MODE_STORAGE_KEY, 'dark');
+    window.localStorage.setItem(
+      MODE_UPDATED_AT_KEY,
+      (Date.now() - 60_000).toString(),
+    );
+    const { result } = renderHook(() => useThemeState());
+
+    act(() => result.current.applyServerMode('light'));
+
+    expect(result.current.mode).toBe('light');
+    expect(window.localStorage.getItem(MODE_STORAGE_KEY)).toBe('light');
+  });
+
+  it('ignores the server mode after the OS drove an adoption', () => {
+    const system = stubSystemColorScheme('dark');
+    window.localStorage.setItem(MODE_STORAGE_KEY, 'dark');
+    window.localStorage.setItem(
+      MODE_UPDATED_AT_KEY,
+      (Date.now() - 60_000).toString(),
+    );
+    const { result } = renderHook(() => useThemeState());
+
+    act(() => system.flip('light'));
+    act(() => result.current.applyServerMode('dark'));
+
+    expect(result.current.mode).toBe('light');
+    expect(window.localStorage.getItem(MODE_STORAGE_KEY)).toBe('light');
+  });
+
+  it('records the OS value and the mode it painted at mount', () => {
+    stubSystemColorScheme('light');
+
+    renderHook(() => useThemeState());
+
+    expect(window.localStorage.getItem(LAST_SEEN_SYSTEM_MODE_KEY)).toBe(
+      'light',
+    );
+    expect(window.localStorage.getItem(MODE_STORAGE_KEY)).toBe('light');
+    expect(window.localStorage.getItem(MODE_UPDATED_AT_KEY)).toBeNull();
+  });
+
+  it('records the OS value this boot read, not a second reading', () => {
+    let readCount = 0;
+    const lightQuery = {
+      get matches() {
+        readCount += 1;
+        return readCount > 1;
+      },
+      media: '(prefers-color-scheme: light)',
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    };
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      writable: true,
+      value: (media: string) =>
+        media === lightQuery.media
+          ? lightQuery
+          : {
+              matches: false,
+              media,
+              addEventListener() {},
+              removeEventListener() {},
+            },
+    });
+
+    const { result } = renderHook(() => useThemeState());
+
+    expect(result.current.mode).toBe('dark');
+    expect(window.localStorage.getItem(LAST_SEEN_SYSTEM_MODE_KEY)).toBe('dark');
+    expect(window.localStorage.getItem(MODE_STORAGE_KEY)).toBe('dark');
+  });
+
+  it('mounts without throwing when the store refuses to be written', () => {
+    stubSystemColorScheme('light');
+
+    withRefusedStorage(
+      'setItem',
+      () => {
+        expect(() => renderHook(() => useThemeState())).not.toThrow();
+      },
+      'localStorage',
+    );
+  });
+
+  it('records the OS value again after an adoption', () => {
+    const system = stubSystemColorScheme('dark');
+    window.localStorage.setItem(MODE_STORAGE_KEY, 'dark');
+    const { result } = renderHook(() => useThemeState());
+
+    act(() => system.flip('light'));
+
+    expect(result.current.mode).toBe('light');
+    expect(window.localStorage.getItem(LAST_SEEN_SYSTEM_MODE_KEY)).toBe(
+      'light',
+    );
+  });
+
+  it('adopts an OS change that landed while the tab was closed', () => {
+    const system = stubSystemColorScheme('dark');
+    window.localStorage.setItem(MODE_STORAGE_KEY, 'dark');
+    renderHook(() => useThemeState()).unmount();
+
+    system.flip('light');
+    const { result } = renderHook(() => useThemeState());
+
+    expect(result.current.mode).toBe('light');
+    expect(document.documentElement.dataset.mode).toBe('light');
+    expect(window.localStorage.getItem(MODE_STORAGE_KEY)).toBe('light');
+    expect(window.localStorage.getItem(MODE_UPDATED_AT_KEY)).toBeNull();
+  });
+
+  it('ignores the server mode after adopting at mount', () => {
+    stubSystemColorScheme('light');
+    window.localStorage.setItem(MODE_STORAGE_KEY, 'dark');
+    window.localStorage.setItem(LAST_SEEN_SYSTEM_MODE_KEY, 'dark');
+    const { result } = renderHook(() => useThemeState());
+
+    act(() => result.current.applyServerMode('dark'));
+
+    expect(result.current.mode).toBe('light');
+    expect(window.localStorage.getItem(MODE_STORAGE_KEY)).toBe('light');
+  });
+
+  it('keeps a chosen mode the OS has not caught up to', () => {
+    stubSystemColorScheme('light');
+    window.localStorage.setItem(MODE_STORAGE_KEY, 'dark');
+    window.localStorage.setItem(LAST_SEEN_SYSTEM_MODE_KEY, 'light');
+
+    const { result } = renderHook(() => useThemeState());
+
+    expect(result.current.mode).toBe('dark');
+    expect(document.documentElement.dataset.mode).toBe('dark');
+    expect(window.localStorage.getItem(MODE_STORAGE_KEY)).toBe('dark');
+  });
+
+  it('applies the server mode in a tab a sibling left behind', () => {
+    stubSystemColorScheme('dark');
+    window.localStorage.setItem(MODE_STORAGE_KEY, 'light');
+    const firstTab = renderHook(() => useThemeState());
+    const secondTab = renderHook(() => useThemeState());
+
+    act(() => firstTab.result.current.toggleMode());
+    window.localStorage.setItem(
+      MODE_UPDATED_AT_KEY,
+      (Date.now() - 60_000).toString(),
+    );
+
+    act(() => secondTab.result.current.applyServerMode('dark'));
+
+    expect(firstTab.result.current.mode).toBe('dark');
+    expect(secondTab.result.current.mode).toBe('dark');
   });
 });

@@ -6,6 +6,11 @@ export const MODE_STORAGE_KEY = 'linklater_mode';
 export const THEME_UPDATED_AT_KEY = 'linklater_theme_updated_at';
 /** Timestamp written alongside the mode when a user action changes it. */
 export const MODE_UPDATED_AT_KEY = 'linklater_mode_updated_at';
+/**
+ * The OS color scheme as of the last time this device saw it, so a boot
+ * can tell a mode the OS moved away from apart from one the user chose.
+ */
+export const LAST_SEEN_SYSTEM_MODE_KEY = 'linklater_last_seen_system_mode';
 /** Whether CVD mode is explicitly on. */
 export const CVD_MODE_KEY = 'linklater_cvd_mode';
 /** The theme that was active before CVD mode was enabled. */
@@ -58,6 +63,57 @@ export function readLocalStorage(key: string): string | null {
 }
 
 /**
+ * Keys this tab could not persist, each mapped to what the store held when
+ * it refused. A refusal is the only evidence a later read has that the
+ * store's copy is older than the state this tab is showing.
+ */
+const refusedWrites = new Map<string, string | null>();
+
+/**
+ * Safely writes to `localStorage`. Does nothing when the write is refused
+ * (blocked storage, a full quota). The theme provider mounts above every
+ * `ErrorBoundary`, so an unguarded write reached from its boot layout
+ * effect, or from the server-sync effect in `App.tsx`, is a blank page.
+ */
+export function writeLocalStorage(key: string, value: string): void {
+  try {
+    window.localStorage.setItem(key, value);
+    refusedWrites.delete(key);
+  } catch {
+    refusedWrites.set(key, readLocalStorage(key));
+  }
+}
+
+/**
+ * The newest copy of `key` this tab knows of. Unreadable, absent, and a
+ * value this tab failed to write over all resolve to `cachedValue`: a
+ * refused write leaves live state ahead of the store. A stored value that
+ * differs from the one the refusal saw is another tab's, and wins.
+ */
+export function readPersistedValue(key: string, cachedValue: string): string {
+  const persisted = readLocalStorage(key);
+  if (persisted === null) return cachedValue;
+  if (refusedWrites.has(key) && persisted === refusedWrites.get(key)) {
+    return cachedValue;
+  }
+
+  return persisted;
+}
+
+/**
+ * Safely removes a key, mirroring `writeLocalStorage`. `removeItem` throws
+ * under a blocked store exactly as `setItem` does, so a sync path that
+ * clears a preference needs a guard of its own.
+ */
+export function removeLocalStorage(key: string): void {
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    return;
+  }
+}
+
+/**
  * Returns `true` when the preference tracked by `updatedAtKey` was changed
  * locally within the last `RECENT_LOCAL_CHANGE_MS`. The server-sync effects in
  * `useThemeState` (`applyServer*`) and `useServerBooleanPrefSync` call this to
@@ -78,9 +134,8 @@ interface PersistWithTimestampInput {
 /**
  * Persists a preference `value` under `valueKey` and stamps the current time
  * under `updatedAtKey`, so the `hasRecentLocalChange` guard can later suppress
- * a stale server sync. Only user-initiated setters write the timestamp; the
- * `applyServer*` syncs write the value alone (via a bare `setItem`) so they
- * never reset their own guard window.
+ * a stale server sync. The `applyServer*` syncs and the system-mode paths
+ * write the value alone, so they never reset their own guard window.
  *
  * Takes a named-argument object rather than three positional `string`s. With
  * all three parameters sharing the `string` type, positional arguments let a
@@ -93,6 +148,6 @@ export function persistWithTimestamp({
   value,
   updatedAtKey,
 }: PersistWithTimestampInput): void {
-  window.localStorage.setItem(valueKey, value);
-  window.localStorage.setItem(updatedAtKey, Date.now().toString());
+  writeLocalStorage(valueKey, value);
+  writeLocalStorage(updatedAtKey, Date.now().toString());
 }

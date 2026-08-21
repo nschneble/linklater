@@ -139,12 +139,11 @@ export function tokensForMode(
  * `CUSTOM_TOKEN_KEYS` are ever written, keeping the branding fallback inside
  * the same trust boundary as user data.
  *
- * Shared by the active-theme injection in `useThemeState` AND the theme-picker
- * live preview (`useThemePreview`): the picker only swaps the `data-theme`
- * attribute, which CSS-file themes key off, but the Custom palette is inline
- * `style` (higher specificity than any stylesheet), so the preview must
- * apply/clear these tokens itself or a stale Custom palette would bleed over
- * every previewed theme.
+ * `useThemeState` is the only caller, and a second one would break the
+ * pairing with `data-theme`: it writes tokens the layout effect registered
+ * no cleanup for, stranding them under the theme that replaced them. The
+ * theme picker's live preview goes through `setPreviewTheme` for that
+ * reason.
  */
 export function applyCustomThemeTokens(
   root: HTMLElement,

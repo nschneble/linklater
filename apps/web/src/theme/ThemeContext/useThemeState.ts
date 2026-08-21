@@ -22,13 +22,16 @@ import {
   DYSLEXIC_FONT_KEY,
   DYSLEXIC_FONT_UPDATED_AT_KEY,
   hasRecentLocalChange,
+  LAST_SEEN_SYSTEM_MODE_KEY,
   MODE_STORAGE_KEY,
   MODE_UPDATED_AT_KEY,
   persistWithTimestamp,
   PRE_CVD_THEME_KEY,
   readLocalStorage,
+  removeLocalStorage,
   THEME_STORAGE_KEY,
   THEME_UPDATED_AT_KEY,
+  writeLocalStorage,
 } from '../storage';
 import {
   CVD_BASE_THEME,
@@ -37,6 +40,11 @@ import {
   type Mode,
 } from '../constants';
 import { getInitialBaseTheme, getInitialMode } from '../initial';
+import {
+  getSystemMode,
+  isFollowingSystemMode,
+  useSystemModeSync,
+} from '../systemMode';
 import type { CustomTheme } from '../customTheme';
 import type { ThemeContextValue } from './types';
 
@@ -82,7 +90,10 @@ type PaintedTheme = BaseTheme | typeof BRANDING_THEME_ID;
 export function useThemeState(isAuthenticated = true): ThemeContextValue {
   const [baseTheme, setBaseThemeState] =
     useState<BaseTheme>(getInitialBaseTheme);
-  const [mode, setModeState] = useState<Mode>(getInitialMode);
+  const [systemModeAtBoot] = useState<Mode>(getSystemMode);
+  const [mode, setModeState] = useState<Mode>(() =>
+    getInitialMode(systemModeAtBoot),
+  );
   const [isCvdMode, setIsCvdMode] = useState<boolean>(
     () => readLocalStorage(CVD_MODE_KEY) === 'on',
   );
@@ -108,6 +119,19 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
   useLayoutEffect(() => {
     baseThemeRef.current = baseTheme;
   }, [baseTheme]);
+
+  const modeRef = useRef<Mode>(mode);
+  useLayoutEffect(() => {
+    modeRef.current = mode;
+  }, [mode]);
+
+  // records the OS value this boot saw, and keeps the mode it painted
+  useLayoutEffect(() => {
+    writeLocalStorage(LAST_SEEN_SYSTEM_MODE_KEY, systemModeAtBoot);
+    if (modeRef.current !== readLocalStorage(MODE_STORAGE_KEY)) {
+      writeLocalStorage(MODE_STORAGE_KEY, modeRef.current);
+    }
+  }, [systemModeAtBoot]);
 
   // set data-theme/mode before child effects call getComputedStyle
   useLayoutEffect(() => {
@@ -153,8 +177,8 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
 
       if (isCvdMode && theme !== CVD_BASE_THEME) {
         setIsCvdMode(false);
-        window.localStorage.setItem(CVD_MODE_KEY, 'off');
-        window.localStorage.removeItem(PRE_CVD_THEME_KEY);
+        writeLocalStorage(CVD_MODE_KEY, 'off');
+        removeLocalStorage(PRE_CVD_THEME_KEY);
       }
     },
     [isCvdMode],
@@ -216,7 +240,7 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
   const applyServerTheme = useCallback((theme: BaseTheme) => {
     if (hasRecentLocalChange(THEME_UPDATED_AT_KEY)) return;
     setBaseThemeState(theme);
-    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    writeLocalStorage(THEME_STORAGE_KEY, theme);
   }, []);
 
   const setCustomTheme = useCallback((nextCustomTheme: CustomTheme) => {
@@ -233,12 +257,12 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
       if (hasRecentLocalChange(CUSTOM_THEME_UPDATED_AT_KEY)) return;
       setCustomThemeState(serverCustomTheme);
       if (serverCustomTheme) {
-        window.localStorage.setItem(
+        writeLocalStorage(
           CUSTOM_THEME_STORAGE_KEY,
           JSON.stringify(serverCustomTheme),
         );
       } else {
-        window.localStorage.removeItem(CUSTOM_THEME_STORAGE_KEY);
+        removeLocalStorage(CUSTOM_THEME_STORAGE_KEY);
       }
     },
     [],
@@ -256,22 +280,32 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
   const applyServerCustomThemeEnabled = useCallback((enabled: boolean) => {
     if (hasRecentLocalChange(CUSTOM_THEME_ENABLED_UPDATED_AT_KEY)) return;
     setCustomThemeEnabledState(enabled);
-    window.localStorage.setItem(
-      CUSTOM_THEME_ENABLED_KEY,
-      enabled ? 'on' : 'off',
-    );
+    writeLocalStorage(CUSTOM_THEME_ENABLED_KEY, enabled ? 'on' : 'off');
   }, []);
 
+  // per-tab: a tab painting its own OS value ignores the account's mode
   const applyServerMode = useCallback((serverMode: Mode) => {
+    if (isFollowingSystemMode(modeRef.current)) return;
     if (hasRecentLocalChange(MODE_UPDATED_AT_KEY)) return;
     setModeState(serverMode);
-    window.localStorage.setItem(MODE_STORAGE_KEY, serverMode);
+    writeLocalStorage(MODE_STORAGE_KEY, serverMode);
   }, []);
+
+  const adoptSystemMode = useCallback(
+    (systemMode: Mode) => {
+      applyModeTransition();
+      setModeState(systemMode);
+      writeLocalStorage(MODE_STORAGE_KEY, systemMode);
+      writeLocalStorage(LAST_SEEN_SYSTEM_MODE_KEY, systemMode);
+    },
+    [applyModeTransition],
+  );
+  useSystemModeSync(adoptSystemMode);
 
   const enableCvdMode = useCallback((): BaseTheme => {
     const current = baseThemeRef.current;
     if (current !== CVD_BASE_THEME) {
-      window.localStorage.setItem(PRE_CVD_THEME_KEY, current);
+      writeLocalStorage(PRE_CVD_THEME_KEY, current);
     }
     setBaseThemeState(CVD_BASE_THEME);
     persistWithTimestamp({
@@ -305,7 +339,7 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
       value: 'off',
       updatedAtKey: CVD_UPDATED_AT_KEY,
     });
-    window.localStorage.removeItem(PRE_CVD_THEME_KEY);
+    removeLocalStorage(PRE_CVD_THEME_KEY);
     setIsCvdMode(false);
     return previousTheme;
   }, []);
@@ -345,6 +379,7 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
       isCvdMode,
       isDyslexicFont,
       mode,
+      previewTheme,
       setBaseTheme,
       setCustomTheme,
       setCustomThemeEnabled,
@@ -367,6 +402,7 @@ export function useThemeState(isAuthenticated = true): ThemeContextValue {
       isCvdMode,
       isDyslexicFont,
       mode,
+      previewTheme,
       setBaseTheme,
       setCustomTheme,
       setCustomThemeEnabled,

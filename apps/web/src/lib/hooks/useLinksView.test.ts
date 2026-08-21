@@ -1,10 +1,11 @@
 import { act, renderHook } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createElement } from 'react';
 import { MemoryRouter } from 'react-router';
 import type { ReactNode } from 'react';
 
 import { filterFromPath, useLinksView } from './useLinksView';
+import { resetShortcutsPreference } from '../../../test/shortcutsPreference';
 import { setShortcutsEnabled } from './useShortcutsEnabled';
 import type { UseLinksResult } from './types';
 
@@ -146,8 +147,9 @@ describe('useLinksView save-link dialog reporting (onLinkFormOpenChange)', () =>
 });
 
 describe('useLinksView keyboard-shortcuts preference', () => {
+  beforeEach(resetShortcutsPreference);
+
   afterEach(() => {
-    window.localStorage.clear();
     vi.mocked(linksStub.handleRandom).mockClear();
   });
 

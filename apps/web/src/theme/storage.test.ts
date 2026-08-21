@@ -4,10 +4,29 @@ import {
   MODE_STORAGE_KEY,
   persistWithTimestamp,
   readLocalStorage,
+  readPersistedValue,
   RECENT_LOCAL_CHANGE_MS,
   THEME_STORAGE_KEY,
   THEME_UPDATED_AT_KEY,
+  writeLocalStorage,
 } from './storage';
+import { withRefusedStorage } from '../../test/refusedStorage';
+
+let refusalKeyCounter = 0;
+
+// the refusal map has no reset, so a shared key couples the cases
+function freshRefusalKey(): string {
+  refusalKeyCounter += 1;
+  return `linklater_test_refusal_${refusalKeyCounter}`;
+}
+
+function recordRefusedWrite(key: string, value: string): void {
+  withRefusedStorage(
+    'setItem',
+    () => writeLocalStorage(key, value),
+    'localStorage',
+  );
+}
 
 describe('readLocalStorage', () => {
   afterEach(() => {
@@ -40,6 +59,53 @@ describe('readLocalStorage', () => {
     } finally {
       globalThis.window = originalWindow;
     }
+  });
+});
+
+describe('readPersistedValue', () => {
+  afterEach(() => {
+    window.localStorage.clear();
+  });
+
+  it('returns the stored value when this tab never failed to write the key', () => {
+    const key = freshRefusalKey();
+    window.localStorage.setItem(key, 'boyhood');
+
+    expect(readPersistedValue(key, 'school-of-rock')).toBe('boyhood');
+  });
+
+  it('returns the cached value when nothing is stored under the key', () => {
+    expect(readPersistedValue(freshRefusalKey(), 'school-of-rock')).toBe(
+      'school-of-rock',
+    );
+  });
+
+  it('returns the cached value when the store has not moved since it refused', () => {
+    const key = freshRefusalKey();
+    window.localStorage.setItem(key, 'boyhood');
+    recordRefusedWrite(key, 'school-of-rock');
+
+    expect(readPersistedValue(key, 'school-of-rock')).toBe('school-of-rock');
+  });
+
+  it('returns the stored value once a later write to the key lands', () => {
+    const key = freshRefusalKey();
+    window.localStorage.setItem(key, 'boyhood');
+    recordRefusedWrite(key, 'school-of-rock');
+
+    writeLocalStorage(key, 'boyhood');
+
+    expect(readPersistedValue(key, 'school-of-rock')).toBe('boyhood');
+  });
+
+  it('returns the stored value when another tab moved it after the refusal', () => {
+    const key = freshRefusalKey();
+    window.localStorage.setItem(key, 'boyhood');
+    recordRefusedWrite(key, 'school-of-rock');
+
+    window.localStorage.setItem(key, 'scanner-darkly');
+
+    expect(readPersistedValue(key, 'school-of-rock')).toBe('scanner-darkly');
   });
 });
 

@@ -56,9 +56,9 @@ interface ThemeSubmenuProps {
   flyoutReference?: RefObject<HTMLDivElement | null>;
   /**
    * Called when hovering or focusing a theme option to apply a live preview.
-   * Handles setting `data-theme` on the document root and temporarily clearing
-   * `data-cvd` when previewing a non-accessible theme while cvd
-   * mode is active. Pass the hook's `applyPreview` here.
+   * Hands the theme to the theme context to paint, and borrows `data-cvd`
+   * when previewing a non-accessible theme while cvd mode is on. Pass
+   * the hook's `applyPreview` here.
    */
   onApplyPreview: (theme: BaseTheme) => void;
   /** Called when the user clicks a theme option. Closes the menu. */
@@ -71,11 +71,10 @@ interface ThemeSubmenuProps {
  * The trigger row shows the current theme name (or "Previewing X" while
  * hovering an option). The flyout lists all themes with color dot indicators.
  *
- * Live preview on hover: hovering a theme option immediately sets the
- * `data-theme` attribute on `document.documentElement` with a 150ms CSS
- * transition so the user can see the theme before committing. Mousing away
- * from the theme area resets the preview back to the active theme with a
- * 600ms ease-out transition.
+ * Live preview on hover: hovering a theme option previews it through the
+ * theme context with a 150ms CSS transition, so the user sees the theme
+ * before committing. Mousing away from the theme area resets it to the
+ * active theme with a 600ms ease-out transition.
  */
 export default function ThemeSubmenu({
   baseTheme,

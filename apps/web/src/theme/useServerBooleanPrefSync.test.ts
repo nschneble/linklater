@@ -2,13 +2,14 @@
  * Tests for useServerBooleanPrefSync, the shared App-level hook that syncs a
  * boolean user preference (CVD mode, dyslexic font) from the server into
  * ThemeContext. It covers the four decision branches plus the two guards: the
- * 30s optimistic-toggle timestamp guard and the local `'on'` disable guard.
+ * 30s timestamp guard and the disable guard's reading of the local value.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RECENT_LOCAL_CHANGE_MS } from './storage';
 import { renderHook } from '@testing-library/react';
 import { useServerBooleanPrefSync } from './useServerBooleanPrefSync';
+import { withRefusedStorage } from '../../test/refusedStorage';
 
 const UPDATED_AT_KEY = 'test_pref_updated_at';
 const VALUE_KEY = 'test_pref';
@@ -48,6 +49,7 @@ describe('useServerBooleanPrefSync', () => {
   });
 
   it('disables when the server is off and local state disagrees', () => {
+    window.localStorage.setItem(VALUE_KEY, 'off');
     const enable = vi.fn();
     const disable = vi.fn();
 
@@ -61,6 +63,37 @@ describe('useServerBooleanPrefSync', () => {
 
   it('does not disable when the local value is still `on`', () => {
     window.localStorage.setItem(VALUE_KEY, 'on');
+    const enable = vi.fn();
+    const disable = vi.fn();
+
+    renderHook(() =>
+      useServerBooleanPrefSync(false, true, enable, disable, storageKeys),
+    );
+
+    expect(disable).not.toHaveBeenCalled();
+    expect(enable).not.toHaveBeenCalled();
+  });
+
+  it('does not disable when the local value cannot be read at all', () => {
+    const enable = vi.fn();
+    const disable = vi.fn();
+
+    expect(() =>
+      withRefusedStorage(
+        'getItem',
+        () => {
+          renderHook(() =>
+            useServerBooleanPrefSync(false, true, enable, disable, storageKeys),
+          );
+        },
+        'localStorage',
+      ),
+    ).not.toThrow();
+    expect(disable).not.toHaveBeenCalled();
+    expect(enable).not.toHaveBeenCalled();
+  });
+
+  it('does not disable when the local value was never written', () => {
     const enable = vi.fn();
     const disable = vi.fn();
 

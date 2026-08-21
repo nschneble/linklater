@@ -1,12 +1,13 @@
 {
   "schemaVersion": 1,
   "captureSchema": 1,
-  "tuffgalVersion": "0.2.0-alpha.7",
+  "tuffgalVersion": "0.2.0-alpha.8",
   "playwrightVersion": "1.62.1",
   "browser": "chromium",
   "browserVersion": "151.0.7922.34",
   "platform": "linux",
   "captureMode": "viewport",
+  "colorScheme": "dark",
   "breakpoints": [
     {
       "name": "mobile",

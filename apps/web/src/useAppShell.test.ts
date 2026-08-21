@@ -34,7 +34,9 @@ vi.mock('./lib/api', () => ({
 }));
 
 import { makeAuthContext, makeUser } from '../test/factories';
+import { resetShortcutsPreference } from '../test/shortcutsPreference';
 import { setShortcutsEnabled } from './lib/hooks/useShortcutsEnabled';
+import { updateMe } from './lib/api';
 import { useAppShell } from './useAppShell';
 import { useAuth } from './auth/AuthContext';
 import { useLocation, useNavigate } from 'react-router';
@@ -60,6 +62,7 @@ function makeThemeContext(
     isCvdMode: false,
     isDyslexicFont: false,
     mode: 'dark',
+    previewTheme: null,
     setBaseTheme: vi.fn(() => undefined),
     setCustomTheme: vi.fn(() => undefined),
     setCustomThemeEnabled: vi.fn(() => undefined),
@@ -235,6 +238,24 @@ describe('user menu toggle', () => {
   });
 });
 
+describe('mode toggle', () => {
+  it('persists the mode it painted, not the account value', () => {
+    const theme = makeThemeContext({ mode: 'light' });
+    vi.mocked(useTheme).mockReturnValue(theme);
+    vi.mocked(useAuth).mockReturnValue(
+      makeAuthContext({ user: makeUser({ mode: 'dark' }) }),
+    );
+    const { result } = renderHook(() => useAppShell());
+
+    act(() => {
+      result.current.handleModeToggle();
+    });
+
+    expect(theme.toggleMode).toHaveBeenCalledOnce();
+    expect(updateMe).toHaveBeenCalledWith({ mode: 'dark' });
+  });
+});
+
 describe('save-link dialog open state (drives AppShell chrome inerting)', () => {
   it('defaults to closed', () => {
     const { result } = renderHook(() => useAppShell());
@@ -269,9 +290,7 @@ describe('save-link dialog open state (drives AppShell chrome inerting)', () => 
 });
 
 describe('global x shortcut respects the keyboard-shortcuts preference', () => {
-  afterEach(() => {
-    window.localStorage.clear();
-  });
+  beforeEach(resetShortcutsPreference);
 
   function renderWithMenuTrigger() {
     const trigger = document.createElement('button');
