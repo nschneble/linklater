@@ -48,16 +48,14 @@
     - paragraph: Adjust how Linklater looks and feels.
     - text: Color Vision Deficiency (CVD) mode
     - paragraph: Switches to the Apollo 10½ theme and adds distinctive visual non-color cues, including underlined links, striped disabled controls, stronger focus outlines, and selected indicator bars.
-    - switch "Color Vision Deficiency (CVD) mode": "Off"
+    - switch "Color Vision Deficiency (CVD) mode"
     - text: OpenDyslexic typeface
     - paragraph: Switches the app's interface font to OpenDyslexic, a typeface designed for readers with dyslexia. It features heavier strokes and more distinctive letter shapes.
-    - switch "OpenDyslexic typeface": "Off"
+    - switch "OpenDyslexic typeface"
     - text: Keyboard shortcuts
-    - paragraph:
-      - text: Provides quick keyboard navigation for many actions on the
-      - button "Your Links"
-      - text: page, such as Q to search and A to add links.
-    - switch "Keyboard shortcuts" [checked]: "On"
+    - paragraph: Provides quick keyboard navigation for many actions on the Your Links page, such as Q to search and A to add links.
+    - button "Go to your links"
+    - switch "Keyboard shortcuts" [checked]
   - region "Browser bookmarks":
     - heading "Browser bookmarks" [level=2]
     - paragraph: Save and stumble upon links right from your bookmarks bar.
