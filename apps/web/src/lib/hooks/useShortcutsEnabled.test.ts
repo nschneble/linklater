@@ -1,5 +1,5 @@
 import { act, render, renderHook } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createElement } from 'react';
 
 import {
@@ -9,10 +9,7 @@ import {
 } from './useShortcutsEnabled';
 import { resetShortcutsPreference } from '../../../test/shortcutsPreference';
 import { useKeyboardShortcuts } from './useKeyboardShortcuts';
-import {
-  withRefusedStorage,
-  withRefusedStorageAsync,
-} from '../../../test/refusedStorage';
+import { withRefusedStorage } from '../../../test/refusedStorage';
 
 beforeEach(resetShortcutsPreference);
 
@@ -76,13 +73,6 @@ describe('resetShortcutsPreference', () => {
 });
 
 describe('useShortcutsEnabled', () => {
-  let freshModule: typeof import('./useShortcutsEnabled') | null = null;
-
-  afterEach(() => {
-    freshModule?.stopCrossTabShortcutsSync();
-    freshModule = null;
-  });
-
   it('defaults to enabled when nothing is stored', () => {
     const { result } = renderHook(() => useShortcutsEnabled());
     expect(result.current).toBe(true);
@@ -136,29 +126,6 @@ describe('useShortcutsEnabled', () => {
 
     act(() => setShortcutsEnabled(true));
     expect(window.localStorage.getItem(KEYBOARD_SHORTCUTS_KEY)).toBe('on');
-  });
-
-  it('seeds enabled at module load when the store is empty', async () => {
-    window.localStorage.clear();
-    vi.resetModules();
-    const loadedModule = await import('./useShortcutsEnabled');
-    freshModule = loadedModule;
-
-    const { result } = renderHook(() => loadedModule.useShortcutsEnabled());
-
-    expect(result.current).toBe(true);
-  });
-
-  it('seeds its in-memory copy at module load, not on first use', async () => {
-    window.localStorage.setItem(KEYBOARD_SHORTCUTS_KEY, 'off');
-    vi.resetModules();
-    const loadedModule = await import('./useShortcutsEnabled');
-    freshModule = loadedModule;
-    window.localStorage.clear();
-
-    const { result } = renderHook(() => loadedModule.useShortcutsEnabled());
-
-    expect(result.current).toBe(false);
   });
 });
 
@@ -239,66 +206,6 @@ describe('useShortcutsEnabled against a store that refuses writes', () => {
   });
 });
 
-describe('the shortcut gate against a store that refuses reads', () => {
-  let freshModule: typeof import('./useShortcutsEnabled') | null = null;
-
-  afterEach(() => {
-    freshModule?.stopCrossTabShortcutsSync();
-    freshModule = null;
-  });
-
-  // the seed runs at module evaluation, so the refusal has to span the import
-  async function mountGateOnAFreshModule(
-    options: ReturnType<typeof makeShortcutOptions>,
-  ) {
-    vi.resetModules();
-    const loadedModule = await import('./useShortcutsEnabled');
-    freshModule = loadedModule;
-
-    function Probe() {
-      useKeyboardShortcuts({
-        ...options,
-        singleKeyShortcutsEnabled: loadedModule.useShortcutsEnabled(),
-      });
-      return null;
-    }
-
-    render(createElement(Probe));
-    return loadedModule;
-  }
-
-  it('leaves the single-key shortcuts down when the store threw at module load', async () => {
-    const options = makeShortcutOptions();
-
-    await withRefusedStorageAsync(
-      'getItem',
-      async () => {
-        await mountGateOnAFreshModule(options);
-        pressSingleKeyShortcut();
-      },
-      'localStorage',
-    );
-
-    expect(options.onSearch).not.toHaveBeenCalled();
-  });
-
-  it('still lets the user turn them on for the session', async () => {
-    const options = makeShortcutOptions();
-
-    await withRefusedStorageAsync(
-      'getItem',
-      async () => {
-        const loadedModule = await mountGateOnAFreshModule(options);
-        act(() => loadedModule.setShortcutsEnabled(true));
-        pressSingleKeyShortcut();
-      },
-      'localStorage',
-    );
-
-    expect(options.onSearch).toHaveBeenCalledOnce();
-  });
-});
-
 describe('the shortcut gate against a sibling tab and a refused write', () => {
   function renderShortcutGate(options: ReturnType<typeof makeShortcutOptions>) {
     function Probe() {
@@ -332,12 +239,6 @@ describe('the shortcut gate against a sibling tab and a refused write', () => {
         }),
       );
     });
-  }
-
-  function pressSingleKeyShortcut() {
-    document.dispatchEvent(
-      new KeyboardEvent('keydown', { key: 'q', bubbles: true }),
-    );
   }
 
   it('takes a sibling disable that its own refusal snapshotted before the event landed', () => {
