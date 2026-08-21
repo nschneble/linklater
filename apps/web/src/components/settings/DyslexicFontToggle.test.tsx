@@ -76,7 +76,7 @@ describe('DyslexicFontToggle', () => {
     expect(mockTheme.disableDyslexicFont).toHaveBeenCalledTimes(1);
   });
 
-  it('disables the switch while the persist is in flight', async () => {
+  it('refuses a second flip while the persist is in flight, without dropping focus', async () => {
     let resolvePersist!: () => void;
     vi.mocked(updateMe).mockReturnValue(
       new Promise<void>((resolve) => {
@@ -85,11 +85,20 @@ describe('DyslexicFontToggle', () => {
     );
     render(<DyslexicFontToggle />);
     const toggle = screen.getByRole('switch');
+    toggle.focus();
 
     fireEvent.click(toggle);
 
-    await waitFor(() => expect(toggle).toBeDisabled());
+    await waitFor(() =>
+      expect(toggle).toHaveAttribute('aria-disabled', 'true'),
+    );
+    expect(toggle).not.toBeDisabled();
+    expect(document.activeElement).toBe(toggle);
+
+    fireEvent.click(toggle);
+    expect(updateMe).toHaveBeenCalledTimes(1);
+
     resolvePersist();
-    await waitFor(() => expect(toggle).not.toBeDisabled());
+    await waitFor(() => expect(toggle).not.toHaveAttribute('aria-disabled'));
   });
 });
