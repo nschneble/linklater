@@ -24,10 +24,11 @@ interface SettingSwitchProps {
 }
 
 /**
- * Presentational `role="switch"` toggle shared by the three Accessibility
- * settings switches; callers keep their own state and persistence.
- * `aria-checked` is the whole state, and a busy caller refuses through
- * `aria-disabled`, which unlike the native attribute keeps focus.
+ * Presentational `role="switch"` toggle - an immediate-effect control,
+ * not a checkbox inside a form - shared by the three Accessibility
+ * settings switches; callers own state and persistence. A busy caller
+ * refuses through `aria-disabled`, which unlike the native attribute
+ * keeps focus.
  */
 export default function SettingSwitch({
   id,
