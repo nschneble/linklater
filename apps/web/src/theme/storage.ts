@@ -85,9 +85,14 @@ export function writeLocalStorage(key: string, value: string): void {
 }
 
 /**
- * Drops `key`'s refusal record. A successful `writeLocalStorage` is the
- * only other thing that clears one, so a caller that has to return the key
- * to its unwritten state without a working store needs this instead.
+ * Drops `key`'s refusal record, for a test returning a key to its
+ * unwritten state without a working store to write through.
+ *
+ * Nothing else in `src` should call it. Releasing a record on a live read
+ * or event path was reviewed and rejected: it resurrects shortcuts in a
+ * tab where the user disabled them, and from this shared module it would
+ * also let a stale server undo a CVD or dyslexic-font accommodation via
+ * `useServerBooleanPrefSync`.
  */
 export function forgetRefusedWrite(key: string): void {
   refusedWrites.delete(key);

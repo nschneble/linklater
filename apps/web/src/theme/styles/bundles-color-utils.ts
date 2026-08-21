@@ -143,13 +143,14 @@ export function resolveFg(value: Rgba): Rgb {
 
 /**
  * Removes every CSS comment, because comments are consumed at tokenization
- * and so no boundary a reader looks for may fall inside one.
+ * and so no boundary a reader looks for may fall inside one. Shared at two
+ * call sites against the usual 3x rule because divergent copies are how a
+ * comment came to decide where a cascade block ended.
  *
- * Exported for callers that measure a POSITION in the source rather than
- * extract a block: an `indexOf` over a selector finds the first mention of
- * it, and the first mention is routinely a comment describing the block
- * rather than the block. Both readers have to run over the same stripped
- * string for their offsets to be comparable.
+ * Exported for callers that measure a POSITION rather than extract a
+ * block: an `indexOf` over a selector finds its first mention, which is
+ * routinely a comment about the block rather than the block. Both readers
+ * need the same stripped string for their offsets to compare.
  */
 export function stripComments(css: string): string {
   return css.replace(/\/\*[\s\S]*?\*\//g, '');

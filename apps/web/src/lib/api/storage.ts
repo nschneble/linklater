@@ -177,39 +177,20 @@ export function isTokenStorageEvent(event: StorageEvent): boolean {
 }
 
 /**
- * Pulls a sibling tab's rotation into the in-memory copy as it happens, so
- * a read taken after storage becomes unreadable still answers with the
- * rotated pair rather than the one read at boot. The `storage` event never
- * fires in the tab that wrote, so this only ever carries another tab's
- * work, but not necessarily work newer than this tab's: the event is
- * delivered as a queued task, so a sibling's write can arrive after a
- * rotation this tab performed in the gap. An outstanding refusal is
- * therefore left standing, and `readPersisted` decides which copy is
- * newer, exactly as a read taken before the event would.
- *
- * `useShortcutsEnabled` faces the same unordered event and does break the
- * tie, taking a present stored value other than `on` over its own record.
- * An absent store is not one of those, so it evicts nothing there either.
- * One of its two answers re-arms a key handler the user disabled, and
- * neither of these does.
- *
- * The store is re-read rather than trusting the event payload, so the rule
- * that a `null` never evicts a live token lives in a single place.
- *
- * A sibling's refresh token moots this tab's nomination for the reason
- * `setStoredToken` drops one on its own arrival, and this is the only
- * place that can say so: the nomination is excluded from the event filter
- * on purpose, so a sibling removing the key reaches nobody, and the rule
- * that a `null` never evicts would keep serving the removed value from
- * memory indefinitely. Left standing it outlives the session it belonged
- * to, and a renewal after a sign-in would offer the new account a token
- * minted for the old one.
+ * Pulls a sibling's rotation into the in-memory copy, so a read taken
+ * after storage becomes unreadable still answers with the rotated pair.
+ * The event is a queued task, so it orders nothing against this tab's own
+ * writes: a refusal stands and `readPersisted` picks the newer copy.
+ * `useShortcutsEnabled` breaks that tie, having an unsafe answer to break
+ * it towards. Neither of these does.
  */
 function handleTokenStorageEvent(event: StorageEvent): void {
   if (!isTokenStorageEvent(event)) return;
   const previousRefreshToken = cachedRefreshToken;
+  // re-read rather than trust the payload, so the null rule lives in one place
   cachedToken = readPersisted(TOKEN_KEY, cachedToken);
   cachedRefreshToken = readPersisted(REFRESH_TOKEN_KEY, cachedRefreshToken);
+  // the filter excludes the nomination, so nowhere else sees it removed
   if (cachedRefreshToken !== previousRefreshToken) clearNomination();
 }
 

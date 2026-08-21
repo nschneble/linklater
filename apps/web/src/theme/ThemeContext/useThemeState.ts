@@ -84,8 +84,9 @@ type PaintedTheme = BaseTheme | typeof BRANDING_THEME_ID;
  *   (`BRANDING_THEME_ID`) on the auth surfaces — never their stored film theme
  *   or the runtime-injected custom palette. `localStorage` is left untouched,
  *   so the stored selection restores automatically once the server sync
- *   confirms it after login. Defaults to `true` so direct hook tests and bare
- *   `ThemeProvider` mounts keep their authenticated painting behavior.
+ *   confirms it after login. Defaults to `true` for direct hook callers only:
+ *   `ThemeProvider` always passes `auth?.user != null`, which is `false` with
+ *   no `AuthProvider` above it, so a bare provider mount paints branding.
  */
 export function useThemeState(isAuthenticated = true): ThemeContextValue {
   const [baseTheme, setBaseThemeState] =

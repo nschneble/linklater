@@ -62,9 +62,11 @@ function installRefusal(
  * Runs a block against a web storage area that refuses one method,
  * `sessionStorage` unless `store` names the other one.
  *
- * @throws {Error} When `run` never reached the refusing method. `store`
- *   defaults, so a refusal aimed at the wrong area is otherwise a silent
- *   pass against a store that still works.
+ * @throws {Error} When nothing under `run` called the refusing method.
+ *   It counts calls without telling which caller arrived, so it catches a
+ *   refusal aimed at the wrong area — easy, since `store` defaults — but
+ *   a render path reading the same key satisfies it just as the code
+ *   under test would. The value assertion still carries the claim.
  */
 export function withRefusedStorage(
   method: StorageMethod,
@@ -86,7 +88,8 @@ export function withRefusedStorage(
  * `withRefusedStorage` for a block that has to await something, such as a
  * module re-import whose evaluation must land while the store is refusing.
  *
- * @throws {Error} When `run` never reached the refusing method.
+ * @throws {Error} When nothing anywhere under `run` called the refusing
+ *   method, with the same limit its sync twin documents.
  */
 export async function withRefusedStorageAsync(
   method: StorageMethod,
@@ -100,5 +103,6 @@ export async function withRefusedStorageAsync(
     refusal.restore();
   }
 
+  // after the finally, so a real failure inside run() is never masked
   refusal.assertReached();
 }

@@ -1,9 +1,8 @@
-/**
- * Guards the three places the contrast suites can lie: `resolveFg` dropping a
- * foreground's alpha and reporting a color nobody can see as a PASS,
- * `parseDeclarations` reading a declaration out of a CSS comment, then eating
- * the real declaration that follows it, and `extractBlock` letting a comment
- * decide where a cascade block starts and ends.
+/*
+ * Guards the three places the contrast suites can lie: `resolveFg` dropping
+ * an alpha and calling an invisible color a PASS, `parseDeclarations` reading
+ * a declaration out of a comment, and `extractBlock` letting a comment decide
+ * where a cascade block begins or ends.
  */
 
 import {

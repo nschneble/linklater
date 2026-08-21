@@ -452,12 +452,16 @@ const SHAPE_REDUNDANCY_WAIVERS: ReadonlySet<string> = new Set([
   //   - success-warn: emerald-500 vs amber-500 collapse under protan
   //     (dE bg 4.3 / border 9.0), and sit closest of any branding pair
   //     on luminance (bg 1.17x, border 1.07x). Glyph carries it: success
-  //     is fa-circle-check at every call site (Alert.tsx:28 and
-  //     StatusBadge.tsx:17, neither overridden by any success caller),
+  //     defaults to fa-circle-check (Alert.tsx:28, StatusBadge.tsx:17),
+  //     and the two callers that do override it pass that same glyph
+  //     (EmailSettingsForm.tsx:146, MultiFactorSection/index.tsx:74).
   //     warn is fa-triangle-exclamation at StatusBadge.tsx:18 and
   //     AppShell.tsx:52 or fa-circle-exclamation where a caller
-  //     overrides it. No warn surface draws a check. The one place the
-  //     two sit side by side is EmailSettingsForm.tsx:146-152.
+  //     overrides it. No warn surface draws a check. The two co-render
+  //     for an unverified account: AppShell's warn banner sits above
+  //     EmailSettingsForm's own success Alerts (:158, :168). Its
+  //     StatusBadge pair at :146/:150 is NOT such a place - those are
+  //     ternary arms and only one ever renders.
   //   - alert-warn: rose-400 vs amber-500 borders collapse under tritan
   //     (dE bg 3.8 / border 7.3); the 0.55-alpha bgs both composite over
   //     the same near-black chrome, so the luminance gap closes too
