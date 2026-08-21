@@ -347,6 +347,11 @@ const FIXTURES: readonly CascadeFixture[] = [
  * test today AND has verifiable shape redundancy in real consumers. Don't
  * preemptively waive – that defeats the test.
  *
+ * One entry deliberately breaks that second condition: branding::alert-warn
+ * has no compensating channel and is a known WCAG 1.4.1 gap, held here
+ * rather than left red while its palette fix waits on the user. Its own
+ * note below says so; nothing else in this set may follow that precedent.
+ *
  * Removing a waiver: the waiver-hygiene meta-test auto-detects when a
  * palette change closes either axis, and forces the corresponding entry
  * to be dropped. Don't pre-emptively edit; let the test guide.
@@ -439,23 +444,40 @@ const SHAPE_REDUNDANCY_WAIVERS: ReadonlySet<string> = new Set([
   'nouvelle-vague-dark::alert-success',
   'nouvelle-vague-dark::info-warn',
 
-  // branding (off-book, mode-independent) - 2 warm-vs-warm pairs. Both
-  // members of both pairs are painted by Toast.tsx, which is the strongest
-  // form this proof takes anywhere in the file: one component renders all
-  // three of alert / warn / success and gives each an unconditional glyph
-  // of its own (fa-circle-exclamation, fa-triangle-exclamation,
-  // fa-circle-check), so neither pair rests on color in the component that
-  // shows them side by side. Alert.tsx and StatusBadge.tsx carry the same
-  // glyphs, also unconditionally, on the surfaces that render only one.
+  // branding (off-book, mode-independent) - 2 warm-vs-warm pairs, here
+  // for different reasons: success-warn is compensated by glyph,
+  // alert-warn is not. The measurement is bg + border, so the consumers
+  // that matter are the ones painting those slots, not Toast.tsx, which
+  // paints --{state}-highlight.
+  //   - success-warn: emerald-500 vs amber-500 collapse under protan
+  //     (dE bg 4.3 / border 9.0), and sit closest of any branding pair
+  //     on luminance (bg 1.17x, border 1.07x). Glyph carries it: success
+  //     is fa-circle-check at every call site (Alert.tsx:28 and
+  //     StatusBadge.tsx:17, neither overridden by any success caller),
+  //     warn is fa-triangle-exclamation at StatusBadge.tsx:18 and
+  //     AppShell.tsx:52 or fa-circle-exclamation where a caller
+  //     overrides it. No warn surface draws a check. The one place the
+  //     two sit side by side is EmailSettingsForm.tsx:146-152.
   //   - alert-warn: rose-400 vs amber-500 borders collapse under tritan
   //     (dE bg 3.8 / border 7.3); the 0.55-alpha bgs both composite over
   //     the same near-black chrome, so the luminance gap closes too
-  //     (bg 1.23x, border 1.33x).
-  //   - success-warn: emerald-500 vs amber-500 collapse under protan
-  //     (dE bg 4.3 / border 9.0), and sit closest of any branding pair on
-  //     luminance (bg 1.17x, border 1.07x).
-  // Re-hueing either bundle is a palette change, which is the user's call,
-  // not this suite's.
+  //     (bg 1.23x, border 1.33x). This entry is a known WCAG 1.4.1 gap,
+  //     not a compensated waiver: eight callers override the error
+  //     Alert's icon to warn's own fa-triangle-exclamation
+  //     (LoginRegisterView.tsx:160, ForgotPasswordView.tsx:68,
+  //     MfaView.tsx:105, ExtensionAuthorizePage.tsx:124,
+  //     ExtensionRequestUnreadable.tsx:33, LinksView.tsx:34,
+  //     LinkForm.tsx:84, StumblePage.tsx:81), the glyph warn itself
+  //     paints at AppShell.tsx:52 and StatusBadge.tsx:18. Other error
+  //     Alerts keep fa-circle-exclamation, but one collapsed co-render
+  //     is enough: AppShell's unverified-email banner (warn, triangle,
+  //     AppShell.tsx:44-55) renders directly above LinksView (:99),
+  //     whose error alert draws the same triangle. These values also
+  //     seed an unedited Custom theme (brandingDefaults.ts), so that
+  //     pairing is reachable signed in, not only on logged-out chrome.
+  //     The entry stays so the suite is not red while the fix waits on
+  //     a --warn-border palette value, which is the user's call, not
+  //     this suite's.
   'branding::alert-warn',
   'branding::success-warn',
 ]);
