@@ -57,6 +57,15 @@ describe('useShortcutsEnabled', () => {
     expect(result.current).toBe(true);
   });
 
+  it.each(['OFF', 'false', '0', '', 'o'])(
+    'reads the unrecognised stored value %j as disabled',
+    (stored) => {
+      window.localStorage.setItem(KEYBOARD_SHORTCUTS_KEY, stored);
+      const { result } = renderHook(() => useShortcutsEnabled());
+      expect(result.current).toBe(false);
+    },
+  );
+
   it('re-renders subscribers when the preference is turned off', () => {
     const { result } = renderHook(() => useShortcutsEnabled());
     expect(result.current).toBe(true);

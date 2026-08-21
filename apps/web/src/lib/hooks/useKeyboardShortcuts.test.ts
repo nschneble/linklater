@@ -158,6 +158,22 @@ describe('useKeyboardShortcuts', () => {
     expect(options.onToggleShortcuts).toHaveBeenCalledOnce();
   });
 
+  it('z stops closing the open modal when the preference goes off mid-session', () => {
+    const options = makeOptions({ isShortcutsModalOpen: true });
+    const { rerender } = renderHook(
+      (singleKeyShortcutsEnabled: boolean) =>
+        useKeyboardShortcuts({ ...options, singleKeyShortcutsEnabled }),
+      { initialProps: true },
+    );
+
+    fireKey('z');
+    expect(options.onToggleShortcuts).toHaveBeenCalledOnce();
+
+    rerender(false);
+    fireKey('z');
+    expect(options.onToggleShortcuts).toHaveBeenCalledOnce();
+  });
+
   it('Escape calls onEscape when provided', () => {
     const onEscape = vi.fn();
     const options = makeOptions({ onEscape });

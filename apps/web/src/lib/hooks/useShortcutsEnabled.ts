@@ -16,9 +16,11 @@ export const KEYBOARD_SHORTCUTS_KEY = 'linklater_keyboard_shortcuts';
  * preference gates the listeners on first mount rather than after an
  * effect settles, which matters for speech-input users: a dictated
  * keystroke could otherwise land on `d` (Stumble) before the
- * preference loaded. Default is on (shortcuts exist unless the user
- * turns them off), satisfying WCAG 2.1.4 via a disable that holds for
- * the session a refused write could not persist.
+ * preference loaded. Only an absent or unreadable store reaches the
+ * default of on: `on` and `off` are the sole values recognised and
+ * anything else reads as off. Shortcuts exist unless the user turns
+ * them off, satisfying WCAG 2.1.4 via a disable that holds for the
+ * session a refused write could not persist.
  */
 const listeners = new Set<() => void>();
 
@@ -31,7 +33,7 @@ function notifyListeners(): void {
 }
 
 function readEnabled(): boolean {
-  return readPersistedValue(KEYBOARD_SHORTCUTS_KEY, cachedPreference) !== 'off';
+  return readPersistedValue(KEYBOARD_SHORTCUTS_KEY, cachedPreference) === 'on';
 }
 
 function subscribe(listener: () => void): () => void {
@@ -59,9 +61,9 @@ startCrossTabShortcutsSync();
 
 /**
  * Persists the keyboard-shortcuts preference and notifies every
- * subscribed consumer. A refused write cannot snap the switch back:
- * `readPersistedValue` holds the in-memory copy against the value the
- * refusal saw.
+ * subscribed consumer. `readPersistedValue` holds the in-memory copy
+ * against the value the refusal saw, and the copy moves before the
+ * notify, which is what subscribers re-read.
  */
 export function setShortcutsEnabled(enabled: boolean): void {
   cachedPreference = enabled ? 'on' : 'off';
