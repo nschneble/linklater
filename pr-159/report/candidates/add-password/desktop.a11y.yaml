@@ -54,7 +54,7 @@
     - switch "OpenDyslexic typeface"
     - text: Keyboard shortcuts
     - paragraph: Provides quick keyboard navigation for many actions on the Your Links page, such as Q to search and A to add links.
-    - button "Go to Your Links"
+    - button "Go to your links"
     - switch "Keyboard shortcuts" [checked]
   - region "Browser bookmarks":
     - heading "Browser bookmarks" [level=2]
