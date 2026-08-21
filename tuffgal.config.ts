@@ -9,6 +9,7 @@ export default defineConfig({
   apiHost: 'https://localhost:3000',
   baseUrl: process.env.LINKLATER_BASE_URL ?? 'https://localhost:5173',
   breakpoints: ['mobile', 'desktop'],
+  colorScheme: 'dark',
   database: {
     fixtures: {
       'user-with-3-links': userWithLinksFixture,
