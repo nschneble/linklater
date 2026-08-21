@@ -94,7 +94,7 @@ describe('KeyboardShortcutsToggle', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Go to Your Links' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Go to your links' }));
 
     expect(screen.getByText('Your links')).toBeInTheDocument();
   });

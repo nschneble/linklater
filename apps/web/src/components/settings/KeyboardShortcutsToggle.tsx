@@ -46,7 +46,7 @@ export default function KeyboardShortcutsToggle() {
           surface="mount"
           onClick={() => navigate('/unread')}
         >
-          Go to Your Links
+          Go to your links
         </LinkButton>
       }
       checked={shortcutsEnabled}
