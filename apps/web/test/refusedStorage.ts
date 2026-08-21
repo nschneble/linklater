@@ -1,25 +1,26 @@
+type StorageMethod = 'getItem' | 'setItem' | 'removeItem';
+type StorageArea = 'localStorage' | 'sessionStorage';
+
+interface InstalledRefusal {
+  restore: () => void;
+  assertReached: () => void;
+}
+
 /**
- * Runs a block against a web storage area that refuses one method,
- * `sessionStorage` unless `store` names the other one.
+ * Stands a substitute store in front of `store` whose `method` throws.
  *
- * A whole substitute store is stood in front of the accessor, rather than
- * the method being patched, because patching does not take: jsdom hands
- * out a `Storage` proxy whose methods are neither the prototype's nor
- * writable through the instance. Assigning over one of those names stores
- * an item under that name instead, and the real method goes on answering.
- * A test written that way passes without ever reaching the arm it names,
- * which is the shape every best-effort `catch` here is meant to be pinned
- * by.
- *
- * @throws {Error} When `run` never reached the refusing method. `store`
- *   defaults, so a refusal aimed at the wrong area is otherwise a silent
- *   pass against a store that still works.
+ * A whole substitute is installed, rather than the method being patched,
+ * because patching does not take: jsdom hands out a `Storage` proxy whose
+ * methods are neither the prototype's nor writable through the instance.
+ * Assigning over one of those names stores an item under that name
+ * instead, and the real method goes on answering. A test written that way
+ * passes without ever reaching the arm it names, which is the shape every
+ * best-effort `catch` here is meant to be pinned by.
  */
-export function withRefusedStorage(
-  method: 'getItem' | 'setItem' | 'removeItem',
-  run: () => void,
-  store: 'localStorage' | 'sessionStorage' = 'sessionStorage',
-) {
+function installRefusal(
+  method: StorageMethod,
+  store: StorageArea,
+): InstalledRefusal {
   const real = window[store];
   let refusals = 0;
   const substitute = {
@@ -42,17 +43,62 @@ export function withRefusedStorage(
     configurable: true,
     value: substitute as Storage,
   });
+
+  return {
+    restore: () => {
+      if (original) Object.defineProperty(window, store, original);
+      else Reflect.deleteProperty(window, store);
+    },
+    assertReached: () => {
+      if (refusals > 0) return;
+      throw new Error(
+        `withRefusedStorage: nothing called window.${store}.${method}, so the refusal was never reached`,
+      );
+    },
+  };
+}
+
+/**
+ * Runs a block against a web storage area that refuses one method,
+ * `sessionStorage` unless `store` names the other one.
+ *
+ * @throws {Error} When `run` never reached the refusing method. `store`
+ *   defaults, so a refusal aimed at the wrong area is otherwise a silent
+ *   pass against a store that still works.
+ */
+export function withRefusedStorage(
+  method: StorageMethod,
+  run: () => void,
+  store: StorageArea = 'sessionStorage',
+) {
+  const refusal = installRefusal(method, store);
   try {
     run();
   } finally {
-    if (original) Object.defineProperty(window, store, original);
-    else Reflect.deleteProperty(window, store);
+    refusal.restore();
   }
 
   // after the finally, so a real failure inside run() is never masked
-  if (refusals === 0) {
-    throw new Error(
-      `withRefusedStorage: nothing called window.${store}.${method}, so the refusal was never reached`,
-    );
+  refusal.assertReached();
+}
+
+/**
+ * `withRefusedStorage` for a block that has to await something, such as a
+ * module re-import whose evaluation must land while the store is refusing.
+ *
+ * @throws {Error} When `run` never reached the refusing method.
+ */
+export async function withRefusedStorageAsync(
+  method: StorageMethod,
+  run: () => Promise<void>,
+  store: StorageArea = 'sessionStorage',
+) {
+  const refusal = installRefusal(method, store);
+  try {
+    await run();
+  } finally {
+    refusal.restore();
   }
+
+  refusal.assertReached();
 }

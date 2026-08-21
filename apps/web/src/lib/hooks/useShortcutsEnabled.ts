@@ -9,22 +9,30 @@ import { useSyncExternalStore } from 'react';
 export const KEYBOARD_SHORTCUTS_KEY = 'linklater_keyboard_shortcuts';
 
 /**
- * Device-local store for whether the app's single-key keyboard
- * shortcuts are active.
- *
- * Every snapshot resolves synchronously, so a stored "disabled"
- * preference gates the listeners on first mount rather than after an
- * effect settles, which matters for speech-input users: a dictated
- * keystroke could otherwise land on `d` (Stumble) before the
- * preference loaded. Only an absent or unreadable store reaches the
- * default of on: `on` and `off` are the sole values recognised and
- * anything else reads as off. Shortcuts exist unless the user turns
- * them off, satisfying WCAG 2.1.4 via a disable that holds for the
- * session a refused write could not persist.
+ * Device-local store for whether the single-key keyboard shortcuts are
+ * active. Snapshots resolve synchronously, so a disable gates the
+ * listeners on the first committed render, not after an effect: a
+ * speech-input user's dictated keystroke must not reach `d` (Stumble)
+ * first.
  */
 const listeners = new Set<() => void>();
 
-let cachedPreference = readLocalStorage(KEYBOARD_SHORTCUTS_KEY) ?? 'on';
+/**
+ * The preference this session starts on. An absent store is a fresh
+ * install and starts on; a store that throws cannot show the user left
+ * them on, and `off` withdraws nothing under WCAG 2.1.4, since each of
+ * the single-character shortcuts has a focusable control of its own.
+ */
+function seedPreference(): string {
+  if (typeof window === 'undefined') return 'on';
+  try {
+    return window.localStorage.getItem(KEYBOARD_SHORTCUTS_KEY) ?? 'on';
+  } catch {
+    return 'off';
+  }
+}
+
+let cachedPreference = seedPreference();
 
 function notifyListeners(): void {
   for (const listener of listeners) {
@@ -47,8 +55,10 @@ function subscribe(listener: () => void): () => void {
  * The preference a `storage` event leaves this tab holding. The event is
  * proof a sibling just wrote the stored value, which is the one thing the
  * refusal record cannot tell once the store has cycled back to the value
- * the refusal saw. Any stored value but `on` is taken as a disable on that
- * proof alone, as every other read here takes it: the event fixes no order
+ * the refusal saw. A present stored value other than `on` is taken as a
+ * disable on that proof alone, which no other read here does:
+ * `readPersistedValue` hands back the cached copy instead when the stored
+ * value is the one the refusal saw. The event fixes no order
  * against this tab's own writes, and of the two unordered answers only a
  * stray `on` re-arms a `document`-level handler someone asked to stop. So
  * the record stands only against a stored `on`, and a refused local
@@ -59,6 +69,12 @@ function subscribe(listener: () => void): () => void {
  * write predates the enable, so a switch turned on in a tab whose store
  * refuses writes can visibly go back off. An absent or unreadable store is
  * neither value, so a sibling's `removeItem` still evicts nothing.
+ *
+ * The two reads are not one snapshot: the store is shared across
+ * processes and the spec has authors assume no locking. Only the first
+ * can short-circuit to `off`, so a tear misses only towards the
+ * fall-through, which re-reads the store, and the write that caused it
+ * delivers an event of its own.
  *
  * `lib/api/storage.ts` leaves the same unordered event to `readPersisted`
  * in both directions, having no unsafe one to break the tie towards.

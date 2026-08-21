@@ -188,9 +188,10 @@ export function isTokenStorageEvent(event: StorageEvent): boolean {
  * newer, exactly as a read taken before the event would.
  *
  * `useShortcutsEnabled` faces the same unordered event and does break the
- * tie, taking any stored value but `on` over its own record: one of its
- * two answers re-arms a key handler the user disabled, and neither of
- * these does.
+ * tie, taking a present stored value other than `on` over its own record.
+ * An absent store is not one of those, so it evicts nothing there either.
+ * One of its two answers re-arms a key handler the user disabled, and
+ * neither of these does.
  *
  * The store is re-read rather than trusting the event payload, so the rule
  * that a `null` never evicts a live token lives in a single place.
