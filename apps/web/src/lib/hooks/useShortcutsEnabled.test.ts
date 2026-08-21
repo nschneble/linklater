@@ -289,4 +289,25 @@ describe('the shortcut gate against a sibling tab and a refused write', () => {
     pressSingleKeyShortcut();
     expect(options.onSearch).not.toHaveBeenCalled();
   });
+
+  it("takes a sibling's unrecognised value as the disable every other read makes of it", () => {
+    window.localStorage.setItem(KEYBOARD_SHORTCUTS_KEY, 'OFF');
+    const options = makeShortcutOptions();
+    renderShortcutGate(options);
+
+    withRefusedStorage(
+      'setItem',
+      () => act(() => setShortcutsEnabled(true)),
+      'localStorage',
+    );
+    pressSingleKeyShortcut();
+    expect(options.onSearch).toHaveBeenCalledOnce();
+
+    deliverStorageEvent(siblingWrites('on'));
+    deliverStorageEvent(siblingWrites('OFF'));
+
+    options.onSearch.mockClear();
+    pressSingleKeyShortcut();
+    expect(options.onSearch).not.toHaveBeenCalled();
+  });
 });

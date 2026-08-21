@@ -47,17 +47,25 @@ function subscribe(listener: () => void): () => void {
  * The preference a `storage` event leaves this tab holding. The event is
  * proof a sibling just wrote the stored value, which is the one thing the
  * refusal record cannot tell once the store has cycled back to the value
- * the refusal saw. A stored `off` is taken on that proof alone, and only
- * `off`: the event fixes no order against this tab's own writes, and of
- * the two unordered answers only a stray `on` re-arms a `document`-level
- * handler someone asked to stop. Every other value leaves the record
- * standing, so a refused local disable outlives a sibling's `on`.
+ * the refusal saw. Any stored value but `on` is taken as a disable on that
+ * proof alone, as every other read here takes it: the event fixes no order
+ * against this tab's own writes, and of the two unordered answers only a
+ * stray `on` re-arms a `document`-level handler someone asked to stop. So
+ * the record stands only against a stored `on`, and a refused local
+ * disable outlives one.
+ *
+ * The refused local enable is the direction given up: while the store
+ * reads anything but `on`, any sibling event drops it, even one whose
+ * write predates the enable, so a switch turned on in a tab whose store
+ * refuses writes can visibly go back off. An absent or unreadable store is
+ * neither value, so a sibling's `removeItem` still evicts nothing.
  *
  * `lib/api/storage.ts` leaves the same unordered event to `readPersisted`
  * in both directions, having no unsafe one to break the tie towards.
  */
 function resolveSiblingPreference(): string {
-  if (readLocalStorage(KEYBOARD_SHORTCUTS_KEY) === 'off') return 'off';
+  const stored = readLocalStorage(KEYBOARD_SHORTCUTS_KEY);
+  if (stored !== null && stored !== 'on') return 'off';
 
   return readPersistedValue(KEYBOARD_SHORTCUTS_KEY, cachedPreference);
 }
