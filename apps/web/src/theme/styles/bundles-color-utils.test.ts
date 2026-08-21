@@ -1,13 +1,15 @@
 /**
- * Guards the two places the contrast suites can lie: `resolveFg` dropping a
- * foreground's alpha and reporting a color nobody can see as a PASS, and
+ * Guards the three places the contrast suites can lie: `resolveFg` dropping a
+ * foreground's alpha and reporting a color nobody can see as a PASS,
  * `parseDeclarations` reading a declaration out of a CSS comment, then eating
- * the real declaration that follows it.
+ * the real declaration that follows it, and `extractBlock` letting a comment
+ * decide where a cascade block starts and ends.
  */
 
 import {
   compositeOverBg,
   contrastRatio,
+  extractBlock,
   parseColor,
   parseDeclarations,
   resolveFg,
@@ -87,5 +89,49 @@ describe('parseDeclarations', () => {
 
     expect(value).toContain('color-mix');
     expect(value).toContain('var(--border-shadow-color)');
+  });
+});
+
+describe('extractBlock', () => {
+  const PROBE_SELECTOR = "[data-theme='probe'][data-mode='dark']";
+
+  it('reads past a comment line that opens with a closing brace', () => {
+    const source = [
+      `${PROBE_SELECTOR} {`,
+      '  /* palette note */',
+      '  --probe-bg: #101010;',
+      '  /* the longhand form lives below',
+      '} closes the shorthand */',
+      '  --probe-text: #f0f0f0;',
+      '}',
+    ].join('\n');
+    const declarations = parseDeclarations(
+      extractBlock(source, PROBE_SELECTOR),
+    );
+
+    expect(declarations.get('probe-bg')).toBe('#101010');
+    expect(declarations.get('probe-text')).toBe('#f0f0f0');
+  });
+
+  it('does not open a block at a selector that only appears in a comment', () => {
+    const source = [
+      `/* an earlier draft read ${PROBE_SELECTOR} {`,
+      '     --probe-text: #000000;',
+      '} */',
+      `${PROBE_SELECTOR} {`,
+      '  --probe-text: #f0f0f0;',
+      '}',
+    ].join('\n');
+    const declarations = parseDeclarations(
+      extractBlock(source, PROBE_SELECTOR),
+    );
+
+    expect(declarations.get('probe-text')).toBe('#f0f0f0');
+  });
+
+  it('still refuses a selector that is nowhere in the source', () => {
+    expect(() => extractBlock('/* nothing here */', PROBE_SELECTOR)).toThrow(
+      /Cascade block not found/,
+    );
   });
 });

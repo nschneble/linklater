@@ -141,10 +141,15 @@ export function resolveFg(value: Rgba): Rgb {
   return [value[0], value[1], value[2]];
 }
 
+// comments are consumed at tokenization, so no boundary may see one
+function stripComments(css: string): string {
+  return css.replace(/\/\*[\s\S]*?\*\//g, '');
+}
+
 export function extractBlock(source: string, selector: string): string {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const pattern = new RegExp(`${escaped}\\s*\\{([\\s\\S]*?)\\n\\}`, 'm');
-  const match = source.match(pattern);
+  const match = stripComments(source).match(pattern);
   if (!match) {
     throw new Error(`Cascade block not found: ${selector}`);
   }
@@ -153,7 +158,7 @@ export function extractBlock(source: string, selector: string): string {
 
 export function parseDeclarations(block: string): Map<string, string> {
   const declarations = new Map<string, string>();
-  const withoutComments = block.replace(/\/\*[\s\S]*?\*\//g, '');
+  const withoutComments = stripComments(block);
   // a value may wrap across lines but never reach the next --token:
   const pattern = /--([a-z-]+)\s*:\s*((?:(?!--[a-z-]+\s*:)[^;{}])+);/g;
   let match: RegExpExecArray | null;
