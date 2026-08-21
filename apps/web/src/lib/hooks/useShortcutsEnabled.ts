@@ -43,12 +43,28 @@ function subscribe(listener: () => void): () => void {
   };
 }
 
+/**
+ * The preference a `storage` event leaves this tab holding. The event is
+ * proof a sibling just wrote the stored value, which is the one thing the
+ * refusal record cannot tell once the store has cycled back to the value
+ * the refusal saw. A stored `off` is taken on that proof alone, and only
+ * `off`: the event fixes no order against this tab's own writes, and of
+ * the two unordered answers only a stray `on` re-arms a `document`-level
+ * handler someone asked to stop. Every other value leaves the record
+ * standing, so a refused local disable outlives a sibling's `on`.
+ *
+ * `lib/api/storage.ts` leaves the same unordered event to `readPersisted`
+ * in both directions, having no unsafe one to break the tie towards.
+ */
+function resolveSiblingPreference(): string {
+  if (readLocalStorage(KEYBOARD_SHORTCUTS_KEY) === 'off') return 'off';
+
+  return readPersistedValue(KEYBOARD_SHORTCUTS_KEY, cachedPreference);
+}
+
 function handleShortcutsStorageEvent(event: StorageEvent): void {
   if (event.key !== KEYBOARD_SHORTCUTS_KEY) return;
-  cachedPreference = readPersistedValue(
-    KEYBOARD_SHORTCUTS_KEY,
-    cachedPreference,
-  );
+  cachedPreference = resolveSiblingPreference();
   notifyListeners();
 }
 

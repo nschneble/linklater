@@ -8,6 +8,7 @@ import {
   useShortcutsEnabled,
 } from './useShortcutsEnabled';
 import { resetShortcutsPreference } from '../../../test/shortcutsPreference';
+import { useKeyboardShortcuts } from './useKeyboardShortcuts';
 import { withRefusedStorage } from '../../../test/refusedStorage';
 
 beforeEach(resetShortcutsPreference);
@@ -183,5 +184,109 @@ describe('useShortcutsEnabled against a store that refuses writes', () => {
     });
 
     expect(result.current).toBe(true);
+  });
+});
+
+describe('the shortcut gate against a sibling tab and a refused write', () => {
+  function makeShortcutOptions() {
+    return {
+      isShortcutsModalOpen: false,
+      onNavigateNextLink: vi.fn(),
+      onNavigatePrevLink: vi.fn(),
+      onOpenSelectedLink: vi.fn(),
+      onSearch: vi.fn(),
+      onShowRead: vi.fn(),
+      onShowUnread: vi.fn(),
+      onStumble: vi.fn(),
+      onToggleForm: vi.fn(),
+      onToggleShortcuts: vi.fn(),
+    };
+  }
+
+  function renderShortcutGate(options: ReturnType<typeof makeShortcutOptions>) {
+    function Probe() {
+      useKeyboardShortcuts({
+        ...options,
+        singleKeyShortcutsEnabled: useShortcutsEnabled(),
+      });
+      return null;
+    }
+
+    render(createElement(Probe));
+  }
+
+  function siblingWrites(value: string) {
+    const stored = window.localStorage.getItem(KEYBOARD_SHORTCUTS_KEY);
+    // setItem returns early on an unchanged value, firing no event
+    expect(stored).not.toBe(value);
+    window.localStorage.setItem(KEYBOARD_SHORTCUTS_KEY, value);
+    return { oldValue: stored, newValue: value };
+  }
+
+  function deliverStorageEvent(values: {
+    oldValue: string | null;
+    newValue: string;
+  }) {
+    act(() => {
+      window.dispatchEvent(
+        new StorageEvent('storage', {
+          key: KEYBOARD_SHORTCUTS_KEY,
+          ...values,
+        }),
+      );
+    });
+  }
+
+  function pressSingleKeyShortcut() {
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'q', bubbles: true }),
+    );
+  }
+
+  it('takes a sibling disable that its own refusal snapshotted before the event landed', () => {
+    window.localStorage.setItem(KEYBOARD_SHORTCUTS_KEY, 'on');
+    const options = makeShortcutOptions();
+    renderShortcutGate(options);
+    pressSingleKeyShortcut();
+    expect(options.onSearch).toHaveBeenCalledOnce();
+
+    withRefusedStorage(
+      'setItem',
+      () => act(() => setShortcutsEnabled(false)),
+      'localStorage',
+    );
+    const siblingDisable = siblingWrites('off');
+    withRefusedStorage(
+      'setItem',
+      () => act(() => setShortcutsEnabled(true)),
+      'localStorage',
+    );
+
+    deliverStorageEvent(siblingDisable);
+
+    options.onSearch.mockClear();
+    pressSingleKeyShortcut();
+    expect(options.onSearch).not.toHaveBeenCalled();
+  });
+
+  it('holds a refused local disable through a sibling that cycles back to "on"', () => {
+    window.localStorage.setItem(KEYBOARD_SHORTCUTS_KEY, 'on');
+    const options = makeShortcutOptions();
+    renderShortcutGate(options);
+    pressSingleKeyShortcut();
+    expect(options.onSearch).toHaveBeenCalledOnce();
+
+    withRefusedStorage(
+      'setItem',
+      () => act(() => setShortcutsEnabled(false)),
+      'localStorage',
+    );
+
+    deliverStorageEvent(siblingWrites('off'));
+    deliverStorageEvent(siblingWrites('on'));
+
+    options.onSearch.mockClear();
+    pressSingleKeyShortcut();
+    expect(options.onSearch).not.toHaveBeenCalled();
   });
 });
