@@ -1,4 +1,5 @@
 import {
+  forgetRefusedWrite,
   readLocalStorage,
   readPersistedValue,
   writeLocalStorage,
@@ -9,22 +10,30 @@ import { useSyncExternalStore } from 'react';
 export const KEYBOARD_SHORTCUTS_KEY = 'linklater_keyboard_shortcuts';
 
 /**
- * Device-local store for whether the app's single-key keyboard
- * shortcuts are active.
- *
- * Every snapshot resolves synchronously, so a stored "disabled"
- * preference gates the listeners on first mount rather than after an
- * effect settles, which matters for speech-input users: a dictated
- * keystroke could otherwise land on `d` (Stumble) before the
- * preference loaded. Only an absent or unreadable store reaches the
- * default of on: `on` and `off` are the sole values recognised and
- * anything else reads as off. Shortcuts exist unless the user turns
- * them off, satisfying WCAG 2.1.4 via a disable that holds for the
- * session a refused write could not persist.
+ * Device-local store for whether the single-key keyboard shortcuts are
+ * active. Snapshots resolve synchronously, so a disable gates the
+ * listeners on the first committed render, not after an effect: a
+ * speech-input user's dictated keystroke must not reach `d` (Stumble)
+ * first.
  */
 const listeners = new Set<() => void>();
 
-let cachedPreference = readLocalStorage(KEYBOARD_SHORTCUTS_KEY) ?? 'on';
+/**
+ * The preference this session starts on. An absent store is a fresh
+ * install and starts on; a store that throws cannot show the user left
+ * them on, and `off` withdraws nothing under WCAG 2.1.4, since each of
+ * the single-character shortcuts has a focusable control of its own.
+ */
+function seedPreference(): string {
+  if (typeof window === 'undefined') return 'on';
+  try {
+    return window.localStorage.getItem(KEYBOARD_SHORTCUTS_KEY) ?? 'on';
+  } catch {
+    return 'off';
+  }
+}
+
+let cachedPreference = seedPreference();
 
 function notifyListeners(): void {
   for (const listener of listeners) {
@@ -44,29 +53,17 @@ function subscribe(listener: () => void): () => void {
 }
 
 /**
- * The preference a `storage` event leaves this tab holding. The event is
- * proof a sibling just wrote the stored value, which is the one thing the
- * refusal record cannot tell once the store has cycled back to the value
- * the refusal saw. Any stored value but `on` is taken as a disable on that
- * proof alone, as every other read here takes it: the event fixes no order
- * against this tab's own writes, and of the two unordered answers only a
- * stray `on` re-arms a `document`-level handler someone asked to stop. So
- * the record stands only against a stored `on`, and a refused local
- * disable outlives one.
- *
- * The refused local enable is the direction given up: while the store
- * reads anything but `on`, any sibling event drops it, even one whose
- * write predates the enable, so a switch turned on in a tab whose store
- * refuses writes can visibly go back off. An absent or unreadable store is
- * neither value, so a sibling's `removeItem` still evicts nothing.
- *
- * `lib/api/storage.ts` leaves the same unordered event to `readPersisted`
- * in both directions, having no unsafe one to break the tie towards.
+ * The preference a `storage` event leaves this tab holding. The event
+ * proves a sibling wrote, which no refusal record can tell once the store
+ * cycles back to the value the refusal saw. Only a disable is taken on
+ * it: a stray `on` re-arms a handler someone asked to stop.
  */
 function resolveSiblingPreference(): string {
   const stored = readLocalStorage(KEYBOARD_SHORTCUTS_KEY);
+  // absent and unreadable are neither value, so a removeItem evicts nothing
   if (stored !== null && stored !== 'on') return 'off';
 
+  // a tear between the two reads misses only towards this re-read
   return readPersistedValue(KEYBOARD_SHORTCUTS_KEY, cachedPreference);
 }
 
@@ -93,6 +90,17 @@ export function setShortcutsEnabled(enabled: boolean): void {
   cachedPreference = enabled ? 'on' : 'off';
   writeLocalStorage(KEYBOARD_SHORTCUTS_KEY, cachedPreference);
   notifyListeners();
+}
+
+/**
+ * Drops this module's memory of the preference to a fixed `on`, touching
+ * no store. Fixed rather than a re-seed on purpose: `seedPreference`
+ * answers `off` under a refusal, and a test wants one starting point
+ * either way. Nothing in `src` calls this.
+ */
+export function forgetShortcutsPreference(): void {
+  cachedPreference = 'on';
+  forgetRefusedWrite(KEYBOARD_SHORTCUTS_KEY);
 }
 
 /**

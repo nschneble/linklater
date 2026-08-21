@@ -175,6 +175,18 @@ const NOUVELLE_VAGUE_DARK_PAGE_BG: Rgb = readPageBg(
   "[data-theme='nouvelle-vague'][data-mode='dark']",
   'base-bg',
 );
+/*
+ * branding is the OFF-BOOK brand-chrome theme: DARK-LOCKED / mode-independent,
+ * so its selector has NO `[data-mode]` qualifier (see branding.css). It backs
+ * every logged-out surface, which is why its state bundles need the same CVD
+ * guarantee the on-book themes get. Its own --base-bg (#0a0812, the bg-hit-man
+ * radial's outer stop) is the page bg its alpha state-bundle bgs composite over.
+ */
+const BRANDING_PAGE_BG: Rgb = readPageBg(
+  BUNDLES_CSS,
+  "[data-theme='branding']",
+  'base-bg',
+);
 
 const FIXTURES: readonly CascadeFixture[] = [
   {
@@ -286,6 +298,11 @@ const FIXTURES: readonly CascadeFixture[] = [
     label: 'nouvelle-vague dark',
     selector: "[data-theme='nouvelle-vague'][data-mode='dark']",
     pageBg: NOUVELLE_VAGUE_DARK_PAGE_BG,
+  },
+  {
+    label: 'branding',
+    selector: "[data-theme='branding']",
+    pageBg: BRANDING_PAGE_BG,
   },
 ];
 
@@ -448,6 +465,7 @@ const CASCADE_SLUGS: Record<string, string> = {
   "[data-theme='before-sunrise'][data-mode='dark']": 'before-sunrise-dark',
   "[data-theme='nouvelle-vague'][data-mode='light']": 'nouvelle-vague-light',
   "[data-theme='nouvelle-vague'][data-mode='dark']": 'nouvelle-vague-dark',
+  "[data-theme='branding']": 'branding',
 };
 
 function waiverKey(selector: string, first: Bundle, second: Bundle): string {

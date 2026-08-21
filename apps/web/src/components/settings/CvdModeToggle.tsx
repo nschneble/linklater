@@ -59,7 +59,7 @@ export default function CvdModeToggle() {
           </>
         }
         checked={isCvdMode}
-        disabled={loading}
+        busy={loading}
         onToggle={handleToggle}
       />
 

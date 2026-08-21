@@ -12,12 +12,12 @@
  * cannot drift when a bundle is added.
  *
  * `aria-disabled` does not block clicks, and the codebase relies on that,
- * but no site setting it leaves a control operable: all fifteen either
- * guard their own handler or are natively disabled besides, so 1.4.3's
- * inactive-component exception covers the lot. The 4.5:1 holds on other
- * grounds: the hatch is gated to `[data-cvd='on']`, where `index.css`
- * forces `opacity: 1`, so the pair the contract pins is the pair that
- * renders.
+ * but no site setting it leaves a control operable: each one guards its
+ * own handler, is natively disabled besides, or takes no pointer, so
+ * 1.4.3's inactive-component exception covers the lot. The 4.5:1 holds
+ * on other grounds: the hatch is gated to `[data-cvd='on']`, where
+ * `index.css` forces `opacity: 1`, so the pair the contract pins is the
+ * pair that renders.
  */
 
 import { compileIndexCss } from '../../../test/tailwind';
@@ -33,13 +33,12 @@ describe('the CVD disabled hatch', () => {
   /*
    * It stays gated. Un-gating it once looked right on the argument that a
    * shape beats a contrast reduction, and shipped stripes across the
-   * primary button a user had just successfully pressed. Nearly thirty
-   * controls here set `disabled` for a request in flight or a success
-   * cooldown, and fifteen more take `aria-disabled` to refuse without
-   * dropping focus, so a treatment that reads as permanently unavailable
-   * is the wrong signal for almost every one of them. Gating is what
-   * confines it to the users who need a non-colour cue and accept that
-   * trade.
+   * primary button a user had just successfully pressed. Most controls
+   * here that take either attribute take it for a request in flight or a
+   * success cooldown, so a treatment that reads as permanently
+   * unavailable is the wrong signal for almost every one of them. Gating
+   * is what confines it to the users who need a non-colour cue and accept
+   * that trade.
    */
   it('reaches only the users who asked for it', async () => {
     const css = await compileIndexCss([]);

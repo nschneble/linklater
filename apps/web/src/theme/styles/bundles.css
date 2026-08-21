@@ -71,16 +71,24 @@
   /* --focus-ring and --base/mount/orbit-highlight omitted from the
    * synthetic fallback – defined per-theme; see preamble. */
 
-  /* base = page chrome. Pre-theme-attribute fallback hex. */
+  /* base = page chrome. Pre-theme-attribute fallback hex.
+   *
+   * The three border slots share --base-bg / --mount-bg with
+   * scanner-darkly dark, which is why they share its --base-border
+   * #847ecc too: 5.39:1 on --base-bg, 4.40:1 on --mount-bg. They
+   * previously carried #47419d, the retired flat --border, which the
+   * bundle split copied across unchanged and so never picked up the
+   * lift scanner-darkly's own border got - leaving base at 2.32:1 and
+   * mount at 1.89:1 against SC 1.4.11's 3:1. */
   --base-bg: #0f0b1b;
-  --base-border: #47419d;
+  --base-border: #847ecc;
   --base-text: #eeeedf;
   --base-alt-text: #e09d3a;
   --base-subtle-text: #8db030;
 
   /* mount = cards */
   --mount-bg: #201e43;
-  --mount-border: #47419d;
+  --mount-border: #847ecc;
   --mount-text: #eeeedf;
   --mount-alt-text: #e09d3a;
 
@@ -89,7 +97,7 @@
 
   /* orbit = menus / dropdowns. --orbit-bg per-theme only (legacy
    * --bg-elevated retired). See preamble. */
-  --orbit-border: #47419d;
+  --orbit-border: #847ecc;
   --orbit-text: #eeeedf;
   --orbit-alt-text: #e09d3a;
 

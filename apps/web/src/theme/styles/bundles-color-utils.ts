@@ -141,10 +141,20 @@ export function resolveFg(value: Rgba): Rgb {
   return [value[0], value[1], value[2]];
 }
 
+/**
+ * Removes every CSS comment, because comments are consumed at
+ * tokenization: no boundary a reader looks for may fall inside one.
+ * Exported so a caller measuring a POSITION strips the same string - an
+ * `indexOf` over a selector otherwise finds a comment about the block.
+ */
+export function stripComments(css: string): string {
+  return css.replace(/\/\*[\s\S]*?\*\//g, '');
+}
+
 export function extractBlock(source: string, selector: string): string {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const pattern = new RegExp(`${escaped}\\s*\\{([\\s\\S]*?)\\n\\}`, 'm');
-  const match = source.match(pattern);
+  const match = stripComments(source).match(pattern);
   if (!match) {
     throw new Error(`Cascade block not found: ${selector}`);
   }
@@ -153,7 +163,7 @@ export function extractBlock(source: string, selector: string): string {
 
 export function parseDeclarations(block: string): Map<string, string> {
   const declarations = new Map<string, string>();
-  const withoutComments = block.replace(/\/\*[\s\S]*?\*\//g, '');
+  const withoutComments = stripComments(block);
   // a value may wrap across lines but never reach the next --token:
   const pattern = /--([a-z-]+)\s*:\s*((?:(?!--[a-z-]+\s*:)[^;{}])+);/g;
   let match: RegExpExecArray | null;
@@ -176,13 +186,6 @@ export function getSlot(
     return null;
   }
   return parseColor(value);
-}
-
-export function bundleIsFullyDefined(
-  declarations: Map<string, string>,
-  bundle: Bundle,
-): boolean {
-  return SLOTS.every((slot) => getSlot(declarations, bundle, slot) !== null);
 }
 
 export function readPageBg(

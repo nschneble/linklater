@@ -35,17 +35,19 @@ export default function KeyboardShortcutsToggle() {
       label="Keyboard shortcuts"
       description={
         <>
-          Provides quick keyboard navigation for many actions on the{' '}
-          <LinkButton
-            className="inline-flex"
-            surface="mount"
-            onClick={() => navigate('/unread')}
-          >
-            Your Links
-          </LinkButton>{' '}
+          Provides quick keyboard navigation for many actions on the Your Links
           page, such as <span className="font-semibold">Q</span> to search and{' '}
           <span className="font-semibold">A</span> to add links.
         </>
+      }
+      followUpAction={
+        <LinkButton
+          className="inline-flex"
+          surface="mount"
+          onClick={() => navigate('/unread')}
+        >
+          Go to your links
+        </LinkButton>
       }
       checked={shortcutsEnabled}
       onToggle={handleToggle}

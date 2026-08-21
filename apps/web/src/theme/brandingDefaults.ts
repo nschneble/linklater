@@ -50,7 +50,7 @@ export const BRANDING_DEFAULTS: Readonly<Record<string, string>> = {
   '--alert-highlight-hover': '#fb7185',
 
   '--warn-bg': '#451a038c',
-  '--warn-border': '#f59e0b',
+  '--warn-border': '#fbbf24',
   '--warn-text': '#fcd34d',
   '--warn-alt-text': '#fde68a',
   '--warn-highlight': '#f59e0b',

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  forgetRefusedWrite,
   hasRecentLocalChange,
   MODE_STORAGE_KEY,
   persistWithTimestamp,
@@ -106,6 +107,26 @@ describe('readPersistedValue', () => {
     window.localStorage.setItem(key, 'scanner-darkly');
 
     expect(readPersistedValue(key, 'school-of-rock')).toBe('scanner-darkly');
+  });
+});
+
+describe('forgetRefusedWrite', () => {
+  afterEach(() => {
+    window.localStorage.clear();
+  });
+
+  it("drops the named key's record and leaves every other one standing", () => {
+    const forgotten = freshRefusalKey();
+    const kept = freshRefusalKey();
+    window.localStorage.setItem(forgotten, 'boyhood');
+    window.localStorage.setItem(kept, 'boyhood');
+    recordRefusedWrite(forgotten, 'school-of-rock');
+    recordRefusedWrite(kept, 'school-of-rock');
+
+    forgetRefusedWrite(forgotten);
+
+    expect(readPersistedValue(forgotten, 'school-of-rock')).toBe('boyhood');
+    expect(readPersistedValue(kept, 'school-of-rock')).toBe('school-of-rock');
   });
 });
 

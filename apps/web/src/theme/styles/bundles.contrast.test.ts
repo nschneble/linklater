@@ -18,13 +18,19 @@
  * Soft assertions are used so a single run reports every failing pair,
  * not just the first.
  *
+ * A cascade may declare a bundle only partly - the synthetic fallback omits
+ * --orbit-bg and every --{base,mount,orbit}-highlight slot on purpose (see
+ * bundles.css preamble). Coverage is decided per PAIR, not per bundle: a pair
+ * is skipped only when a slot it actually reads is absent. Deciding per bundle
+ * is what hid two SC 1.4.11 border failures in the synthetic fallback, since
+ * one missing highlight slot took the defined border pair down with it.
+ *
  * Sister suite: bundles.distinguishability.test.ts encodes the
  * CVD-distinguishability invariant from feedback-bundle-hue-separation.
  * Shared color parsing + WCAG helpers live in bundles-color-utils.ts.
  */
 
 import {
-  bundleIsFullyDefined,
   BUNDLES,
   BUNDLES_CSS,
   CARD_BUNDLES,
@@ -38,6 +44,7 @@ import {
   parseDeclarations,
   readPageBg,
   resolveFg,
+  stripComments,
 } from './bundles-color-utils';
 import { describe, expect, it } from 'vitest';
 import type { Rgb, Rgba, Slot } from './bundles-color-utils';
@@ -367,22 +374,27 @@ describe('bundle contrast contract', () => {
 
     describe(`${fixture.label}`, () => {
       for (const bundle of BUNDLES) {
-        if (!bundleIsFullyDefined(declarations, bundle)) {
+        const definedPairs = CONTRACT.flatMap((pair) => {
+          const foregroundRaw = getSlot(declarations, bundle, pair.fg);
+          const backgroundRaw = getSlot(declarations, bundle, pair.bg);
+          if (foregroundRaw === null || backgroundRaw === null) {
+            return [];
+          }
+          return [{ ...pair, foregroundRaw, backgroundRaw }];
+        });
+        // an empty describe registers zero it() calls and vitest fails it
+        if (definedPairs.length === 0) {
           continue;
         }
 
         describe(`${bundle} bundle`, () => {
-          for (const pair of CONTRACT) {
+          for (const pair of definedPairs) {
             it(`${pair.fg} on ${pair.bg} >= ${pair.threshold}:1`, () => {
-              const foregroundRaw = getSlot(declarations, bundle, pair.fg);
-              const backgroundRaw = getSlot(declarations, bundle, pair.bg);
-              if (foregroundRaw === null || backgroundRaw === null) {
-                throw new Error(
-                  `Missing slot for ${bundle}-${pair.fg} / ${bundle}-${pair.bg}`,
-                );
-              }
-              const background = compositeOverBg(backgroundRaw, fixture.pageBg);
-              const foreground = resolveFg(foregroundRaw);
+              const background = compositeOverBg(
+                pair.backgroundRaw,
+                fixture.pageBg,
+              );
+              const foreground = resolveFg(pair.foregroundRaw);
               const ratio = contrastRatio(foreground, background);
               expect
                 .soft(
@@ -711,16 +723,31 @@ describe('bundle contrast contract', () => {
    * different AND that branding is later in source, so the resolved bg is
    * branding's own. Alpha is encoded as the trailing hex byte: 0.55 -> 8c,
    * 0.4 -> 66.
+   *
+   * Both offsets are read from comment-stripped source. Against the raw
+   * string the branding offset landed at 47358, inside branding.css's own
+   * preamble describing the block, so the order held by luck of where the
+   * prose sits rather than by where the rules do.
    */
   describe('branding alert/success bg wins by source order', () => {
-    const brandingIndex = BUNDLES_CSS.indexOf("[data-theme='branding']");
-    const darkModeIndex = BUNDLES_CSS.indexOf("[data-mode='dark']");
+    const cascadeSource = stripComments(BUNDLES_CSS);
+    const brandingIndex = cascadeSource.indexOf("[data-theme='branding']");
+    const darkModeIndex = cascadeSource.indexOf("[data-mode='dark']");
     const brandingDecls = parseDeclarations(
       extractBlock(BUNDLES_CSS, "[data-theme='branding']"),
     );
     const darkDecls = parseDeclarations(
       extractBlock(BUNDLES_CSS, "[data-mode='dark']"),
     );
+
+    it('measures both offsets at a rule, not at a mention of one', () => {
+      expect(cascadeSource.slice(brandingIndex)).toMatch(
+        /^\[data-theme='branding'\]\s*\{/,
+      );
+      expect(cascadeSource.slice(darkModeIndex)).toMatch(
+        /^\[data-mode='dark'\]\s*\{/,
+      );
+    });
 
     it('branding cascade is later in source than [data-mode=dark]', () => {
       expect(brandingIndex).toBeGreaterThan(-1);

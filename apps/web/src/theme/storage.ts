@@ -85,6 +85,16 @@ export function writeLocalStorage(key: string, value: string): void {
 }
 
 /**
+ * Drops `key`'s refusal record, for a test returning a key to its
+ * unwritten state without a working store to write through. No live path
+ * may: a release there re-arms shortcuts a user disabled, or lets a stale
+ * server undo a CVD or dyslexic-font accommodation.
+ */
+export function forgetRefusedWrite(key: string): void {
+  refusedWrites.delete(key);
+}
+
+/**
  * The newest copy of `key` this tab knows of. Unreadable, absent, and a
  * value this tab failed to write over all resolve to `cachedValue`: a
  * refused write leaves live state ahead of the store. A stored value that

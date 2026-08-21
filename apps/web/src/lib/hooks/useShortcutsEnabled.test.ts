@@ -1,5 +1,5 @@
 import { act, render, renderHook } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createElement } from 'react';
 
 import {
@@ -13,6 +13,27 @@ import { withRefusedStorage } from '../../../test/refusedStorage';
 
 beforeEach(resetShortcutsPreference);
 
+function makeShortcutOptions() {
+  return {
+    isShortcutsModalOpen: false,
+    onNavigateNextLink: vi.fn(),
+    onNavigatePrevLink: vi.fn(),
+    onOpenSelectedLink: vi.fn(),
+    onSearch: vi.fn(),
+    onShowRead: vi.fn(),
+    onShowUnread: vi.fn(),
+    onStumble: vi.fn(),
+    onToggleForm: vi.fn(),
+    onToggleShortcuts: vi.fn(),
+  };
+}
+
+function pressSingleKeyShortcut() {
+  document.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'q', bubbles: true }),
+  );
+}
+
 describe('resetShortcutsPreference', () => {
   it('empties the store rather than leaving the default it just wrote', () => {
     window.localStorage.setItem(KEYBOARD_SHORTCUTS_KEY, 'off');
@@ -21,16 +42,37 @@ describe('resetShortcutsPreference', () => {
 
     expect(window.localStorage.getItem(KEYBOARD_SHORTCUTS_KEY)).toBeNull();
   });
+
+  it('drops a refusal record while the store is still refusing writes', () => {
+    window.localStorage.setItem(KEYBOARD_SHORTCUTS_KEY, 'off');
+
+    withRefusedStorage(
+      'setItem',
+      () => {
+        setShortcutsEnabled(true);
+        resetShortcutsPreference();
+      },
+      'localStorage',
+    );
+
+    window.localStorage.setItem(KEYBOARD_SHORTCUTS_KEY, 'off');
+    const { result } = renderHook(() => useShortcutsEnabled());
+    expect(result.current).toBe(false);
+  });
+
+  it('resets what it still can when the store refuses to clear', () => {
+    setShortcutsEnabled(false);
+
+    withRefusedStorage('clear', resetShortcutsPreference, 'localStorage');
+
+    // the refused clear left 'off' stored; only the in-memory half is at issue
+    window.localStorage.removeItem(KEYBOARD_SHORTCUTS_KEY);
+    const { result } = renderHook(() => useShortcutsEnabled());
+    expect(result.current).toBe(true);
+  });
 });
 
 describe('useShortcutsEnabled', () => {
-  let freshModule: typeof import('./useShortcutsEnabled') | null = null;
-
-  afterEach(() => {
-    freshModule?.stopCrossTabShortcutsSync();
-    freshModule = null;
-  });
-
   it('defaults to enabled when nothing is stored', () => {
     const { result } = renderHook(() => useShortcutsEnabled());
     expect(result.current).toBe(true);
@@ -84,29 +126,6 @@ describe('useShortcutsEnabled', () => {
 
     act(() => setShortcutsEnabled(true));
     expect(window.localStorage.getItem(KEYBOARD_SHORTCUTS_KEY)).toBe('on');
-  });
-
-  it('seeds enabled at module load when the store is empty', async () => {
-    window.localStorage.clear();
-    vi.resetModules();
-    const loadedModule = await import('./useShortcutsEnabled');
-    freshModule = loadedModule;
-
-    const { result } = renderHook(() => loadedModule.useShortcutsEnabled());
-
-    expect(result.current).toBe(true);
-  });
-
-  it('seeds its in-memory copy at module load, not on first use', async () => {
-    window.localStorage.setItem(KEYBOARD_SHORTCUTS_KEY, 'off');
-    vi.resetModules();
-    const loadedModule = await import('./useShortcutsEnabled');
-    freshModule = loadedModule;
-    window.localStorage.clear();
-
-    const { result } = renderHook(() => loadedModule.useShortcutsEnabled());
-
-    expect(result.current).toBe(false);
   });
 });
 
@@ -188,21 +207,6 @@ describe('useShortcutsEnabled against a store that refuses writes', () => {
 });
 
 describe('the shortcut gate against a sibling tab and a refused write', () => {
-  function makeShortcutOptions() {
-    return {
-      isShortcutsModalOpen: false,
-      onNavigateNextLink: vi.fn(),
-      onNavigatePrevLink: vi.fn(),
-      onOpenSelectedLink: vi.fn(),
-      onSearch: vi.fn(),
-      onShowRead: vi.fn(),
-      onShowUnread: vi.fn(),
-      onStumble: vi.fn(),
-      onToggleForm: vi.fn(),
-      onToggleShortcuts: vi.fn(),
-    };
-  }
-
   function renderShortcutGate(options: ReturnType<typeof makeShortcutOptions>) {
     function Probe() {
       useKeyboardShortcuts({
@@ -235,12 +239,6 @@ describe('the shortcut gate against a sibling tab and a refused write', () => {
         }),
       );
     });
-  }
-
-  function pressSingleKeyShortcut() {
-    document.dispatchEvent(
-      new KeyboardEvent('keydown', { key: 'q', bubbles: true }),
-    );
   }
 
   it('takes a sibling disable that its own refusal snapshotted before the event landed', () => {
