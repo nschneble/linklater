@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-08-28
+
 ### Added
 
 - A smoother login and signup experience
