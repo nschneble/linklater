@@ -38,6 +38,7 @@ Linklater is an Instapaper-inspired "read it later" app.
 - Check installed versions before suggesting tools or syntax
 - Don't allow god files to persist (refactor files with 100+ lines of code)
 - Don't prematurely optimize
+- Don't stop at the first plausible match (grep hit, commit message); verify claims against the current file before concluding
 - Embrace Postel's Law: be conservative in output, liberal in input
 - Lean database calls (avoid excess joins and n+1 queries)
 - Normalize user input before matching/comparing
