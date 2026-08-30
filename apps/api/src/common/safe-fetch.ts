@@ -1,7 +1,7 @@
 import { Agent, fetch as undiciFetch } from 'undici';
 import { isIP, type LookupFunction } from 'node:net';
 import { isPrivateAddress, isPrivateHost } from './private-host.js';
-import { lookup as dnsLookup } from 'node:dns/promises';
+import { systemResolver } from './dns-resolver.js';
 
 /**
  * SSRF-hardened fetch for the metadata worker.
@@ -56,11 +56,8 @@ export class PrivateHostError extends Error {
   }
 }
 
-/** Default resolver backed by the system resolver via `node:dns/promises`. */
-const defaultResolver: HostResolver = async (hostname) => {
-  const records = await dnsLookup(hostname, { all: true });
-  return records.map((record) => record.address);
-};
+/** Default resolver: timeout+cache wrapped `node:dns/promises` lookup. */
+const defaultResolver: HostResolver = systemResolver;
 
 /**
  * Resolves `hostname` and asserts every resulting address is public. Returns
