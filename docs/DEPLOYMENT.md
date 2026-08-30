@@ -71,6 +71,19 @@ What the implementation ships:
 - A GitHub Actions workflow that builds and publishes both images and deploys
   over SSH.
 
+### Maintenance fallback
+
+Caddy's `reverse_proxy` to the API sets `fail_duration 10s` / `max_fails 3`:
+after 3 failed dials it stops retrying that upstream for 10s and fails fast
+with a 502 instead of hanging every request behind a full dial timeout. Either
+that circuit breaker or a real dial failure (API container down, mid-deploy
+swap, crash) routes to a `handle_errors` block in the `Caddyfile` that serves a
+small "temporarily unavailable" response instead of a raw Bad Gateway page —
+HTML for browser navigations, a JSON body for API clients that send
+`Accept: application/json`. It only ever fires for a genuine gateway-level
+failure; a normal error from inside the app already carries its own JSON body
+and never reaches this path.
+
 ## Order the box
 
 **Target: InterServer, 2 slices – $6/mo – 1 core / 4 GB RAM / 80 GB SSD / 4 TB
@@ -347,6 +360,16 @@ automation should not (and in some cases cannot) perform.
   un-reconfigured provider is simply off rather than broken. [GOOGLE-SSO.md](./GOOGLE-SSO.md) is the step-by-step for
   Google, including the Cloud Console client, both redirect URIs, the API
   variables, and the build-time flag that renders the login button.
+- **External uptime monitoring.** Nothing in this stack alerts you when the box
+  goes down — `GET /health` only answers if something is already polling it.
+  Set up a free [UptimeRobot](https://uptimerobot.com) monitor:
+  - Monitor type: HTTP(s).
+  - URL: `https://YOUR_DOMAIN/api/health`.
+  - Interval: 5 minutes (the free-tier floor).
+  - Alert contact: email, and SMS/Slack/etc. if you want a louder ping.
+  A `503` or timeout means Postgres is unreachable or the box is down; a
+  connection failure straight through Caddy's [maintenance
+  fallback](#maintenance-fallback) means the API container itself is down.
 
 ## First deploy
 

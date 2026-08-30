@@ -4,6 +4,20 @@
 
 ## [Unreleased]
 
+## [1.6.1] - 2026-08-30
+
+### Added
+
+- A cached, timeout-bounded DNS resolver for the SSRF host-validation check
+
+### Changed
+
+- Caddy fails fast and serves a plain "temporarily unavailable" response (HTML or JSON) instead of a raw "Bad Gateway" when the API is unreachable
+
+### Fixed
+
+- Link saves no longer hang on an uncached, unbounded DNS lookup during the SSRF check
+
 ## [1.6.0] - 2026-08-28
 
 ### Added
@@ -239,7 +253,8 @@ This is a development version bump. Most of the changes are related to refactori
 - Toggle themes based on Richard Linklater's filmography
 - Toggle light and dark mode
 
-[Unreleased]: https://github.com/nschneble/linklater/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/nschneble/linklater/compare/v1.6.1...HEAD
+[1.6.1]: https://github.com/nschneble/linklater/compare/v1.6.0...v1.6.1
 [1.5.0]: https://github.com/nschneble/linklater/compare/v1.4.2...v1.5.0
 [1.4.2]: https://github.com/nschneble/linklater/compare/v1.4.1...v1.4.2
 [1.4.1]: https://github.com/nschneble/linklater/compare/v1.4.0...v1.4.1
