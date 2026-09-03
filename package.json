@@ -54,6 +54,9 @@
     },
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
+    "body-parser": {
+      "qs": "^6.16.0"
+    },
     "deepmerge-ts": "^8.0.1",
     "esbuild": "0.27.2",
     "eslint-plugin-jsx-a11y": {
@@ -61,6 +64,9 @@
     },
     "eslint-plugin-react": {
       "eslint": "$eslint"
+    },
+    "express": {
+      "qs": "^6.16.0"
     },
     "find-my-way": "^9.7.0",
     "js-yaml": "^4.2.0",
@@ -70,17 +76,20 @@
       "mysql2": "^3.23.1"
     },
     "shell-quote": "^1.10.0",
+    "superagent": {
+      "qs": "^6.16.0"
+    },
     "valibot": "^1.4.2",
     "webpack": "^5.105.0"
   },
   "allowScripts": {
-    "@prisma/engines@7.9.1": true,
     "@scarf/scarf@1.4.0": true,
     "esbuild@0.27.2": true,
     "fsevents@2.3.2": true,
     "fsevents@2.3.3": true,
-    "prisma@7.9.1": true,
     "unrs-resolver@1.12.2": true,
-    "@swc/core@1.16.0": true
+    "@prisma/engines@7.10.0": true,
+    "@swc/core@1.16.1": true,
+    "prisma@7.10.0": true
   }
 }
