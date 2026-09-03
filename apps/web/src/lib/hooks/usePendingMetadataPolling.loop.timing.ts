@@ -63,8 +63,8 @@ const MAX_POLLS_PER_TICK = 3;
  * the rotation for every other pending card. Aborting at this deadline bounds
  * the stall, since the abort rejects like any other request error and the next
  * tick schedules normally. What it does not reach is the refresh itself, which
- * runs on its own deadline (see REFRESH_DEADLINE_MS in the api token-refresh
- * module), so that leg is bounded too, just not by this signal.
+ * runs on its own deadline (see REFRESH_DEADLINE_MS in refreshLeg.ts), so
+ * that leg is bounded too, just not by this signal.
  *
  * The value sits above any healthy round-trip (a slow mobile connection
  * included, so a working-but-slow poll is not falsely aborted and left to
