@@ -43,9 +43,9 @@
     "eslint-config-prettier": "^10.1.8",
     "pg": "^8.23.0",
     "prettier": "^3.9.5",
-    "squawk-cli": "^2.63.0",
+    "squawk-cli": "^2.64.0",
     "tuffgal": "^0.2.0-alpha.8",
-    "typescript-eslint": "^8.68.0"
+    "typescript-eslint": "^8.69.0"
   },
   "overrides": {
     "@hono/node-server": "^2.0.5",
