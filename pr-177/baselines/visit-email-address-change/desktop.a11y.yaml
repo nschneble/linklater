@@ -1,0 +1,25 @@
+- table:
+  - rowgroup:
+    - 'row "Linklater Confirm your new email. Click the button below to confirm your new Linklater email address. Confirm Email Or copy and paste this link into your browser: https://linklater.app/verify-email-change?token=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef This link expires in 24 hours. If you did not request this change, please contact support immediately."':
+      - 'cell "Linklater Confirm your new email. Click the button below to confirm your new Linklater email address. Confirm Email Or copy and paste this link into your browser: https://linklater.app/verify-email-change?token=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef This link expires in 24 hours. If you did not request this change, please contact support immediately."':
+        - table:
+          - rowgroup:
+            - row "Linklater":
+              - cell "Linklater"
+            - 'row "Confirm your new email. Click the button below to confirm your new Linklater email address. Confirm Email Or copy and paste this link into your browser: https://linklater.app/verify-email-change?token=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"':
+              - 'cell "Confirm your new email. Click the button below to confirm your new Linklater email address. Confirm Email Or copy and paste this link into your browser: https://linklater.app/verify-email-change?token=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"':
+                - heading "Confirm your new email." [level=1]
+                - paragraph: Click the button below to confirm your new Linklater email address.
+                - table:
+                  - rowgroup:
+                    - row "Confirm Email":
+                      - cell "Confirm Email":
+                        - link "Confirm Email":
+                          - /url: https://linklater.app/verify-email-change?token=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+                - paragraph:
+                  - text: "Or copy and paste this link into your browser:"
+                  - link "https://linklater.app/verify-email-change?token=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef":
+                    - /url: https://linklater.app/verify-email-change?token=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+            - row "This link expires in 24 hours. If you did not request this change, please contact support immediately.":
+              - cell "This link expires in 24 hours. If you did not request this change, please contact support immediately.":
+                - paragraph: This link expires in 24 hours. If you did not request this change, please contact support immediately.
