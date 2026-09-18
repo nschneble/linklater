@@ -1,0 +1,25 @@
+- table:
+  - rowgroup:
+    - 'row "Linklater Verify your email. Thanks for signing up for Linklater! Click the button below to verify your email address. Verify Email Or copy and paste this link into your browser: https://linklater.app/verify-email?token=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef This link expires in 24 hours. If you did not create a Linklater account, you can safely ignore this email."':
+      - 'cell "Linklater Verify your email. Thanks for signing up for Linklater! Click the button below to verify your email address. Verify Email Or copy and paste this link into your browser: https://linklater.app/verify-email?token=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef This link expires in 24 hours. If you did not create a Linklater account, you can safely ignore this email."':
+        - table:
+          - rowgroup:
+            - row "Linklater":
+              - cell "Linklater"
+            - 'row "Verify your email. Thanks for signing up for Linklater! Click the button below to verify your email address. Verify Email Or copy and paste this link into your browser: https://linklater.app/verify-email?token=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"':
+              - 'cell "Verify your email. Thanks for signing up for Linklater! Click the button below to verify your email address. Verify Email Or copy and paste this link into your browser: https://linklater.app/verify-email?token=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"':
+                - heading "Verify your email." [level=1]
+                - paragraph: Thanks for signing up for Linklater! Click the button below to verify your email address.
+                - table:
+                  - rowgroup:
+                    - row "Verify Email":
+                      - cell "Verify Email":
+                        - link "Verify Email":
+                          - /url: https://linklater.app/verify-email?token=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+                - paragraph:
+                  - text: "Or copy and paste this link into your browser:"
+                  - link "https://linklater.app/verify-email?token=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef":
+                    - /url: https://linklater.app/verify-email?token=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+            - row "This link expires in 24 hours. If you did not create a Linklater account, you can safely ignore this email.":
+              - cell "This link expires in 24 hours. If you did not create a Linklater account, you can safely ignore this email.":
+                - paragraph: This link expires in 24 hours. If you did not create a Linklater account, you can safely ignore this email.

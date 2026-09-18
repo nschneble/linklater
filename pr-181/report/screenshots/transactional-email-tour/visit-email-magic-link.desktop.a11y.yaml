@@ -1,0 +1,25 @@
+- table:
+  - rowgroup:
+    - 'row "Linklater Your login link. Click the button below to log in. This link expires in 15 minutes. Log in to Linklater Or copy and paste this link into your browser: https://linklater.app/verify-login?token=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef If you did not request this login link, you can safely ignore this email."':
+      - 'cell "Linklater Your login link. Click the button below to log in. This link expires in 15 minutes. Log in to Linklater Or copy and paste this link into your browser: https://linklater.app/verify-login?token=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef If you did not request this login link, you can safely ignore this email."':
+        - table:
+          - rowgroup:
+            - row "Linklater":
+              - cell "Linklater"
+            - 'row "Your login link. Click the button below to log in. This link expires in 15 minutes. Log in to Linklater Or copy and paste this link into your browser: https://linklater.app/verify-login?token=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"':
+              - 'cell "Your login link. Click the button below to log in. This link expires in 15 minutes. Log in to Linklater Or copy and paste this link into your browser: https://linklater.app/verify-login?token=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"':
+                - heading "Your login link." [level=1]
+                - paragraph: Click the button below to log in. This link expires in 15 minutes.
+                - table:
+                  - rowgroup:
+                    - row "Log in to Linklater":
+                      - cell "Log in to Linklater":
+                        - link "Log in to Linklater":
+                          - /url: https://linklater.app/verify-login?token=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+                - paragraph:
+                  - text: "Or copy and paste this link into your browser:"
+                  - link "https://linklater.app/verify-login?token=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef":
+                    - /url: https://linklater.app/verify-login?token=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+            - row "If you did not request this login link, you can safely ignore this email.":
+              - cell "If you did not request this login link, you can safely ignore this email.":
+                - paragraph: If you did not request this login link, you can safely ignore this email.
