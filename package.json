@@ -70,7 +70,7 @@
     },
     "find-my-way": "^9.7.0",
     "js-yaml": "^4.2.0",
-    "multer": "^2.2.0",
+    "multer": "^2.4.0",
     "picomatch": "^4.0.4",
     "prisma": {
       "mysql2": "^3.23.1"
