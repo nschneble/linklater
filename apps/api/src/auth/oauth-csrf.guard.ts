@@ -5,8 +5,8 @@ import {
   ProviderEmailUnverifiedException,
   redirectOAuthSignInFailure,
 } from './oauth-sign-in-failure.js';
+import type { AuthGuardAuthenticateOptions } from '@nestjs/passport';
 import type { CanActivate, ExecutionContext, Type } from '@nestjs/common';
-import type { IAuthModuleOptions } from '@nestjs/passport';
 import type { OAuthSignInFailure } from './oauth-sign-in-failure.js';
 import type { Request, Response } from 'express';
 
@@ -37,7 +37,7 @@ export function createOAuthInitiateGuard(
 
     override getAuthenticateOptions(
       context: ExecutionContext,
-    ): IAuthModuleOptions {
+    ): AuthGuardAuthenticateOptions {
       const request = context
         .switchToHttp()
         .getRequest<RequestWithOAuthNonce>();

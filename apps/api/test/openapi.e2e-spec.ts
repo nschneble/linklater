@@ -5,6 +5,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import type { Request, Response } from 'express';
 
 import { AnyAuthGuard } from '../src/auth/any-auth.guard.js';
+import { CustomThrottlerGuard } from '../src/auth/custom-throttler.guard.js';
 import { LinksController } from '../src/links/links.controller.js';
 import { LinksQueryService } from '../src/links/links-query.service.js';
 import { LinksService } from '../src/links/links.service.js';
@@ -46,6 +47,8 @@ describe('OpenAPI document (e2e)', () => {
     })
       .overrideGuard(AnyAuthGuard)
       .useValue({ canActivate: (_context: ExecutionContext) => true })
+      .overrideGuard(CustomThrottlerGuard)
+      .useValue({ canActivate: () => true })
       .compile();
 
     app = moduleRef.createNestApplication();
