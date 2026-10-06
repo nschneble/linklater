@@ -40,4 +40,4 @@ jobs:
         with:
           working-directory: .
           # baselines-path: tuffgal/baselines
-          node-version: "24"
+          node-version: '24'
