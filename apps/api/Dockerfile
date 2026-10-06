@@ -11,7 +11,7 @@
 #                 toolchain never reaches the runtime image.
 #   3. runtime  — a slim image that runs `node dist/main`.
 #
-# Node 22 matches the root package.json `engines` pin (`node: >=22`).
+# Node 24 matches the root package.json `engines` pin (`node: >=24`).
 #
 # Debian slim (glibc) rather than Alpine (musl): the app itself does not need a
 # native Prisma query engine — it uses the @prisma/adapter-pg driver adapter and
@@ -24,7 +24,7 @@
 # ---------------------------------------------------------------------------
 # Stage 1: builder
 # ---------------------------------------------------------------------------
-FROM node:22-slim AS builder
+FROM node:24-slim AS builder
 
 WORKDIR /app
 
@@ -74,7 +74,7 @@ RUN npm run typecheck && npm run build
 # places the native schema engine that `prisma migrate deploy` needs. Same
 # manifests as the builder, so the install is lockfile-identical minus the dev
 # dependencies.
-FROM node:22-slim AS proddeps
+FROM node:24-slim AS proddeps
 
 WORKDIR /app
 
@@ -99,12 +99,12 @@ RUN npm ci --omit=dev
 # ---------------------------------------------------------------------------
 # Stage 3: runtime
 # ---------------------------------------------------------------------------
-FROM node:22-slim AS runtime
+FROM node:24-slim AS runtime
 
 ENV NODE_ENV=production
 
 # OpenSSL for the Prisma schema engine used by `prisma migrate deploy`; wget for
-# the container HEALTHCHECK. node:22-slim ships neither by default.
+# the container HEALTHCHECK. node:24-slim ships neither by default.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends openssl wget \
     && rm -rf /var/lib/apt/lists/*

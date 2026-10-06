@@ -7,7 +7,7 @@
   "license": "CC0-1.0",
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "scripts": {
     "build": "npm run build --workspace @linklater/api && npm run build --workspace @linklater/web",
