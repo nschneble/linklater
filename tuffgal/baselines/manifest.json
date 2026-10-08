@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "captureSchema": 1,
-  "tuffgalVersion": "0.2.0-alpha.8",
-  "playwrightVersion": "1.62.1",
+  "tuffgalVersion": "0.3.0-alpha.1",
+  "playwrightVersion": "1.63.0",
   "browser": "chromium",
-  "browserVersion": "151.0.7922.34",
+  "browserVersion": "153.0.8010.12",
   "platform": "linux",
   "captureMode": "viewport",
   "colorScheme": "dark",
