@@ -1,11 +1,11 @@
 import { jest } from '@jest/globals';
 
+import { AnyAuthGuard } from '../auth/any-auth.guard';
 import { CustomThrottlerGuard } from '../auth/custom-throttler.guard';
 import { LinksController } from './links.controller';
 import { LinksQueryService } from './links-query.service';
 import { LinksService } from './links.service';
 import { Test, type TestingModule } from '@nestjs/testing';
-import { TokenScopeService } from '../auth/token-scope.service';
 
 const LINK_ID = 'link-1';
 const LINK_URL = 'https://example.com/page';
@@ -47,10 +47,10 @@ describe('LinksController', () => {
       providers: [
         { provide: LinksService, useValue: linksServiceMock },
         { provide: LinksQueryService, useValue: linksQueryMock },
-        // AnyAuthGuard needs TokenScopeService; stub avoids booting it
-        { provide: TokenScopeService, useValue: { enforce: jest.fn() } },
       ],
     })
+      .overrideGuard(AnyAuthGuard)
+      .useValue({ canActivate: () => true })
       // CustomThrottlerGuard needs the ThrottlerModule graph; override it
       .overrideGuard(CustomThrottlerGuard)
       .useValue({ canActivate: () => true })

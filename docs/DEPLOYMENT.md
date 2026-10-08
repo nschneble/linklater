@@ -60,7 +60,7 @@ lives in `VPS-PLAYBOOK.md`.
 
 What the implementation ships:
 
-- An API `Dockerfile` (Node 22, runs `node dist/main`). Migrations are **not**
+- An API `Dockerfile` (Node 24, runs `node dist/main`). Migrations are **not**
   run by the image entrypoint; the deploy workflow runs them as a separate
   one-shot Compose step before the new API starts.
 - A web `Dockerfile` that bakes the static build into the Caddy image, so the

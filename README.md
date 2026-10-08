@@ -95,7 +95,7 @@ To install, go to **Settings → Bookmarklet** and drag the _Save to Linklater_ 
 
 ### Prerequisites
 
-- Node 22.x
+- Node 24.x
 - PostgreSQL 16
 - [Mailpit](https://mailpit.axllent.org/)
 - [ShellCheck](https://www.shellcheck.net/) (`brew install shellcheck`), needed by `npm run lint` and `bin/flintest` but not to run the app
