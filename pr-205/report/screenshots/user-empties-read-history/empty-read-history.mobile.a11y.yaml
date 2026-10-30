@@ -1,0 +1,43 @@
+- status
+- link "Skip to main content":
+  - /url: "#main-content"
+- banner:
+  - button "Go to your links": Linklater Save links now, read them later.
+  - button "User menu (testing-ui@linklater.test)"
+  - dialog "User menu":
+    - menu "User menu":
+      - group "Logged in as":
+        - paragraph: Logged in as
+        - paragraph: testing-ui@linklater.test
+      - menuitem "Your links"
+      - menuitem "Settings"
+      - menuitem "Switch to light mode"
+      - menuitem "Craft your theme"
+      - menuitem "Theme A Scanner Darkly"
+      - menuitem "Log out"
+    - menu "Theme":
+      - menuitem "Back to main menu"
+      - paragraph: Themes
+      - menuitemradio "Apollo 10½ Accessible theme"
+      - menuitemradio "A Scanner Darkly" [checked]
+      - menuitemradio "Before Sunrise"
+      - menuitemradio "Before Sunset"
+      - menuitemradio "Before Midnight"
+      - menuitemradio "Boyhood"
+      - menuitemradio "Dazed and Confused"
+      - menuitemradio "Hit Man"
+      - menuitemradio "Nouvelle Vague"
+      - menuitemradio "School of Rock"
+- main "Your links":
+  - heading "Your links" [level=1]
+  - paragraph: Read links are removed after 7 days.
+  - tablist "Links filter":
+    - tab "Unread"
+    - tab "Read" [selected]
+  - searchbox "Search through your links"
+  - button "Remove all read links" [disabled]
+  - tabpanel "Read":
+    - paragraph: No read links
+  - status
+  - status
+  - status
