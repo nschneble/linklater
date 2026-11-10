@@ -91,8 +91,9 @@
     "fsevents@2.3.2": true,
     "fsevents@2.3.3": true,
     "unrs-resolver@1.12.2": true,
-    "@prisma/engines@7.10.0": true,
-    "@swc/core@1.16.13": true,
-    "prisma@7.10.0": true
+    "@parcel/watcher": false,
+    "@prisma/engines@7.10.1": true,
+    "@swc/core@1.16.21": true,
+    "prisma@7.10.1": true
   }
 }

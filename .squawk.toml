@@ -1,5 +1,10 @@
 pg_version = "16.0"
 
+excluded_paths = [
+  # applied fk drop/re-add; an inline ignore would change its checksum
+  "apps/api/prisma/migrations/20251210174700_add_cascade_on_user_links/migration.sql",
+]
+
 excluded_rules = [
   # Prisma generates TIMESTAMP(3) by default — use @db.Timestamptz in schema to opt in per-field
   "prefer-timestamptz",
