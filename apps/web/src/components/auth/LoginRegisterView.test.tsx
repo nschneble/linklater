@@ -539,7 +539,7 @@ describe('LoginRegisterView submit icon cross-fade', () => {
     ['opacity-100', 'opacity-0', 'scale-100', 'blur-none'].forEach(
       (utility) => {
         expect(css).toContain(
-          `.group-data-\\[busy\\]\\:${utility}:is(:where(.group)[data-busy] *)`,
+          `:is(:where(.group)[data-busy] .group-data-\\[busy\\]\\:${utility})`,
         );
       },
     );
@@ -570,7 +570,7 @@ describe('LoginRegisterView submit icon cross-fade', () => {
     const css = await compileClasses(spinner?.className.split(' ') ?? []);
 
     expect(css.match(/([^{}]+)\{[^{}]*animation:/)?.[1]).toContain(
-      ':is(:where(.group)[data-busy] *)',
+      ':is(:where(.group)[data-busy] ',
     );
   });
 

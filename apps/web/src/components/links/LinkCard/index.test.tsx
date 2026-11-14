@@ -418,17 +418,17 @@ describe('LinkCard skeleton settle cross-fade (lifts out as content rises in)', 
     const flattened = css.replace(/\s+/g, ' ');
 
     expect(flattened).toContain(
-      '.group-aria-busy\\:animate-meta-pulse-bg:is(:where(.group)[aria-busy="true"] *) { animation: var(--animate-meta-pulse-bg); }',
+      ':is(:where(.group)[aria-busy="true"] .group-aria-busy\\:animate-meta-pulse-bg) { animation: var(--animate-meta-pulse-bg); }',
     );
     expect(flattened).toContain(
       'transition-property: opacity,translate,filter;',
     );
     expect(flattened).toContain(
-      '.group-aria-busy\\:translate-y-0:is(:where(.group)[aria-busy="true"] *)',
+      ':is(:where(.group)[aria-busy="true"] .group-aria-busy\\:translate-y-0)',
     );
     expect(flattened).toContain('.blur-\\[2px\\]');
     expect(flattened).toContain(
-      '.group-aria-busy\\:blur-\\[0px\\]:is(:where(.group)[aria-busy="true"] *)',
+      ':is(:where(.group)[aria-busy="true"] .group-aria-busy\\:blur-\\[0px\\])',
     );
   });
 });
