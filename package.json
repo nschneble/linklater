@@ -35,17 +35,17 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@swc/cli": "^0.8.2",
-    "@swc/core": "^1.16.21",
+    "@swc/core": "^1.16.22",
     "@types/pg": "^8.21.0",
     "bcryptjs": "^3.0.3",
-    "concurrently": "^10.0.6",
+    "concurrently": "^10.0.7",
     "eslint": "^10.14.0",
     "eslint-config-prettier": "^10.1.8",
     "pg": "^8.23.1",
     "prettier": "^3.9.10",
-    "squawk-cli": "^2.70.0",
+    "squawk-cli": "^2.72.0",
     "tuffgal": "^0.3.2-alpha.1",
-    "typescript-eslint": "^8.72.1"
+    "typescript-eslint": "^8.72.2"
   },
   "overrides": {
     "@hono/node-server": "^2.0.5",
@@ -93,7 +93,7 @@
     "unrs-resolver@1.12.2": true,
     "@parcel/watcher": false,
     "@prisma/engines@7.10.1": true,
-    "@swc/core@1.16.21": true,
+    "@swc/core@1.16.22": true,
     "prisma@7.10.1": true
   }
 }
