@@ -6,14 +6,6 @@
 
 ## [1.6.2] - 2026-11-14
 
-### Added
-
-- _TODO_
-
-### Changed
-
-- _TODO_
-
 ### Fixed
 
 - The Themes title in the mobile menu sits right of center
@@ -271,6 +263,7 @@ This is a development version bump. Most of the changes are related to refactori
 [Unreleased]: https://github.com/nschneble/linklater/compare/v1.6.2...HEAD
 [1.6.2]: https://github.com/nschneble/linklater/compare/v1.6.1...v1.6.2
 [1.6.1]: https://github.com/nschneble/linklater/compare/v1.6.0...v1.6.1
+[1.6.0]: https://github.com/nschneble/linklater/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/nschneble/linklater/compare/v1.4.2...v1.5.0
 [1.4.2]: https://github.com/nschneble/linklater/compare/v1.4.1...v1.4.2
 [1.4.1]: https://github.com/nschneble/linklater/compare/v1.4.0...v1.4.1
