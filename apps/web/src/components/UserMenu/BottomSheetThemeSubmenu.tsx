@@ -38,18 +38,15 @@ export default function BottomSheetThemeSubmenu({
       className="pb-4"
       inert={!showThemeSubview ? true : undefined}
     >
-      <MenuSection className="flex items-center justify-between">
+      <MenuSection className="grid grid-cols-[1fr_auto_1fr] items-center">
         <MenuItem
           icon="fa-chevron-left"
           label=""
           aria-label="Back to main menu"
-          className="flex-0"
+          className="max-w-fit"
           onClick={onBack}
         />
         <p className="font-semibold">Themes</p>
-
-        {/* keeps the heading visually centered */}
-        <div aria-hidden="true" className="flex-0 w-9" />
       </MenuSection>
 
       <InlineThemeList baseTheme={baseTheme} onSelect={onThemeSelect} />

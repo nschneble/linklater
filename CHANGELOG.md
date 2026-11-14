@@ -16,7 +16,7 @@
 
 ### Fixed
 
-- _TODO_
+- The Themes title in the mobile menu sits right of center
 
 ## [1.6.1] - 2026-08-30
 
