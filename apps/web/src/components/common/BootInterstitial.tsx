@@ -27,7 +27,7 @@ export default function BootInterstitial() {
   return (
     <div
       data-theme="branding"
-      className="flex items-center justify-center min-h-svh bg-[var(--base-bg)] text-[var(--base-text)] select-none"
+      className="fixed inset-0 flex items-center justify-center bg-[var(--base-bg)] text-[var(--base-text)] select-none"
     >
       <div className="text-[var(--base-alt-text)] text-sm animate-boot-pulse">
         Defrosting Linklater in the microwave…

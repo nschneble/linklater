@@ -17,6 +17,7 @@
 ### Fixed
 
 - The Themes title in the mobile menu sits right of center
+- The "defrosting" boot message sits well below center on iOS Safari
 
 ## [1.6.1] - 2026-08-30
 
