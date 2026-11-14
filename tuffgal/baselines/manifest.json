@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "captureSchema": 1,
-  "tuffgalVersion": "0.3.0-alpha.1",
+  "tuffgalVersion": "0.3.2-alpha.1",
   "playwrightVersion": "1.63.0",
   "browser": "chromium",
   "browserVersion": "153.0.8010.12",
