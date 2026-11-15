@@ -1,3 +1,4 @@
+import { FULL_SCREEN_CENTER } from '../../lib/styles';
 import IconButton from '../common/IconButton';
 import PixelArtGhost from './PixelArtGhost';
 import SuggestionCallout from '../links/SuggestionCallout';
@@ -18,32 +19,36 @@ export default function StumbleEmptyView() {
   const navigate = useNavigate();
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-svh px-4 py-12 bg-[var(--base-bg)] text-[var(--base-text)] text-center select-none">
-      <div className="mb-8">
-        <PixelArtGhost />
+    <div
+      className={`${FULL_SCREEN_CENTER} bg-[var(--base-bg)] text-[var(--base-text)] select-none`}
+    >
+      <div className="flex flex-col items-center m-auto px-4 py-12 text-center">
+        <div className="mb-8">
+          <PixelArtGhost />
+        </div>
+
+        <h1 className="mb-6 text-xl font-semibold text-balance">
+          Boo. Your reading list is empty.
+        </h1>
+
+        <SuggestionCallout
+          fallback={
+            <p className="mb-8 text-[var(--base-subtle-text)] text-xs italic">
+              (Suggestions are napping too.)
+            </p>
+          }
+        />
+
+        <IconButton
+          variant="elevated"
+          surface="base"
+          className="mt-8"
+          onClick={() => navigate('/unread')}
+        >
+          <i className="fa-solid fa-arrow-left text-xs" aria-hidden="true" />
+          Back to Linklater
+        </IconButton>
       </div>
-
-      <h1 className="mb-6 text-xl font-semibold text-balance">
-        Boo. Your reading list is empty.
-      </h1>
-
-      <SuggestionCallout
-        fallback={
-          <p className="mb-8 text-[var(--base-subtle-text)] text-xs italic">
-            (Suggestions are napping too.)
-          </p>
-        }
-      />
-
-      <IconButton
-        variant="elevated"
-        surface="base"
-        className="mt-8"
-        onClick={() => navigate('/unread')}
-      >
-        <i className="fa-solid fa-arrow-left text-xs" aria-hidden="true" />
-        Back to Linklater
-      </IconButton>
     </div>
   );
 }

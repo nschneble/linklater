@@ -1,5 +1,6 @@
 import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
+import { FULL_SCREEN_CENTER } from '../../lib/styles';
 import { getErrorMessage } from '../../lib/errors';
 import LinkButton from '../common/LinkButton';
 import MfaView from './MfaView';
@@ -149,13 +150,13 @@ export default function ResetPasswordPage() {
     return (
       <main
         data-theme="branding"
-        className="flex items-center justify-center min-h-svh bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none"
+        className={`${FULL_SCREEN_CENTER} bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none`}
       >
         <p role="status" aria-live="polite" className="sr-only">
           Resetting your password…
         </p>
         <i
-          className="fa-solid fa-arrows-rotate fa-spin text-4xl opacity-50"
+          className="m-auto fa-solid fa-arrows-rotate fa-spin text-4xl opacity-50"
           aria-hidden="true"
         />
       </main>

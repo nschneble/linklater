@@ -1,4 +1,5 @@
 import Alert from '../common/Alert';
+import { FULL_SCREEN_CENTER } from '../../lib/styles';
 import IconButton from '../common/IconButton';
 import { isSafeRedirectUrl } from '../../lib/safe-redirect-url';
 import StumbleEmptyView from './StumbleEmptyView';
@@ -77,31 +78,40 @@ export default function StumblePage() {
 
   if (state === 'error') {
     return (
-      <main className="flex flex-col items-center justify-center max-w-md min-h-svh mx-auto px-4 bg-[var(--base-bg)] text-[var(--base-text)] text-center gap-4">
-        <Alert variant="error" icon="fa-triangle-exclamation">
-          We couldn't open that link. It may have been saved with an unsupported
-          address.
-        </Alert>
-        <IconButton
-          ref={retryButtonReference}
-          variant="elevated"
-          surface="base"
-          onClick={handleStumble}
-        >
-          <i className="fa-solid fa-arrows-rotate text-xs" aria-hidden="true" />
-          Try another link
-        </IconButton>
+      <main
+        className={`${FULL_SCREEN_CENTER} bg-[var(--base-bg)] text-[var(--base-text)]`}
+      >
+        <div className="flex flex-col items-center w-full max-w-md m-auto px-4 text-center gap-4">
+          <Alert variant="error" icon="fa-triangle-exclamation">
+            We couldn't open that link. It may have been saved with an
+            unsupported address.
+          </Alert>
+          <IconButton
+            ref={retryButtonReference}
+            variant="elevated"
+            surface="base"
+            onClick={handleStumble}
+          >
+            <i
+              className="fa-solid fa-arrows-rotate text-xs"
+              aria-hidden="true"
+            />
+            Try another link
+          </IconButton>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="flex items-center justify-center min-h-svh bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none">
+    <main
+      className={`${FULL_SCREEN_CENTER} bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none`}
+    >
       <p role="status" aria-live="polite" className="sr-only">
         Finding a random link…
       </p>
       <i
-        className="fa-solid fa-arrows-rotate fa-spin text-4xl opacity-50"
+        className="m-auto fa-solid fa-arrows-rotate fa-spin text-4xl opacity-50"
         aria-hidden="true"
       />
     </main>

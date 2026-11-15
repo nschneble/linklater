@@ -1,3 +1,4 @@
+import { FULL_SCREEN_CENTER } from '../../lib/styles';
 import PrimaryButton from '../common/PrimaryButton';
 import { useEffect, useState } from 'react';
 
@@ -44,39 +45,38 @@ export default function FailWhalePage() {
       >
         Skip to main content
       </a>
-      <main
-        id="main-content"
-        className="flex flex-col items-center justify-center max-w-md min-h-svh mx-auto px-4 text-center"
-      >
-        <pre
-          aria-hidden="true"
-          className="mb-6 text-[var(--base-alt-text)] text-xs leading-snug select-none"
-        >
-          {FAILWHALE_ASCII}
-        </pre>
-        <h1 className="mb-3 text-[var(--base-text)] text-2xl font-bold text-balance">
-          You found the failwhale!
-        </h1>
-        <p className="mb-6 text-[var(--base-alt-text)] text-sm text-balance">
-          This is a dead end on purpose. Press the button below and Linklater
-          will throw a render error so you can see the app's error screen
-          firsthand.
-        </p>
-        <PrimaryButton
-          type="button"
-          surface="base"
-          aria-describedby="crash-help"
-          onClick={() => setShouldCrash(true)}
-        >
-          Crash this page on purpose
-        </PrimaryButton>
-        <p
-          id="crash-help"
-          className="mt-4 text-[var(--base-subtle-text)] text-xs text-balance"
-        >
-          Triggers the app's error screen. Reload the page to recover.
-        </p>
-        <Crasher shouldCrash={shouldCrash} />
+      <main id="main-content" className={FULL_SCREEN_CENTER}>
+        <div className="flex flex-col items-center w-full max-w-md m-auto px-4 text-center">
+          <pre
+            aria-hidden="true"
+            className="mb-6 text-[var(--base-alt-text)] text-xs leading-snug select-none"
+          >
+            {FAILWHALE_ASCII}
+          </pre>
+          <h1 className="mb-3 text-[var(--base-text)] text-2xl font-bold text-balance">
+            You found the failwhale!
+          </h1>
+          <p className="mb-6 text-[var(--base-alt-text)] text-sm text-balance">
+            This is a dead end on purpose. Press the button below and Linklater
+            will throw a render error so you can see the app's error screen
+            firsthand.
+          </p>
+          <PrimaryButton
+            type="button"
+            surface="base"
+            aria-describedby="crash-help"
+            onClick={() => setShouldCrash(true)}
+          >
+            Crash this page on purpose
+          </PrimaryButton>
+          <p
+            id="crash-help"
+            className="mt-4 text-[var(--base-subtle-text)] text-xs text-balance"
+          >
+            Triggers the app's error screen. Reload the page to recover.
+          </p>
+          <Crasher shouldCrash={shouldCrash} />
+        </div>
       </main>
     </div>
   );
