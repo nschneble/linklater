@@ -1,15 +1,17 @@
-import { getErrorMessage } from '../../lib/errors';
 import LoadingScreen from '../common/LoadingScreen';
-import MfaView from './MfaView';
-import { revokeAllSessions, verifyMagicLink, verifyOtp } from '../../lib/api';
+import MfaStep from './MfaStep';
+import { revokeAllSessions, verifyMagicLink } from '../../lib/api';
 import { setPendingNotice } from '../../lib/pendingNotice';
 import { useAuth } from '../../auth/AuthContext';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
-import type { FormEvent } from 'react';
+import type { MfaChallenge } from './useAuthForm';
 
-type MfaChallenge = 'totp' | 'recovery';
+interface PendingMfa {
+  mfaMethod: MfaChallenge;
+  mfaToken: string;
+}
 
 /**
  * Handles the `/verify-login?token=…` route for magic-link login.
@@ -41,27 +43,19 @@ type MfaChallenge = 'totp' | 'recovery';
  * on).
  *
  * MFA-enabled accounts authenticated via magic link still need to clear
- * the OTP challenge; that branch mounts `MfaView` and is unchanged.
+ * the OTP challenge; that branch mounts `MfaStep`.
  */
 export default function VerifyLoginPage() {
   useDocumentTitle('Linklater – Verifying sign in');
   const [searchParameters] = useSearchParams();
   const navigate = useNavigate();
-  const { loginWithToken, refreshUser, user } = useAuth();
+  const { loginWithToken, user } = useAuth();
   // mirror user into a ref so post-await reads the effect-time value, not a stale closure
   const userReference = useRef(user);
   useEffect(() => {
     userReference.current = user;
   }, [user]);
-  const [isInMfa, setIsInMfa] = useState(false);
-  const [mfaToken, setMfaToken] = useState<string | null>(null);
-  const [mfaChallenge, setMfaChallenge] = useState<MfaChallenge>('totp');
-  const [mfaCode, setMfaCode] = useState('');
-  const [mfaLoading, setMfaLoading] = useState(false);
-  // mfaError is only for OTP failures; verify-link failures redirect to /login
-  const [mfaError, setMfaError] = useState<string | null>(null);
-  const mfaErrorReference = useRef<HTMLParagraphElement>(null);
-  const mfaInputReference = useRef<HTMLInputElement>(null);
+  const [pendingMfa, setPendingMfa] = useState<PendingMfa | null>(null);
   const hasVerified = useRef(false);
 
   useEffect(() => {
@@ -79,9 +73,10 @@ export default function VerifyLoginPage() {
       .then(async (result) => {
         // MFA accounts via magic link still must clear the OTP challenge first
         if ('mfaToken' in result) {
-          setMfaToken(result.mfaToken);
-          setMfaChallenge(result.mfaMethod);
-          setIsInMfa(true);
+          setPendingMfa({
+            mfaMethod: result.mfaMethod,
+            mfaToken: result.mfaToken,
+          });
           return;
         }
 
@@ -118,52 +113,11 @@ export default function VerifyLoginPage() {
       });
   }, [loginWithToken, navigate, searchParameters]);
 
-  // focus the MfaView error; the ref only attaches during the MFA step
-  useEffect(() => {
-    if (mfaError) {
-      mfaErrorReference.current?.focus();
-    }
-  }, [mfaError]);
-
-  const handleVerifyOtp = async (formEvent: FormEvent) => {
-    formEvent.preventDefault();
-    if (!mfaToken) return;
-    setMfaError(null);
-    setMfaLoading(true);
-    try {
-      await verifyOtp(mfaToken, mfaCode, mfaChallenge);
-      await refreshUser();
-      setMfaCode('');
-      navigate('/unread', { replace: true });
-    } catch (error: unknown) {
-      setMfaError(getErrorMessage(error, 'Invalid code'));
-      setMfaCode('');
-    } finally {
-      setMfaLoading(false);
-    }
-  };
-
-  if (isInMfa) {
+  if (pendingMfa) {
     return (
-      <MfaView
-        error={mfaError}
-        errorReference={mfaErrorReference}
-        loading={mfaLoading}
-        mfaChallenge={mfaChallenge}
-        mfaCode={mfaCode}
-        mfaInputReference={mfaInputReference}
-        onMfaCodeChange={setMfaCode}
-        onSubmit={handleVerifyOtp}
-        onSwitchToRecovery={() => {
-          setMfaChallenge('recovery');
-          setMfaCode('');
-          setMfaError(null);
-        }}
-        onSwitchToTotp={() => {
-          setMfaChallenge('totp');
-          setMfaCode('');
-          setMfaError(null);
-        }}
+      <MfaStep
+        mfaMethod={pendingMfa.mfaMethod}
+        mfaToken={pendingMfa.mfaToken}
       />
     );
   }

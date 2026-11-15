@@ -7,16 +7,21 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router';
 import { verifyOtp } from '../../lib/api';
 import type { MfaChallenge } from './useAuthForm';
+import type { PendingNotice } from '../../lib/pendingNotice';
 
-interface ResetPasswordMfaStepProps {
+interface MfaStepProps {
+  branded?: boolean;
   mfaMethod: MfaChallenge;
   mfaToken: string;
+  successNotice?: PendingNotice;
 }
 
-export default function ResetPasswordMfaStep({
+export default function MfaStep({
+  branded = false,
   mfaMethod,
   mfaToken,
-}: ResetPasswordMfaStepProps) {
+  successNotice,
+}: MfaStepProps) {
   const navigate = useNavigate();
   const { refreshUser } = useAuth();
   const [mfaChallenge, setMfaChallenge] = useState<MfaChallenge>(mfaMethod);
@@ -40,7 +45,7 @@ export default function ResetPasswordMfaStep({
       await verifyOtp(mfaToken, mfaCode, mfaChallenge);
       await refreshUser();
       setMfaCode('');
-      setPendingNotice('password-reset-success');
+      if (successNotice) setPendingNotice(successNotice);
       navigate('/unread', { replace: true });
     } catch (caughtError: unknown) {
       setMfaError(getErrorMessage(caughtError, 'Invalid code'));
@@ -56,25 +61,29 @@ export default function ResetPasswordMfaStep({
     setMfaError(null);
   };
 
+  const mfaView = (
+    <MfaView
+      error={mfaError}
+      errorReference={mfaErrorReference}
+      loading={mfaLoading}
+      mfaChallenge={mfaChallenge}
+      mfaCode={mfaCode}
+      mfaInputReference={mfaInputReference}
+      onMfaCodeChange={setMfaCode}
+      onSubmit={handleVerifyOtp}
+      onSwitchToRecovery={() => switchChallenge('recovery')}
+      onSwitchToTotp={() => switchChallenge('totp')}
+    />
+  );
+
+  if (!branded) return mfaView;
+
   return (
     <main
       data-theme="branding"
       className={`${FULL_SCREEN_CENTER} px-4 py-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]`}
     >
-      <div className="w-full m-auto">
-        <MfaView
-          error={mfaError}
-          errorReference={mfaErrorReference}
-          loading={mfaLoading}
-          mfaChallenge={mfaChallenge}
-          mfaCode={mfaCode}
-          mfaInputReference={mfaInputReference}
-          onMfaCodeChange={setMfaCode}
-          onSubmit={handleVerifyOtp}
-          onSwitchToRecovery={() => switchChallenge('recovery')}
-          onSwitchToTotp={() => switchChallenge('totp')}
-        />
-      </div>
+      <div className="w-full m-auto">{mfaView}</div>
     </main>
   );
 }
