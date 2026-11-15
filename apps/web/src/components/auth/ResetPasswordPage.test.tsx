@@ -384,6 +384,9 @@ describe('ResetPasswordPage main landmark', () => {
           fireEvent.submit(container.querySelector('form')!);
         });
       }
+      if (state === 'loading') {
+        expect(screen.queryByLabelText(/^new password/i)).toBeNull();
+      }
       if (state === 'MFA challenge') {
         await screen.findByRole('heading', {
           name: /multi-factor authentication/i,
