@@ -120,28 +120,30 @@ export default function ResetPasswordPage() {
     return (
       <div
         data-theme="branding"
-        className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]"
+        className={`${FULL_SCREEN_CENTER} px-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]`}
       >
-        <MfaView
-          error={mfaError}
-          errorReference={mfaErrorReference}
-          loading={mfaLoading}
-          mfaChallenge={mfaChallenge}
-          mfaCode={mfaCode}
-          mfaInputReference={mfaInputReference}
-          onMfaCodeChange={setMfaCode}
-          onSubmit={handleVerifyOtp}
-          onSwitchToRecovery={() => {
-            setMfaChallenge('recovery');
-            setMfaCode('');
-            setMfaError(null);
-          }}
-          onSwitchToTotp={() => {
-            setMfaChallenge('totp');
-            setMfaCode('');
-            setMfaError(null);
-          }}
-        />
+        <div className="w-full m-auto">
+          <MfaView
+            error={mfaError}
+            errorReference={mfaErrorReference}
+            loading={mfaLoading}
+            mfaChallenge={mfaChallenge}
+            mfaCode={mfaCode}
+            mfaInputReference={mfaInputReference}
+            onMfaCodeChange={setMfaCode}
+            onSubmit={handleVerifyOtp}
+            onSwitchToRecovery={() => {
+              setMfaChallenge('recovery');
+              setMfaCode('');
+              setMfaError(null);
+            }}
+            onSwitchToTotp={() => {
+              setMfaChallenge('totp');
+              setMfaCode('');
+              setMfaError(null);
+            }}
+          />
+        </div>
       </div>
     );
   }
@@ -166,9 +168,9 @@ export default function ResetPasswordPage() {
   return (
     <div
       data-theme="branding"
-      className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]"
+      className={`${FULL_SCREEN_CENTER} px-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]`}
     >
-      <div className="w-full max-w-md mx-auto p-8 bg-[var(--mount-bg)] border-shadow rounded-2xl select-none">
+      <div className="w-full max-w-md m-auto p-8 bg-[var(--mount-bg)] border-shadow rounded-2xl select-none">
         <h1 className="mb-2 text-[var(--mount-text)] text-center text-2xl font-bold">
           Reset Password
         </h1>

@@ -8,8 +8,9 @@
 
 ### Fixed
 
-- The Themes title in the mobile menu sits right of center
 - The "defrosting" boot message sits well below center on iOS Safari
+- The reset password form sits below center on iOS Safari
+- The Themes title in the mobile menu sits right of center
 
 ## [1.6.1] - 2026-08-30
 
