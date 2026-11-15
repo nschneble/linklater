@@ -1,3 +1,4 @@
+import { FULL_SCREEN_CENTER } from '../../lib/styles';
 import { setPendingNotice } from '../../lib/pendingNotice';
 import { useAuth } from '../../auth/AuthContext';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
@@ -68,12 +69,14 @@ export default function OAuthCallbackPage() {
 
   // no card chrome: it would flash for the sub-second window before redirect
   return (
-    <main className="flex items-center justify-center min-h-svh bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none">
+    <main
+      className={`${FULL_SCREEN_CENTER} bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none`}
+    >
       <p role="status" aria-live="polite" className="sr-only">
         Signing you in…
       </p>
       <i
-        className="fa-solid fa-arrows-rotate fa-spin text-4xl opacity-50"
+        className="m-auto fa-solid fa-arrows-rotate fa-spin text-4xl opacity-50"
         aria-hidden="true"
       />
     </main>

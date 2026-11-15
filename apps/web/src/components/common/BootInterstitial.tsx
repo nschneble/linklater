@@ -1,3 +1,5 @@
+import { FULL_SCREEN_CENTER } from '../../lib/styles';
+
 /**
  * The visible boot screen, shown only once a boot has run long enough to be
  * worth explaining (see `useBootStatus`).
@@ -27,9 +29,9 @@ export default function BootInterstitial() {
   return (
     <div
       data-theme="branding"
-      className="fixed inset-0 flex items-center justify-center bg-[var(--base-bg)] text-[var(--base-text)] select-none"
+      className={`${FULL_SCREEN_CENTER} bg-[var(--base-bg)] text-[var(--base-text)] select-none`}
     >
-      <div className="text-[var(--base-alt-text)] text-sm animate-boot-pulse">
+      <div className="m-auto px-4 text-[var(--base-alt-text)] text-sm animate-boot-pulse">
         Defrosting Linklater in the microwave…
       </div>
     </div>
