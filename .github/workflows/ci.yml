@@ -124,6 +124,17 @@ jobs:
       - name: Install WebKit
         run: npx playwright install --with-deps webkit
 
+      # on PATH so vite-plugin-mkcert skips the rate-limited GitHub lookup
+      - name: Install mkcert
+        run: |
+          MKCERT_VERSION="v1.4.4"
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 \
+            --connect-timeout 10 --max-time 60 \
+            "https://github.com/FiloSottile/mkcert/releases/download/${MKCERT_VERSION}/mkcert-${MKCERT_VERSION}-linux-amd64" \
+            -o mkcert
+          chmod +x mkcert
+          sudo mv mkcert /usr/local/bin/mkcert
+
       - name: Browser tests
         run: npm run test:browser
 
