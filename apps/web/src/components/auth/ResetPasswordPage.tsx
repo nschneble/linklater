@@ -10,25 +10,10 @@ import { useNavigate } from 'react-router';
 import { useResetPasswordForm } from './useResetPasswordForm';
 
 /**
- * Handles the `/reset-password?token=...` route. Renders a form for the user
- * to choose a new password. Validates that both password fields match
- * client-side before calling `POST /auth/reset-password`.
- *
- * On success the server issues a session – the user lands signed in on
- * `/unread` without having to retype credentials. TOTP-enrolled accounts hit
- * the MFA challenge first (same surface as login/magic-link MFA). The
- * destination page surfaces a `password-reset-success` toast via the
- * pending-notice mirror.
- *
- * The submit-in-flight window swaps the form out for a bare centered spinner
- * (matching `TokenVerificationPage` / `VerifyLoginPage`) so the post-submit
- * moment reads as transient routing rather than a card flash before the
- * redirect.
- *
- * The token is read from the `?token=` query parameter and is only valid
- * for 1 hour after the forgot-password email is sent.
- *
- * This route is always accessible without authentication.
+ * The `/reset-password?token=…` route; open without auth. A token is good
+ * for one hour. Success signs the user in (TOTP accounts hit MFA first),
+ * and submitting swaps the form for a loading screen so the redirect never
+ * flashes the card.
  */
 export default function ResetPasswordPage() {
   useDocumentTitle('Linklater – Reset password');
