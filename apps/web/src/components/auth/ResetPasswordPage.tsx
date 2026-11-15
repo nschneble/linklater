@@ -10,9 +10,9 @@ import { useNavigate } from 'react-router';
 import { useResetPasswordForm } from './useResetPasswordForm';
 
 /**
- * The `/reset-password?token=…` route; open without auth. A token is good
- * for one hour. Success signs the user in (TOTP accounts hit MFA first),
- * and submitting swaps the form for a loading screen so the redirect never
+ * The `/reset-password?token=…` route; open without auth. Tokens last an
+ * hour. Success signs the user in (TOTP accounts hit MFA first), and
+ * submitting swaps the form for a loading screen so the redirect never
  * flashes the card.
  */
 export default function ResetPasswordPage() {
