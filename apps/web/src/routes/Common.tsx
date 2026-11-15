@@ -1,8 +1,8 @@
 import ConfirmAccountDeletionPage from '../components/auth/ConfirmAccountDeletionPage';
 import ExtensionAuthorizePage from '../components/auth/ExtensionAuthorizePage';
 import FailWhalePage from '../components/FailWhalePage';
-import { FULL_SCREEN_CENTER } from '../lib/styles';
 import { lazy, Suspense } from 'react';
+import LoadingScreen from '../components/common/LoadingScreen';
 import LogoutPage from '../components/auth/LogoutPage';
 import OAuthCallbackPage from '../components/auth/OAuthCallbackPage';
 import ResetPasswordPage from '../components/auth/ResetPasswordPage';
@@ -29,21 +29,7 @@ function CommonRoute({ label }: { label: string }) {
   };
 
   return (
-    <Suspense
-      fallback={
-        <div
-          className={`${FULL_SCREEN_CENTER} bg-[var(--base-bg)] text-[var(--base-text)] select-none`}
-        >
-          <p role="status" aria-live="polite" className="sr-only">
-            Loading {label}…
-          </p>
-          <i
-            className="m-auto fa-solid fa-arrows-rotate fa-spin text-[var(--base-alt-text)] text-4xl"
-            aria-hidden="true"
-          />
-        </div>
-      }
-    >
+    <Suspense fallback={<LoadingScreen statusText={`Loading ${label}…`} />}>
       {routeView()}
     </Suspense>
   );

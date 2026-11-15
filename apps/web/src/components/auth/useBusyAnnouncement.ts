@@ -1,10 +1,7 @@
+import { ANNOUNCE_DELAY_MS } from '../../lib/liveRegion';
 import { useCallback, useEffect, useState } from 'react';
 import { useTransientState } from '../../lib/hooks/useTransientState';
 import type { MfaChallenge, Mode } from './useAuthForm';
-
-// under a second the busy line only queues ahead of the error that ends
-// the wait; the same threshold `useOAuthArrivalError` announces on
-const ANNOUNCE_DELAY_MS = 1000;
 
 // backstop for a wait that never reports an outcome; 8s outlasts reading it
 const CLEAR_DELAY_MS = 8000;

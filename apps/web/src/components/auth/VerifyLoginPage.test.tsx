@@ -20,7 +20,8 @@
  */
 
 import { act, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ANNOUNCE_DELAY_MS } from '../../lib/liveRegion';
 import { MemoryRouter } from 'react-router';
 import VerifyLoginPage from './VerifyLoginPage';
 
@@ -78,16 +79,29 @@ beforeEach(() => {
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('VerifyLoginPage verifying state', () => {
-  it('renders a polite sr-only status message while verifying', () => {
-    vi.mocked(apiModule.verifyMagicLink).mockReturnValue(new Promise(() => {}));
+  describe('announcement timing', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
 
-    renderPage();
+    afterEach(() => {
+      vi.useRealTimers();
+    });
 
-    const status = screen.getByRole('status');
-    expect(status).toBeInTheDocument();
-    expect(status).toHaveTextContent(/verifying your login link/i);
-    // sr-only status only; failures redirect to /login, no error card
-    expect(status).toHaveClass('sr-only');
+    it('announces the verifying status after the announce delay', () => {
+      vi.mocked(apiModule.verifyMagicLink).mockReturnValue(
+        new Promise(() => {}),
+      );
+
+      renderPage();
+      act(() => {
+        vi.advanceTimersByTime(ANNOUNCE_DELAY_MS);
+      });
+
+      expect(screen.getByRole('status')).toHaveTextContent(
+        /verifying your login link/i,
+      );
+    });
   });
 
   it('does not render the legacy "Logging in" card heading', () => {

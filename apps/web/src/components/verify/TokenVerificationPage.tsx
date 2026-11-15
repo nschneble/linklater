@@ -1,4 +1,4 @@
-import { FULL_SCREEN_CENTER } from '../../lib/styles';
+import LoadingScreen from '../common/LoadingScreen';
 import { setPendingNotice, type PendingNotice } from '../../lib/pendingNotice';
 import { useAuth } from '../../auth/AuthContext';
 import { useEffect, useRef } from 'react';
@@ -122,17 +122,5 @@ export default function TokenVerificationPage({
     onVerify,
   ]);
 
-  return (
-    <main
-      className={`${FULL_SCREEN_CENTER} bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none`}
-    >
-      <p role="status" aria-live="polite" className="sr-only">
-        {verifyingText}
-      </p>
-      <i
-        className="m-auto fa-solid fa-arrows-rotate fa-spin text-4xl opacity-50"
-        aria-hidden="true"
-      />
-    </main>
-  );
+  return <LoadingScreen statusText={verifyingText} />;
 }

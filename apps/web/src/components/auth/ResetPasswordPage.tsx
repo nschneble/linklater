@@ -3,6 +3,7 @@ import FormInput from '../common/FormInput';
 import { FULL_SCREEN_CENTER } from '../../lib/styles';
 import { getErrorMessage } from '../../lib/errors';
 import LinkButton from '../common/LinkButton';
+import LoadingScreen from '../common/LoadingScreen';
 import MfaView from './MfaView';
 import PrimaryButton from '../common/PrimaryButton';
 import { resetPassword, verifyOtp } from '../../lib/api';
@@ -150,18 +151,7 @@ export default function ResetPasswordPage() {
 
   if (loading) {
     return (
-      <main
-        data-theme="branding"
-        className={`${FULL_SCREEN_CENTER} bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none`}
-      >
-        <p role="status" aria-live="polite" className="sr-only">
-          Resetting your password…
-        </p>
-        <i
-          className="m-auto fa-solid fa-arrows-rotate fa-spin text-4xl opacity-50"
-          aria-hidden="true"
-        />
-      </main>
+      <LoadingScreen statusText="Resetting your password…" theme="branding" />
     );
   }
 

@@ -24,7 +24,8 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ANNOUNCE_DELAY_MS } from '../../lib/liveRegion';
 import { MemoryRouter } from 'react-router';
 import ResetPasswordPage from './ResetPasswordPage';
 
@@ -146,31 +147,44 @@ describe('ResetPasswordPage success path (non-MFA)', () => {
     );
   });
 
-  it('renders an sr-only polite status while the reset is in flight', async () => {
-    // hold the API call open so the loading state stays mounted
-    let resolveReset: (value: {
-      accessToken: string;
-      refreshToken: string;
-    }) => void = () => {};
-    vi.mocked(apiModule.resetPassword).mockReturnValue(
-      new Promise((resolve) => {
-        resolveReset = resolve;
-      }),
-    );
-    const { container } = renderPage();
-
-    fillForm();
-
-    await act(async () => {
-      fireEvent.submit(container.querySelector('form')!);
+  describe('announcement timing', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
     });
 
-    expect(screen.getByRole('status')).toHaveTextContent(
-      /resetting your password/i,
-    );
+    afterEach(() => {
+      vi.useRealTimers();
+    });
 
-    await act(async () => {
-      resolveReset({ accessToken: 'a', refreshToken: 'r' });
+    it('announces the reset status after the announce delay', async () => {
+      // hold the API call open so the loading state stays mounted
+      let resolveReset: (value: {
+        accessToken: string;
+        refreshToken: string;
+      }) => void = () => {};
+      vi.mocked(apiModule.resetPassword).mockReturnValue(
+        new Promise((resolve) => {
+          resolveReset = resolve;
+        }),
+      );
+      const { container } = renderPage();
+
+      fillForm();
+
+      await act(async () => {
+        fireEvent.submit(container.querySelector('form')!);
+      });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(ANNOUNCE_DELAY_MS);
+      });
+
+      expect(screen.getByRole('status')).toHaveTextContent(
+        /resetting your password/i,
+      );
+
+      await act(async () => {
+        resolveReset({ accessToken: 'a', refreshToken: 'r' });
+      });
     });
   });
 

@@ -17,7 +17,8 @@
  */
 
 import { act, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ANNOUNCE_DELAY_MS } from '../../lib/liveRegion';
 import { MemoryRouter } from 'react-router';
 import TokenVerificationPage from './TokenVerificationPage';
 import type { PendingNotice } from '../../lib/pendingNotice';
@@ -90,16 +91,27 @@ beforeEach(() => {
 // ─── Verifying state ─────────────────────────────────────────────────────────
 
 describe('TokenVerificationPage verifying state', () => {
-  it('renders a polite sr-only status message while the API call is in flight', () => {
-    const onVerify = vi.fn().mockReturnValue(new Promise(() => {}));
+  describe('announcement timing', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
 
-    renderPage({ onVerify, verifyingText: 'Verifying your email…' });
+    afterEach(() => {
+      vi.useRealTimers();
+    });
 
-    const status = screen.getByRole('status');
-    expect(status).toBeInTheDocument();
-    expect(status).toHaveTextContent(/verifying your email/i);
-    // verifying state is a bare spinner; status text lives sr-only
-    expect(status).toHaveClass('sr-only');
+    it('announces the verifying text after the announce delay', () => {
+      const onVerify = vi.fn().mockReturnValue(new Promise(() => {}));
+
+      renderPage({ onVerify, verifyingText: 'Verifying your email…' });
+      act(() => {
+        vi.advanceTimersByTime(ANNOUNCE_DELAY_MS);
+      });
+
+      expect(screen.getByRole('status')).toHaveTextContent(
+        /verifying your email/i,
+      );
+    });
   });
 
   it('does not render any card heading during the verifying state', () => {

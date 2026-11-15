@@ -1,3 +1,4 @@
+import { ANNOUNCE_DELAY_MS } from '../../lib/liveRegion';
 import { authErrorMessage } from './authFlashMessages';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFlashQueryParameters } from '../../lib/hooks/useFlashQueryParameters';
@@ -7,10 +8,6 @@ import { useTransientState } from '../../lib/hooks/useTransientState';
 
 const ERROR_PARAMETER = 'error';
 const PROVIDER_PARAMETER = 'provider';
-
-// screen readers ignore a region populated during page load, and nothing
-// here waits on the network to supply a natural delay
-const ANNOUNCE_DELAY_MS = 1000;
 
 // AuthForm survives mode changes, so an uncleared announcement outlives
 // the Alert it belongs to; 8s outlasts reading the longest message

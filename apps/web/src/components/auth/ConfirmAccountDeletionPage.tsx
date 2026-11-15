@@ -1,5 +1,5 @@
 import { confirmAccountDeletion } from '../../lib/api';
-import { FULL_SCREEN_CENTER } from '../../lib/styles';
+import LoadingScreen from '../common/LoadingScreen';
 import { setPendingNotice } from '../../lib/pendingNotice';
 import { useAuth } from '../../auth/AuthContext';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
@@ -64,19 +64,5 @@ export default function ConfirmAccountDeletionPage() {
   }, [logout, navigate, searchParameters]);
 
   // transient page: no card chrome, it'd flash before the redirect
-  return (
-    <main
-      id="main-content"
-      tabIndex={-1}
-      className={`${FULL_SCREEN_CENTER} bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none`}
-    >
-      <p role="status" aria-live="polite" className="sr-only">
-        Verifying your deletion link…
-      </p>
-      <i
-        className="m-auto fa-solid fa-arrows-rotate fa-spin text-4xl opacity-50"
-        aria-hidden="true"
-      />
-    </main>
-  );
+  return <LoadingScreen statusText="Verifying your deletion link…" />;
 }

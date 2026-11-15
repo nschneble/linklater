@@ -11,6 +11,7 @@
 
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ANNOUNCE_DELAY_MS } from '../../lib/liveRegion';
 import AuthForm from './AuthForm';
 import { MemoryRouter } from 'react-router';
 import { StrictMode } from 'react';
@@ -39,7 +40,6 @@ const ARRIVAL_MESSAGE =
   "Google hasn't confirmed this email address. Log in with your email instead.";
 const UNKNOWN_MESSAGE =
   "That sign-in didn't finish. Log in with your email instead.";
-const ANNOUNCE_DELAY_MS = 1000;
 const CLEAR_DELAY_MS = 8000;
 
 function renderArrival(path = ARRIVAL_PATH) {

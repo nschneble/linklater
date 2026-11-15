@@ -8,6 +8,7 @@
 
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ANNOUNCE_DELAY_MS } from '../../lib/liveRegion';
 import { MemoryRouter } from 'react-router';
 import type { FormEvent } from 'react';
 
@@ -1235,7 +1236,6 @@ describe('useAuthForm', () => {
       '/login?error=provider_email_unverified&provider=google';
     const ARRIVAL_MESSAGE =
       "Google hasn't confirmed this email address. Log in with your email instead.";
-    const ANNOUNCE_DELAY_MS = 1000;
 
     /** Renders the hook, letting the caller wire refs before effects run. */
     function renderWithReferences(
