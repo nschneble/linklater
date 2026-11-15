@@ -47,7 +47,7 @@ export default function ResetPasswordPage() {
 
   // "branding" pins the surface so no stale film/custom palette leaks in
   return (
-    <div
+    <main
       data-theme="branding"
       className={`${FULL_SCREEN_CENTER} px-4 py-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]`}
     >
@@ -107,6 +107,6 @@ export default function ResetPasswordPage() {
           </p>
         </form>
       </div>
-    </div>
+    </main>
   );
 }

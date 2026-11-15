@@ -362,6 +362,42 @@ describe('ResetPasswordPage branding pin', () => {
   });
 });
 
+describe('ResetPasswordPage main landmark', () => {
+  it.each(['form', 'loading', 'MFA challenge'])(
+    'renders exactly one main in the %s state',
+    async (state) => {
+      if (state === 'loading') {
+        vi.mocked(apiModule.resetPassword).mockReturnValue(
+          new Promise(() => {}),
+        );
+      } else {
+        vi.mocked(apiModule.resetPassword).mockResolvedValue({
+          mfaToken: 'mfa-tok',
+          mfaMethod: 'totp',
+        });
+      }
+      const { container } = renderPage();
+
+      if (state !== 'form') {
+        fillForm();
+        await act(async () => {
+          fireEvent.submit(container.querySelector('form')!);
+        });
+      }
+      if (state === 'loading') {
+        screen.getByRole('status');
+      }
+      if (state === 'MFA challenge') {
+        await screen.findByRole('heading', {
+          name: /multi-factor authentication/i,
+        });
+      }
+
+      expect(screen.getAllByRole('main')).toHaveLength(1);
+    },
+  );
+});
+
 describe('ResetPasswordPage error path', () => {
   it('shows an error when resetPassword API call rejects', async () => {
     vi.mocked(apiModule.resetPassword).mockRejectedValue(
