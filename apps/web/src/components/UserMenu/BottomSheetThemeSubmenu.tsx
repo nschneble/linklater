@@ -43,7 +43,7 @@ export default function BottomSheetThemeSubmenu({
           icon="fa-chevron-left"
           label=""
           aria-label="Back to main menu"
-          className="max-w-fit"
+          fullWidth={false}
           onClick={onBack}
         />
         <p className="font-semibold">Themes</p>

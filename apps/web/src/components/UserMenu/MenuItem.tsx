@@ -3,7 +3,7 @@ import { useRef } from 'react';
 
 /**
  * A single action item within a `role="menu"` container.
- * Renders a full-width `<button>` with `role="menuitem"`, a Font Awesome icon,
+ * Renders a `<button>` with `role="menuitem"`, a Font Awesome icon,
  * and a text label. The icon is tinted with the orbit-tier highlight when
  * `active` is true.
  */
@@ -21,6 +21,8 @@ interface MenuItemProps {
    * @default false
    */
   active?: boolean;
+  /** When `false`, keeps its intrinsic width. Defaults to `true`. */
+  fullWidth?: boolean;
   /** Additional Tailwind classes for spacing overrides (e.g. `"mt-2"` for the logout item). */
   className?: string;
   /**
@@ -39,15 +41,17 @@ export default function MenuItem({
   label,
   onClick,
   active = false,
+  fullWidth = true,
   className = '',
   'aria-label': ariaLabel,
 }: MenuItemProps) {
   // record pointer type so the mousedown hack fires for mouse input only
   const lastPointerType = useRef<string | undefined>(undefined);
+  const width = fullWidth ? 'w-full' : 'w-fit';
 
   return (
     <button
-      className={`group flex items-center gap-2 w-full pl-2.5 pr-3 py-2 hover:bg-[var(--orbit-highlight)]/80 border-y border-transparent hover:border-[var(--orbit-highlight-hover)]/80 text-[var(--orbit-text)] hover:text-[var(--orbit-highlight-fg)] text-left ${FOCUS_RING} cursor-pointer ${className}`}
+      className={`group flex items-center gap-2 ${width} pl-2.5 pr-3 py-2 hover:bg-[var(--orbit-highlight)]/80 border-y border-transparent hover:border-[var(--orbit-highlight-hover)]/80 text-[var(--orbit-text)] hover:text-[var(--orbit-highlight-fg)] text-left ${FOCUS_RING} cursor-pointer ${className}`}
       type="button"
       role="menuitem"
       aria-current={active ? 'page' : undefined}
