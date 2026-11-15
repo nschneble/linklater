@@ -3,9 +3,9 @@ import { useRef } from 'react';
 
 /**
  * A single action item within a `role="menu"` container.
- * Renders a `<button>` with `role="menuitem"`, a Font Awesome icon,
- * and a text label. The icon is tinted with the orbit-tier highlight when
- * `active` is true.
+ * Renders a `<button>` with `role="menuitem"`, a Font
+ * Awesome icon, and a text label. The icon is tinted
+ * with the orbit-tier highlight when `active` is true.
  */
 interface MenuItemProps {
   /** Font Awesome icon class without the `fa-solid` prefix (e.g. `'fa-bookmark'`). */
@@ -21,7 +21,6 @@ interface MenuItemProps {
    * @default false
    */
   active?: boolean;
-  /** When `false`, keeps its intrinsic width. Defaults to `true`. */
   fullWidth?: boolean;
   /** Additional Tailwind classes for spacing overrides (e.g. `"mt-2"` for the logout item). */
   className?: string;

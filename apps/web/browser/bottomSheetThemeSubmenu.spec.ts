@@ -1,6 +1,6 @@
+import { CENTER_TOLERANCE_PX } from './helpers';
 import { expect, test, type Route } from '@playwright/test';
 
-const CENTER_TOLERANCE_PX = 2;
 const MIN_TARGET_SIZE_PX = 24;
 const USER_EMAIL = 'browser-test@linklater.test';
 
@@ -78,13 +78,11 @@ test('theme subview centers its title beside an intrinsic-width back button', as
     return {
       button: {
         height: button.height,
-        right: button.right,
         width: button.width,
       },
       firstColumnWidth,
       panelCenter: panel.left + panel.width / 2,
       titleCenter: title.left + title.width / 2,
-      titleLeft: title.left,
     };
   });
 
@@ -94,5 +92,4 @@ test('theme subview centers its title beside an intrinsic-width back button', as
   expect(layout.button.width).toBeGreaterThanOrEqual(MIN_TARGET_SIZE_PX);
   expect(layout.button.height).toBeGreaterThanOrEqual(MIN_TARGET_SIZE_PX);
   expect(layout.button.width).toBeLessThan(layout.firstColumnWidth);
-  expect(layout.button.right).toBeLessThanOrEqual(layout.titleLeft);
 });

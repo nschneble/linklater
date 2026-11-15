@@ -20,7 +20,6 @@ export default defineConfig({
     ignoreHTTPSErrors: true,
   },
   webServer: {
-    // builds every run, so a stale dist can't pass for the current source
     command: 'vite build && vite preview --port 4173 --strictPort',
     ignoreHTTPSErrors: true,
     reuseExistingServer: false,

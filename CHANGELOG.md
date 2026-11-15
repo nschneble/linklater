@@ -9,6 +9,7 @@
 ### Fixed
 
 - The "defrosting" boot message sits well below center on iOS Safari
+- The loading, error, and not-found screens sit below center on iOS Safari
 - The reset password form sits below center on iOS Safari
 - The Themes title in the mobile menu sits right of center
 

@@ -1,6 +1,6 @@
+import { CENTER_TOLERANCE_PX } from './helpers';
 import { expect, test, type Page } from '@playwright/test';
 
-const CENTER_TOLERANCE_PX = 2;
 const SHORT_VIEWPORT = { height: 320, width: 393 };
 const TOP_BAR_OFFSETS_PX = [0, 100];
 
@@ -16,22 +16,29 @@ async function measureCentering(page: Page, heading: string) {
   await expect(card).toBeVisible();
 
   return card.evaluate((element) => {
-    const box = element.getBoundingClientRect();
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    const content = range.getBoundingClientRect();
     const layer = element
       .closest('[data-theme="branding"]')!
       .getBoundingClientRect();
     return {
-      center: box.top + box.height / 2,
+      horizontalCenter: content.left + content.width / 2,
       layerBottom: layer.bottom,
       layerTop: layer.top,
+      verticalCenter: content.top + content.height / 2,
       viewportHeight: window.innerHeight,
+      viewportWidth: window.innerWidth,
     };
   });
 }
 
 function expectCentered(layout: Awaited<ReturnType<typeof measureCentering>>) {
   expect(
-    Math.abs(layout.center - layout.viewportHeight / 2),
+    Math.abs(layout.verticalCenter - layout.viewportHeight / 2),
+  ).toBeLessThanOrEqual(CENTER_TOLERANCE_PX);
+  expect(
+    Math.abs(layout.horizontalCenter - layout.viewportWidth / 2),
   ).toBeLessThanOrEqual(CENTER_TOLERANCE_PX);
   expect(layout.layerTop).toBe(0);
   expect(layout.layerBottom).toBe(layout.viewportHeight);
@@ -45,7 +52,7 @@ for (const topBarOffset of TOP_BAR_OFFSETS_PX) {
     expectCentered(await measureCentering(page, 'Reset Password'));
   });
 
-  test(`reset form scrolls its last control into a short viewport with a ${topBarOffset}px top bar`, async ({
+  test(`reset form scrolls its last control into view in a short viewport with a ${topBarOffset}px top bar`, async ({
     page,
   }) => {
     await page.setViewportSize(SHORT_VIEWPORT);

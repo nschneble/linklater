@@ -120,7 +120,7 @@ export default function ResetPasswordPage() {
     return (
       <div
         data-theme="branding"
-        className={`${FULL_SCREEN_CENTER} px-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]`}
+        className={`${FULL_SCREEN_CENTER} px-4 py-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]`}
       >
         <div className="w-full m-auto">
           <MfaView
@@ -168,7 +168,7 @@ export default function ResetPasswordPage() {
   return (
     <div
       data-theme="branding"
-      className={`${FULL_SCREEN_CENTER} px-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]`}
+      className={`${FULL_SCREEN_CENTER} px-4 py-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]`}
     >
       <div className="w-full max-w-md m-auto p-8 bg-[var(--mount-bg)] border-shadow rounded-2xl select-none">
         <h1 className="mb-2 text-[var(--mount-text)] text-center text-2xl font-bold">
