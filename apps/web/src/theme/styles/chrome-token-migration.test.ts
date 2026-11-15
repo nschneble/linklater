@@ -91,6 +91,7 @@ const MIGRATED_FILES = [
   'src/components/auth/ExtensionAuthorizePage.tsx',
   'src/components/auth/ExtensionRequestUnreadable.tsx',
   'src/components/auth/OAuthCallbackPage.tsx',
+  'src/components/auth/ResetPasswordMfaStep.tsx',
   'src/components/auth/ResetPasswordPage.tsx',
   'src/components/auth/VerifyLoginPage.tsx',
   'src/components/verify/TokenVerificationPage.tsx',
