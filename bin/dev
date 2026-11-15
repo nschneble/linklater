@@ -195,14 +195,34 @@ if [[ "$PUBLIC" == true ]]; then
   fi
 fi
 
-# ── LAN hostname (remote mode) ────────────────────────────────────────────────
+# ── LAN addresses (remote mode) ───────────────────────────────────────────────
 REMOTE_URL=""
+REMOTE_IP_URL=""
 LAN_HOSTNAME=""
+LAN_IPV4=""
+
+lan_ipv4() {
+  local interface
+  interface=$(route -n get default 2>/dev/null | awk '/interface:/ { print $2 }')
+  if [[ -n "$interface" ]]; then
+    ipconfig getifaddr "$interface" 2>/dev/null || true
+  fi
+}
+
+set_remote_urls() {
+  local port=$1
+  if [[ -n "$LAN_HOSTNAME" ]]; then
+    REMOTE_URL="https://${LAN_HOSTNAME}.local:${port}"
+  fi
+  if [[ -n "$LAN_IPV4" ]]; then
+    REMOTE_IP_URL="https://${LAN_IPV4}:${port}"
+  fi
+}
+
 if [[ "$REMOTE" == true ]]; then
   LAN_HOSTNAME=$(scutil --get LocalHostName 2>/dev/null || hostname -s 2>/dev/null || true)
-  if [[ -n "$LAN_HOSTNAME" ]]; then
-    REMOTE_URL="https://${LAN_HOSTNAME}.local:5173"
-  fi
+  LAN_IPV4=$(lan_ipv4)
+  set_remote_urls 5173
 fi
 
 # ── View state ────────────────────────────────────────────────────────────────
@@ -412,7 +432,7 @@ render_service_line() {
 
 # ── LAN row (remote mode only) ────────────────────────────────────────────────
 render_lan_line() {
-  printf "${CYAN}↗${RESET} %-7s  ${CYAN}%s${RESET}" "LAN" "$REMOTE_URL"
+  printf "${CYAN}↗${RESET} %-7s  ${CYAN}%s${RESET}" "LAN" "$1"
 }
 
 # ── Key list ──────────────────────────────────────────────────────────────────
@@ -452,7 +472,8 @@ render_chrome() {
   frame_row "  $(render_service_line "$MAILPIT_STATE" "$MAILPIT_URL" "$frame_char" "Mailpit")"
   [[ -n "$TUNNEL_STATE" ]] && \
     frame_row "  $(render_service_line "$TUNNEL_STATE" "$TUNNEL_URL" "$frame_char" "Tunnel")"
-  [[ -n "$REMOTE_URL" ]] && frame_row "  $(render_lan_line)"
+  [[ -n "$REMOTE_URL" ]] && frame_row "  $(render_lan_line "$REMOTE_URL")"
+  [[ -n "$REMOTE_IP_URL" ]] && frame_row "  $(render_lan_line "$REMOTE_IP_URL")"
   frame_gap
 }
 
@@ -705,8 +726,12 @@ render_plain_start() {
 render_plain_update() {
   plain_transition API "$PREV_API_STATE" "$API_STATE" "$API_URL" "$API_LOG"
   plain_transition 'The web server' "$PREV_WEB_STATE" "$WEB_STATE" "$WEB_URL" "$WEB_LOG"
-  if [[ "$WEB_STATE" == "ready" && "$PREV_WEB_STATE" != "ready" && -n "$REMOTE_URL" ]]; then
-    plain_report "Other devices on this Wi-Fi network can reach it at $REMOTE_URL"
+  local remote_urls=$REMOTE_URL
+  if [[ -n "$REMOTE_IP_URL" ]]; then
+    remote_urls="${remote_urls:+$remote_urls or }$REMOTE_IP_URL"
+  fi
+  if [[ "$WEB_STATE" == "ready" && "$PREV_WEB_STATE" != "ready" && -n "$remote_urls" ]]; then
+    plain_report "Other devices on this Wi-Fi network can reach it at $remote_urls"
   fi
   plain_transition Mailpit "$PREV_MAILPIT_STATE" "$MAILPIT_STATE" "$MAILPIT_URL" "$MAILPIT_LOG"
   plain_transition 'The tunnel' "$PREV_TUNNEL_STATE" "$TUNNEL_STATE" "$TUNNEL_URL" "$TUNNEL_LOG"
@@ -837,7 +862,7 @@ while true; do
       WEB_STATE="ready"
       WEB_PORT="${WEB_URL##*:}"
       [[ "$WEB_PORT" =~ ^[0-9]+$ ]] || WEB_PORT=5173
-      [[ -n "$LAN_HOSTNAME" ]] && REMOTE_URL="https://${LAN_HOSTNAME}.local:${WEB_PORT}"
+      set_remote_urls "$WEB_PORT"
       [[ "$TUNNEL_STATE" == "starting" ]] && launch_tunnel "$WEB_PORT"
     fi
   fi
