@@ -327,13 +327,14 @@ git push origin v0.3.0
 
 #### Remote access (LAN)
 
-`bin/dev` has a `--remote` option which allows Linklater to be discoverable by other devices on the same Wi-Fi network. It works on both the TUI and the line by line path, and both print the LAN URL once the web server is up.
+`bin/dev` has a `--remote` option which allows Linklater to be discoverable by other devices on the same Wi-Fi network. It works on both the TUI and the line by line path, and both print the LAN URLs once the web server is up: the Bonjour `.local` name and the Mac's current Wi-Fi IP address. Use the IP address if a device can't resolve the `.local` name.
 
 ```bash
 # cd /path/to/your/repo
 bin/dev --remote
 
 # Linklater is now available on https://linklater.local:5173
+# and on https://192.168.1.109:5173 (your Wi-Fi IP address)
 ```
 
 ##### One-time setup for mobile devices
