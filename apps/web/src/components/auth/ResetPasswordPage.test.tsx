@@ -385,7 +385,7 @@ describe('ResetPasswordPage main landmark', () => {
         });
       }
       if (state === 'loading') {
-        expect(screen.queryByLabelText(/^new password/i)).toBeNull();
+        screen.getByRole('status');
       }
       if (state === 'MFA challenge') {
         await screen.findByRole('heading', {
