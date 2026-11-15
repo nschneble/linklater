@@ -24,6 +24,7 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react';
+import { ANNOUNCE_DELAY_MS } from '../../lib/liveRegion';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router';
 import ResetPasswordPage from './ResetPasswordPage';
@@ -146,32 +147,40 @@ describe('ResetPasswordPage success path (non-MFA)', () => {
     );
   });
 
-  it('renders an sr-only polite status while the reset is in flight', async () => {
-    // hold the API call open so the loading state stays mounted
-    let resolveReset: (value: {
-      accessToken: string;
-      refreshToken: string;
-    }) => void = () => {};
-    vi.mocked(apiModule.resetPassword).mockReturnValue(
-      new Promise((resolve) => {
-        resolveReset = resolve;
-      }),
-    );
-    const { container } = renderPage();
+  it('announces the reset status after the announce delay', async () => {
+    vi.useFakeTimers();
+    try {
+      // hold the API call open so the loading state stays mounted
+      let resolveReset: (value: {
+        accessToken: string;
+        refreshToken: string;
+      }) => void = () => {};
+      vi.mocked(apiModule.resetPassword).mockReturnValue(
+        new Promise((resolve) => {
+          resolveReset = resolve;
+        }),
+      );
+      const { container } = renderPage();
 
-    fillForm();
+      fillForm();
 
-    await act(async () => {
-      fireEvent.submit(container.querySelector('form')!);
-    });
+      await act(async () => {
+        fireEvent.submit(container.querySelector('form')!);
+      });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(ANNOUNCE_DELAY_MS);
+      });
 
-    expect(screen.getByRole('status')).toHaveTextContent(
-      /resetting your password/i,
-    );
+      expect(screen.getByRole('status')).toHaveTextContent(
+        /resetting your password/i,
+      );
 
-    await act(async () => {
-      resolveReset({ accessToken: 'a', refreshToken: 'r' });
-    });
+      await act(async () => {
+        resolveReset({ accessToken: 'a', refreshToken: 'r' });
+      });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('does NOT render a "Signing you in" success card or "I\'d like to log in now" button', async () => {

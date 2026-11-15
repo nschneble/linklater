@@ -1,5 +1,5 @@
-import { FULL_SCREEN_CENTER } from '../../lib/styles';
 import { getErrorMessage } from '../../lib/errors';
+import LoadingScreen from '../common/LoadingScreen';
 import MfaView from './MfaView';
 import { revokeAllSessions, verifyMagicLink, verifyOtp } from '../../lib/api';
 import { setPendingNotice } from '../../lib/pendingNotice';
@@ -169,17 +169,5 @@ export default function VerifyLoginPage() {
   }
 
   // bare spinner, no card chrome that would flash before the redirect fires
-  return (
-    <main
-      className={`${FULL_SCREEN_CENTER} bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none`}
-    >
-      <p role="status" aria-live="polite" className="sr-only">
-        Verifying your login link…
-      </p>
-      <i
-        className="m-auto fa-solid fa-arrows-rotate fa-spin text-4xl opacity-50"
-        aria-hidden="true"
-      />
-    </main>
-  );
+  return <LoadingScreen statusText="Verifying your login link…" />;
 }

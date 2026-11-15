@@ -14,6 +14,7 @@
  */
 
 import { act, render, screen, waitFor } from '@testing-library/react';
+import { ANNOUNCE_DELAY_MS } from '../../lib/liveRegion';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ConfirmAccountDeletionPage from './ConfirmAccountDeletionPage';
 import { MemoryRouter } from 'react-router';
@@ -71,18 +72,24 @@ beforeEach(() => {
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('ConfirmAccountDeletionPage verifying state', () => {
-  it('renders a polite sr-only status message while verifying', () => {
-    vi.mocked(apiModule.confirmAccountDeletion).mockReturnValue(
-      new Promise(() => {}),
-    );
+  it('announces the verifying status after the announce delay', () => {
+    vi.useFakeTimers();
+    try {
+      vi.mocked(apiModule.confirmAccountDeletion).mockReturnValue(
+        new Promise(() => {}),
+      );
 
-    renderPage();
+      renderPage();
+      act(() => {
+        vi.advanceTimersByTime(ANNOUNCE_DELAY_MS);
+      });
 
-    const status = screen.getByRole('status');
-    expect(status).toBeInTheDocument();
-    expect(status).toHaveTextContent(/verifying your deletion link/i);
-    // the status node is `sr-only`; verifying is visually a bare spinner
-    expect(status).toHaveClass('sr-only');
+      expect(screen.getByRole('status')).toHaveTextContent(
+        /verifying your deletion link/i,
+      );
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('does not render the legacy "Verifying deletion link" card heading', () => {

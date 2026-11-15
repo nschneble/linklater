@@ -8,9 +8,11 @@
 
 ### Fixed
 
+- Screen readers can skip the message on a loading screen
 - The "defrosting" boot message sits well below center on iOS Safari
 - The loading, error, and not-found screens sit below center on iOS Safari
 - The reset password form sits below center on iOS Safari
+- The spinner on a loading screen is too faint in some themes
 - The Themes title in the mobile menu sits right of center
 
 ## [1.6.1] - 2026-08-30

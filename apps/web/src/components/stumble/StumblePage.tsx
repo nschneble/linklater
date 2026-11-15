@@ -2,6 +2,7 @@ import Alert from '../common/Alert';
 import { FULL_SCREEN_CENTER } from '../../lib/styles';
 import IconButton from '../common/IconButton';
 import { isSafeRedirectUrl } from '../../lib/safe-redirect-url';
+import LoadingScreen from '../common/LoadingScreen';
 import StumbleEmptyView from './StumbleEmptyView';
 import { stumbleLink } from '../../lib/api';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -103,17 +104,5 @@ export default function StumblePage() {
     );
   }
 
-  return (
-    <main
-      className={`${FULL_SCREEN_CENTER} bg-[var(--base-bg)] text-[var(--base-alt-text)] select-none`}
-    >
-      <p role="status" aria-live="polite" className="sr-only">
-        Finding a random link…
-      </p>
-      <i
-        className="m-auto fa-solid fa-arrows-rotate fa-spin text-4xl opacity-50"
-        aria-hidden="true"
-      />
-    </main>
-  );
+  return <LoadingScreen statusText="Finding a random link…" />;
 }

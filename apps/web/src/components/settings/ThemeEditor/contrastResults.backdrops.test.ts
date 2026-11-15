@@ -259,16 +259,14 @@ const PAINTERS: ReadonlyArray<readonly [string, string, string]> = [
   ['components/api-docs/WelcomePanel.tsx', 'mount', ''],
   ['components/auth/AlreadySignedInNotice.tsx', 'mount', ''],
   ['components/auth/AuthCard.tsx', 'mount', ''],
-  ['components/auth/ConfirmAccountDeletionPage.tsx', 'base', ''],
   ['components/auth/ExtensionAuthorizeCard.tsx', 'mount', ''],
-  ['components/auth/OAuthCallbackPage.tsx', 'base', ''],
-  ['components/auth/ResetPasswordPage.tsx', 'base mount', ''],
-  ['components/auth/VerifyLoginPage.tsx', 'base', ''],
+  ['components/auth/ResetPasswordPage.tsx', 'mount', ''],
   ['components/common/Alert.tsx', 'alert success', ''],
   ['components/common/BootInterstitial.tsx', 'base', ''],
   ['components/common/CopyRevealPanel.tsx', 'orbit', ''],
   ['components/common/IconButton.tsx', 'mount orbit alert', 'alert'],
   ['components/common/IconListButton.tsx', 'mount orbit', ''],
+  ['components/common/LoadingScreen.tsx', 'base', ''],
   ['components/common/Modal.tsx', 'orbit', ''],
   ['components/common/PendingNoticeAnnouncer.tsx', 'mount', ''],
   ['components/common/PrimaryButton.tsx', '', 'base mount orbit'],
@@ -308,9 +306,7 @@ const PAINTERS: ReadonlyArray<readonly [string, string, string]> = [
   ['components/stumble/StumbleEmptyView.tsx', 'base', ''],
   ['components/stumble/StumblePage.tsx', 'base', ''],
   ['components/stumble/StumbleSection.tsx', 'mount orbit', ''],
-  ['components/verify/TokenVerificationPage.tsx', 'base', ''],
   ['components/welcome/WelcomeModal.tsx', 'orbit', ''],
-  ['routes/Common.tsx', 'base', ''],
 ];
 
 // the two mocks that take their bundle as a prop paint every bundle at once
