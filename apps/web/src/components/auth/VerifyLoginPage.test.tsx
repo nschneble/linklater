@@ -20,8 +20,8 @@
  */
 
 import { act, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ANNOUNCE_DELAY_MS } from '../../lib/liveRegion';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router';
 import VerifyLoginPage from './VerifyLoginPage';
 
@@ -79,9 +79,16 @@ beforeEach(() => {
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('VerifyLoginPage verifying state', () => {
-  it('announces the verifying status after the announce delay', () => {
-    vi.useFakeTimers();
-    try {
+  describe('announcement timing', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('announces the verifying status after the announce delay', () => {
       vi.mocked(apiModule.verifyMagicLink).mockReturnValue(
         new Promise(() => {}),
       );
@@ -94,9 +101,7 @@ describe('VerifyLoginPage verifying state', () => {
       expect(screen.getByRole('status')).toHaveTextContent(
         /verifying your login link/i,
       );
-    } finally {
-      vi.useRealTimers();
-    }
+    });
   });
 
   it('does not render the legacy "Logging in" card heading', () => {

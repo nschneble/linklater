@@ -17,8 +17,8 @@
  */
 
 import { act, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ANNOUNCE_DELAY_MS } from '../../lib/liveRegion';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router';
 import TokenVerificationPage from './TokenVerificationPage';
 import type { PendingNotice } from '../../lib/pendingNotice';
@@ -91,9 +91,16 @@ beforeEach(() => {
 // ─── Verifying state ─────────────────────────────────────────────────────────
 
 describe('TokenVerificationPage verifying state', () => {
-  it('announces the verifying text after the announce delay', () => {
-    vi.useFakeTimers();
-    try {
+  describe('announcement timing', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('announces the verifying text after the announce delay', () => {
       const onVerify = vi.fn().mockReturnValue(new Promise(() => {}));
 
       renderPage({ onVerify, verifyingText: 'Verifying your email…' });
@@ -104,9 +111,7 @@ describe('TokenVerificationPage verifying state', () => {
       expect(screen.getByRole('status')).toHaveTextContent(
         /verifying your email/i,
       );
-    } finally {
-      vi.useRealTimers();
-    }
+    });
   });
 
   it('does not render any card heading during the verifying state', () => {

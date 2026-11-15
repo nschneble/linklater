@@ -24,8 +24,8 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ANNOUNCE_DELAY_MS } from '../../lib/liveRegion';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router';
 import ResetPasswordPage from './ResetPasswordPage';
 
@@ -147,9 +147,16 @@ describe('ResetPasswordPage success path (non-MFA)', () => {
     );
   });
 
-  it('announces the reset status after the announce delay', async () => {
-    vi.useFakeTimers();
-    try {
+  describe('announcement timing', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('announces the reset status after the announce delay', async () => {
       // hold the API call open so the loading state stays mounted
       let resolveReset: (value: {
         accessToken: string;
@@ -178,9 +185,7 @@ describe('ResetPasswordPage success path (non-MFA)', () => {
       await act(async () => {
         resolveReset({ accessToken: 'a', refreshToken: 'r' });
       });
-    } finally {
-      vi.useRealTimers();
-    }
+    });
   });
 
   it('does NOT render a "Signing you in" success card or "I\'d like to log in now" button', async () => {
