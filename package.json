@@ -21,6 +21,7 @@
     "lint:root": "eslint \"{eslint-rules,scripts}/**/*.mjs\" eslint.config.mjs --max-warnings=0",
     "lint:shell": "command -v shellcheck > /dev/null || { echo 'ShellCheck is not installed, so the shell scripts cannot be linted. Install it with brew install shellcheck, or see https://www.shellcheck.net' >&2; exit 1; }; find bin scripts -type f -exec sh -c 'head -n 1 \"$1\" | grep -qE \"^#!.*sh( |$)|^# shellcheck shell=\"' _ {} \\; -print0 | xargs -0 shellcheck",
     "test": "node scripts/run-tests.mjs",
+    "test:browser": "npm run test:browser --workspace @linklater/web",
     "test:cov": "npm run test:cov --workspace @linklater/api && npm run test:cov --workspace @linklater/web && npm run test:root",
     "test:root": "node --test 'eslint-rules/**/*.test.mjs' 'scripts/**/*.test.mjs'",
     "tuffgal": "tuffgal run",

@@ -74,9 +74,9 @@ export default tseslint.config(
     },
   },
 
-  // Node globals + Vitest rules; build scripts run in Node, not browser
+  // node globals + Vitest rules; scripts and browser tests run in Node
   {
-    files: ['scripts/**/*.{ts,mjs}'],
+    files: ['browser/**/*.ts', 'playwright.config.ts', 'scripts/**/*.{ts,mjs}'],
     languageOptions: {
       globals: {
         console: 'readonly',

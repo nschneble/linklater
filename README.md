@@ -188,7 +188,7 @@ Linklater uses `concurrently` to run NestJS on port 3000 and Vite on port 5173. 
 
 ### Linting, tests, and CI
 
-Both the front and back-end use ESLint and Prettier. The shell scripts in `bin/` and `scripts/` use ShellCheck. Vitest is used to test the front-end and Jest is used to test the back-end. The commands in `bin/` and the local ESLint rules sit outside both workspaces, so their tests run on Node's own test runner as a third step of `npm run test`. GitHub Actions lint, type-check, and test on pushes and PRs to `main`.
+Both the front and back-end use ESLint and Prettier. The shell scripts in `bin/` and `scripts/` use ShellCheck. Vitest is used to test the front-end and Jest is used to test the back-end. The commands in `bin/` and the local ESLint rules sit outside both workspaces, so their tests run on Node's own test runner as a third step of `npm run test`. Layout tests that need a real browser run in WebKit through Playwright with `npm run test:browser`, which builds the web app and serves it with `vite preview`; `npm run test` leaves them out so it runs without a browser installed. GitHub Actions lint, type-check, and test on pushes and PRs to `main`.
 
 ```bash
 # cd /path/to/your/repo
@@ -200,6 +200,9 @@ npm run test
 
 # lint the shell scripts on their own
 npm run lint:shell
+
+# run the layout tests in WebKit (install it once with `npx playwright install webkit`)
+npm run test:browser
 
 # -OR-
 

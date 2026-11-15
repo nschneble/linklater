@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 import mkcert from 'vite-plugin-mkcert';
 import os from 'node:os';
 import react from '@vitejs/plugin-react';
@@ -49,6 +49,7 @@ export default defineConfig({
       provider: 'istanbul',
     },
     environment: 'jsdom',
+    exclude: [...configDefaults.exclude, 'browser/**'],
     globals: true,
     reporters: ['default', './test/failed-files-reporter.ts'],
     setupFiles: './test/setup.ts',
