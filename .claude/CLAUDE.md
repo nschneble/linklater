@@ -23,6 +23,7 @@ Linklater is an Instapaper-inspired "read it later" app.
 - **Reset Database:** `npm run migrate:reset --workspace @linklater/api`
 - **Run:** `npm run dev`
 - **Test:** `npm run test`
+- **Test Browser:** `npm run test:browser`
 - **Test Coverage:** `npm run test:cov`
 - **Tuffgal Setup:** `npm run tuffgal:setup`
 - **Tuffgal:** `npm run tuffgal`, `npm run dev:test`

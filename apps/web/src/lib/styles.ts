@@ -41,6 +41,10 @@ export const FOCUS_RING =
 export const FOCUS_RING_FLUSH =
   'focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-[var(--focus-ring)] forced-colors:focus-visible:outline-[Highlight]';
 
+/** Fixed, not svh-sized: iOS 26 Safari sizes svh past its toolbars. */
+export const FULL_SCREEN_CENTER =
+  'fixed inset-0 flex overflow-y-auto overscroll-contain';
+
 export const DISABLED = 'disabled:opacity-60 disabled:cursor-not-allowed';
 
 /**

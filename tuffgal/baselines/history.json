@@ -4,11 +4,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "visit-extension-authorize-unauthenticated::desktop": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -23,11 +43,41 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 3216,
+      "diffRatio": 0.012857571214392804
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 3216,
+      "diffRatio": 0.012857571214392804
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 3216,
+      "diffRatio": 0.012857571214392804
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 3216,
+      "diffRatio": 0.012857571214392804
     }
   ],
   "crash-failwhale::mobile": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -42,11 +92,41 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 3209,
+      "diffRatio": 0.0031337890625
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 3209,
+      "diffRatio": 0.0031337890625
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 3209,
+      "diffRatio": 0.0031337890625
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 3209,
+      "diffRatio": 0.0031337890625
     }
   ],
   "crash-failwhale::desktop": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 85,
+      "diffRatio": 0.0000830078125
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -56,11 +136,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "visit-login::mobile": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -70,11 +170,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "visit-forgot-password::mobile": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -84,11 +204,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "visit-login::desktop": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -98,11 +238,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "visit-forgot-password::desktop": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -112,11 +272,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "login::desktop": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -126,11 +306,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "click-login-cta::mobile": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -140,11 +340,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "click-login-cta::desktop": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -154,11 +374,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "visit-privacy::desktop": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -168,11 +408,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "visit-terms::desktop": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -182,11 +442,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "request-magic-link::desktop": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -196,11 +476,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "reset-password::desktop": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -210,11 +510,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "attempt-login-expect-mfa-challenge::desktop": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -224,11 +544,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "visit-oauth-callback-no-token::desktop": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -238,11 +578,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "add-password::desktop": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -252,11 +612,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "change-email-expect-403::mobile": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -266,11 +646,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "change-email-expect-403::desktop": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -280,11 +680,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "change-password::desktop": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -294,11 +714,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "visit-read::mobile": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -313,11 +753,41 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "visit-settings::mobile": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -327,6 +797,16 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "visit-unread::desktop": [
@@ -334,11 +814,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "visit-read::desktop": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -353,11 +853,41 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "visit-settings::desktop": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -367,11 +897,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "delete-account::mobile": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -381,11 +931,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "create-api-token::mobile": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -395,11 +965,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "resend-verification-email::mobile": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -409,11 +999,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "visit-authenticated-with-stale-token::mobile": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -423,11 +1033,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "revoke-token::mobile": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -437,11 +1067,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "revoke-token::desktop": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -451,11 +1101,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "save-link::mobile": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -465,11 +1135,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "save-link::desktop": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -479,11 +1169,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "setup-mfa::mobile": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -493,6 +1203,16 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "copy-recovery-codes::mobile": [
@@ -500,11 +1220,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 2929,
       "diffRatio": 0.011710144927536232
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "setup-mfa::desktop": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -514,6 +1254,16 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "copy-recovery-codes::desktop": [
@@ -521,11 +1271,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 2933,
       "diffRatio": 0.0028642578125
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "toggle-cvd-mode::mobile": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -535,11 +1305,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "toggle-dyslexic-font::mobile": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -549,11 +1339,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "use-bookmarklet::mobile": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -563,11 +1373,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "keyboard-navigation::mobile": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -577,11 +1407,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "view-unread-links::mobile": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -591,11 +1441,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "read-link::mobile": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -605,11 +1475,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "read-suggestion::mobile": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -619,11 +1509,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "search-unread-links::mobile": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -633,6 +1543,16 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "stumble-unread::mobile": [
@@ -640,6 +1560,16 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 646,
       "diffRatio": 0.0025827086456771614
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "stumble-unread::desktop": [
@@ -647,11 +1577,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 2496,
       "diffRatio": 0.0024375
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "view-read-links::mobile": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -661,11 +1611,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "unread-link::mobile": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -675,11 +1645,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "click-read-link::desktop": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -689,11 +1679,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "empty-read-history::mobile": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -703,11 +1713,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "register::desktop": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -717,11 +1747,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 8361,
       "diffRatio": 0.0081650390625
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "change-theme::desktop": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -731,11 +1781,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "visit-email-verification::desktop": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -745,11 +1815,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "visit-email-address-change::desktop": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }
@@ -759,6 +1849,16 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "visit-email-account-deletion::desktop": [
@@ -766,11 +1866,31 @@
       "finishedAt": "2026-11-14T11:44:47.616Z",
       "diffPixels": 0,
       "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
+      "diffPixels": 0,
+      "diffRatio": 0
     }
   ],
   "visit-email-policy-update::desktop": [
     {
       "finishedAt": "2026-11-14T11:44:47.616Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T00:51:57.346Z",
+      "diffPixels": 0,
+      "diffRatio": 0
+    },
+    {
+      "finishedAt": "2026-11-15T13:43:25.250Z",
       "diffPixels": 0,
       "diffRatio": 0
     }

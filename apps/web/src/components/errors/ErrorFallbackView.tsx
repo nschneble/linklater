@@ -1,3 +1,4 @@
+import { FULL_SCREEN_CENTER } from '../../lib/styles';
 import PrimaryButton from '../common/PrimaryButton';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import { useEffect, useRef } from 'react';
@@ -24,25 +25,27 @@ export default function ErrorFallbackView() {
     <main
       ref={mainReference}
       tabIndex={-1}
-      className="flex flex-col items-center justify-center min-h-svh px-4 bg-[var(--base-bg)] text-[var(--base-text)] text-center focus:outline-none select-none"
+      className={`${FULL_SCREEN_CENTER} bg-[var(--base-bg)] text-[var(--base-text)] focus:outline-none select-none`}
     >
-      <i
-        className="fa-solid fa-bug text-4xl text-[var(--base-subtle-text)] mb-4"
-        aria-hidden="true"
-      />
-      <h1 className="mb-2 text-lg font-semibold">Something went wrong</h1>
-      <p className="mb-6 text-[var(--base-alt-text)] text-sm">
-        An unexpected error occurred. Reloading the page{' '}
-        <span className="italic">usually</span> fixes it.
-      </p>
-
-      <PrimaryButton surface="base" onClick={() => window.location.reload()}>
+      <div className="flex flex-col items-center m-auto px-4 text-center">
         <i
-          className="fa-solid fa-arrow-rotate-right text-xs"
+          className="fa-solid fa-bug text-4xl text-[var(--base-subtle-text)] mb-4"
           aria-hidden="true"
         />
-        Reload page
-      </PrimaryButton>
+        <h1 className="mb-2 text-lg font-semibold">Something went wrong</h1>
+        <p className="mb-6 text-[var(--base-alt-text)] text-sm">
+          An unexpected error occurred. Reloading the page{' '}
+          <span className="italic">usually</span> fixes it.
+        </p>
+
+        <PrimaryButton surface="base" onClick={() => window.location.reload()}>
+          <i
+            className="fa-solid fa-arrow-rotate-right text-xs"
+            aria-hidden="true"
+          />
+          Reload page
+        </PrimaryButton>
+      </div>
     </main>
   );
 }

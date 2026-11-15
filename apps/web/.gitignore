@@ -27,6 +27,9 @@ dist-ssr
 .nyc_output
 coverage
 
+# Playwright
+test-results
+
 # Environment variables
 .env
 .env.development.local

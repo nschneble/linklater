@@ -163,6 +163,9 @@ describe('App boot', () => {
     advance(BOOT_THRESHOLD_MS);
 
     expect(screen.getByText(BOOT_MESSAGE)).toBeInTheDocument();
+    expect(
+      screen.getByText(BOOT_MESSAGE).closest('[aria-hidden="true"]'),
+    ).toBeNull();
     expect(region(container)).toBe(before);
     expect(region(container)?.textContent).toBe('Loading Linklater…');
     expect(screen.queryByTestId('routes')).toBeNull();
