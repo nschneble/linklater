@@ -1,19 +1,13 @@
 import Alert from '../common/Alert';
 import FormInput from '../common/FormInput';
 import { FULL_SCREEN_CENTER } from '../../lib/styles';
-import { getErrorMessage } from '../../lib/errors';
 import LinkButton from '../common/LinkButton';
 import LoadingScreen from '../common/LoadingScreen';
-import MfaView from './MfaView';
 import PrimaryButton from '../common/PrimaryButton';
-import { resetPassword, verifyOtp } from '../../lib/api';
-import { setPendingNotice } from '../../lib/pendingNotice';
-import { useAuth } from '../../auth/AuthContext';
+import ResetPasswordMfaStep from './ResetPasswordMfaStep';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { useNavigate, useSearchParams } from 'react-router';
-
-type MfaChallenge = 'totp' | 'recovery';
+import { useNavigate } from 'react-router';
+import { useResetPasswordForm } from './useResetPasswordForm';
 
 /**
  * Handles the `/reset-password?token=...` route. Renders a form for the user
@@ -39,113 +33,24 @@ type MfaChallenge = 'totp' | 'recovery';
 export default function ResetPasswordPage() {
   useDocumentTitle('Linklater – Reset password');
 
-  const [searchParameters] = useSearchParams();
   const navigate = useNavigate();
-  const { refreshUser } = useAuth();
-  const [password, setPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const {
+    confirm,
+    error,
+    handleSubmit,
+    loading,
+    password,
+    pendingMfa,
+    setConfirm,
+    setPassword,
+  } = useResetPasswordForm();
 
-  const [isInMfa, setIsInMfa] = useState(false);
-  const [mfaToken, setMfaToken] = useState<string | null>(null);
-  const [mfaChallenge, setMfaChallenge] = useState<MfaChallenge>('totp');
-  const [mfaCode, setMfaCode] = useState('');
-  const [mfaLoading, setMfaLoading] = useState(false);
-  const [mfaError, setMfaError] = useState<string | null>(null);
-  const mfaErrorReference = useRef<HTMLParagraphElement>(null);
-  const mfaInputReference = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (mfaError) {
-      mfaErrorReference.current?.focus();
-    }
-  }, [mfaError]);
-
-  const handleSubmit = async (formEvent: FormEvent) => {
-    formEvent.preventDefault();
-    setError(null);
-
-    const token = searchParameters.get('token');
-    if (!token) {
-      setError('No reset token found in the link.');
-      return;
-    }
-
-    if (password !== confirm) {
-      setError('Passwords do not match.');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const result = await resetPassword(token, password);
-      if ('mfaToken' in result) {
-        setMfaToken(result.mfaToken);
-        setMfaChallenge(result.mfaMethod);
-        setIsInMfa(true);
-        setLoading(false);
-        return;
-      }
-      // server issued the session; hydrate auth and route to the app
-      await refreshUser();
-      setPendingNotice('password-reset-success');
-      navigate('/unread', { replace: true });
-    } catch (caughtError: unknown) {
-      setError(getErrorMessage(caughtError, 'Password reset failed.'));
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyOtp = async (formEvent: FormEvent) => {
-    formEvent.preventDefault();
-    if (!mfaToken) return;
-    setMfaError(null);
-    setMfaLoading(true);
-    try {
-      await verifyOtp(mfaToken, mfaCode, mfaChallenge);
-      await refreshUser();
-      setMfaCode('');
-      setPendingNotice('password-reset-success');
-      navigate('/unread', { replace: true });
-    } catch (caughtError: unknown) {
-      setMfaError(getErrorMessage(caughtError, 'Invalid code'));
-      setMfaCode('');
-    } finally {
-      setMfaLoading(false);
-    }
-  };
-
-  // "branding" pins the surface so no stale film/custom palette leaks in
-  if (isInMfa) {
+  if (pendingMfa) {
     return (
-      <div
-        data-theme="branding"
-        className={`${FULL_SCREEN_CENTER} px-4 py-4 bg-gradient-to-b from-[var(--page-gradient-from)] to-[var(--page-gradient-to)]`}
-      >
-        <div className="w-full m-auto">
-          <MfaView
-            error={mfaError}
-            errorReference={mfaErrorReference}
-            loading={mfaLoading}
-            mfaChallenge={mfaChallenge}
-            mfaCode={mfaCode}
-            mfaInputReference={mfaInputReference}
-            onMfaCodeChange={setMfaCode}
-            onSubmit={handleVerifyOtp}
-            onSwitchToRecovery={() => {
-              setMfaChallenge('recovery');
-              setMfaCode('');
-              setMfaError(null);
-            }}
-            onSwitchToTotp={() => {
-              setMfaChallenge('totp');
-              setMfaCode('');
-              setMfaError(null);
-            }}
-          />
-        </div>
-      </div>
+      <ResetPasswordMfaStep
+        mfaMethod={pendingMfa.mfaMethod}
+        mfaToken={pendingMfa.mfaToken}
+      />
     );
   }
 
@@ -155,6 +60,7 @@ export default function ResetPasswordPage() {
     );
   }
 
+  // "branding" pins the surface so no stale film/custom palette leaks in
   return (
     <div
       data-theme="branding"
