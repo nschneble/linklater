@@ -1,7 +1,11 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { MemoryRouter } from 'react-router';
-import ResetPasswordPage from './ResetPasswordPage';
+import {
+  fillForm,
+  renderPage,
+  submitFromButton,
+  TOKEN_ERROR,
+} from './ResetPasswordPage.testSetup';
+import { screen } from '@testing-library/react';
 
 vi.mock('../../lib/api', () => ({
   resetPassword: vi.fn(),
@@ -18,39 +22,9 @@ vi.mock('../../auth/AuthContext', () => ({
 
 import * as apiModule from '../../lib/api';
 
-const PASSWORD = 'correct-horse-battery';
-const TOKEN_ERROR = new Error('Invalid or expired reset token.');
-
-function confirmField() {
-  return screen.getByLabelText(/confirm new password/i);
-}
-
-function newPasswordField() {
-  return screen.getByLabelText(/^new password/i);
-}
-
-function fillForm(confirm = PASSWORD) {
-  fireEvent.change(newPasswordField(), { target: { value: PASSWORD } });
-  fireEvent.change(confirmField(), { target: { value: confirm } });
-}
-
-async function submitFromButton() {
-  const submitButton = screen.getByRole('button', { name: /reset password/i });
-  submitButton.focus();
-  expect(submitButton).toHaveFocus();
-
-  await act(async () => {
-    fireEvent.submit(submitButton.closest('form')!);
-  });
-}
-
 beforeEach(() => {
   vi.clearAllMocks();
-  render(
-    <MemoryRouter initialEntries={['/reset-password?token=valid-token']}>
-      <ResetPasswordPage />
-    </MemoryRouter>,
-  );
+  renderPage();
 });
 
 describe('ResetPasswordPage focus', () => {
@@ -107,35 +81,5 @@ describe('ResetPasswordPage focus', () => {
     expect(screen.getByRole('alert')).toBe(alert);
     expect(alert.lastChild).not.toBe(firstMessage);
     expect(alert).toHaveTextContent('Passwords do not match.');
-  });
-});
-
-describe('ResetPasswordPage invalid fields', () => {
-  it('marks the confirm field invalid when the passwords differ', async () => {
-    fillForm('different-password');
-
-    await submitFromButton();
-
-    expect(screen.getByRole('alert')).toHaveFocus();
-    expect(confirmField()).toHaveAttribute('aria-invalid', 'true');
-    expect(confirmField()).toHaveAccessibleDescription(
-      'Passwords do not match.',
-    );
-    expect(newPasswordField()).not.toHaveAttribute('aria-invalid');
-    expect(newPasswordField()).not.toHaveAccessibleDescription();
-  });
-
-  it('clears the invalid mark once the passwords match', async () => {
-    vi.mocked(apiModule.resetPassword).mockRejectedValue(TOKEN_ERROR);
-    fillForm('different-password');
-    await submitFromButton();
-    expect(confirmField()).toHaveAttribute('aria-invalid', 'true');
-
-    fillForm();
-    await submitFromButton();
-
-    expect(confirmField()).not.toHaveAttribute('aria-invalid');
-    expect(confirmField()).not.toHaveAccessibleDescription();
-    expect(newPasswordField()).not.toHaveAccessibleDescription();
   });
 });
