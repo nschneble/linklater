@@ -1,15 +1,9 @@
-import Alert from '../common/Alert';
-import FormInput from '../common/FormInput';
 import { FULL_SCREEN_CENTER } from '../../lib/styles';
-import LinkButton from '../common/LinkButton';
 import LoadingScreen from '../common/LoadingScreen';
 import MfaStep from './MfaStep';
-import PrimaryButton from '../common/PrimaryButton';
+import ResetPasswordForm from './ResetPasswordForm';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
-import { useNavigate } from 'react-router';
 import { useResetPasswordForm } from './useResetPasswordForm';
-
-const ERROR_ID = 'reset-error';
 
 /**
  * The `/reset-password?token=…` route; open without auth. Tokens last an
@@ -20,12 +14,12 @@ const ERROR_ID = 'reset-error';
 export default function ResetPasswordPage() {
   useDocumentTitle('Linklater – Reset password');
 
-  const navigate = useNavigate();
   const {
     confirm,
     confirmMismatch,
     error,
     errorReference,
+    failedSubmitCount,
     handleSubmit,
     loading,
     password,
@@ -33,9 +27,6 @@ export default function ResetPasswordPage() {
     setConfirm,
     setPassword,
   } = useResetPasswordForm();
-
-  let errorId: string | undefined;
-  if (error) errorId = ERROR_ID;
 
   if (pendingMfa) {
     return (
@@ -72,65 +63,17 @@ export default function ResetPasswordPage() {
           No one liked your old password, anyways.
         </p>
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <label
-            className="block mb-0 text-[var(--mount-alt-text)] text-sm font-medium"
-            htmlFor="reset-password"
-          >
-            New password
-          </label>
-          <FormInput
-            id="reset-password"
-            type="password"
-            surface="mount"
-            autoComplete="new-password"
-            onChange={(event) => setPassword(event.target.value)}
-            value={password}
-            required
-            minLength={12}
-            aria-describedby={errorId}
-          />
-
-          <label
-            className="block mb-0 text-[var(--mount-alt-text)] text-sm font-medium"
-            htmlFor="reset-confirm"
-          >
-            Confirm new password
-          </label>
-          <FormInput
-            id="reset-confirm"
-            type="password"
-            surface="mount"
-            autoComplete="new-password"
-            onChange={(event) => setConfirm(event.target.value)}
-            value={confirm}
-            required
-            aria-describedby={errorId}
-            aria-invalid={confirmMismatch || undefined}
-          />
-
-          {error && (
-            <Alert
-              id={ERROR_ID}
-              ref={errorReference}
-              tabIndex={-1}
-              variant="error"
-            >
-              {error}
-            </Alert>
-          )}
-
-          <PrimaryButton className="w-full py-2.5">
-            <i className="fa-solid fa-lock text-xs" aria-hidden="true" />
-            Reset password
-          </PrimaryButton>
-
-          <p className="text-center">
-            <LinkButton onClick={() => navigate('/login')}>
-              Back to login
-            </LinkButton>
-          </p>
-        </form>
+        <ResetPasswordForm
+          confirm={confirm}
+          confirmMismatch={confirmMismatch}
+          error={error}
+          errorReference={errorReference}
+          failedSubmitCount={failedSubmitCount}
+          onConfirmChange={setConfirm}
+          onPasswordChange={setPassword}
+          onSubmit={handleSubmit}
+          password={password}
+        />
       </div>
     </main>
   );

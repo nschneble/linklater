@@ -1,7 +1,8 @@
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import MfaStep from './MfaStep';
+import { verifyOtp } from '../../lib/api';
 
 vi.mock('../../lib/api', () => ({
   verifyOtp: vi.fn(),
@@ -42,5 +43,17 @@ describe('MfaStep focus', () => {
     clickWhileFocused('Use a different method');
 
     expect(screen.getByLabelText('Authenticator code')).toHaveFocus();
+  });
+
+  it('moves focus to the error when the code is rejected', async () => {
+    vi.mocked(verifyOtp).mockRejectedValue(new Error('Invalid code'));
+    const codeInput = screen.getByLabelText('Authenticator code');
+    expect(codeInput).toHaveFocus();
+
+    await act(async () => {
+      fireEvent.change(codeInput, { target: { value: '123456' } });
+    });
+
+    expect(screen.getByRole('alert')).toHaveFocus();
   });
 });

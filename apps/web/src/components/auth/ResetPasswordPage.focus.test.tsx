@@ -86,6 +86,28 @@ describe('ResetPasswordPage focus', () => {
 
     expect(screen.getByRole('alert')).toHaveFocus();
   });
+
+  it('moves focus to the alert again when the same submit fails twice', async () => {
+    fillForm('different-password');
+    await submitFromButton();
+
+    await submitFromButton();
+
+    expect(screen.getByRole('alert')).toHaveFocus();
+  });
+
+  it('replaces the alert message when the same submit fails twice', async () => {
+    fillForm('different-password');
+    await submitFromButton();
+    const alert = screen.getByRole('alert');
+    const firstMessage = alert.lastChild;
+
+    await submitFromButton();
+
+    expect(screen.getByRole('alert')).toBe(alert);
+    expect(alert.lastChild).not.toBe(firstMessage);
+    expect(alert).toHaveTextContent('Passwords do not match.');
+  });
 });
 
 describe('ResetPasswordPage invalid fields', () => {
@@ -100,6 +122,7 @@ describe('ResetPasswordPage invalid fields', () => {
       'Passwords do not match.',
     );
     expect(newPasswordField()).not.toHaveAttribute('aria-invalid');
+    expect(newPasswordField()).not.toHaveAccessibleDescription();
   });
 
   it('clears the invalid mark once the passwords match', async () => {
@@ -112,7 +135,7 @@ describe('ResetPasswordPage invalid fields', () => {
     await submitFromButton();
 
     expect(confirmField()).not.toHaveAttribute('aria-invalid');
-    expect(confirmField()).toHaveAccessibleDescription(TOKEN_ERROR.message);
-    expect(newPasswordField()).toHaveAccessibleDescription(TOKEN_ERROR.message);
+    expect(confirmField()).not.toHaveAccessibleDescription();
+    expect(newPasswordField()).not.toHaveAccessibleDescription();
   });
 });
