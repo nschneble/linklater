@@ -37,6 +37,7 @@
   "exclude": [
     "src/**/*.test.ts",
     "src/**/*.test.tsx",
+    "src/**/*.testSetup.tsx",
     "src/theme/styles/bundles-color-utils.ts",
   ],
   "include": ["src"]
