@@ -419,4 +419,32 @@ describe('VerifyLoginPage MFA challenge', () => {
     expect(pendingNoticeModule.setPendingNotice).not.toHaveBeenCalled();
     expect(navigate).not.toHaveBeenCalled();
   });
+
+  it('keeps one main landmark from spinner to branded MFA challenge', async () => {
+    let resolveVerify!: (result: {
+      mfaMethod: 'totp';
+      mfaToken: string;
+    }) => void;
+    vi.mocked(apiModule.verifyMagicLink).mockReturnValue(
+      new Promise((resolve) => {
+        resolveVerify = resolve;
+      }),
+    );
+
+    renderPage();
+    expect(screen.getAllByRole('main')).toHaveLength(1);
+    expect(
+      screen.getByRole('status').closest('[data-theme="branding"]'),
+    ).not.toBeNull();
+
+    await act(async () => {
+      resolveVerify({ mfaMethod: 'totp', mfaToken: 'mfa-tok-123' });
+    });
+
+    const heading = await screen.findByRole('heading', {
+      name: /multi-factor authentication/i,
+    });
+    expect(screen.getAllByRole('main')).toHaveLength(1);
+    expect(heading.closest('[data-theme="branding"]')).not.toBeNull();
+  });
 });

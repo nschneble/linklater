@@ -14,43 +14,16 @@ interface PendingMfa {
 }
 
 /**
- * Handles the `/verify-login?token=…` route for magic-link login.
- *
- * Reads the `?token=` query parameter, calls `POST /auth/verify-magic-link`,
- * and routes one of three ways based on the relationship between the
- * current session and the user the magic link belongs to:
- *
- *   1. No prior session → standard login: store the returned tokens via
- *      `loginWithToken`, navigate `/unread`, no toast (the destination is
- *      the confirmation that auth succeeded).
- *   2. Already signed in as the same user → keep the existing session,
- *      discard the returned tokens, queue `already-logged-in` toast,
- *      navigate `/unread`. The server-side magic-link token is still
- *      single-use (it was just consumed by the verify call), but we
- *      don't disturb the current JWT – open tabs stay valid.
- *   3. Signed in as a different user (cross-account click) → call
- *      `revokeAllSessions()` first (uses the OLD user's bearer to DELETE
- *      /auth/sessions), then `loginWithToken` with the new tokens,
- *      queue `account-switched` warn toast, navigate `/unread`. The
- *      logout-then-login sequence is bypassed at the React-state level
- *      (we never flip `user` to `null` mid-flow) so the catch-all
- *      auth-redirect cannot race in and bounce us to `/login`.
- *
- * Failures redirect to /login with an error-variant pending notice; the
- * AuthForm surfaces it as an assertive toast. /login is also where the
- * user immediately retries (request a new link), so the toast copy stays
- * short (WCAG 3.3.3 – recovery destination is the page the user lands
- * on).
- *
- * MFA-enabled accounts authenticated via magic link still need to clear
- * the OTP challenge; that branch mounts `MfaStep`.
+ * The `/verify-login?token=…` route. A fresh login stores the tokens,
+ * the same account keeps its session, and another account is swapped
+ * in. Failures return to /login with an error notice.
  */
 export default function VerifyLoginPage() {
   useDocumentTitle('Linklater – Verifying sign in');
   const [searchParameters] = useSearchParams();
   const navigate = useNavigate();
   const { loginWithToken, user } = useAuth();
-  // mirror user into a ref so post-await reads the effect-time value, not a stale closure
+  // mirror user so post-await reads skip the stale closure
   const userReference = useRef(user);
   useEffect(() => {
     userReference.current = user;
@@ -71,7 +44,7 @@ export default function VerifyLoginPage() {
 
     verifyMagicLink(token)
       .then(async (result) => {
-        // MFA accounts via magic link still must clear the OTP challenge first
+        // MFA accounts must still clear the OTP challenge
         if ('mfaToken' in result) {
           setPendingMfa({
             mfaMethod: result.mfaMethod,
@@ -87,14 +60,14 @@ export default function VerifyLoginPage() {
           currentUser !== null && currentUser.userId !== result.userId;
 
         if (isSameAccount) {
-          // same account: keep the session, discard fresh tokens (no JWT rotation)
+          // same account: keep the session, discard the fresh tokens
           setPendingNotice('already-logged-in');
           navigate('/unread', { replace: true });
           return;
         }
 
         if (isAccountSwitch) {
-          // revoke old sessions before swapping tokens so user never flips null (no redirect race)
+          // revoke first so user never flips null (no redirect race)
           await revokeAllSessions();
           await loginWithToken(result.accessToken, result.refreshToken);
           setPendingNotice('account-switched');
@@ -116,12 +89,15 @@ export default function VerifyLoginPage() {
   if (pendingMfa) {
     return (
       <MfaStep
+        branded
         mfaMethod={pendingMfa.mfaMethod}
         mfaToken={pendingMfa.mfaToken}
       />
     );
   }
 
-  // bare spinner, no card chrome that would flash before the redirect fires
-  return <LoadingScreen statusText="Verifying your login link…" />;
+  // bare spinner: no card chrome to flash before the redirect
+  return (
+    <LoadingScreen statusText="Verifying your login link…" theme="branding" />
+  );
 }
