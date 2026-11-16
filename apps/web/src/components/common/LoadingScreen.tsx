@@ -43,7 +43,7 @@ export default function LoadingScreen({
         {announcement}
       </p>
       <i
-        className="m-auto fa-solid fa-arrows-rotate fa-spin text-4xl opacity-75"
+        className="m-auto fa-solid fa-arrows-rotate fa-spin text-4xl"
         aria-hidden="true"
       />
     </main>

@@ -11,6 +11,7 @@
 - The login link's two-factor screen has no main landmark for screen readers
 - The login link's two-factor screen sits at the top of the page instead of centered on the branded background
 - The reset password form doesn't tell screen readers which field has an error
+- The spinner on a loading screen can be too faint in custom themes
 - The Stumble empty page has no main landmark for screen readers
 
 ## [1.6.2] - 2026-11-14
