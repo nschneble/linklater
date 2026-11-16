@@ -160,8 +160,7 @@
    * to-[var(--page-gradient-to)]`). The gradient paints behind a centered
    * AuthCard whose edge is conveyed by `border-shadow` (a box-shadow
    * utility), NOT by `border-[var(--mount-border)]`. Consumers:
-   * ConfirmAccountDeletionPage, ExtensionAuthorizePage, OAuthCallbackPage,
-   * ResetPasswordPage, VerifyLoginPage, TokenVerificationPage,
+   * ExtensionAuthorizeCard, MfaStep (branded), ResetPasswordPage,
    * routes/Unauthenticated.
    *
    * Each shipped theme carries its own --page-gradient-{from,to} in the
