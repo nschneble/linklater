@@ -30,6 +30,8 @@ const MIGRATED_FILES = [
   'src/components/auth/ForgotPasswordView.tsx',
   'src/components/auth/LoginRegisterView.tsx',
   'src/components/auth/LogoutPage.tsx',
+  'src/components/auth/MfaChallengeSwitch.tsx',
+  'src/components/auth/MfaCodeField.tsx',
   'src/components/auth/MfaView.tsx',
   'src/components/common/BootInterstitial.tsx',
   'src/components/common/CopyButton.tsx',
