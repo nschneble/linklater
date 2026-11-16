@@ -45,7 +45,7 @@ export default defineConfig({
   },
   test: {
     coverage: {
-      exclude: ['src/**/*.testSetup.tsx'],
+      exclude: ['src/**/*.testSetup.{ts,tsx}'],
       include: ['src/**/*.{ts,tsx}'],
       provider: 'istanbul',
     },
