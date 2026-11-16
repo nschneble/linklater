@@ -1,0 +1,25 @@
+- table:
+  - rowgroup:
+    - 'row "Linklater Our privacy policy is changing. We''re updating the Linklater privacy policy. The new version takes effect on January 1, 2026. If you keep using Linklater after that date, the new policy applies. if you disagree with the changes, you can delete your account from Settings before then. Read the Policy Or copy and paste this link into your browser: https://linklater.app/privacy You''re receiving this one-time notice because you have a Linklater account. There''s nothing you need to do."':
+      - 'cell "Linklater Our privacy policy is changing. We''re updating the Linklater privacy policy. The new version takes effect on January 1, 2026. If you keep using Linklater after that date, the new policy applies. if you disagree with the changes, you can delete your account from Settings before then. Read the Policy Or copy and paste this link into your browser: https://linklater.app/privacy You''re receiving this one-time notice because you have a Linklater account. There''s nothing you need to do."':
+        - table:
+          - rowgroup:
+            - row "Linklater":
+              - cell "Linklater"
+            - 'row "Our privacy policy is changing. We''re updating the Linklater privacy policy. The new version takes effect on January 1, 2026. If you keep using Linklater after that date, the new policy applies. if you disagree with the changes, you can delete your account from Settings before then. Read the Policy Or copy and paste this link into your browser: https://linklater.app/privacy"':
+              - 'cell "Our privacy policy is changing. We''re updating the Linklater privacy policy. The new version takes effect on January 1, 2026. If you keep using Linklater after that date, the new policy applies. if you disagree with the changes, you can delete your account from Settings before then. Read the Policy Or copy and paste this link into your browser: https://linklater.app/privacy"':
+                - heading "Our privacy policy is changing." [level=1]
+                - paragraph: We're updating the Linklater privacy policy. The new version takes effect on January 1, 2026. If you keep using Linklater after that date, the new policy applies. if you disagree with the changes, you can delete your account from Settings before then.
+                - table:
+                  - rowgroup:
+                    - row "Read the Policy":
+                      - cell "Read the Policy":
+                        - link "Read the Policy":
+                          - /url: https://linklater.app/privacy
+                - paragraph:
+                  - text: "Or copy and paste this link into your browser:"
+                  - link "https://linklater.app/privacy":
+                    - /url: https://linklater.app/privacy
+            - row "You're receiving this one-time notice because you have a Linklater account. There's nothing you need to do.":
+              - cell "You're receiving this one-time notice because you have a Linklater account. There's nothing you need to do.":
+                - paragraph: You're receiving this one-time notice because you have a Linklater account. There's nothing you need to do.
