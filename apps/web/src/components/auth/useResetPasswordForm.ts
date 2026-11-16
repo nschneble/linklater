@@ -2,8 +2,8 @@ import { getErrorMessage } from '../../lib/errors';
 import { resetPassword } from '../../lib/api';
 import { setPendingNotice } from '../../lib/pendingNotice';
 import { useAuth } from '../../auth/AuthContext';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
-import { useState, type FormEvent } from 'react';
 
 interface PendingMfa {
   mfaMethod: 'totp';
@@ -16,22 +16,36 @@ export function useResetPasswordForm() {
   const { refreshUser } = useAuth();
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [confirmMismatch, setConfirmMismatch] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [failedSubmitCount, setFailedSubmitCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [pendingMfa, setPendingMfa] = useState<PendingMfa | null>(null);
+  const errorReference = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    if (failedSubmitCount > 0) errorReference.current?.focus();
+  }, [failedSubmitCount]);
+
+  const failSubmit = (message: string) => {
+    setError(message);
+    setFailedSubmitCount((count) => count + 1);
+  };
 
   const handleSubmit = async (formEvent: FormEvent) => {
     formEvent.preventDefault();
     setError(null);
+    setConfirmMismatch(false);
 
     const token = searchParameters.get('token');
     if (!token) {
-      setError('No reset token found in the link.');
+      failSubmit('No reset token found in the link.');
       return;
     }
 
     if (password !== confirm) {
-      setError('Passwords do not match.');
+      setConfirmMismatch(true);
+      failSubmit('Passwords do not match.');
       return;
     }
 
@@ -48,14 +62,17 @@ export function useResetPasswordForm() {
       setPendingNotice('password-reset-success');
       navigate('/unread', { replace: true });
     } catch (caughtError: unknown) {
-      setError(getErrorMessage(caughtError, 'Password reset failed.'));
+      failSubmit(getErrorMessage(caughtError, 'Password reset failed.'));
       setLoading(false);
     }
   };
 
   return {
     confirm,
+    confirmMismatch,
     error,
+    errorReference,
+    failedSubmitCount,
     handleSubmit,
     loading,
     password,

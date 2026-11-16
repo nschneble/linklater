@@ -2,7 +2,12 @@ import { FULL_SCREEN_CENTER } from '../../lib/styles';
 import IconButton from '../common/IconButton';
 import PixelArtGhost from './PixelArtGhost';
 import SuggestionCallout from '../links/SuggestionCallout';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
+
+interface StumbleEmptyViewProps {
+  focusOnMount?: boolean;
+}
 
 /**
  * Full-page empty state shown by `StumblePage` when the user has no
@@ -15,11 +20,18 @@ import { useNavigate } from 'react-router';
  * are napping too." copy when the suggestions endpoint produces nothing
  * – without it the page would silently lose all suggestion messaging.
  */
-export default function StumbleEmptyView() {
+export default function StumbleEmptyView({
+  focusOnMount = false,
+}: StumbleEmptyViewProps) {
   const navigate = useNavigate();
+  const headingReference = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    if (focusOnMount) headingReference.current?.focus();
+  }, [focusOnMount]);
 
   return (
-    <div
+    <main
       className={`${FULL_SCREEN_CENTER} bg-[var(--base-bg)] text-[var(--base-text)] select-none`}
     >
       <div className="flex flex-col items-center m-auto px-4 py-12 text-center">
@@ -27,7 +39,11 @@ export default function StumbleEmptyView() {
           <PixelArtGhost />
         </div>
 
-        <h1 className="mb-6 text-xl font-semibold text-balance">
+        <h1
+          ref={headingReference}
+          tabIndex={focusOnMount ? -1 : undefined}
+          className="mb-6 text-xl font-semibold text-balance focus:outline-none"
+        >
           Boo. Your reading list is empty.
         </h1>
 
@@ -49,6 +65,6 @@ export default function StumbleEmptyView() {
           Back to Linklater
         </IconButton>
       </div>
-    </div>
+    </main>
   );
 }

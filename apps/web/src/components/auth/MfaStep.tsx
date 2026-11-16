@@ -32,6 +32,10 @@ export default function MfaStep({
   const mfaInputReference = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    mfaInputReference.current?.focus();
+  }, [mfaChallenge]);
+
+  useEffect(() => {
     if (mfaError) {
       mfaErrorReference.current?.focus();
     }

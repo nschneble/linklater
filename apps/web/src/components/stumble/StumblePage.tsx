@@ -27,6 +27,7 @@ type StumbleState = 'loading' | 'empty' | 'error';
  */
 export default function StumblePage() {
   const [state, setState] = useState<StumbleState>('loading');
+  const [hasRetried, setHasRetried] = useState(false);
   useDocumentTitle(
     state === 'error' ? 'Linklater – Stumble error' : 'Linklater – Stumble',
   );
@@ -68,6 +69,11 @@ export default function StumblePage() {
     handleStumble();
   }, [handleStumble]);
 
+  const handleRetry = () => {
+    setHasRetried(true);
+    handleStumble();
+  };
+
   // focus the retry button on error so a keyboard user can recover
   useEffect(() => {
     if (state === 'error') {
@@ -75,7 +81,7 @@ export default function StumblePage() {
     }
   }, [state]);
 
-  if (state === 'empty') return <StumbleEmptyView />;
+  if (state === 'empty') return <StumbleEmptyView focusOnMount={hasRetried} />;
 
   if (state === 'error') {
     return (
@@ -91,7 +97,7 @@ export default function StumblePage() {
             ref={retryButtonReference}
             variant="elevated"
             surface="base"
-            onClick={handleStumble}
+            onClick={handleRetry}
           >
             <i
               className="fa-solid fa-arrows-rotate text-xs"
@@ -104,5 +110,10 @@ export default function StumblePage() {
     );
   }
 
-  return <LoadingScreen statusText="Finding a random link…" />;
+  return (
+    <LoadingScreen
+      focusOnMount={hasRetried}
+      statusText="Finding a random link…"
+    />
+  );
 }
