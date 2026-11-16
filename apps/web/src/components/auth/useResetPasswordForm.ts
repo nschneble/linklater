@@ -2,8 +2,8 @@ import { getErrorMessage } from '../../lib/errors';
 import { resetPassword } from '../../lib/api';
 import { setPendingNotice } from '../../lib/pendingNotice';
 import { useAuth } from '../../auth/AuthContext';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
-import { useState, type FormEvent } from 'react';
 
 interface PendingMfa {
   mfaMethod: 'totp';
@@ -16,13 +16,20 @@ export function useResetPasswordForm() {
   const { refreshUser } = useAuth();
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [confirmMismatch, setConfirmMismatch] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [pendingMfa, setPendingMfa] = useState<PendingMfa | null>(null);
+  const errorReference = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    if (error) errorReference.current?.focus();
+  }, [error]);
 
   const handleSubmit = async (formEvent: FormEvent) => {
     formEvent.preventDefault();
     setError(null);
+    setConfirmMismatch(false);
 
     const token = searchParameters.get('token');
     if (!token) {
@@ -31,6 +38,7 @@ export function useResetPasswordForm() {
     }
 
     if (password !== confirm) {
+      setConfirmMismatch(true);
       setError('Passwords do not match.');
       return;
     }
@@ -55,7 +63,9 @@ export function useResetPasswordForm() {
 
   return {
     confirm,
+    confirmMismatch,
     error,
+    errorReference,
     handleSubmit,
     loading,
     password,

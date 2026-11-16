@@ -57,3 +57,35 @@ describe('LoadingScreen', () => {
     ).not.toBeNull();
   });
 });
+
+describe('LoadingScreen focus', () => {
+  function Harness({ loading }: { loading: boolean }) {
+    return (
+      <>
+        <button type="button">Elsewhere</button>
+        {loading && <LoadingScreen statusText="Signing you in…" />}
+      </>
+    );
+  }
+
+  it('leaves focus where it was by default', () => {
+    const { rerender } = render(<Harness loading={false} />);
+    const elsewhere = screen.getByRole('button', { name: 'Elsewhere' });
+    elsewhere.focus();
+    expect(elsewhere).toHaveFocus();
+
+    rerender(<Harness loading />);
+
+    expect(elsewhere).toHaveFocus();
+    expect(screen.getByRole('main').getAttribute('tabindex')).toBeNull();
+  });
+
+  it('takes focus on mount when asked, without a name of its own', () => {
+    render(<LoadingScreen focusOnMount statusText="Resetting…" />);
+
+    const main = screen.getByRole('main');
+    expect(main).toHaveFocus();
+    expect(main).not.toHaveAccessibleName();
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
+  });
+});

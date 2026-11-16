@@ -9,6 +9,8 @@ import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import { useNavigate } from 'react-router';
 import { useResetPasswordForm } from './useResetPasswordForm';
 
+const ERROR_ID = 'reset-error';
+
 /**
  * The `/reset-password?token=…` route; open without auth. Tokens last an
  * hour. Success signs the user in (TOTP accounts hit MFA first), and
@@ -21,7 +23,9 @@ export default function ResetPasswordPage() {
   const navigate = useNavigate();
   const {
     confirm,
+    confirmMismatch,
     error,
+    errorReference,
     handleSubmit,
     loading,
     password,
@@ -29,6 +33,9 @@ export default function ResetPasswordPage() {
     setConfirm,
     setPassword,
   } = useResetPasswordForm();
+
+  let errorId: string | undefined;
+  if (error) errorId = ERROR_ID;
 
   if (pendingMfa) {
     return (
@@ -43,7 +50,11 @@ export default function ResetPasswordPage() {
 
   if (loading) {
     return (
-      <LoadingScreen statusText="Resetting your password…" theme="branding" />
+      <LoadingScreen
+        focusOnMount
+        statusText="Resetting your password…"
+        theme="branding"
+      />
     );
   }
 
@@ -77,6 +88,7 @@ export default function ResetPasswordPage() {
             value={password}
             required
             minLength={12}
+            aria-describedby={errorId}
           />
 
           <label
@@ -93,9 +105,20 @@ export default function ResetPasswordPage() {
             onChange={(event) => setConfirm(event.target.value)}
             value={confirm}
             required
+            aria-describedby={errorId}
+            aria-invalid={confirmMismatch || undefined}
           />
 
-          {error && <Alert variant="error">{error}</Alert>}
+          {error && (
+            <Alert
+              id={ERROR_ID}
+              ref={errorReference}
+              tabIndex={-1}
+              variant="error"
+            >
+              {error}
+            </Alert>
+          )}
 
           <PrimaryButton className="w-full py-2.5">
             <i className="fa-solid fa-lock text-xs" aria-hidden="true" />

@@ -6,8 +6,12 @@
 
 ### Fixed
 
+- Keyboard focus is lost when switching to or from a recovery code after a password reset or login link
+- Keyboard focus is lost when the reset password form or Stumble switches to a loading screen and back
 - The login link's two-factor screen has no main landmark for screen readers
 - The login link's two-factor screen sits at the top of the page instead of centered on the branded background
+- The reset password form doesn't tell screen readers which field has an error
+- The Stumble empty page has no main landmark for screen readers
 
 ## [1.6.2] - 2026-11-14
 
