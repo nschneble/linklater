@@ -3,8 +3,8 @@ import FormInput from '../common/FormInput';
 import { FULL_SCREEN_CENTER } from '../../lib/styles';
 import LinkButton from '../common/LinkButton';
 import LoadingScreen from '../common/LoadingScreen';
+import MfaStep from './MfaStep';
 import PrimaryButton from '../common/PrimaryButton';
-import ResetPasswordMfaStep from './ResetPasswordMfaStep';
 import { useDocumentTitle } from '../../lib/hooks/useDocumentTitle';
 import { useNavigate } from 'react-router';
 import { useResetPasswordForm } from './useResetPasswordForm';
@@ -32,9 +32,11 @@ export default function ResetPasswordPage() {
 
   if (pendingMfa) {
     return (
-      <ResetPasswordMfaStep
+      <MfaStep
+        branded
         mfaMethod={pendingMfa.mfaMethod}
         mfaToken={pendingMfa.mfaToken}
+        successNotice="password-reset-success"
       />
     );
   }
