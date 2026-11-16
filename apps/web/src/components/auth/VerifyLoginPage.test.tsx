@@ -433,6 +433,9 @@ describe('VerifyLoginPage MFA challenge', () => {
 
     renderPage();
     expect(screen.getAllByRole('main')).toHaveLength(1);
+    expect(
+      screen.getByRole('status').closest('[data-theme="branding"]'),
+    ).not.toBeNull();
 
     await act(async () => {
       resolveVerify({ mfaMethod: 'totp', mfaToken: 'mfa-tok-123' });

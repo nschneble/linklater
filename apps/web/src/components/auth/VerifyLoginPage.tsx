@@ -97,5 +97,7 @@ export default function VerifyLoginPage() {
   }
 
   // bare spinner: no card chrome to flash before the redirect
-  return <LoadingScreen statusText="Verifying your login link…" />;
+  return (
+    <LoadingScreen statusText="Verifying your login link…" theme="branding" />
+  );
 }
