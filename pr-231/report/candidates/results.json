@@ -1,7 +1,7 @@
 {
-  "startedAt": "2026-11-16T12:00:36.838Z",
-  "finishedAt": "2026-11-16T12:02:48.571Z",
-  "durationMs": 131733,
+  "startedAt": "2026-11-16T12:12:35.189Z",
+  "finishedAt": "2026-11-16T12:14:46.059Z",
+  "durationMs": 130870,
   "mode": "ci",
   "totals": {
     "stories": 38,
@@ -87,18 +87,18 @@
       "story": "Visiting /extension/authorize while logged out surfaces the sign-in prompt.",
       "file": "unauthenticated-user-visits-extension-authorize.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:00:41.721Z",
-      "finishedAt": "2026-11-16T12:01:40.260Z",
-      "durationMs": 2752,
+      "startedAt": "2026-11-16T12:12:39.794Z",
+      "finishedAt": "2026-11-16T12:13:37.574Z",
+      "durationMs": 3104,
       "actions": [
         {
           "action": "visit-extension-authorize-unauthenticated",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:41.785Z",
-          "finishedAt": "2026-11-16T12:00:43.090Z",
-          "durationMs": 1305,
+          "startedAt": "2026-11-16T12:12:39.857Z",
+          "finishedAt": "2026-11-16T12:12:41.253Z",
+          "durationMs": 1396,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-extension-authorize-unauthenticated/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/unauthenticated-user-visits-extension-authorize/visit-extension-authorize-unauthenticated.mobile.actual.png",
           "diffPixels": 0,
@@ -125,7 +125,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -136,9 +136,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:38.967Z",
-          "finishedAt": "2026-11-16T12:01:40.242Z",
-          "durationMs": 1275,
+          "startedAt": "2026-11-16T12:13:36.021Z",
+          "finishedAt": "2026-11-16T12:13:37.407Z",
+          "durationMs": 1386,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-extension-authorize-unauthenticated/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/unauthenticated-user-visits-extension-authorize/visit-extension-authorize-unauthenticated.desktop.actual.png",
           "diffPixels": 0,
@@ -165,7 +165,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -177,23 +177,23 @@
       "story": "Clicking the failwhale crash button triggers the app-root ErrorBoundary fallback.",
       "file": "user-crashes-app-via-failwhale.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:00:43.122Z",
-      "finishedAt": "2026-11-16T12:01:42.734Z",
-      "durationMs": 4270,
+      "startedAt": "2026-11-16T12:12:41.300Z",
+      "finishedAt": "2026-11-16T12:13:39.937Z",
+      "durationMs": 4306,
       "actions": [
         {
           "action": "visit-failwhale",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:43.179Z",
-          "finishedAt": "2026-11-16T12:00:44.130Z",
-          "durationMs": 951,
+          "startedAt": "2026-11-16T12:12:41.358Z",
+          "finishedAt": "2026-11-16T12:12:42.479Z",
+          "durationMs": 1121,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-failwhale/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-crashes-app-via-failwhale/visit-failwhale.mobile.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9999997917574515,
+          "ssimScore": 1,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-failwhale/mobile.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-crashes-app-via-failwhale/visit-failwhale.mobile.a11y.yaml",
           "breakpointWidth": 375,
@@ -230,7 +230,7 @@
               "diffRatio": 0.012857571214392804
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -241,9 +241,9 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:44.130Z",
-          "finishedAt": "2026-11-16T12:00:44.908Z",
-          "durationMs": 778,
+          "startedAt": "2026-11-16T12:12:42.479Z",
+          "finishedAt": "2026-11-16T12:12:43.205Z",
+          "durationMs": 726,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/crash-failwhale/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-crashes-app-via-failwhale/crash-failwhale.mobile.actual.png",
           "diffPixels": 0,
@@ -270,7 +270,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -281,9 +281,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:40.468Z",
-          "finishedAt": "2026-11-16T12:01:41.692Z",
-          "durationMs": 1224,
+          "startedAt": "2026-11-16T12:13:37.637Z",
+          "finishedAt": "2026-11-16T12:13:38.948Z",
+          "durationMs": 1311,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-failwhale/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-crashes-app-via-failwhale/visit-failwhale.desktop.actual.png",
           "diffPixels": 0,
@@ -325,7 +325,7 @@
               "diffRatio": 0.0031337890625
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -336,9 +336,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:41.692Z",
-          "finishedAt": "2026-11-16T12:01:42.727Z",
-          "durationMs": 1035,
+          "startedAt": "2026-11-16T12:13:38.948Z",
+          "finishedAt": "2026-11-16T12:13:39.929Z",
+          "durationMs": 981,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/crash-failwhale/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-crashes-app-via-failwhale/crash-failwhale.desktop.actual.png",
           "diffPixels": 0,
@@ -365,7 +365,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -377,18 +377,18 @@
       "story": "Visual tour of key screens reachable while signed out.",
       "file": "screen-tour-unauthenticated.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:00:41.721Z",
-      "finishedAt": "2026-11-16T12:01:43.131Z",
-      "durationMs": 7527,
+      "startedAt": "2026-11-16T12:12:39.794Z",
+      "finishedAt": "2026-11-16T12:13:40.408Z",
+      "durationMs": 8059,
       "actions": [
         {
           "action": "visit-landing",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:41.782Z",
-          "finishedAt": "2026-11-16T12:00:43.121Z",
-          "durationMs": 1339,
+          "startedAt": "2026-11-16T12:12:39.859Z",
+          "finishedAt": "2026-11-16T12:12:41.295Z",
+          "durationMs": 1436,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-landing/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/screen-tour-unauthenticated/visit-landing.mobile.actual.png",
           "diffPixels": 0,
@@ -415,7 +415,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -426,9 +426,9 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:43.121Z",
-          "finishedAt": "2026-11-16T12:00:43.980Z",
-          "durationMs": 859,
+          "startedAt": "2026-11-16T12:12:41.295Z",
+          "finishedAt": "2026-11-16T12:12:42.332Z",
+          "durationMs": 1037,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-login/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/screen-tour-unauthenticated/visit-login.mobile.actual.png",
           "diffPixels": 0,
@@ -455,7 +455,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -466,9 +466,9 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:43.980Z",
-          "finishedAt": "2026-11-16T12:00:44.489Z",
-          "durationMs": 509,
+          "startedAt": "2026-11-16T12:12:42.332Z",
+          "finishedAt": "2026-11-16T12:12:42.821Z",
+          "durationMs": 489,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-signup/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/screen-tour-unauthenticated/visit-signup.mobile.actual.png",
           "diffPixels": 0,
@@ -495,7 +495,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -506,9 +506,9 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:44.489Z",
-          "finishedAt": "2026-11-16T12:00:45.016Z",
-          "durationMs": 527,
+          "startedAt": "2026-11-16T12:12:42.821Z",
+          "finishedAt": "2026-11-16T12:12:43.401Z",
+          "durationMs": 580,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-forgot-password/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/screen-tour-unauthenticated/visit-forgot-password.mobile.actual.png",
           "diffPixels": 0,
@@ -535,7 +535,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -546,14 +546,14 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:38.960Z",
-          "finishedAt": "2026-11-16T12:01:40.457Z",
-          "durationMs": 1497,
+          "startedAt": "2026-11-16T12:13:36.022Z",
+          "finishedAt": "2026-11-16T12:13:37.572Z",
+          "durationMs": 1550,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-landing/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/screen-tour-unauthenticated/visit-landing.desktop.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 1,
+          "ssimScore": 0.9999998633042854,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-landing/desktop.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/screen-tour-unauthenticated/visit-landing.desktop.a11y.yaml",
           "breakpointWidth": 1280,
@@ -575,7 +575,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -586,9 +586,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:40.457Z",
-          "finishedAt": "2026-11-16T12:01:41.500Z",
-          "durationMs": 1043,
+          "startedAt": "2026-11-16T12:13:37.572Z",
+          "finishedAt": "2026-11-16T12:13:38.664Z",
+          "durationMs": 1092,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-login/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/screen-tour-unauthenticated/visit-login.desktop.actual.png",
           "diffPixels": 0,
@@ -615,7 +615,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -626,14 +626,14 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:41.500Z",
-          "finishedAt": "2026-11-16T12:01:42.147Z",
-          "durationMs": 647,
+          "startedAt": "2026-11-16T12:13:38.664Z",
+          "finishedAt": "2026-11-16T12:13:39.387Z",
+          "durationMs": 723,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-signup/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/screen-tour-unauthenticated/visit-signup.desktop.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9999999988039048,
+          "ssimScore": 1,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-signup/desktop.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/screen-tour-unauthenticated/visit-signup.desktop.a11y.yaml",
           "breakpointWidth": 1280,
@@ -655,7 +655,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -666,9 +666,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:42.147Z",
-          "finishedAt": "2026-11-16T12:01:43.087Z",
-          "durationMs": 940,
+          "startedAt": "2026-11-16T12:13:39.387Z",
+          "finishedAt": "2026-11-16T12:13:40.319Z",
+          "durationMs": 932,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-forgot-password/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/screen-tour-unauthenticated/visit-forgot-password.desktop.actual.png",
           "diffPixels": 0,
@@ -695,7 +695,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -707,18 +707,18 @@
       "story": "As a user, I can log in with email and password.",
       "file": "user-logs-in.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:00:45.025Z",
-      "finishedAt": "2026-11-16T12:01:45.760Z",
-      "durationMs": 5118,
+      "startedAt": "2026-11-16T12:12:43.420Z",
+      "finishedAt": "2026-11-16T12:13:42.982Z",
+      "durationMs": 5024,
       "actions": [
         {
           "action": "intercept-no-links",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:45.097Z",
-          "finishedAt": "2026-11-16T12:00:45.100Z",
-          "durationMs": 3,
+          "startedAt": "2026-11-16T12:12:43.488Z",
+          "finishedAt": "2026-11-16T12:12:43.492Z",
+          "durationMs": 4,
           "breakpointWidth": 375,
           "breakpointHeight": 667
         },
@@ -727,9 +727,9 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:45.100Z",
-          "finishedAt": "2026-11-16T12:00:47.504Z",
-          "durationMs": 2404,
+          "startedAt": "2026-11-16T12:12:43.492Z",
+          "finishedAt": "2026-11-16T12:12:45.859Z",
+          "durationMs": 2367,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/login/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-logs-in/login.mobile.actual.png",
           "diffPixels": 0,
@@ -756,7 +756,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -767,8 +767,8 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:43.214Z",
-          "finishedAt": "2026-11-16T12:01:43.216Z",
+          "startedAt": "2026-11-16T12:13:40.453Z",
+          "finishedAt": "2026-11-16T12:13:40.455Z",
           "durationMs": 2,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
@@ -778,9 +778,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:43.216Z",
-          "finishedAt": "2026-11-16T12:01:45.751Z",
-          "durationMs": 2535,
+          "startedAt": "2026-11-16T12:13:40.455Z",
+          "finishedAt": "2026-11-16T12:13:42.972Z",
+          "durationMs": 2517,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/login/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-logs-in/login.desktop.actual.png",
           "diffPixels": 0,
@@ -807,7 +807,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -819,18 +819,18 @@
       "story": "As a visitor to the marketing page, I can click through to sign up or log in.",
       "file": "user-discovers-linklater.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:00:44.918Z",
-      "finishedAt": "2026-11-16T12:01:46.376Z",
-      "durationMs": 7150,
+      "startedAt": "2026-11-16T12:12:43.243Z",
+      "finishedAt": "2026-11-16T12:13:43.591Z",
+      "durationMs": 7014,
       "actions": [
         {
           "action": "click-signup-cta",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:44.986Z",
-          "finishedAt": "2026-11-16T12:00:46.937Z",
-          "durationMs": 1951,
+          "startedAt": "2026-11-16T12:12:43.303Z",
+          "finishedAt": "2026-11-16T12:12:45.169Z",
+          "durationMs": 1866,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/click-signup-cta/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-discovers-linklater/click-signup-cta.mobile.actual.png",
           "diffPixels": 0,
@@ -857,7 +857,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -868,9 +868,9 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:46.937Z",
-          "finishedAt": "2026-11-16T12:00:48.412Z",
-          "durationMs": 1475,
+          "startedAt": "2026-11-16T12:12:45.169Z",
+          "finishedAt": "2026-11-16T12:12:46.594Z",
+          "durationMs": 1425,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/click-login-cta/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-discovers-linklater/click-login-cta.mobile.actual.png",
           "diffPixels": 0,
@@ -897,7 +897,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -908,9 +908,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:42.788Z",
-          "finishedAt": "2026-11-16T12:01:44.724Z",
-          "durationMs": 1936,
+          "startedAt": "2026-11-16T12:13:39.990Z",
+          "finishedAt": "2026-11-16T12:13:41.946Z",
+          "durationMs": 1956,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/click-signup-cta/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-discovers-linklater/click-signup-cta.desktop.actual.png",
           "diffPixels": 0,
@@ -937,7 +937,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -948,9 +948,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:44.724Z",
-          "finishedAt": "2026-11-16T12:01:46.281Z",
-          "durationMs": 1557,
+          "startedAt": "2026-11-16T12:13:41.946Z",
+          "finishedAt": "2026-11-16T12:13:43.524Z",
+          "durationMs": 1578,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/click-login-cta/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-discovers-linklater/click-login-cta.desktop.actual.png",
           "diffPixels": 0,
@@ -977,7 +977,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -989,18 +989,18 @@
       "story": "A visitor reads the privacy policy without needing an account.",
       "file": "user-reads-privacy-policy.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:00:47.514Z",
-      "finishedAt": "2026-11-16T12:01:47.476Z",
-      "durationMs": 2919,
+      "startedAt": "2026-11-16T12:12:45.870Z",
+      "finishedAt": "2026-11-16T12:13:44.761Z",
+      "durationMs": 3058,
       "actions": [
         {
           "action": "visit-privacy",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:47.566Z",
-          "finishedAt": "2026-11-16T12:00:48.709Z",
-          "durationMs": 1143,
+          "startedAt": "2026-11-16T12:12:45.924Z",
+          "finishedAt": "2026-11-16T12:12:47.136Z",
+          "durationMs": 1212,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-privacy/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-reads-privacy-policy/visit-privacy.mobile.actual.png",
           "diffPixels": 0,
@@ -1027,7 +1027,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -1038,9 +1038,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:45.801Z",
-          "finishedAt": "2026-11-16T12:01:47.467Z",
-          "durationMs": 1666,
+          "startedAt": "2026-11-16T12:13:43.026Z",
+          "finishedAt": "2026-11-16T12:13:44.750Z",
+          "durationMs": 1724,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-privacy/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-reads-privacy-policy/visit-privacy.desktop.actual.png",
           "diffPixels": 0,
@@ -1067,7 +1067,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -1079,18 +1079,18 @@
       "story": "A visitor reads the terms and conditions without needing an account.",
       "file": "user-reads-terms.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:00:48.426Z",
-      "finishedAt": "2026-11-16T12:01:48.244Z",
-      "durationMs": 3320,
+      "startedAt": "2026-11-16T12:12:46.603Z",
+      "finishedAt": "2026-11-16T12:13:45.316Z",
+      "durationMs": 3427,
       "actions": [
         {
           "action": "visit-terms",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:48.478Z",
-          "finishedAt": "2026-11-16T12:00:49.869Z",
-          "durationMs": 1391,
+          "startedAt": "2026-11-16T12:12:46.694Z",
+          "finishedAt": "2026-11-16T12:12:48.294Z",
+          "durationMs": 1600,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-terms/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-reads-terms/visit-terms.mobile.actual.png",
           "diffPixels": 0,
@@ -1117,7 +1117,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -1128,9 +1128,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:46.426Z",
-          "finishedAt": "2026-11-16T12:01:48.219Z",
-          "durationMs": 1793,
+          "startedAt": "2026-11-16T12:13:43.665Z",
+          "finishedAt": "2026-11-16T12:13:45.303Z",
+          "durationMs": 1638,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-terms/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-reads-terms/visit-terms.desktop.actual.png",
           "diffPixels": 0,
@@ -1157,7 +1157,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -1169,18 +1169,18 @@
       "story": "Submitting the login form with the password blank fires a magic-link toast over the same form.",
       "file": "user-receives-magic-link.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:00:48.717Z",
-      "finishedAt": "2026-11-16T12:01:50.091Z",
-      "durationMs": 4887,
+      "startedAt": "2026-11-16T12:12:47.149Z",
+      "finishedAt": "2026-11-16T12:13:47.581Z",
+      "durationMs": 5135,
       "actions": [
         {
           "action": "intercept-noop-magic-link-request",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:48.815Z",
-          "finishedAt": "2026-11-16T12:00:48.817Z",
-          "durationMs": 2,
+          "startedAt": "2026-11-16T12:12:47.306Z",
+          "finishedAt": "2026-11-16T12:12:47.314Z",
+          "durationMs": 8,
           "breakpointWidth": 375,
           "breakpointHeight": 667
         },
@@ -1189,14 +1189,14 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:48.817Z",
-          "finishedAt": "2026-11-16T12:00:50.984Z",
-          "durationMs": 2167,
+          "startedAt": "2026-11-16T12:12:47.314Z",
+          "finishedAt": "2026-11-16T12:12:49.455Z",
+          "durationMs": 2141,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/request-magic-link/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-receives-magic-link/request-magic-link.mobile.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9999685928680746,
+          "ssimScore": 0.9999687055075329,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/request-magic-link/mobile.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-receives-magic-link/request-magic-link.mobile.a11y.yaml",
           "breakpointWidth": 375,
@@ -1218,7 +1218,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -1229,9 +1229,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:47.560Z",
-          "finishedAt": "2026-11-16T12:01:47.562Z",
-          "durationMs": 2,
+          "startedAt": "2026-11-16T12:13:44.887Z",
+          "finishedAt": "2026-11-16T12:13:44.888Z",
+          "durationMs": 1,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -1240,14 +1240,14 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:47.562Z",
-          "finishedAt": "2026-11-16T12:01:50.081Z",
-          "durationMs": 2519,
+          "startedAt": "2026-11-16T12:13:44.888Z",
+          "finishedAt": "2026-11-16T12:13:47.572Z",
+          "durationMs": 2684,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/request-magic-link/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-receives-magic-link/request-magic-link.desktop.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9999968712498011,
+          "ssimScore": 0.9999968725803889,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/request-magic-link/desktop.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-receives-magic-link/request-magic-link.desktop.a11y.yaml",
           "breakpointWidth": 1280,
@@ -1269,7 +1269,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -1281,9 +1281,9 @@
       "story": "As a user who forgot their password, I can request a reset link.",
       "file": "user-resets-password.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:00:49.879Z",
-      "finishedAt": "2026-11-16T12:01:52.192Z",
-      "durationMs": 3703,
+      "startedAt": "2026-11-16T12:12:48.305Z",
+      "finishedAt": "2026-11-16T12:13:49.419Z",
+      "durationMs": 3938,
       "actions": [
         {
           "action": "reset-password",
@@ -1292,14 +1292,14 @@
           },
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:49.966Z",
-          "finishedAt": "2026-11-16T12:00:51.466Z",
-          "durationMs": 1500,
+          "startedAt": "2026-11-16T12:12:48.355Z",
+          "finishedAt": "2026-11-16T12:12:50.396Z",
+          "durationMs": 2041,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/reset-password/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-resets-password/reset-password.mobile.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9999676377153055,
+          "ssimScore": 0.9999676510749343,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/reset-password/mobile.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-resets-password/reset-password.mobile.a11y.yaml",
           "breakpointWidth": 375,
@@ -1321,7 +1321,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -1334,14 +1334,14 @@
           },
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:50.166Z",
-          "finishedAt": "2026-11-16T12:01:52.183Z",
-          "durationMs": 2017,
+          "startedAt": "2026-11-16T12:13:47.634Z",
+          "finishedAt": "2026-11-16T12:13:49.412Z",
+          "durationMs": 1778,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/reset-password/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-resets-password/reset-password.desktop.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.999995580308576,
+          "ssimScore": 0.9999955799545007,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/reset-password/desktop.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-resets-password/reset-password.desktop.a11y.yaml",
           "breakpointWidth": 1280,
@@ -1363,7 +1363,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -1375,18 +1375,18 @@
       "story": "Visiting /failwhale surfaces the Easter-egg page with its crash button.",
       "file": "user-visits-failwhale.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:00:51.481Z",
-      "finishedAt": "2026-11-16T12:01:53.122Z",
-      "durationMs": 1888,
+      "startedAt": "2026-11-16T12:12:50.406Z",
+      "finishedAt": "2026-11-16T12:13:50.301Z",
+      "durationMs": 1740,
       "actions": [
         {
           "action": "visit-failwhale",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:51.597Z",
-          "finishedAt": "2026-11-16T12:00:52.433Z",
-          "durationMs": 836,
+          "startedAt": "2026-11-16T12:12:50.488Z",
+          "finishedAt": "2026-11-16T12:12:51.259Z",
+          "durationMs": 771,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-failwhale/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-visits-failwhale/visit-failwhale.mobile.actual.png",
           "diffPixels": 0,
@@ -1428,12 +1428,12 @@
               "diffRatio": 0.012857571214392804
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -1444,9 +1444,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:52.260Z",
-          "finishedAt": "2026-11-16T12:01:53.117Z",
-          "durationMs": 857,
+          "startedAt": "2026-11-16T12:13:49.457Z",
+          "finishedAt": "2026-11-16T12:13:50.294Z",
+          "durationMs": 837,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-failwhale/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-visits-failwhale/visit-failwhale.desktop.actual.png",
           "diffPixels": 0,
@@ -1488,12 +1488,12 @@
               "diffRatio": 0.0031337890625
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -1505,17 +1505,17 @@
       "story": "As a TOTP-enrolled user, I can sign in by submitting my password and clearing the MFA challenge.",
       "file": "user-signs-in-with-mfa.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:00:50.990Z",
-      "finishedAt": "2026-11-16T12:01:53.557Z",
-      "durationMs": 4548,
+      "startedAt": "2026-11-16T12:12:49.464Z",
+      "finishedAt": "2026-11-16T12:13:50.634Z",
+      "durationMs": 4488,
       "actions": [
         {
           "action": "intercept-login-mfa-challenge",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:51.034Z",
-          "finishedAt": "2026-11-16T12:00:51.036Z",
+          "startedAt": "2026-11-16T12:12:49.538Z",
+          "finishedAt": "2026-11-16T12:12:49.540Z",
           "durationMs": 2,
           "breakpointWidth": 375,
           "breakpointHeight": 667
@@ -1525,9 +1525,9 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:51.036Z",
-          "finishedAt": "2026-11-16T12:00:53.101Z",
-          "durationMs": 2065,
+          "startedAt": "2026-11-16T12:12:49.540Z",
+          "finishedAt": "2026-11-16T12:12:51.502Z",
+          "durationMs": 1962,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/attempt-login-expect-mfa-challenge/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-signs-in-with-mfa/attempt-login-expect-mfa-challenge.mobile.actual.png",
           "diffPixels": 0,
@@ -1554,7 +1554,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -1565,8 +1565,8 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:51.203Z",
-          "finishedAt": "2026-11-16T12:01:51.205Z",
+          "startedAt": "2026-11-16T12:13:48.308Z",
+          "finishedAt": "2026-11-16T12:13:48.310Z",
           "durationMs": 2,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
@@ -1576,9 +1576,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:51.205Z",
-          "finishedAt": "2026-11-16T12:01:53.480Z",
-          "durationMs": 2275,
+          "startedAt": "2026-11-16T12:13:48.310Z",
+          "finishedAt": "2026-11-16T12:13:50.593Z",
+          "durationMs": 2283,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/attempt-login-expect-mfa-challenge/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-signs-in-with-mfa/attempt-login-expect-mfa-challenge.desktop.actual.png",
           "diffPixels": 0,
@@ -1605,7 +1605,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -1617,18 +1617,18 @@
       "story": "Visiting the OAuth callback without a token in the hash surfaces the error screen.",
       "file": "user-visits-oauth-callback-without-token.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:00:52.440Z",
-      "finishedAt": "2026-11-16T12:01:54.725Z",
-      "durationMs": 3027,
+      "startedAt": "2026-11-16T12:12:51.264Z",
+      "finishedAt": "2026-11-16T12:13:52.089Z",
+      "durationMs": 3470,
       "actions": [
         {
           "action": "visit-oauth-callback-no-token",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:52.478Z",
-          "finishedAt": "2026-11-16T12:00:53.842Z",
-          "durationMs": 1364,
+          "startedAt": "2026-11-16T12:12:51.306Z",
+          "finishedAt": "2026-11-16T12:12:52.927Z",
+          "durationMs": 1621,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-oauth-callback-no-token/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-visits-oauth-callback-without-token/visit-oauth-callback-no-token.mobile.actual.png",
           "diffPixels": 0,
@@ -1655,7 +1655,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -1666,9 +1666,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:53.158Z",
-          "finishedAt": "2026-11-16T12:01:54.712Z",
-          "durationMs": 1554,
+          "startedAt": "2026-11-16T12:13:50.368Z",
+          "finishedAt": "2026-11-16T12:13:52.079Z",
+          "durationMs": 1711,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-oauth-callback-no-token/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-visits-oauth-callback-without-token/visit-oauth-callback-no-token.desktop.actual.png",
           "diffPixels": 0,
@@ -1695,7 +1695,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -1707,18 +1707,18 @@
       "story": "As a passwordless user, I can add a password from the Security section.",
       "file": "passwordless-user-adds-password.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:00:53.108Z",
-      "finishedAt": "2026-11-16T12:01:55.988Z",
-      "durationMs": 4719,
+      "startedAt": "2026-11-16T12:12:51.552Z",
+      "finishedAt": "2026-11-16T12:13:53.162Z",
+      "durationMs": 5085,
       "actions": [
         {
           "action": "intercept-no-api-tokens",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:53.231Z",
-          "finishedAt": "2026-11-16T12:00:53.232Z",
-          "durationMs": 1,
+          "startedAt": "2026-11-16T12:12:51.670Z",
+          "finishedAt": "2026-11-16T12:12:51.672Z",
+          "durationMs": 2,
           "breakpointWidth": 375,
           "breakpointHeight": 667
         },
@@ -1727,9 +1727,9 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:53.232Z",
-          "finishedAt": "2026-11-16T12:00:53.233Z",
-          "durationMs": 1,
+          "startedAt": "2026-11-16T12:12:51.672Z",
+          "finishedAt": "2026-11-16T12:12:51.677Z",
+          "durationMs": 5,
           "breakpointWidth": 375,
           "breakpointHeight": 667
         },
@@ -1738,9 +1738,9 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:53.233Z",
-          "finishedAt": "2026-11-16T12:00:53.233Z",
-          "durationMs": 0,
+          "startedAt": "2026-11-16T12:12:51.677Z",
+          "finishedAt": "2026-11-16T12:12:51.678Z",
+          "durationMs": 1,
           "breakpointWidth": 375,
           "breakpointHeight": 667
         },
@@ -1749,9 +1749,9 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:53.233Z",
-          "finishedAt": "2026-11-16T12:00:53.233Z",
-          "durationMs": 0,
+          "startedAt": "2026-11-16T12:12:51.678Z",
+          "finishedAt": "2026-11-16T12:12:51.679Z",
+          "durationMs": 1,
           "breakpointWidth": 375,
           "breakpointHeight": 667
         },
@@ -1762,14 +1762,14 @@
           },
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:53.233Z",
-          "finishedAt": "2026-11-16T12:00:55.391Z",
-          "durationMs": 2158,
+          "startedAt": "2026-11-16T12:12:51.679Z",
+          "finishedAt": "2026-11-16T12:12:54.103Z",
+          "durationMs": 2424,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/add-password/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/passwordless-user-adds-password/add-password.mobile.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9999606592784288,
+          "ssimScore": 0.9999606714890932,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/add-password/mobile.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/passwordless-user-adds-password/add-password.mobile.a11y.yaml",
           "breakpointWidth": 375,
@@ -1791,7 +1791,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -1802,9 +1802,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:53.779Z",
-          "finishedAt": "2026-11-16T12:01:53.781Z",
-          "durationMs": 2,
+          "startedAt": "2026-11-16T12:13:50.757Z",
+          "finishedAt": "2026-11-16T12:13:50.758Z",
+          "durationMs": 1,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -1813,8 +1813,8 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:53.781Z",
-          "finishedAt": "2026-11-16T12:01:53.782Z",
+          "startedAt": "2026-11-16T12:13:50.758Z",
+          "finishedAt": "2026-11-16T12:13:50.759Z",
           "durationMs": 1,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
@@ -1824,9 +1824,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:53.782Z",
-          "finishedAt": "2026-11-16T12:01:53.782Z",
-          "durationMs": 0,
+          "startedAt": "2026-11-16T12:13:50.759Z",
+          "finishedAt": "2026-11-16T12:13:50.760Z",
+          "durationMs": 1,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -1835,9 +1835,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:53.782Z",
-          "finishedAt": "2026-11-16T12:01:53.783Z",
-          "durationMs": 1,
+          "startedAt": "2026-11-16T12:13:50.760Z",
+          "finishedAt": "2026-11-16T12:13:50.764Z",
+          "durationMs": 4,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -1848,14 +1848,14 @@
           },
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:53.783Z",
-          "finishedAt": "2026-11-16T12:01:55.977Z",
-          "durationMs": 2194,
+          "startedAt": "2026-11-16T12:13:50.764Z",
+          "finishedAt": "2026-11-16T12:13:53.155Z",
+          "durationMs": 2391,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/add-password/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/passwordless-user-adds-password/add-password.desktop.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9999982177096837,
+          "ssimScore": 0.999998216885493,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/add-password/desktop.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/passwordless-user-adds-password/add-password.desktop.a11y.yaml",
           "breakpointWidth": 1280,
@@ -1877,7 +1877,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -1889,18 +1889,18 @@
       "story": "As a logged-in user, I can change my email address — and if I have MFA enabled, I am prompted for a verification code.",
       "file": "user-changes-email.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:00:55.396Z",
-      "finishedAt": "2026-11-16T12:02:00.808Z",
-      "durationMs": 9361,
+      "startedAt": "2026-11-16T12:12:54.109Z",
+      "finishedAt": "2026-11-16T12:13:57.900Z",
+      "durationMs": 9012,
       "actions": [
         {
           "action": "intercept-no-api-tokens",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:55.498Z",
-          "finishedAt": "2026-11-16T12:00:55.500Z",
-          "durationMs": 2,
+          "startedAt": "2026-11-16T12:12:54.240Z",
+          "finishedAt": "2026-11-16T12:12:54.241Z",
+          "durationMs": 1,
           "breakpointWidth": 375,
           "breakpointHeight": 667
         },
@@ -1909,9 +1909,9 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:55.500Z",
-          "finishedAt": "2026-11-16T12:00:55.500Z",
-          "durationMs": 0,
+          "startedAt": "2026-11-16T12:12:54.241Z",
+          "finishedAt": "2026-11-16T12:12:54.242Z",
+          "durationMs": 1,
           "breakpointWidth": 375,
           "breakpointHeight": 667
         },
@@ -1920,8 +1920,8 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:55.500Z",
-          "finishedAt": "2026-11-16T12:00:55.501Z",
+          "startedAt": "2026-11-16T12:12:54.242Z",
+          "finishedAt": "2026-11-16T12:12:54.243Z",
           "durationMs": 1,
           "breakpointWidth": 375,
           "breakpointHeight": 667
@@ -1933,9 +1933,9 @@
           },
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:55.501Z",
-          "finishedAt": "2026-11-16T12:00:57.592Z",
-          "durationMs": 2091,
+          "startedAt": "2026-11-16T12:12:54.243Z",
+          "finishedAt": "2026-11-16T12:12:56.365Z",
+          "durationMs": 2122,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/change-email/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-changes-email/change-email.mobile.actual.png",
           "diffPixels": 0,
@@ -1962,7 +1962,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -1973,9 +1973,9 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:57.592Z",
-          "finishedAt": "2026-11-16T12:00:57.593Z",
-          "durationMs": 1,
+          "startedAt": "2026-11-16T12:12:56.365Z",
+          "finishedAt": "2026-11-16T12:12:56.365Z",
+          "durationMs": 0,
           "breakpointWidth": 375,
           "breakpointHeight": 667
         },
@@ -1984,8 +1984,8 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:57.593Z",
-          "finishedAt": "2026-11-16T12:00:57.594Z",
+          "startedAt": "2026-11-16T12:12:56.365Z",
+          "finishedAt": "2026-11-16T12:12:56.366Z",
           "durationMs": 1,
           "breakpointWidth": 375,
           "breakpointHeight": 667
@@ -1997,14 +1997,14 @@
           },
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:57.594Z",
-          "finishedAt": "2026-11-16T12:00:59.928Z",
-          "durationMs": 2334,
+          "startedAt": "2026-11-16T12:12:56.366Z",
+          "finishedAt": "2026-11-16T12:12:58.311Z",
+          "durationMs": 1945,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/change-email-expect-403/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-changes-email/change-email-expect-403.mobile.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.999996580635045,
+          "ssimScore": 0.9999960183889534,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/change-email-expect-403/mobile.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-changes-email/change-email-expect-403.mobile.a11y.yaml",
           "breakpointWidth": 375,
@@ -2026,7 +2026,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -2037,9 +2037,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:56.136Z",
-          "finishedAt": "2026-11-16T12:01:56.139Z",
-          "durationMs": 3,
+          "startedAt": "2026-11-16T12:13:53.275Z",
+          "finishedAt": "2026-11-16T12:13:53.279Z",
+          "durationMs": 4,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -2048,8 +2048,8 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:56.139Z",
-          "finishedAt": "2026-11-16T12:01:56.139Z",
+          "startedAt": "2026-11-16T12:13:53.279Z",
+          "finishedAt": "2026-11-16T12:13:53.279Z",
           "durationMs": 0,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
@@ -2059,8 +2059,8 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:56.139Z",
-          "finishedAt": "2026-11-16T12:01:56.140Z",
+          "startedAt": "2026-11-16T12:13:53.279Z",
+          "finishedAt": "2026-11-16T12:13:53.280Z",
           "durationMs": 1,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
@@ -2072,14 +2072,14 @@
           },
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:56.140Z",
-          "finishedAt": "2026-11-16T12:01:58.686Z",
-          "durationMs": 2546,
+          "startedAt": "2026-11-16T12:13:53.280Z",
+          "finishedAt": "2026-11-16T12:13:55.534Z",
+          "durationMs": 2254,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/change-email/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-changes-email/change-email.desktop.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9999999994921577,
+          "ssimScore": 1,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/change-email/desktop.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-changes-email/change-email.desktop.a11y.yaml",
           "breakpointWidth": 1280,
@@ -2101,7 +2101,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -2112,9 +2112,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:58.686Z",
-          "finishedAt": "2026-11-16T12:01:58.688Z",
-          "durationMs": 2,
+          "startedAt": "2026-11-16T12:13:55.534Z",
+          "finishedAt": "2026-11-16T12:13:55.535Z",
+          "durationMs": 1,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -2123,9 +2123,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:58.688Z",
-          "finishedAt": "2026-11-16T12:01:58.692Z",
-          "durationMs": 4,
+          "startedAt": "2026-11-16T12:13:55.535Z",
+          "finishedAt": "2026-11-16T12:13:55.535Z",
+          "durationMs": 0,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -2136,14 +2136,14 @@
           },
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:58.692Z",
-          "finishedAt": "2026-11-16T12:02:00.785Z",
-          "durationMs": 2093,
+          "startedAt": "2026-11-16T12:13:55.535Z",
+          "finishedAt": "2026-11-16T12:13:57.890Z",
+          "durationMs": 2355,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/change-email-expect-403/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-changes-email/change-email-expect-403.desktop.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9999999502527834,
+          "ssimScore": 0.9999999726079843,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/change-email-expect-403/desktop.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-changes-email/change-email-expect-403.desktop.a11y.yaml",
           "breakpointWidth": 1280,
@@ -2165,7 +2165,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -2177,18 +2177,18 @@
       "story": "As a logged-in user, I can change my password.",
       "file": "user-changes-password.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:00:59.937Z",
-      "finishedAt": "2026-11-16T12:02:03.617Z",
-      "durationMs": 5559,
+      "startedAt": "2026-11-16T12:12:58.384Z",
+      "finishedAt": "2026-11-16T12:14:00.622Z",
+      "durationMs": 5137,
       "actions": [
         {
           "action": "intercept-instant-bookmarklet-token",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:00.137Z",
-          "finishedAt": "2026-11-16T12:01:00.147Z",
-          "durationMs": 10,
+          "startedAt": "2026-11-16T12:12:58.608Z",
+          "finishedAt": "2026-11-16T12:12:58.612Z",
+          "durationMs": 4,
           "breakpointWidth": 375,
           "breakpointHeight": 667
         },
@@ -2200,14 +2200,14 @@
           },
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:00.147Z",
-          "finishedAt": "2026-11-16T12:01:02.676Z",
-          "durationMs": 2529,
+          "startedAt": "2026-11-16T12:12:58.612Z",
+          "finishedAt": "2026-11-16T12:13:00.794Z",
+          "durationMs": 2182,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/change-password/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-changes-password/change-password.mobile.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 1,
+          "ssimScore": 0.9999909800215402,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/change-password/mobile.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-changes-password/change-password.mobile.a11y.yaml",
           "breakpointWidth": 375,
@@ -2229,7 +2229,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -2240,9 +2240,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:00.960Z",
-          "finishedAt": "2026-11-16T12:02:00.962Z",
-          "durationMs": 2,
+          "startedAt": "2026-11-16T12:13:58.065Z",
+          "finishedAt": "2026-11-16T12:13:58.066Z",
+          "durationMs": 1,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -2254,9 +2254,9 @@
           },
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:00.962Z",
-          "finishedAt": "2026-11-16T12:02:03.609Z",
-          "durationMs": 2647,
+          "startedAt": "2026-11-16T12:13:58.066Z",
+          "finishedAt": "2026-11-16T12:14:00.609Z",
+          "durationMs": 2543,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/change-password/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-changes-password/change-password.desktop.actual.png",
           "diffPixels": 0,
@@ -2283,7 +2283,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -2295,18 +2295,18 @@
       "story": "Visual tour of key screens reachable while signed in.",
       "file": "screen-tour-authenticated.json",
       "status": "changed",
-      "startedAt": "2026-11-16T12:00:53.864Z",
-      "finishedAt": "2026-11-16T12:02:05.342Z",
-      "durationMs": 21068,
+      "startedAt": "2026-11-16T12:12:52.946Z",
+      "finishedAt": "2026-11-16T12:14:02.742Z",
+      "durationMs": 20073,
       "actions": [
         {
           "action": "intercept-no-links",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:53.988Z",
-          "finishedAt": "2026-11-16T12:00:53.991Z",
-          "durationMs": 3,
+          "startedAt": "2026-11-16T12:12:53.105Z",
+          "finishedAt": "2026-11-16T12:12:53.107Z",
+          "durationMs": 2,
           "breakpointWidth": 375,
           "breakpointHeight": 667
         },
@@ -2315,9 +2315,9 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:53.991Z",
-          "finishedAt": "2026-11-16T12:00:53.992Z",
-          "durationMs": 1,
+          "startedAt": "2026-11-16T12:12:53.107Z",
+          "finishedAt": "2026-11-16T12:12:53.107Z",
+          "durationMs": 0,
           "breakpointWidth": 375,
           "breakpointHeight": 667
         },
@@ -2326,8 +2326,8 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:53.992Z",
-          "finishedAt": "2026-11-16T12:00:53.993Z",
+          "startedAt": "2026-11-16T12:12:53.107Z",
+          "finishedAt": "2026-11-16T12:12:53.108Z",
           "durationMs": 1,
           "breakpointWidth": 375,
           "breakpointHeight": 667
@@ -2337,14 +2337,14 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:53.993Z",
-          "finishedAt": "2026-11-16T12:00:55.740Z",
-          "durationMs": 1747,
+          "startedAt": "2026-11-16T12:12:53.108Z",
+          "finishedAt": "2026-11-16T12:12:54.616Z",
+          "durationMs": 1508,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-unread/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/screen-tour-authenticated/visit-unread.mobile.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9999856192590981,
+          "ssimScore": 0.9999858306174736,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-unread/mobile.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/screen-tour-authenticated/visit-unread.mobile.a11y.yaml",
           "breakpointWidth": 375,
@@ -2366,7 +2366,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -2377,9 +2377,9 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:55.740Z",
-          "finishedAt": "2026-11-16T12:00:57.244Z",
-          "durationMs": 1504,
+          "startedAt": "2026-11-16T12:12:54.616Z",
+          "finishedAt": "2026-11-16T12:12:56.229Z",
+          "durationMs": 1613,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-read/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/screen-tour-authenticated/visit-read.mobile.actual.png",
           "diffPixels": 0,
@@ -2406,7 +2406,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -2417,9 +2417,9 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "changed",
-          "startedAt": "2026-11-16T12:00:57.244Z",
-          "finishedAt": "2026-11-16T12:00:59.112Z",
-          "durationMs": 1868,
+          "startedAt": "2026-11-16T12:12:56.229Z",
+          "finishedAt": "2026-11-16T12:12:58.010Z",
+          "durationMs": 1781,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-stumble-empty/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/screen-tour-authenticated/visit-stumble-empty.mobile.actual.png",
           "diffPixels": 0,
@@ -2485,7 +2485,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -2496,14 +2496,14 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:00:59.112Z",
-          "finishedAt": "2026-11-16T12:01:00.206Z",
-          "durationMs": 1094,
+          "startedAt": "2026-11-16T12:12:58.010Z",
+          "finishedAt": "2026-11-16T12:12:59.105Z",
+          "durationMs": 1095,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-settings/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/screen-tour-authenticated/visit-settings.mobile.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9999906861431536,
+          "ssimScore": 1,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-settings/mobile.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/screen-tour-authenticated/visit-settings.mobile.a11y.yaml",
           "breakpointWidth": 375,
@@ -2525,7 +2525,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -2536,9 +2536,9 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:00.206Z",
-          "finishedAt": "2026-11-16T12:01:02.291Z",
-          "durationMs": 2085,
+          "startedAt": "2026-11-16T12:12:59.105Z",
+          "finishedAt": "2026-11-16T12:13:01.042Z",
+          "durationMs": 1937,
           "breakpointWidth": 375,
           "breakpointHeight": 667
         },
@@ -2547,9 +2547,9 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:02.291Z",
-          "finishedAt": "2026-11-16T12:01:04.298Z",
-          "durationMs": 2007,
+          "startedAt": "2026-11-16T12:13:01.042Z",
+          "finishedAt": "2026-11-16T12:13:02.363Z",
+          "durationMs": 1321,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-editor/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/screen-tour-authenticated/visit-editor.mobile.actual.png",
           "diffPixels": 0,
@@ -2576,7 +2576,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -2587,9 +2587,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:54.834Z",
-          "finishedAt": "2026-11-16T12:01:54.836Z",
-          "durationMs": 2,
+          "startedAt": "2026-11-16T12:13:52.321Z",
+          "finishedAt": "2026-11-16T12:13:52.326Z",
+          "durationMs": 5,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -2598,8 +2598,8 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:54.836Z",
-          "finishedAt": "2026-11-16T12:01:54.837Z",
+          "startedAt": "2026-11-16T12:13:52.326Z",
+          "finishedAt": "2026-11-16T12:13:52.327Z",
           "durationMs": 1,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
@@ -2609,9 +2609,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:54.837Z",
-          "finishedAt": "2026-11-16T12:01:54.838Z",
-          "durationMs": 1,
+          "startedAt": "2026-11-16T12:13:52.327Z",
+          "finishedAt": "2026-11-16T12:13:52.327Z",
+          "durationMs": 0,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -2620,14 +2620,14 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:54.838Z",
-          "finishedAt": "2026-11-16T12:01:56.588Z",
-          "durationMs": 1750,
+          "startedAt": "2026-11-16T12:13:52.327Z",
+          "finishedAt": "2026-11-16T12:13:54.153Z",
+          "durationMs": 1826,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-unread/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/screen-tour-authenticated/visit-unread.desktop.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9999999617475926,
+          "ssimScore": 1,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-unread/desktop.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/screen-tour-authenticated/visit-unread.desktop.a11y.yaml",
           "breakpointWidth": 1280,
@@ -2649,7 +2649,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -2660,14 +2660,14 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:56.588Z",
-          "finishedAt": "2026-11-16T12:01:58.392Z",
-          "durationMs": 1804,
+          "startedAt": "2026-11-16T12:13:54.153Z",
+          "finishedAt": "2026-11-16T12:13:55.886Z",
+          "durationMs": 1733,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-read/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/screen-tour-authenticated/visit-read.desktop.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 1,
+          "ssimScore": 0.999999999990076,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-read/desktop.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/screen-tour-authenticated/visit-read.desktop.a11y.yaml",
           "breakpointWidth": 1280,
@@ -2689,7 +2689,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -2700,9 +2700,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "changed",
-          "startedAt": "2026-11-16T12:01:58.392Z",
-          "finishedAt": "2026-11-16T12:02:00.493Z",
-          "durationMs": 2101,
+          "startedAt": "2026-11-16T12:13:55.886Z",
+          "finishedAt": "2026-11-16T12:13:57.715Z",
+          "durationMs": 1829,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-stumble-empty/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/screen-tour-authenticated/visit-stumble-empty.desktop.actual.png",
           "diffPixels": 0,
@@ -2768,7 +2768,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -2779,14 +2779,14 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:00.493Z",
-          "finishedAt": "2026-11-16T12:02:02.390Z",
-          "durationMs": 1897,
+          "startedAt": "2026-11-16T12:13:57.715Z",
+          "finishedAt": "2026-11-16T12:13:59.393Z",
+          "durationMs": 1678,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-settings/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/screen-tour-authenticated/visit-settings.desktop.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9999999997750447,
+          "ssimScore": 1,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-settings/desktop.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/screen-tour-authenticated/visit-settings.desktop.a11y.yaml",
           "breakpointWidth": 1280,
@@ -2808,7 +2808,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -2819,9 +2819,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:02.390Z",
-          "finishedAt": "2026-11-16T12:02:03.626Z",
-          "durationMs": 1236,
+          "startedAt": "2026-11-16T12:13:59.393Z",
+          "finishedAt": "2026-11-16T12:14:00.627Z",
+          "durationMs": 1234,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -2830,9 +2830,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:03.626Z",
-          "finishedAt": "2026-11-16T12:02:05.337Z",
-          "durationMs": 1711,
+          "startedAt": "2026-11-16T12:14:00.627Z",
+          "finishedAt": "2026-11-16T12:14:02.735Z",
+          "durationMs": 2108,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-editor/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/screen-tour-authenticated/visit-editor.desktop.actual.png",
           "diffPixels": 0,
@@ -2859,7 +2859,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -2871,17 +2871,17 @@
       "story": "As a logged-in user, I can start the account deletion flow.",
       "file": "user-deletes-account.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:01:04.315Z",
-      "finishedAt": "2026-11-16T12:02:07.681Z",
-      "durationMs": 4880,
+      "startedAt": "2026-11-16T12:13:02.369Z",
+      "finishedAt": "2026-11-16T12:14:05.108Z",
+      "durationMs": 4766,
       "actions": [
         {
           "action": "intercept-no-api-tokens",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:04.482Z",
-          "finishedAt": "2026-11-16T12:01:04.483Z",
+          "startedAt": "2026-11-16T12:13:02.462Z",
+          "finishedAt": "2026-11-16T12:13:02.463Z",
           "durationMs": 1,
           "breakpointWidth": 375,
           "breakpointHeight": 667
@@ -2891,8 +2891,8 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:04.483Z",
-          "finishedAt": "2026-11-16T12:01:04.483Z",
+          "startedAt": "2026-11-16T12:13:02.463Z",
+          "finishedAt": "2026-11-16T12:13:02.463Z",
           "durationMs": 0,
           "breakpointWidth": 375,
           "breakpointHeight": 667
@@ -2902,9 +2902,9 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:04.483Z",
-          "finishedAt": "2026-11-16T12:01:06.851Z",
-          "durationMs": 2368,
+          "startedAt": "2026-11-16T12:13:02.463Z",
+          "finishedAt": "2026-11-16T12:13:04.764Z",
+          "durationMs": 2301,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/delete-account/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-deletes-account/delete-account.mobile.actual.png",
           "diffPixels": 0,
@@ -2931,7 +2931,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -2942,9 +2942,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:05.426Z",
-          "finishedAt": "2026-11-16T12:02:05.427Z",
-          "durationMs": 1,
+          "startedAt": "2026-11-16T12:14:02.827Z",
+          "finishedAt": "2026-11-16T12:14:02.829Z",
+          "durationMs": 2,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -2953,8 +2953,8 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:05.427Z",
-          "finishedAt": "2026-11-16T12:02:05.427Z",
+          "startedAt": "2026-11-16T12:14:02.829Z",
+          "finishedAt": "2026-11-16T12:14:02.829Z",
           "durationMs": 0,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
@@ -2964,14 +2964,14 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:05.427Z",
-          "finishedAt": "2026-11-16T12:02:07.677Z",
-          "durationMs": 2250,
+          "startedAt": "2026-11-16T12:14:02.829Z",
+          "finishedAt": "2026-11-16T12:14:05.102Z",
+          "durationMs": 2273,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/delete-account/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-deletes-account/delete-account.desktop.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9998761799428189,
+          "ssimScore": 0.9998761820475729,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/delete-account/desktop.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-deletes-account/delete-account.desktop.a11y.yaml",
           "breakpointWidth": 1280,
@@ -2993,7 +2993,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -3005,18 +3005,18 @@
       "story": "As a logged-in user, I can create an API token.",
       "file": "user-creates-api-token.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:01:02.687Z",
-      "finishedAt": "2026-11-16T12:02:08.588Z",
-      "durationMs": 9991,
+      "startedAt": "2026-11-16T12:13:00.799Z",
+      "finishedAt": "2026-11-16T12:14:05.489Z",
+      "durationMs": 9555,
       "actions": [
         {
           "action": "intercept-instant-bookmarklet-token",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:03.010Z",
-          "finishedAt": "2026-11-16T12:01:03.018Z",
-          "durationMs": 8,
+          "startedAt": "2026-11-16T12:13:00.903Z",
+          "finishedAt": "2026-11-16T12:13:00.904Z",
+          "durationMs": 1,
           "breakpointWidth": 375,
           "breakpointHeight": 667
         },
@@ -3025,9 +3025,9 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:03.018Z",
-          "finishedAt": "2026-11-16T12:01:03.019Z",
-          "durationMs": 1,
+          "startedAt": "2026-11-16T12:13:00.904Z",
+          "finishedAt": "2026-11-16T12:13:00.904Z",
+          "durationMs": 0,
           "breakpointWidth": 375,
           "breakpointHeight": 667
         },
@@ -3038,9 +3038,9 @@
           },
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:03.019Z",
-          "finishedAt": "2026-11-16T12:01:07.699Z",
-          "durationMs": 4680,
+          "startedAt": "2026-11-16T12:13:00.904Z",
+          "finishedAt": "2026-11-16T12:13:05.482Z",
+          "durationMs": 4578,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/create-api-token/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-creates-api-token/create-api-token.mobile.actual.png",
           "diffPixels": 0,
@@ -3067,7 +3067,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -3078,9 +3078,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:03.776Z",
-          "finishedAt": "2026-11-16T12:02:03.778Z",
-          "durationMs": 2,
+          "startedAt": "2026-11-16T12:14:00.798Z",
+          "finishedAt": "2026-11-16T12:14:00.801Z",
+          "durationMs": 3,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -3089,9 +3089,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:03.778Z",
-          "finishedAt": "2026-11-16T12:02:03.780Z",
-          "durationMs": 2,
+          "startedAt": "2026-11-16T12:14:00.801Z",
+          "finishedAt": "2026-11-16T12:14:00.801Z",
+          "durationMs": 0,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -3102,9 +3102,9 @@
           },
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:03.780Z",
-          "finishedAt": "2026-11-16T12:02:08.578Z",
-          "durationMs": 4798,
+          "startedAt": "2026-11-16T12:14:00.801Z",
+          "finishedAt": "2026-11-16T12:14:05.480Z",
+          "durationMs": 4679,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/create-api-token/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-creates-api-token/create-api-token.desktop.actual.png",
           "diffPixels": 0,
@@ -3131,7 +3131,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -3143,17 +3143,17 @@
       "story": "As a user whose email is not yet verified, I can resend the verification email from settings.",
       "file": "user-resends-verification-email.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:01:06.856Z",
-      "finishedAt": "2026-11-16T12:02:10.100Z",
-      "durationMs": 4355,
+      "startedAt": "2026-11-16T12:13:04.769Z",
+      "finishedAt": "2026-11-16T12:14:07.438Z",
+      "durationMs": 4084,
       "actions": [
         {
           "action": "intercept-no-api-tokens",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:06.947Z",
-          "finishedAt": "2026-11-16T12:01:06.948Z",
+          "startedAt": "2026-11-16T12:13:04.855Z",
+          "finishedAt": "2026-11-16T12:13:04.856Z",
           "durationMs": 1,
           "breakpointWidth": 375,
           "breakpointHeight": 667
@@ -3163,8 +3163,8 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:06.948Z",
-          "finishedAt": "2026-11-16T12:01:06.949Z",
+          "startedAt": "2026-11-16T12:13:04.856Z",
+          "finishedAt": "2026-11-16T12:13:04.857Z",
           "durationMs": 1,
           "breakpointWidth": 375,
           "breakpointHeight": 667
@@ -3174,8 +3174,8 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:06.949Z",
-          "finishedAt": "2026-11-16T12:01:06.949Z",
+          "startedAt": "2026-11-16T12:13:04.857Z",
+          "finishedAt": "2026-11-16T12:13:04.857Z",
           "durationMs": 0,
           "breakpointWidth": 375,
           "breakpointHeight": 667
@@ -3185,9 +3185,9 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:06.949Z",
-          "finishedAt": "2026-11-16T12:01:06.950Z",
-          "durationMs": 1,
+          "startedAt": "2026-11-16T12:13:04.857Z",
+          "finishedAt": "2026-11-16T12:13:04.857Z",
+          "durationMs": 0,
           "breakpointWidth": 375,
           "breakpointHeight": 667
         },
@@ -3196,14 +3196,14 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:06.950Z",
-          "finishedAt": "2026-11-16T12:01:08.787Z",
-          "durationMs": 1837,
+          "startedAt": "2026-11-16T12:13:04.857Z",
+          "finishedAt": "2026-11-16T12:13:06.518Z",
+          "durationMs": 1661,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/resend-verification-email/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-resends-verification-email/resend-verification-email.mobile.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 1,
+          "ssimScore": 0.9999822191192391,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/resend-verification-email/mobile.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-resends-verification-email/resend-verification-email.mobile.a11y.yaml",
           "breakpointWidth": 375,
@@ -3225,7 +3225,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -3236,9 +3236,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:07.829Z",
-          "finishedAt": "2026-11-16T12:02:07.830Z",
-          "durationMs": 1,
+          "startedAt": "2026-11-16T12:14:05.217Z",
+          "finishedAt": "2026-11-16T12:14:05.219Z",
+          "durationMs": 2,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -3247,8 +3247,8 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:07.830Z",
-          "finishedAt": "2026-11-16T12:02:07.830Z",
+          "startedAt": "2026-11-16T12:14:05.219Z",
+          "finishedAt": "2026-11-16T12:14:05.219Z",
           "durationMs": 0,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
@@ -3258,9 +3258,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:07.830Z",
-          "finishedAt": "2026-11-16T12:02:07.830Z",
-          "durationMs": 0,
+          "startedAt": "2026-11-16T12:14:05.219Z",
+          "finishedAt": "2026-11-16T12:14:05.220Z",
+          "durationMs": 1,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -3269,9 +3269,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:07.830Z",
-          "finishedAt": "2026-11-16T12:02:07.831Z",
-          "durationMs": 1,
+          "startedAt": "2026-11-16T12:14:05.220Z",
+          "finishedAt": "2026-11-16T12:14:05.220Z",
+          "durationMs": 0,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -3280,14 +3280,14 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:07.831Z",
-          "finishedAt": "2026-11-16T12:02:10.092Z",
-          "durationMs": 2261,
+          "startedAt": "2026-11-16T12:14:05.220Z",
+          "finishedAt": "2026-11-16T12:14:07.431Z",
+          "durationMs": 2211,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/resend-verification-email/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-resends-verification-email/resend-verification-email.desktop.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9999999979237972,
+          "ssimScore": 0.9999998444303226,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/resend-verification-email/desktop.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-resends-verification-email/resend-verification-email.desktop.a11y.yaml",
           "breakpointWidth": 1280,
@@ -3309,7 +3309,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -3321,18 +3321,18 @@
       "story": "As a user returning after my session expired, I open the app and land on the logged-out shell.",
       "file": "user-returns-with-stale-session.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:01:07.707Z",
-      "finishedAt": "2026-11-16T12:02:10.642Z",
-      "durationMs": 3898,
+      "startedAt": "2026-11-16T12:13:05.488Z",
+      "finishedAt": "2026-11-16T12:14:07.779Z",
+      "durationMs": 4116,
       "actions": [
         {
           "action": "intercept-auth-me-401",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:07.862Z",
-          "finishedAt": "2026-11-16T12:01:07.865Z",
-          "durationMs": 3,
+          "startedAt": "2026-11-16T12:13:05.619Z",
+          "finishedAt": "2026-11-16T12:13:05.621Z",
+          "durationMs": 2,
           "breakpointWidth": 375,
           "breakpointHeight": 667
         },
@@ -3341,14 +3341,14 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:07.865Z",
-          "finishedAt": "2026-11-16T12:01:09.543Z",
-          "durationMs": 1678,
+          "startedAt": "2026-11-16T12:13:05.621Z",
+          "finishedAt": "2026-11-16T12:13:07.305Z",
+          "durationMs": 1684,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-authenticated-with-stale-token/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-returns-with-stale-session/visit-authenticated-with-stale-token.mobile.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9999998560332052,
+          "ssimScore": 0.9999998896183435,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-authenticated-with-stale-token/mobile.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-returns-with-stale-session/visit-authenticated-with-stale-token.mobile.a11y.yaml",
           "breakpointWidth": 375,
@@ -3370,7 +3370,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -3381,8 +3381,8 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:08.698Z",
-          "finishedAt": "2026-11-16T12:02:08.700Z",
+          "startedAt": "2026-11-16T12:14:05.727Z",
+          "finishedAt": "2026-11-16T12:14:05.729Z",
           "durationMs": 2,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
@@ -3392,9 +3392,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:08.700Z",
-          "finishedAt": "2026-11-16T12:02:10.613Z",
-          "durationMs": 1913,
+          "startedAt": "2026-11-16T12:14:05.729Z",
+          "finishedAt": "2026-11-16T12:14:07.764Z",
+          "durationMs": 2035,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-authenticated-with-stale-token/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-returns-with-stale-session/visit-authenticated-with-stale-token.desktop.actual.png",
           "diffPixels": 0,
@@ -3421,7 +3421,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -3433,18 +3433,18 @@
       "story": "As a logged-in user, I can revoke an API token — and if revocation fails on the server, I see an error.",
       "file": "user-revokes-token.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:01:08.792Z",
-      "finishedAt": "2026-11-16T12:02:15.043Z",
-      "durationMs": 9571,
+      "startedAt": "2026-11-16T12:13:06.523Z",
+      "finishedAt": "2026-11-16T12:14:12.221Z",
+      "durationMs": 9373,
       "actions": [
         {
           "action": "intercept-instant-bookmarklet-token",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:08.890Z",
-          "finishedAt": "2026-11-16T12:01:08.892Z",
-          "durationMs": 2,
+          "startedAt": "2026-11-16T12:13:06.629Z",
+          "finishedAt": "2026-11-16T12:13:06.633Z",
+          "durationMs": 4,
           "breakpointWidth": 375,
           "breakpointHeight": 667
         },
@@ -3453,9 +3453,9 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:08.892Z",
-          "finishedAt": "2026-11-16T12:01:08.892Z",
-          "durationMs": 0,
+          "startedAt": "2026-11-16T12:13:06.633Z",
+          "finishedAt": "2026-11-16T12:13:06.634Z",
+          "durationMs": 1,
           "breakpointWidth": 375,
           "breakpointHeight": 667
         },
@@ -3464,8 +3464,8 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:08.892Z",
-          "finishedAt": "2026-11-16T12:01:08.892Z",
+          "startedAt": "2026-11-16T12:13:06.634Z",
+          "finishedAt": "2026-11-16T12:13:06.634Z",
           "durationMs": 0,
           "breakpointWidth": 375,
           "breakpointHeight": 667
@@ -3475,14 +3475,14 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:08.892Z",
-          "finishedAt": "2026-11-16T12:01:10.808Z",
-          "durationMs": 1916,
+          "startedAt": "2026-11-16T12:13:06.634Z",
+          "finishedAt": "2026-11-16T12:13:08.849Z",
+          "durationMs": 2215,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/revoke-token/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-revokes-token/revoke-token.mobile.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 1,
+          "ssimScore": 0.999988720038688,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/revoke-token/mobile.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-revokes-token/revoke-token.mobile.a11y.yaml",
           "breakpointWidth": 375,
@@ -3504,7 +3504,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -3515,8 +3515,8 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:10.808Z",
-          "finishedAt": "2026-11-16T12:01:10.809Z",
+          "startedAt": "2026-11-16T12:13:08.849Z",
+          "finishedAt": "2026-11-16T12:13:08.850Z",
           "durationMs": 1,
           "breakpointWidth": 375,
           "breakpointHeight": 667
@@ -3526,8 +3526,8 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:10.809Z",
-          "finishedAt": "2026-11-16T12:01:10.810Z",
+          "startedAt": "2026-11-16T12:13:08.850Z",
+          "finishedAt": "2026-11-16T12:13:08.851Z",
           "durationMs": 1,
           "breakpointWidth": 375,
           "breakpointHeight": 667
@@ -3537,14 +3537,14 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:10.810Z",
-          "finishedAt": "2026-11-16T12:01:13.414Z",
-          "durationMs": 2604,
+          "startedAt": "2026-11-16T12:13:08.851Z",
+          "finishedAt": "2026-11-16T12:13:11.107Z",
+          "durationMs": 2256,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/revoke-token-and-expect-error/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-revokes-token/revoke-token-and-expect-error.mobile.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9996443771125645,
+          "ssimScore": 0.9996588931850213,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/revoke-token-and-expect-error/mobile.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-revokes-token/revoke-token-and-expect-error.mobile.a11y.yaml",
           "breakpointWidth": 375,
@@ -3566,7 +3566,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -3577,9 +3577,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:10.191Z",
-          "finishedAt": "2026-11-16T12:02:10.194Z",
-          "durationMs": 3,
+          "startedAt": "2026-11-16T12:14:07.544Z",
+          "finishedAt": "2026-11-16T12:14:07.545Z",
+          "durationMs": 1,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -3588,9 +3588,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:10.194Z",
-          "finishedAt": "2026-11-16T12:02:10.194Z",
-          "durationMs": 0,
+          "startedAt": "2026-11-16T12:14:07.545Z",
+          "finishedAt": "2026-11-16T12:14:07.546Z",
+          "durationMs": 1,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -3599,9 +3599,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:10.194Z",
-          "finishedAt": "2026-11-16T12:02:10.195Z",
-          "durationMs": 1,
+          "startedAt": "2026-11-16T12:14:07.546Z",
+          "finishedAt": "2026-11-16T12:14:07.546Z",
+          "durationMs": 0,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -3610,9 +3610,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:10.195Z",
-          "finishedAt": "2026-11-16T12:02:12.699Z",
-          "durationMs": 2504,
+          "startedAt": "2026-11-16T12:14:07.546Z",
+          "finishedAt": "2026-11-16T12:14:10.119Z",
+          "durationMs": 2573,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/revoke-token/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-revokes-token/revoke-token.desktop.actual.png",
           "diffPixels": 0,
@@ -3639,7 +3639,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -3650,8 +3650,8 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:12.699Z",
-          "finishedAt": "2026-11-16T12:02:12.700Z",
+          "startedAt": "2026-11-16T12:14:10.119Z",
+          "finishedAt": "2026-11-16T12:14:10.120Z",
           "durationMs": 1,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
@@ -3661,9 +3661,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:12.700Z",
-          "finishedAt": "2026-11-16T12:02:12.700Z",
-          "durationMs": 0,
+          "startedAt": "2026-11-16T12:14:10.120Z",
+          "finishedAt": "2026-11-16T12:14:10.121Z",
+          "durationMs": 1,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -3672,14 +3672,14 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:12.700Z",
-          "finishedAt": "2026-11-16T12:02:15.038Z",
-          "durationMs": 2338,
+          "startedAt": "2026-11-16T12:14:10.121Z",
+          "finishedAt": "2026-11-16T12:14:12.213Z",
+          "durationMs": 2092,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/revoke-token-and-expect-error/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-revokes-token/revoke-token-and-expect-error.desktop.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9999341980448473,
+          "ssimScore": 0.9999342023041373,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/revoke-token-and-expect-error/desktop.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-revokes-token/revoke-token-and-expect-error.desktop.a11y.yaml",
           "breakpointWidth": 1280,
@@ -3701,7 +3701,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -3713,18 +3713,18 @@
       "story": "As a logged-in user, I can save a link I found — and if the API is unreachable, I see an error.",
       "file": "user-saves-link.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:01:09.553Z",
-      "finishedAt": "2026-11-16T12:02:15.837Z",
-      "durationMs": 10094,
+      "startedAt": "2026-11-16T12:13:07.314Z",
+      "finishedAt": "2026-11-16T12:14:13.281Z",
+      "durationMs": 9993,
       "actions": [
         {
           "action": "intercept-no-links",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:09.679Z",
-          "finishedAt": "2026-11-16T12:01:09.681Z",
-          "durationMs": 2,
+          "startedAt": "2026-11-16T12:13:07.441Z",
+          "finishedAt": "2026-11-16T12:13:07.445Z",
+          "durationMs": 4,
           "breakpointWidth": 375,
           "breakpointHeight": 667
         },
@@ -3735,9 +3735,9 @@
           },
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:09.681Z",
-          "finishedAt": "2026-11-16T12:01:11.350Z",
-          "durationMs": 1669,
+          "startedAt": "2026-11-16T12:13:07.445Z",
+          "finishedAt": "2026-11-16T12:13:08.828Z",
+          "durationMs": 1383,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/save-link/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-saves-link/save-link.mobile.actual.png",
           "diffPixels": 0,
@@ -3764,7 +3764,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -3775,9 +3775,9 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:11.350Z",
-          "finishedAt": "2026-11-16T12:01:11.352Z",
-          "durationMs": 2,
+          "startedAt": "2026-11-16T12:13:08.828Z",
+          "finishedAt": "2026-11-16T12:13:08.829Z",
+          "durationMs": 1,
           "breakpointWidth": 375,
           "breakpointHeight": 667
         },
@@ -3788,9 +3788,9 @@
           },
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:11.352Z",
-          "finishedAt": "2026-11-16T12:01:14.437Z",
-          "durationMs": 3085,
+          "startedAt": "2026-11-16T12:13:08.829Z",
+          "finishedAt": "2026-11-16T12:13:11.742Z",
+          "durationMs": 2913,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/save-link-expect-error/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-saves-link/save-link-expect-error.mobile.actual.png",
           "diffPixels": 0,
@@ -3817,7 +3817,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -3828,9 +3828,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:10.827Z",
-          "finishedAt": "2026-11-16T12:02:10.832Z",
-          "durationMs": 5,
+          "startedAt": "2026-11-16T12:14:08.036Z",
+          "finishedAt": "2026-11-16T12:14:08.037Z",
+          "durationMs": 1,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -3841,9 +3841,9 @@
           },
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:10.832Z",
-          "finishedAt": "2026-11-16T12:02:12.516Z",
-          "durationMs": 1684,
+          "startedAt": "2026-11-16T12:14:08.037Z",
+          "finishedAt": "2026-11-16T12:14:09.776Z",
+          "durationMs": 1739,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/save-link/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-saves-link/save-link.desktop.actual.png",
           "diffPixels": 0,
@@ -3870,7 +3870,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -3881,8 +3881,8 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:12.516Z",
-          "finishedAt": "2026-11-16T12:02:12.517Z",
+          "startedAt": "2026-11-16T12:14:09.776Z",
+          "finishedAt": "2026-11-16T12:14:09.777Z",
           "durationMs": 1,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
@@ -3894,14 +3894,14 @@
           },
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:12.517Z",
-          "finishedAt": "2026-11-16T12:02:15.803Z",
-          "durationMs": 3286,
+          "startedAt": "2026-11-16T12:14:09.777Z",
+          "finishedAt": "2026-11-16T12:14:13.259Z",
+          "durationMs": 3482,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/save-link-expect-error/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-saves-link/save-link-expect-error.desktop.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9999014478305092,
+          "ssimScore": 0.9999014553454267,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/save-link-expect-error/desktop.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-saves-link/save-link-expect-error.desktop.a11y.yaml",
           "breakpointWidth": 1280,
@@ -3923,7 +3923,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -3935,18 +3935,18 @@
       "story": "As a logged-in user with no unread links, Stumble! lands on a suggestion.",
       "file": "user-stumbles-suggestion.json",
       "status": "changed",
-      "startedAt": "2026-11-16T12:01:14.452Z",
-      "finishedAt": "2026-11-16T12:02:17.758Z",
-      "durationMs": 3616,
+      "startedAt": "2026-11-16T12:13:11.806Z",
+      "finishedAt": "2026-11-16T12:14:15.128Z",
+      "durationMs": 3657,
       "actions": [
         {
           "action": "visit-stumble-empty",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "changed",
-          "startedAt": "2026-11-16T12:01:14.582Z",
-          "finishedAt": "2026-11-16T12:01:16.142Z",
-          "durationMs": 1560,
+          "startedAt": "2026-11-16T12:13:12.020Z",
+          "finishedAt": "2026-11-16T12:13:13.605Z",
+          "durationMs": 1585,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-stumble-empty/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-stumbles-suggestion/visit-stumble-empty.mobile.actual.png",
           "diffPixels": 0,
@@ -4012,12 +4012,12 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -4028,9 +4028,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "changed",
-          "startedAt": "2026-11-16T12:02:15.989Z",
-          "finishedAt": "2026-11-16T12:02:17.750Z",
-          "durationMs": 1761,
+          "startedAt": "2026-11-16T12:14:13.400Z",
+          "finishedAt": "2026-11-16T12:14:15.123Z",
+          "durationMs": 1723,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-stumble-empty/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-stumbles-suggestion/visit-stumble-empty.desktop.actual.png",
           "diffPixels": 0,
@@ -4096,12 +4096,12 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -4113,17 +4113,17 @@
       "story": "As a logged-in user, I can enable MFA by adding an authenticator app, verifying my first code, and saving my recovery codes.",
       "file": "user-sets-up-mfa.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:01:13.420Z",
-      "finishedAt": "2026-11-16T12:02:19.930Z",
-      "durationMs": 8886,
+      "startedAt": "2026-11-16T12:13:11.113Z",
+      "finishedAt": "2026-11-16T12:14:17.033Z",
+      "durationMs": 8939,
       "actions": [
         {
           "action": "intercept-no-api-tokens",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:13.507Z",
-          "finishedAt": "2026-11-16T12:01:13.508Z",
+          "startedAt": "2026-11-16T12:13:11.331Z",
+          "finishedAt": "2026-11-16T12:13:11.332Z",
           "durationMs": 1,
           "breakpointWidth": 375,
           "breakpointHeight": 667
@@ -4133,8 +4133,8 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:13.508Z",
-          "finishedAt": "2026-11-16T12:01:13.508Z",
+          "startedAt": "2026-11-16T12:13:11.332Z",
+          "finishedAt": "2026-11-16T12:13:11.332Z",
           "durationMs": 0,
           "breakpointWidth": 375,
           "breakpointHeight": 667
@@ -4144,8 +4144,8 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:13.508Z",
-          "finishedAt": "2026-11-16T12:01:13.508Z",
+          "startedAt": "2026-11-16T12:13:11.332Z",
+          "finishedAt": "2026-11-16T12:13:11.332Z",
           "durationMs": 0,
           "breakpointWidth": 375,
           "breakpointHeight": 667
@@ -4155,8 +4155,8 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:13.508Z",
-          "finishedAt": "2026-11-16T12:01:13.509Z",
+          "startedAt": "2026-11-16T12:13:11.332Z",
+          "finishedAt": "2026-11-16T12:13:11.333Z",
           "durationMs": 1,
           "breakpointWidth": 375,
           "breakpointHeight": 667
@@ -4166,14 +4166,14 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:13.509Z",
-          "finishedAt": "2026-11-16T12:01:15.236Z",
-          "durationMs": 1727,
+          "startedAt": "2026-11-16T12:13:11.333Z",
+          "finishedAt": "2026-11-16T12:13:13.081Z",
+          "durationMs": 1748,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/setup-mfa/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-sets-up-mfa/setup-mfa.mobile.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 1,
+          "ssimScore": 0.9999853839897639,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/setup-mfa/mobile.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-sets-up-mfa/setup-mfa.mobile.a11y.yaml",
           "breakpointWidth": 375,
@@ -4195,7 +4195,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -4208,14 +4208,14 @@
           },
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:15.236Z",
-          "finishedAt": "2026-11-16T12:01:16.443Z",
-          "durationMs": 1207,
+          "startedAt": "2026-11-16T12:13:13.081Z",
+          "finishedAt": "2026-11-16T12:13:14.300Z",
+          "durationMs": 1219,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/verify-totp-and-reveal-codes/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-sets-up-mfa/verify-totp-and-reveal-codes.mobile.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 1,
+          "ssimScore": 0.9999854839275432,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/verify-totp-and-reveal-codes/mobile.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-sets-up-mfa/verify-totp-and-reveal-codes.mobile.a11y.yaml",
           "breakpointWidth": 375,
@@ -4237,7 +4237,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -4248,14 +4248,14 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:16.443Z",
-          "finishedAt": "2026-11-16T12:01:17.403Z",
-          "durationMs": 960,
+          "startedAt": "2026-11-16T12:13:14.300Z",
+          "finishedAt": "2026-11-16T12:13:15.216Z",
+          "durationMs": 916,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/copy-recovery-codes/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-sets-up-mfa/copy-recovery-codes.mobile.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 1,
+          "ssimScore": 0.9999854839275432,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/copy-recovery-codes/mobile.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-sets-up-mfa/copy-recovery-codes.mobile.a11y.yaml",
           "breakpointWidth": 375,
@@ -4277,7 +4277,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -4288,9 +4288,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:15.129Z",
-          "finishedAt": "2026-11-16T12:02:15.130Z",
-          "durationMs": 1,
+          "startedAt": "2026-11-16T12:14:12.334Z",
+          "finishedAt": "2026-11-16T12:14:12.336Z",
+          "durationMs": 2,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -4299,9 +4299,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:15.130Z",
-          "finishedAt": "2026-11-16T12:02:15.131Z",
-          "durationMs": 1,
+          "startedAt": "2026-11-16T12:14:12.336Z",
+          "finishedAt": "2026-11-16T12:14:12.336Z",
+          "durationMs": 0,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -4310,8 +4310,8 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:15.131Z",
-          "finishedAt": "2026-11-16T12:02:15.131Z",
+          "startedAt": "2026-11-16T12:14:12.336Z",
+          "finishedAt": "2026-11-16T12:14:12.336Z",
           "durationMs": 0,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
@@ -4321,9 +4321,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:15.131Z",
-          "finishedAt": "2026-11-16T12:02:15.131Z",
-          "durationMs": 0,
+          "startedAt": "2026-11-16T12:14:12.336Z",
+          "finishedAt": "2026-11-16T12:14:12.337Z",
+          "durationMs": 1,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -4332,9 +4332,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:15.131Z",
-          "finishedAt": "2026-11-16T12:02:17.303Z",
-          "durationMs": 2172,
+          "startedAt": "2026-11-16T12:14:12.337Z",
+          "finishedAt": "2026-11-16T12:14:14.505Z",
+          "durationMs": 2168,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/setup-mfa/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-sets-up-mfa/setup-mfa.desktop.actual.png",
           "diffPixels": 0,
@@ -4361,7 +4361,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -4374,9 +4374,9 @@
           },
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:17.303Z",
-          "finishedAt": "2026-11-16T12:02:18.614Z",
-          "durationMs": 1311,
+          "startedAt": "2026-11-16T12:14:14.505Z",
+          "finishedAt": "2026-11-16T12:14:15.876Z",
+          "durationMs": 1371,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/verify-totp-and-reveal-codes/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-sets-up-mfa/verify-totp-and-reveal-codes.desktop.actual.png",
           "diffPixels": 0,
@@ -4403,7 +4403,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -4414,9 +4414,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:18.614Z",
-          "finishedAt": "2026-11-16T12:02:19.751Z",
-          "durationMs": 1137,
+          "startedAt": "2026-11-16T12:14:15.876Z",
+          "finishedAt": "2026-11-16T12:14:17.026Z",
+          "durationMs": 1150,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/copy-recovery-codes/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-sets-up-mfa/copy-recovery-codes.desktop.actual.png",
           "diffPixels": 0,
@@ -4443,7 +4443,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -4455,17 +4455,17 @@
       "story": "As a logged-in user, I can turn on CVD mode.",
       "file": "user-toggles-cvd-mode.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:01:16.147Z",
-      "finishedAt": "2026-11-16T12:02:19.932Z",
-      "durationMs": 4324,
+      "startedAt": "2026-11-16T12:13:13.617Z",
+      "finishedAt": "2026-11-16T12:14:17.332Z",
+      "durationMs": 3988,
       "actions": [
         {
           "action": "intercept-noop-user-patch",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:16.232Z",
-          "finishedAt": "2026-11-16T12:01:16.234Z",
+          "startedAt": "2026-11-16T12:13:13.714Z",
+          "finishedAt": "2026-11-16T12:13:13.716Z",
           "durationMs": 2,
           "breakpointWidth": 375,
           "breakpointHeight": 667
@@ -4475,8 +4475,8 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:16.234Z",
-          "finishedAt": "2026-11-16T12:01:16.234Z",
+          "startedAt": "2026-11-16T12:13:13.716Z",
+          "finishedAt": "2026-11-16T12:13:13.716Z",
           "durationMs": 0,
           "breakpointWidth": 375,
           "breakpointHeight": 667
@@ -4486,14 +4486,14 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:16.234Z",
-          "finishedAt": "2026-11-16T12:01:18.291Z",
-          "durationMs": 2057,
+          "startedAt": "2026-11-16T12:13:13.716Z",
+          "finishedAt": "2026-11-16T12:13:15.391Z",
+          "durationMs": 1675,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/toggle-cvd-mode/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-toggles-cvd-mode/toggle-cvd-mode.mobile.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9999999932112185,
+          "ssimScore": 0.9999863025000759,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/toggle-cvd-mode/mobile.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-toggles-cvd-mode/toggle-cvd-mode.mobile.a11y.yaml",
           "breakpointWidth": 375,
@@ -4515,7 +4515,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -4526,9 +4526,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:17.866Z",
-          "finishedAt": "2026-11-16T12:02:17.867Z",
-          "durationMs": 1,
+          "startedAt": "2026-11-16T12:14:15.219Z",
+          "finishedAt": "2026-11-16T12:14:15.222Z",
+          "durationMs": 3,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -4537,8 +4537,8 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:17.867Z",
-          "finishedAt": "2026-11-16T12:02:17.868Z",
+          "startedAt": "2026-11-16T12:14:15.222Z",
+          "finishedAt": "2026-11-16T12:14:15.223Z",
           "durationMs": 1,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
@@ -4548,9 +4548,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:17.868Z",
-          "finishedAt": "2026-11-16T12:02:19.923Z",
-          "durationMs": 2055,
+          "startedAt": "2026-11-16T12:14:15.223Z",
+          "finishedAt": "2026-11-16T12:14:17.326Z",
+          "durationMs": 2103,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/toggle-cvd-mode/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-toggles-cvd-mode/toggle-cvd-mode.desktop.actual.png",
           "diffPixels": 0,
@@ -4577,7 +4577,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -4589,18 +4589,18 @@
       "story": "As a logged-in user, I can turn on the OpenDyslexic font.",
       "file": "user-toggles-dyslexic-font.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:01:17.420Z",
-      "finishedAt": "2026-11-16T12:02:22.342Z",
-      "durationMs": 4708,
+      "startedAt": "2026-11-16T12:13:15.241Z",
+      "finishedAt": "2026-11-16T12:14:19.697Z",
+      "durationMs": 4994,
       "actions": [
         {
           "action": "intercept-noop-user-patch",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:17.596Z",
-          "finishedAt": "2026-11-16T12:01:17.598Z",
-          "durationMs": 2,
+          "startedAt": "2026-11-16T12:13:15.353Z",
+          "finishedAt": "2026-11-16T12:13:15.354Z",
+          "durationMs": 1,
           "breakpointWidth": 375,
           "breakpointHeight": 667
         },
@@ -4609,8 +4609,8 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:17.598Z",
-          "finishedAt": "2026-11-16T12:01:17.598Z",
+          "startedAt": "2026-11-16T12:13:15.354Z",
+          "finishedAt": "2026-11-16T12:13:15.354Z",
           "durationMs": 0,
           "breakpointWidth": 375,
           "breakpointHeight": 667
@@ -4620,14 +4620,14 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:17.598Z",
-          "finishedAt": "2026-11-16T12:01:19.710Z",
-          "durationMs": 2112,
+          "startedAt": "2026-11-16T12:13:15.354Z",
+          "finishedAt": "2026-11-16T12:13:17.558Z",
+          "durationMs": 2204,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/toggle-dyslexic-font/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-toggles-dyslexic-font/toggle-dyslexic-font.mobile.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9999901066319802,
+          "ssimScore": 0.9999923043927024,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/toggle-dyslexic-font/mobile.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-toggles-dyslexic-font/toggle-dyslexic-font.mobile.a11y.yaml",
           "breakpointWidth": 375,
@@ -4649,7 +4649,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -4660,9 +4660,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:20.060Z",
-          "finishedAt": "2026-11-16T12:02:20.066Z",
-          "durationMs": 6,
+          "startedAt": "2026-11-16T12:14:17.339Z",
+          "finishedAt": "2026-11-16T12:14:17.341Z",
+          "durationMs": 2,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -4671,9 +4671,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:20.066Z",
-          "finishedAt": "2026-11-16T12:02:20.067Z",
-          "durationMs": 1,
+          "startedAt": "2026-11-16T12:14:17.341Z",
+          "finishedAt": "2026-11-16T12:14:17.341Z",
+          "durationMs": 0,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -4682,14 +4682,14 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:20.067Z",
-          "finishedAt": "2026-11-16T12:02:22.336Z",
-          "durationMs": 2269,
+          "startedAt": "2026-11-16T12:14:17.341Z",
+          "finishedAt": "2026-11-16T12:14:19.690Z",
+          "durationMs": 2349,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/toggle-dyslexic-font/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-toggles-dyslexic-font/toggle-dyslexic-font.desktop.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9999982144861612,
+          "ssimScore": 0.9999999994044085,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/toggle-dyslexic-font/desktop.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-toggles-dyslexic-font/toggle-dyslexic-font.desktop.a11y.yaml",
           "breakpointWidth": 1280,
@@ -4711,7 +4711,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -4723,18 +4723,18 @@
       "story": "As a logged-in user, I can regenerate my bookmarklet token.",
       "file": "user-uses-bookmarklet.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:01:18.297Z",
-      "finishedAt": "2026-11-16T12:02:22.592Z",
-      "durationMs": 5234,
+      "startedAt": "2026-11-16T12:13:15.401Z",
+      "finishedAt": "2026-11-16T12:14:19.883Z",
+      "durationMs": 4837,
       "actions": [
         {
           "action": "intercept-instant-bookmarklet-token",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:18.443Z",
-          "finishedAt": "2026-11-16T12:01:18.446Z",
-          "durationMs": 3,
+          "startedAt": "2026-11-16T12:13:15.567Z",
+          "finishedAt": "2026-11-16T12:13:15.568Z",
+          "durationMs": 1,
           "breakpointWidth": 375,
           "breakpointHeight": 667
         },
@@ -4743,9 +4743,9 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:18.446Z",
-          "finishedAt": "2026-11-16T12:01:18.446Z",
-          "durationMs": 0,
+          "startedAt": "2026-11-16T12:13:15.568Z",
+          "finishedAt": "2026-11-16T12:13:15.569Z",
+          "durationMs": 1,
           "breakpointWidth": 375,
           "breakpointHeight": 667
         },
@@ -4754,14 +4754,14 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:18.446Z",
-          "finishedAt": "2026-11-16T12:01:20.859Z",
-          "durationMs": 2413,
+          "startedAt": "2026-11-16T12:13:15.569Z",
+          "finishedAt": "2026-11-16T12:13:17.675Z",
+          "durationMs": 2106,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/use-bookmarklet/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-uses-bookmarklet/use-bookmarklet.mobile.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9999402089266125,
+          "ssimScore": 0.9999548307162333,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/use-bookmarklet/mobile.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-uses-bookmarklet/use-bookmarklet.mobile.a11y.yaml",
           "breakpointWidth": 375,
@@ -4783,7 +4783,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -4794,9 +4794,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:20.058Z",
-          "finishedAt": "2026-11-16T12:02:20.061Z",
-          "durationMs": 3,
+          "startedAt": "2026-11-16T12:14:17.485Z",
+          "finishedAt": "2026-11-16T12:14:17.496Z",
+          "durationMs": 11,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -4805,9 +4805,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:20.061Z",
-          "finishedAt": "2026-11-16T12:02:20.062Z",
-          "durationMs": 1,
+          "startedAt": "2026-11-16T12:14:17.496Z",
+          "finishedAt": "2026-11-16T12:14:17.499Z",
+          "durationMs": 3,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -4816,9 +4816,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:20.062Z",
-          "finishedAt": "2026-11-16T12:02:22.584Z",
-          "durationMs": 2522,
+          "startedAt": "2026-11-16T12:14:17.499Z",
+          "finishedAt": "2026-11-16T12:14:19.877Z",
+          "durationMs": 2378,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/use-bookmarklet/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-uses-bookmarklet/use-bookmarklet.desktop.actual.png",
           "diffPixels": 0,
@@ -4845,7 +4845,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -4857,18 +4857,18 @@
       "story": "As a logged-in user, I can navigate using the keyboard.",
       "file": "user-uses-keyboard.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:01:19.716Z",
-      "finishedAt": "2026-11-16T12:02:24.908Z",
-      "durationMs": 4476,
+      "startedAt": "2026-11-16T12:13:17.571Z",
+      "finishedAt": "2026-11-16T12:14:22.287Z",
+      "durationMs": 4581,
       "actions": [
         {
           "action": "intercept-no-links",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:20.052Z",
-          "finishedAt": "2026-11-16T12:01:20.056Z",
-          "durationMs": 4,
+          "startedAt": "2026-11-16T12:13:17.708Z",
+          "finishedAt": "2026-11-16T12:13:17.711Z",
+          "durationMs": 3,
           "breakpointWidth": 375,
           "breakpointHeight": 667
         },
@@ -4877,14 +4877,14 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:20.056Z",
-          "finishedAt": "2026-11-16T12:01:21.593Z",
-          "durationMs": 1537,
+          "startedAt": "2026-11-16T12:13:17.711Z",
+          "finishedAt": "2026-11-16T12:13:19.557Z",
+          "durationMs": 1846,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/keyboard-navigation/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-uses-keyboard/keyboard-navigation.mobile.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9999993004272711,
+          "ssimScore": 1,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/keyboard-navigation/mobile.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-uses-keyboard/keyboard-navigation.mobile.a11y.yaml",
           "breakpointWidth": 375,
@@ -4906,7 +4906,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -4917,9 +4917,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:22.613Z",
-          "finishedAt": "2026-11-16T12:02:22.616Z",
-          "durationMs": 3,
+          "startedAt": "2026-11-16T12:14:19.962Z",
+          "finishedAt": "2026-11-16T12:14:19.977Z",
+          "durationMs": 15,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -4928,9 +4928,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:22.616Z",
-          "finishedAt": "2026-11-16T12:02:24.900Z",
-          "durationMs": 2284,
+          "startedAt": "2026-11-16T12:14:19.977Z",
+          "finishedAt": "2026-11-16T12:14:22.276Z",
+          "durationMs": 2299,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/keyboard-navigation/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-uses-keyboard/keyboard-navigation.desktop.actual.png",
           "diffPixels": 0,
@@ -4957,7 +4957,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -4969,18 +4969,18 @@
       "story": "As a logged-in user, I can view my unread links.",
       "file": "user-views-unread-links.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:01:20.871Z",
-      "finishedAt": "2026-11-16T12:02:27.182Z",
-      "durationMs": 4622,
+      "startedAt": "2026-11-16T12:13:17.687Z",
+      "finishedAt": "2026-11-16T12:14:24.630Z",
+      "durationMs": 4731,
       "actions": [
         {
           "action": "intercept-3-unread-links",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:21.044Z",
-          "finishedAt": "2026-11-16T12:01:21.046Z",
-          "durationMs": 2,
+          "startedAt": "2026-11-16T12:13:17.829Z",
+          "finishedAt": "2026-11-16T12:13:17.837Z",
+          "durationMs": 8,
           "breakpointWidth": 375,
           "breakpointHeight": 667
         },
@@ -4989,9 +4989,9 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:21.046Z",
-          "finishedAt": "2026-11-16T12:01:23.203Z",
-          "durationMs": 2157,
+          "startedAt": "2026-11-16T12:13:17.837Z",
+          "finishedAt": "2026-11-16T12:13:20.017Z",
+          "durationMs": 2180,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/view-unread-links/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-views-unread-links/view-unread-links.mobile.actual.png",
           "diffPixels": 0,
@@ -5018,7 +5018,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -5029,9 +5029,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:25.062Z",
-          "finishedAt": "2026-11-16T12:02:25.066Z",
-          "durationMs": 4,
+          "startedAt": "2026-11-16T12:14:22.417Z",
+          "finishedAt": "2026-11-16T12:14:22.420Z",
+          "durationMs": 3,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -5040,9 +5040,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:25.066Z",
-          "finishedAt": "2026-11-16T12:02:27.176Z",
-          "durationMs": 2110,
+          "startedAt": "2026-11-16T12:14:22.420Z",
+          "finishedAt": "2026-11-16T12:14:24.624Z",
+          "durationMs": 2204,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/view-unread-links/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-views-unread-links/view-unread-links.desktop.actual.png",
           "diffPixels": 0,
@@ -5069,7 +5069,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -5081,17 +5081,17 @@
       "story": "As a logged-in user, I can click on an unread link to mark it as read.",
       "file": "user-reads-link.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:01:21.626Z",
-      "finishedAt": "2026-11-16T12:02:30.589Z",
-      "durationMs": 6343,
+      "startedAt": "2026-11-16T12:13:19.562Z",
+      "finishedAt": "2026-11-16T12:14:27.835Z",
+      "durationMs": 5590,
       "actions": [
         {
           "action": "intercept-1-read-link",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:21.835Z",
-          "finishedAt": "2026-11-16T12:01:21.838Z",
+          "startedAt": "2026-11-16T12:13:19.679Z",
+          "finishedAt": "2026-11-16T12:13:19.682Z",
           "durationMs": 3,
           "breakpointWidth": 375,
           "breakpointHeight": 667
@@ -5101,9 +5101,9 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:21.838Z",
-          "finishedAt": "2026-11-16T12:01:24.550Z",
-          "durationMs": 2712,
+          "startedAt": "2026-11-16T12:13:19.682Z",
+          "finishedAt": "2026-11-16T12:13:21.935Z",
+          "durationMs": 2253,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/read-link/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-reads-link/read-link.mobile.actual.png",
           "diffPixels": 0,
@@ -5130,7 +5130,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -5141,9 +5141,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:27.325Z",
-          "finishedAt": "2026-11-16T12:02:27.327Z",
-          "durationMs": 2,
+          "startedAt": "2026-11-16T12:14:24.778Z",
+          "finishedAt": "2026-11-16T12:14:24.781Z",
+          "durationMs": 3,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -5152,9 +5152,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:27.327Z",
-          "finishedAt": "2026-11-16T12:02:30.577Z",
-          "durationMs": 3250,
+          "startedAt": "2026-11-16T12:14:24.781Z",
+          "finishedAt": "2026-11-16T12:14:27.817Z",
+          "durationMs": 3036,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/read-link/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-reads-link/read-link.desktop.actual.png",
           "diffPixels": 0,
@@ -5181,7 +5181,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -5193,18 +5193,18 @@
       "story": "As a logged-in user with no unread links, I can add and read a suggestion.",
       "file": "user-reads-suggestion.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:01:24.562Z",
-      "finishedAt": "2026-11-16T12:02:33.293Z",
-      "durationMs": 5211,
+      "startedAt": "2026-11-16T12:13:21.948Z",
+      "finishedAt": "2026-11-16T12:14:30.700Z",
+      "durationMs": 5356,
       "actions": [
         {
           "action": "read-suggestion",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:24.650Z",
-          "finishedAt": "2026-11-16T12:01:27.059Z",
-          "durationMs": 2409,
+          "startedAt": "2026-11-16T12:13:22.036Z",
+          "finishedAt": "2026-11-16T12:13:24.430Z",
+          "durationMs": 2394,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/read-suggestion/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-reads-suggestion/read-suggestion.mobile.actual.png",
           "diffPixels": 0,
@@ -5231,7 +5231,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -5242,14 +5242,14 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:30.671Z",
-          "finishedAt": "2026-11-16T12:02:33.283Z",
-          "durationMs": 2612,
+          "startedAt": "2026-11-16T12:14:27.920Z",
+          "finishedAt": "2026-11-16T12:14:30.690Z",
+          "durationMs": 2770,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/read-suggestion/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-reads-suggestion/read-suggestion.desktop.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9997866441753025,
+          "ssimScore": 0.9997866543035948,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/read-suggestion/desktop.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-reads-suggestion/read-suggestion.desktop.a11y.yaml",
           "breakpointWidth": 1280,
@@ -5271,7 +5271,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -5283,9 +5283,9 @@
       "story": "As a logged-in user, I can search through my unread links to find one quickly.",
       "file": "user-searches-unread-links.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:01:27.071Z",
-      "finishedAt": "2026-11-16T12:02:35.183Z",
-      "durationMs": 3619,
+      "startedAt": "2026-11-16T12:13:24.439Z",
+      "finishedAt": "2026-11-16T12:14:32.605Z",
+      "durationMs": 3605,
       "actions": [
         {
           "action": "search-unread-links",
@@ -5294,14 +5294,14 @@
           },
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:27.205Z",
-          "finishedAt": "2026-11-16T12:01:28.792Z",
-          "durationMs": 1587,
+          "startedAt": "2026-11-16T12:13:24.535Z",
+          "finishedAt": "2026-11-16T12:13:26.131Z",
+          "durationMs": 1596,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/search-unread-links/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-searches-unread-links/search-unread-links.mobile.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9999993426370689,
+          "ssimScore": 1,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/search-unread-links/mobile.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-searches-unread-links/search-unread-links.mobile.a11y.yaml",
           "breakpointWidth": 375,
@@ -5323,7 +5323,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -5336,9 +5336,9 @@
           },
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:33.390Z",
-          "finishedAt": "2026-11-16T12:02:35.176Z",
-          "durationMs": 1786,
+          "startedAt": "2026-11-16T12:14:30.799Z",
+          "finishedAt": "2026-11-16T12:14:32.575Z",
+          "durationMs": 1776,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/search-unread-links/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-searches-unread-links/search-unread-links.desktop.actual.png",
           "diffPixels": 0,
@@ -5365,7 +5365,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -5377,17 +5377,17 @@
       "story": "As a logged-in user, I can Stumble! upon an unread link.",
       "file": "user-stumbles-unread.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:01:28.800Z",
-      "finishedAt": "2026-11-16T12:02:37.020Z",
-      "durationMs": 3529,
+      "startedAt": "2026-11-16T12:13:26.139Z",
+      "finishedAt": "2026-11-16T12:14:34.459Z",
+      "durationMs": 3474,
       "actions": [
         {
           "action": "intercept-3-unread-links",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:28.902Z",
-          "finishedAt": "2026-11-16T12:01:28.903Z",
+          "startedAt": "2026-11-16T12:13:26.236Z",
+          "finishedAt": "2026-11-16T12:13:26.237Z",
           "durationMs": 1,
           "breakpointWidth": 375,
           "breakpointHeight": 667
@@ -5397,8 +5397,8 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:28.903Z",
-          "finishedAt": "2026-11-16T12:01:28.904Z",
+          "startedAt": "2026-11-16T12:13:26.237Z",
+          "finishedAt": "2026-11-16T12:13:26.238Z",
           "durationMs": 1,
           "breakpointWidth": 375,
           "breakpointHeight": 667
@@ -5408,9 +5408,9 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:28.904Z",
-          "finishedAt": "2026-11-16T12:01:30.483Z",
-          "durationMs": 1579,
+          "startedAt": "2026-11-16T12:13:26.238Z",
+          "finishedAt": "2026-11-16T12:13:27.751Z",
+          "durationMs": 1513,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/stumble-unread/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-stumbles-unread/stumble-unread.mobile.actual.png",
           "diffPixels": 0,
@@ -5437,7 +5437,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -5448,9 +5448,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:35.286Z",
-          "finishedAt": "2026-11-16T12:02:35.288Z",
-          "durationMs": 2,
+          "startedAt": "2026-11-16T12:14:32.709Z",
+          "finishedAt": "2026-11-16T12:14:32.710Z",
+          "durationMs": 1,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -5459,8 +5459,8 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:35.288Z",
-          "finishedAt": "2026-11-16T12:02:35.289Z",
+          "startedAt": "2026-11-16T12:14:32.710Z",
+          "finishedAt": "2026-11-16T12:14:32.711Z",
           "durationMs": 1,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
@@ -5470,14 +5470,14 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:35.289Z",
-          "finishedAt": "2026-11-16T12:02:37.011Z",
-          "durationMs": 1722,
+          "startedAt": "2026-11-16T12:14:32.711Z",
+          "finishedAt": "2026-11-16T12:14:34.450Z",
+          "durationMs": 1739,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/stumble-unread/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-stumbles-unread/stumble-unread.desktop.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9999999968524556,
+          "ssimScore": 0.9999999944683229,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/stumble-unread/desktop.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-stumbles-unread/stumble-unread.desktop.a11y.yaml",
           "breakpointWidth": 1280,
@@ -5499,7 +5499,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -5511,18 +5511,18 @@
       "story": "As a logged-in user, I can revisit my read links, re-open one, and mark another back as unread.",
       "file": "user-revisits-read-links.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:01:30.493Z",
-      "finishedAt": "2026-11-16T12:02:44.272Z",
-      "durationMs": 13822,
+      "startedAt": "2026-11-16T12:13:27.760Z",
+      "finishedAt": "2026-11-16T12:14:41.655Z",
+      "durationMs": 13591,
       "actions": [
         {
           "action": "view-read-links",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:30.588Z",
-          "finishedAt": "2026-11-16T12:01:32.177Z",
-          "durationMs": 1589,
+          "startedAt": "2026-11-16T12:13:27.855Z",
+          "finishedAt": "2026-11-16T12:13:29.419Z",
+          "durationMs": 1564,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/view-read-links/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-revisits-read-links/view-read-links.mobile.actual.png",
           "diffPixels": 0,
@@ -5549,7 +5549,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -5560,9 +5560,9 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:32.177Z",
-          "finishedAt": "2026-11-16T12:01:33.620Z",
-          "durationMs": 1443,
+          "startedAt": "2026-11-16T12:13:29.419Z",
+          "finishedAt": "2026-11-16T12:13:30.882Z",
+          "durationMs": 1463,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/click-read-link/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-revisits-read-links/click-read-link.mobile.actual.png",
           "diffPixels": 0,
@@ -5589,7 +5589,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -5600,14 +5600,14 @@
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:33.620Z",
-          "finishedAt": "2026-11-16T12:01:37.054Z",
-          "durationMs": 3434,
+          "startedAt": "2026-11-16T12:13:30.882Z",
+          "finishedAt": "2026-11-16T12:13:34.145Z",
+          "durationMs": 3263,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/unread-link/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-revisits-read-links/unread-link.mobile.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9999993690906684,
+          "ssimScore": 0.9999988462490558,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/unread-link/mobile.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-revisits-read-links/unread-link.mobile.a11y.yaml",
           "breakpointWidth": 375,
@@ -5629,7 +5629,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -5640,14 +5640,14 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:37.118Z",
-          "finishedAt": "2026-11-16T12:02:39.032Z",
-          "durationMs": 1914,
+          "startedAt": "2026-11-16T12:14:34.561Z",
+          "finishedAt": "2026-11-16T12:14:36.343Z",
+          "durationMs": 1782,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/view-read-links/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-revisits-read-links/view-read-links.desktop.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9999901930144106,
+          "ssimScore": 0.999990193833581,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/view-read-links/desktop.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-revisits-read-links/view-read-links.desktop.a11y.yaml",
           "breakpointWidth": 1280,
@@ -5669,7 +5669,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -5680,9 +5680,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:39.032Z",
-          "finishedAt": "2026-11-16T12:02:40.693Z",
-          "durationMs": 1661,
+          "startedAt": "2026-11-16T12:14:36.343Z",
+          "finishedAt": "2026-11-16T12:14:38.033Z",
+          "durationMs": 1690,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/click-read-link/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-revisits-read-links/click-read-link.desktop.actual.png",
           "diffPixels": 0,
@@ -5709,7 +5709,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -5720,9 +5720,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:40.693Z",
-          "finishedAt": "2026-11-16T12:02:44.233Z",
-          "durationMs": 3540,
+          "startedAt": "2026-11-16T12:14:38.033Z",
+          "finishedAt": "2026-11-16T12:14:41.645Z",
+          "durationMs": 3612,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/unread-link/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-revisits-read-links/unread-link.desktop.actual.png",
           "diffPixels": 0,
@@ -5749,7 +5749,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -5761,18 +5761,18 @@
       "story": "As a logged-in user, I can remove all my read links and see the empty state.",
       "file": "user-empties-read-history.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:01:37.063Z",
-      "finishedAt": "2026-11-16T12:02:46.381Z",
-      "durationMs": 3806,
+      "startedAt": "2026-11-16T12:13:34.155Z",
+      "finishedAt": "2026-11-16T12:14:43.755Z",
+      "durationMs": 3828,
       "actions": [
         {
           "action": "empty-read-history",
           "parameters": {},
           "breakpoint": "mobile",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:37.166Z",
-          "finishedAt": "2026-11-16T12:01:38.756Z",
-          "durationMs": 1590,
+          "startedAt": "2026-11-16T12:13:34.252Z",
+          "finishedAt": "2026-11-16T12:13:35.879Z",
+          "durationMs": 1627,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/empty-read-history/mobile.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-empties-read-history/empty-read-history.mobile.actual.png",
           "diffPixels": 0,
@@ -5799,7 +5799,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -5810,9 +5810,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:44.374Z",
-          "finishedAt": "2026-11-16T12:02:46.376Z",
-          "durationMs": 2002,
+          "startedAt": "2026-11-16T12:14:41.763Z",
+          "finishedAt": "2026-11-16T12:14:43.750Z",
+          "durationMs": 1987,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/empty-read-history/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-empties-read-history/empty-read-history.desktop.actual.png",
           "diffPixels": 0,
@@ -5839,7 +5839,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -5851,9 +5851,9 @@
       "story": "As a new user, I can create an account.",
       "file": "user-registers.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:01:48.244Z",
-      "finishedAt": "2026-11-16T12:01:51.127Z",
-      "durationMs": 2883,
+      "startedAt": "2026-11-16T12:13:45.317Z",
+      "finishedAt": "2026-11-16T12:13:48.234Z",
+      "durationMs": 2917,
       "actions": [
         {
           "action": "register",
@@ -5863,14 +5863,14 @@
           },
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:01:48.338Z",
-          "finishedAt": "2026-11-16T12:01:51.116Z",
-          "durationMs": 2778,
+          "startedAt": "2026-11-16T12:13:45.376Z",
+          "finishedAt": "2026-11-16T12:13:48.177Z",
+          "durationMs": 2801,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/register/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-registers/register.desktop.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9999999994616663,
+          "ssimScore": 1,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/register/desktop.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-registers/register.desktop.a11y.yaml",
           "breakpointWidth": 1280,
@@ -5892,7 +5892,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -5904,18 +5904,18 @@
       "story": "As a logged-in user, I can use the user menu to toggle light/dark mode, change my theme, and log out.",
       "file": "user-uses-user-menu.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:02:22.592Z",
-      "finishedAt": "2026-11-16T12:02:31.124Z",
-      "durationMs": 8532,
+      "startedAt": "2026-11-16T12:14:19.883Z",
+      "finishedAt": "2026-11-16T12:14:28.663Z",
+      "durationMs": 8780,
       "actions": [
         {
           "action": "intercept-no-links",
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:22.739Z",
-          "finishedAt": "2026-11-16T12:02:22.747Z",
-          "durationMs": 8,
+          "startedAt": "2026-11-16T12:14:20.024Z",
+          "finishedAt": "2026-11-16T12:14:20.030Z",
+          "durationMs": 6,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
         },
@@ -5924,8 +5924,8 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:22.747Z",
-          "finishedAt": "2026-11-16T12:02:22.748Z",
+          "startedAt": "2026-11-16T12:14:20.030Z",
+          "finishedAt": "2026-11-16T12:14:20.031Z",
           "durationMs": 1,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
@@ -5935,14 +5935,14 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:22.748Z",
-          "finishedAt": "2026-11-16T12:02:25.436Z",
-          "durationMs": 2688,
+          "startedAt": "2026-11-16T12:14:20.031Z",
+          "finishedAt": "2026-11-16T12:14:22.928Z",
+          "durationMs": 2897,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/toggle-mode/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-uses-user-menu/toggle-mode.desktop.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 1,
+          "ssimScore": 0.9999999996556257,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/toggle-mode/desktop.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-uses-user-menu/toggle-mode.desktop.a11y.yaml",
           "breakpointWidth": 1280,
@@ -5964,7 +5964,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -5975,14 +5975,14 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:25.436Z",
-          "finishedAt": "2026-11-16T12:02:28.431Z",
-          "durationMs": 2995,
+          "startedAt": "2026-11-16T12:14:22.928Z",
+          "finishedAt": "2026-11-16T12:14:25.842Z",
+          "durationMs": 2914,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/change-theme/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-uses-user-menu/change-theme.desktop.actual.png",
           "diffPixels": 0,
           "diffRatio": 0,
-          "ssimScore": 0.9999999924590777,
+          "ssimScore": 0.9999999918192414,
           "a11yBaselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/change-theme/desktop.a11y.yaml",
           "a11yActualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-uses-user-menu/change-theme.desktop.a11y.yaml",
           "breakpointWidth": 1280,
@@ -6004,7 +6004,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -6015,8 +6015,8 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:28.431Z",
-          "finishedAt": "2026-11-16T12:02:28.432Z",
+          "startedAt": "2026-11-16T12:14:25.842Z",
+          "finishedAt": "2026-11-16T12:14:25.843Z",
           "durationMs": 1,
           "breakpointWidth": 1280,
           "breakpointHeight": 800
@@ -6026,9 +6026,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:28.432Z",
-          "finishedAt": "2026-11-16T12:02:31.094Z",
-          "durationMs": 2662,
+          "startedAt": "2026-11-16T12:14:25.843Z",
+          "finishedAt": "2026-11-16T12:14:28.585Z",
+          "durationMs": 2742,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/log-out/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/user-uses-user-menu/log-out.desktop.actual.png",
           "diffPixels": 0,
@@ -6055,7 +6055,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -6067,18 +6067,18 @@
       "story": "Visual tour of every transactional email a Linklater account can receive.",
       "file": "transactional-email-tour.json",
       "status": "pass",
-      "startedAt": "2026-11-16T12:02:46.477Z",
-      "finishedAt": "2026-11-16T12:02:48.571Z",
-      "durationMs": 2094,
+      "startedAt": "2026-11-16T12:14:43.813Z",
+      "finishedAt": "2026-11-16T12:14:46.059Z",
+      "durationMs": 2246,
       "actions": [
         {
           "action": "visit-email-verification",
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:46.514Z",
-          "finishedAt": "2026-11-16T12:02:46.922Z",
-          "durationMs": 408,
+          "startedAt": "2026-11-16T12:14:43.848Z",
+          "finishedAt": "2026-11-16T12:14:44.245Z",
+          "durationMs": 397,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-email-verification/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/transactional-email-tour/visit-email-verification.desktop.actual.png",
           "diffPixels": 0,
@@ -6105,7 +6105,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -6116,9 +6116,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:46.922Z",
-          "finishedAt": "2026-11-16T12:02:47.240Z",
-          "durationMs": 318,
+          "startedAt": "2026-11-16T12:14:44.245Z",
+          "finishedAt": "2026-11-16T12:14:44.621Z",
+          "durationMs": 376,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-email-password-reset/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/transactional-email-tour/visit-email-password-reset.desktop.actual.png",
           "diffPixels": 0,
@@ -6145,7 +6145,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -6156,9 +6156,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:47.240Z",
-          "finishedAt": "2026-11-16T12:02:47.552Z",
-          "durationMs": 312,
+          "startedAt": "2026-11-16T12:14:44.621Z",
+          "finishedAt": "2026-11-16T12:14:44.974Z",
+          "durationMs": 353,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-email-address-change/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/transactional-email-tour/visit-email-address-change.desktop.actual.png",
           "diffPixels": 0,
@@ -6185,7 +6185,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -6196,9 +6196,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:47.552Z",
-          "finishedAt": "2026-11-16T12:02:47.912Z",
-          "durationMs": 360,
+          "startedAt": "2026-11-16T12:14:44.974Z",
+          "finishedAt": "2026-11-16T12:14:45.290Z",
+          "durationMs": 316,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-email-magic-link/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/transactional-email-tour/visit-email-magic-link.desktop.actual.png",
           "diffPixels": 0,
@@ -6225,7 +6225,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -6236,9 +6236,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:47.912Z",
-          "finishedAt": "2026-11-16T12:02:48.239Z",
-          "durationMs": 327,
+          "startedAt": "2026-11-16T12:14:45.290Z",
+          "finishedAt": "2026-11-16T12:14:45.666Z",
+          "durationMs": 376,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-email-account-deletion/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/transactional-email-tour/visit-email-account-deletion.desktop.actual.png",
           "diffPixels": 0,
@@ -6265,7 +6265,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
@@ -6276,9 +6276,9 @@
           "parameters": {},
           "breakpoint": "desktop",
           "status": "pass",
-          "startedAt": "2026-11-16T12:02:48.239Z",
-          "finishedAt": "2026-11-16T12:02:48.567Z",
-          "durationMs": 328,
+          "startedAt": "2026-11-16T12:14:45.666Z",
+          "finishedAt": "2026-11-16T12:14:46.054Z",
+          "durationMs": 388,
           "baselinePath": "/home/runner/work/linklater/linklater/tuffgal/baselines/visit-email-policy-update/desktop.png",
           "actualPath": "/home/runner/work/linklater/linklater/tuffgal/report/screenshots/transactional-email-tour/visit-email-policy-update.desktop.actual.png",
           "diffPixels": 0,
@@ -6305,7 +6305,7 @@
               "diffRatio": 0
             },
             {
-              "finishedAt": "2026-11-16T12:02:48.571Z",
+              "finishedAt": "2026-11-16T12:14:46.059Z",
               "diffPixels": 0,
               "diffRatio": 0
             }
