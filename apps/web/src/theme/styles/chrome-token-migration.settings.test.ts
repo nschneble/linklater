@@ -1,0 +1,37 @@
+import { describeMigratedFiles } from './chrome-token-migration.testSetup';
+
+const MIGRATED_FILES = [
+  'src/components/settings/ApiTokensList/ApiTokenRow.tsx',
+  'src/components/settings/ApiTokensList/index.tsx',
+  'src/components/settings/ApiTokensSection/index.tsx',
+  'src/components/settings/BookmarkletSection.tsx',
+  'src/components/settings/CvdModeToggle.tsx',
+  'src/components/settings/EmailSettingsForm.tsx',
+  'src/components/settings/IdPsSection/ProviderRow.tsx',
+  'src/components/settings/IdPsSection/index.tsx',
+  'src/components/settings/KeyboardShortcutsToggle.tsx',
+  'src/components/settings/MultiFactorSection/index.tsx',
+  'src/components/settings/PasswordSettingsForm/AddPasswordForm.tsx',
+  'src/components/settings/PasswordSettingsForm/ChangePasswordForm.tsx',
+  'src/components/settings/ReauthForm.tsx',
+  'src/components/settings/SettingsGroup.tsx',
+  'src/components/settings/SettingsLayout.tsx',
+  'src/components/settings/SettingsSectionNav.tsx',
+  'src/components/settings/SettingsView.tsx',
+  'src/components/settings/SettingSwitch.tsx',
+  'src/components/settings/ThemeEditor/BundleTabs.tsx',
+  'src/components/settings/ThemeEditor/ColorEditor.tsx',
+  'src/components/settings/ThemeEditor/ColorRow.tsx',
+  'src/components/settings/ThemeEditor/ComponentShowcase.tsx',
+  'src/components/settings/ThemeEditor/MockHeader.tsx',
+  'src/components/settings/ThemeEditor/MockLinkCard.tsx',
+  'src/components/settings/ThemeEditor/MockMenu.tsx',
+  'src/components/settings/ThemeEditor/MockNotice.tsx',
+  'src/components/settings/ThemeEditor/MockToolbar.tsx',
+  'src/components/settings/ThemeEditor/ModeToggle.tsx',
+  'src/components/settings/ThemeEditor/RandomizeButton.tsx',
+  'src/components/settings/ThemeEditor/index.tsx',
+  'src/components/settings/TotpSetupView.tsx',
+] as const;
+
+describeMigratedFiles(MIGRATED_FILES);

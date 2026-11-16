@@ -37,8 +37,8 @@ Twelve flat tokens have been retired:
   page-gradient wrappers collapsed to a 2-stop `bg-gradient-to-b
 from-{from} to-{to}` and the slot was retired across all 10 themes.
 
-The `chrome-token-migration.test.ts` tripwire keeps every retired token
-in its `LEGACY_TOKENS` list to prevent re-introduction.
+The `chrome-token-migration.testSetup.ts` tripwire keeps every retired
+token in its `LEGACY_TOKENS` list to prevent re-introduction.
 
 ## 2. Color bundles (all 10 film themes migrated)
 
